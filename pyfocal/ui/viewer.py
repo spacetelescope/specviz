@@ -177,7 +177,7 @@ class Viewer(QMainWindow):
         Parameters
         ----------
         """
-        name = model.name or model.__class__.__name__
+        name = model.name
 
         if not name:
             count = 1
