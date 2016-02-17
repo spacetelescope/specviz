@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './source/mainwindow.ui'
+# Form implementation generated from reading ui file '/Users/busko/Projects/pyfocal/pyfocal/pyfocal/ui/qt/uic/source/mainwindow.ui'
 #
-# Created by: ...third_party.qtpy UI code generator 5.5.1
+# Created by: PyQt5 UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-from ...third_party.qtpy import QtCore, QtGui, QtWidgets
+
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1280, 720)
+        MainWindow.resize(1288, 842)
         MainWindow.setMinimumSize(QtCore.QSize(640, 480))
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -31,7 +30,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.mdiArea, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1280, 22))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1288, 22))
         self.menuBar.setObjectName("menuBar")
         self.menuFile = QtWidgets.QMenu(self.menuBar)
         self.menuFile.setObjectName("menuFile")
@@ -200,7 +199,7 @@ class Ui_MainWindow(object):
         self.dockWidget_3.setWidget(self.dockWidgetContents_3)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_3)
         self.dockWidget_4 = QtWidgets.QDockWidget(MainWindow)
-        self.dockWidget_4.setMinimumSize(QtCore.QSize(76, 98))
+        self.dockWidget_4.setMinimumSize(QtCore.QSize(77, 99))
         self.dockWidget_4.setFeatures(QtWidgets.QDockWidget.AllDockWidgetFeatures)
         self.dockWidget_4.setObjectName("dockWidget_4")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
@@ -216,7 +215,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 295, 428))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 310, 481))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_8.setContentsMargins(11, 11, 11, 11)
@@ -267,6 +266,15 @@ class Ui_MainWindow(object):
         self.lineEdit.setObjectName("lineEdit")
         self.verticalLayout_5.addWidget(self.lineEdit)
         self.verticalLayout_4.addWidget(self.groupBox_4)
+        self.groupBox_6 = QtWidgets.QGroupBox(self.groupBox_3)
+        self.groupBox_6.setObjectName("groupBox_6")
+        self.pushButton_5 = QtWidgets.QPushButton(self.groupBox_6)
+        self.pushButton_5.setGeometry(QtCore.QRect(0, 0, 115, 32))
+        self.pushButton_5.setObjectName("pushButton_5")
+        self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_6)
+        self.pushButton_6.setGeometry(QtCore.QRect(110, 0, 111, 32))
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.verticalLayout_4.addWidget(self.groupBox_6)
         self.verticalLayout_8.addWidget(self.groupBox_3)
         self.groupBox_5 = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
         self.groupBox_5.setObjectName("groupBox_5")
@@ -345,6 +353,9 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Add"))
         self.groupBox_3.setTitle(_translate("MainWindow", "Current Models"))
         self.groupBox_4.setTitle(_translate("MainWindow", "Arithmetic Behavior"))
+        self.groupBox_6.setTitle(_translate("MainWindow", "GroupBox"))
+        self.pushButton_5.setText(_translate("MainWindow", "Save"))
+        self.pushButton_6.setText(_translate("MainWindow", "Read"))
         self.groupBox_5.setTitle(_translate("MainWindow", "Fitting Routine"))
         self.pushButton_3.setText(_translate("MainWindow", "Perform Fit"))
         self.pushButton_4.setText(_translate("MainWindow", "Create"))
@@ -356,4 +367,4 @@ class Ui_MainWindow(object):
         self.actionChange_Color.setText(_translate("MainWindow", "Change Color"))
         self.actionChange_Color.setToolTip(_translate("MainWindow", "Change the line color selected layer"))
 
-from . import icon_resource_rc
+# import icon_resource_rc
