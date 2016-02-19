@@ -140,7 +140,7 @@ class Controller(object):
     def save_model(self):
         model_dict = self.viewer.get_model_inputs()
         formula = self.viewer.current_model_formula
-        model = model_layer_manager.get_compound_model(model_dict, formula=formula)
+        model = model_manager.get_compound_model(model_dict, formula=formula)
 
         global _model_directory
         model_io.saveModelToFile(self.viewer.main_window.mdiArea, model, _model_directory)
