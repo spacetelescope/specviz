@@ -1,18 +1,16 @@
 --- !CustomLoader
-name: Keck/DEIMOS Fits
+name: KittPeak/MDM Fits
 extension: [fits, mits]
 wcs:
-  hdu: 1
+  hdu: 0
 dispersion:
-  hdu: 1
-  col: 1
   unit: 'Angstrom'
 data:
-  hdu: 1
+  hdu: 0
   col: 0
 uncertainty:
-  hdu: 1
-  col: 2
-  type: 'ivar'
+  hdu: 0
+  col: 3
+  type: 'std'
 meta:
   author: STScI

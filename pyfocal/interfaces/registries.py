@@ -19,13 +19,20 @@ class CustomLoaderRegistry(Registry):
         super(CustomLoaderRegistry, self).__init__()
 
         cur_path = os.path.join(os.path.dirname(__file__), 'default_loaders')
+        usr_path = os.path.join(os.path.expanduser('~'), '.pyfocal')
 
-        for file_name in os.listdir(cur_path):
-            f_path = os.path.join(cur_path, file_name)
-            custom_loader = yaml.load(open(f_path, 'r'))
-            custom_loader.set_filter()
+        check_paths = [cur_path, usr_path]
 
-            self._members.append(custom_loader)
+        if not os.path.exists(usr_path):
+            os.mkdir(usr_path)
+
+        for path in check_paths:
+            for file_name in os.listdir(path):
+                f_path = os.path.join(cur_path, file_name)
+                custom_loader = yaml.load(open(f_path, 'r'))
+                custom_loader.set_filter()
+
+                self._members.append(custom_loader)
 
     def get(self, filter):
         return [x for x in self._members if x.filter == filter][0]
@@ -38,10 +45,12 @@ class CustomLoaderRegistry(Registry):
 class YAMLLoader(yaml.YAMLObject):
     yaml_tag = u'!CustomLoader'
 
-    def __init__(self, extension, name, data, uncertainty, mask, wcs, meta):
+    def __init__(self, extension, name, data, dispersion, uncertainty, mask,
+                 wcs, meta):
         self.name = name
         self.extension = extension
         self.data = data
+        self.dispersion = dispersion
         self.uncertainty = uncertainty
         self.mask = mask
         self.wcs = wcs
@@ -61,4 +70,5 @@ class YAMLLoader(yaml.YAMLObject):
 loader_registry = CustomLoaderRegistry()
 
 # Import loaders
-from . import loaders
+from .loaders import register_loaders
+register_loaders()
