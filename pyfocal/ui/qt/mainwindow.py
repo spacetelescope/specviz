@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/Users/busko/Projects/pyfocal/pyfocal/pyfocal/ui/qt/uic/source/mainwindow.ui'
+# Form implementation generated from reading ui file './source/mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.5
+# Created by: ...third_party.qtpy UI code generator 5.5
 #
 # WARNING! All changes made in this file will be lost!
-
-from PyQt5 import QtCore, QtGui, QtWidgets
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+from ...third_party.qtpy import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -367,4 +368,4 @@ class Ui_MainWindow(object):
         self.actionChange_Color.setText(_translate("MainWindow", "Change Color"))
         self.actionChange_Color.setToolTip(_translate("MainWindow", "Change the line color selected layer"))
 
-# import icon_resource_rc
+from . import icon_resource_rc
