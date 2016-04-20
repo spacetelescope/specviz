@@ -75,7 +75,7 @@ activate it first before installing: ``$ source activate sviz_env``.
 
     $ git clone https://github.com/spacetelescope/specviz.git
     $ cd specviz
-    $ git checkout tags/v0.1rc3
+    $ git checkout tags/v0.1.1rc3
     $ pip install -r requirements.txt
 
 .. note::
