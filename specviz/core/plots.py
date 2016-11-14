@@ -9,7 +9,7 @@ from itertools import cycle
 import logging
 import numpy as np
 
-AVAILABLE_COLORS = cycle([(0, 0, 0),
+AVAILABLE_COLORS = [(0, 0, 0),
                           (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
                           (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
                           (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
@@ -19,7 +19,7 @@ AVAILABLE_COLORS = cycle([(0, 0, 0),
                           (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
                           (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
                           (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
-                          (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)])
+                          (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)]
 
 
 class LinePlot(object):
@@ -35,8 +35,9 @@ class LinePlot(object):
         self.line_width = 1
         self.mode = None
         self.checked = True
+        self._available_colors = cycle(AVAILABLE_COLORS)
 
-        r, g, b = next(AVAILABLE_COLORS)
+        r, g, b = next(self._available_colors)
         r, g, b = r * 255, g * 255, b * 255
 
         rand_pen = pg.mkPen(QColor(r, g, b, 255), width=self.line_width)
