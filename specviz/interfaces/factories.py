@@ -45,7 +45,7 @@ class ModelFactory(Factory):
         'PowerLaw': models.PowerLaw1D,
         'Linear': models.Linear1D,
         'Const': models.Const1D,
-        'Redshift': models.Redshift,
+        'Redshift': models.RedshiftScaleFactor,
         'Scale': models.Scale,
         'Shift': models.Shift,
         'Sine': models.Sine1D,
