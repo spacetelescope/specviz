@@ -112,7 +112,7 @@ class DataListPlugin(Plugin):
         """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters(["Auto (*)"] + [x + " (*)" for x in
+        dialog.setNameFilters(["Auto (*)"] + [x for x in
                                io_registry.get_formats(Spectrum1DRef)[
                                    'Format']])
 
@@ -188,6 +188,10 @@ class UiDataListPlugin:
 
         # List widget for the data sets
         plugin.list_widget_data_list = QListWidget(plugin)
+
+        # Allow for multiple selections
+        plugin.list_widget_data_list.setSelectionMode(
+            QAbstractItemView.MultiSelection)
 
         # Label box to show when no data set has been loaded
         plugin.label_unopened = QLabel(plugin)

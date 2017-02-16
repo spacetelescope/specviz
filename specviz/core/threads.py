@@ -45,6 +45,7 @@ class FileLoadThread(QThread):
         depend on the intrincacies of the registries, loaders, and data
         classes. In other words, this is brittle code.
         """
+        logging.info("Attempting to read file {} with {}.".format(file_name, file_filter))
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 

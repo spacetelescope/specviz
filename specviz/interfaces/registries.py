@@ -136,10 +136,10 @@ class LoaderRegistry(Registry):
                     loader = AsciiYamlRegister(custom_loader)
 
                 try:
-                    io_registry.register_reader(custom_loader.name,
+                    io_registry.register_reader(custom_loader.filter,
                                                 Spectrum1DRef,
                                                 loader.reader)
-                    io_registry.register_identifier(custom_loader.name,
+                    io_registry.register_identifier(custom_loader.filter,
                                                     Spectrum1DRef,
                                                     loader.identify)
                 except io_registry.IORegistryError as e:
