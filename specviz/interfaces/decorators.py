@@ -43,6 +43,10 @@ def data_loader(label, identifier, priority=-1, **kwargs):
         func.priority = priority
 
         format = label #"-".join(label.lower().split())
+
+        if format in io_registry.get_formats()['Format']:
+            return
+
         io_registry.register_reader(format, Spectrum1DRef, func)
         io_registry.register_identifier(format, Spectrum1DRef,
                                         identifier)
