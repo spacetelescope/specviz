@@ -24,6 +24,11 @@ class LayerListPlugin(Plugin):
     name = "Layer List"
     location = "left"
 
+    def __init__(self, *args, **kwargs):
+        super(LayerListPlugin, self).__init__(*args, **kwargs)
+
+        self._copied_model = None
+
     def setup_ui(self):
         UiLayerListPlugin(self)
 
@@ -77,6 +82,29 @@ class LayerListPlugin(Plugin):
         self.button_change_color.clicked.connect(
             self._change_plot_color
         )
+
+        self.button_copy_model.clicked.connect(
+            self._copy_model
+        )
+
+    def _copy_model(self):
+        layer_item = self.current_layer_item
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if hasattr(layer, 'model'):
+            self._copied_model = layer
+
+    @DispatchHandle.register_listener("on_paste_model")
+    def _paste_model(self, data):
+        if self._copied_model is None:
+            logging.error("No copied model; unable to paste.")
+            return
+
+        layer = Spectrum1DRefLayer.from_parent(data)
+        new_model_layer = self._copied_model.from_parent(parent=layer,
+                                                         model=self._copied_model.model,
+                                                         copy=True)
+        dispatch.on_add_window.emit(layer=[layer, new_model_layer])
 
     @property
     def current_layer(self):
@@ -303,11 +331,20 @@ class LayerListPlugin(Plugin):
             self.button_remove_layer.setEnabled(True)
             self.button_layer_slice.setEnabled(True)
             self.button_change_color.setEnabled(True)
+
+            layer = layer_item.data(0, Qt.UserRole)
+
+            if hasattr(layer, 'model'):
+                self.button_copy_model.setEnabled(True)
+            else:
+                self.button_copy_model.setEnabled(False)
         else:
             self.button_layer_arithmetic.setEnabled(False)
             self.button_remove_layer.setEnabled(False)
             self.button_layer_slice.setEnabled(False)
             self.button_change_color.setEnabled(False)
+
+            self.button_copy_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_activated_window")
     def update_layer_list(self, window):
@@ -366,6 +403,13 @@ class UiLayerListPlugin:
         plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
         plugin.button_layer_arithmetic.setMinimumSize(QSize(35, 35))
 
+        plugin.button_copy_model = QToolButton(plugin)
+        plugin.button_copy_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Copy-96.png")))
+        plugin.button_copy_model.setEnabled(False)
+        plugin.button_copy_model.setIconSize(QSize(25, 25))
+        plugin.button_copy_model.setMinimumSize(QSize(35, 35))
+
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
@@ -381,6 +425,7 @@ class UiLayerListPlugin:
         plugin.button_change_color.setIconSize(QSize(25, 25))
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
+        plugin.layout_horizontal.addWidget(plugin.button_copy_model)
         plugin.layout_horizontal.addStretch()
         plugin.layout_horizontal.addWidget(plugin.button_change_color)
         plugin.layout_horizontal.addWidget(plugin.button_remove_layer)

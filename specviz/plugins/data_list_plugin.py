@@ -65,12 +65,19 @@ class DataListPlugin(Plugin):
         self.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
 
+        self.button_apply_model.clicked.connect(
+            self.apply_model)
+
     @DispatchHandle.register_listener("on_add_data")
     def _data_loaded(self, data):
         dispatch.on_added_data.emit(data=data)
 
         # Open the data automatically
         dispatch.on_add_window.emit(data=data)
+
+    def apply_model(self):
+        for data in self.get_selected_data():
+            dispatch.on_paste_model.emit(data=data)
 
     @property
     def current_data(self):
@@ -175,6 +182,15 @@ class DataListPlugin(Plugin):
             if data_item.data(Qt.UserRole) == data:
                 return data_item
 
+    def get_selected_data(self):
+        selected_data = []
+
+        for data_item in self.list_widget_data_list.selectedItems():
+            data = data_item.data(Qt.UserRole)
+            selected_data.append(data)
+
+        return selected_data
+
     def toggle_buttons(self):
         if self.current_data_item is not None:
             self.label_unopened.hide()
@@ -197,7 +213,7 @@ class UiDataListPlugin:
 
         # Allow for multiple selections
         plugin.list_widget_data_list.setSelectionMode(
-            QAbstractItemView.MultiSelection)
+            QAbstractItemView.ExtendedSelection)
 
         # Label box to show when no data set has been loaded
         plugin.label_unopened = QLabel(plugin)
@@ -232,6 +248,13 @@ class UiDataListPlugin:
         plugin.button_add_to_sub_window.setMinimumSize(QSize(35, 35))
         plugin.button_add_to_sub_window.setEnabled(False)
 
+        plugin.button_apply_model = QToolButton(plugin)
+        plugin.button_apply_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Paste-96.png")))
+        plugin.button_apply_model.setIconSize(QSize(25, 25))
+        plugin.button_apply_model.setMinimumSize(QSize(35, 35))
+        plugin.button_apply_model.setEnabled(True)
+
         plugin.button_remove_data = QToolButton(plugin)
         plugin.button_remove_data.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
@@ -241,6 +264,7 @@ class UiDataListPlugin:
 
         plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
         plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
+        plugin.layout_horizontal.addWidget(plugin.button_apply_model)
         plugin.layout_horizontal.addStretch()
         plugin.layout_horizontal.addWidget(plugin.button_remove_data)
 

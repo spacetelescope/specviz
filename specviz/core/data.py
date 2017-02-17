@@ -332,7 +332,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         self._model = model
 
     @classmethod
-    def from_parent(cls, parent, model=None, layer_mask=None):
+    def from_parent(cls, parent, model=None, layer_mask=None, copy=False):
         """
         Create a duplicate child layer from a parent layer
 
@@ -347,12 +347,18 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         layer_mask: layer
             The layer defining the valid data mask.
 
+        copy : bool
+            Copy the model if one is provided.
+
         Returns
         -------
         child_layer:
             The new layer.
         """
         if model is not None:
+            if copy:
+                model = model.copy()
+
             data = model(parent.dispersion.data.value)
         else:
             data = np.zeros(parent.dispersion.shape)
