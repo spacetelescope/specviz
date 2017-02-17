@@ -1,3 +1,6 @@
+"""
+Registry library
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -8,13 +11,25 @@ import inspect
 import logging
 
 import astropy.io.registry as io_registry
+
+#-- local
 from ..core.data import Spectrum1DRef
 from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
+from ..io.loaders import *
+
+__all__ = ['Registry',
+           'PluginRegistry',
+           'LoaderRegistry']
 
 
 class Registry(object):
     """
     Maintains a set of referential objects.
+
+    Attributes
+    ----------
+    members: list
+        The list of members belonging to this registry.
     """
     def __init__(self):
         self._members = []
@@ -70,6 +85,8 @@ class PluginRegistry(Registry):
 
 
 class LoaderRegistry(Registry):
+    """Loads and stores the IO data loaders
+    """
     def __init__(self):
         super(LoaderRegistry, self).__init__()
 
@@ -77,16 +94,25 @@ class LoaderRegistry(Registry):
         self._load_yaml()
 
     def _load_py(self):
+        """ Loads built-in and custom python loaders
+
+        Loaders from the io.loaders module will be included from the
+        import statement.
+        Python modules (.py ending) found in the following locations will be
+        auto-loaded into the registry for data loading.
+
+        1.  .specviz folder in the user's HOME directory
+
         """
-        Loads python files as custom loaders.
-        """
-        cur_path = os.path.abspath(os.path.join(__file__, '..', '..', 'io',
-                                                'loaders'))
+
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path]
+        #
+        # Leaving in list format incase other locations want to be added
+        # in the future
+        check_paths = [usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -96,7 +122,6 @@ class LoaderRegistry(Registry):
                 mod = mod.split('.')[0]
                 sys.path.insert(0, path)
                 mod = importlib.import_module(mod)
-                members = inspect.getmembers(mod, predicate=inspect.isfunction)
 
                 # for _, func in members:
                 #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:
@@ -105,8 +130,19 @@ class LoaderRegistry(Registry):
                 sys.path.pop(0)
 
     def _load_yaml(self):
-        """
-        Loads yaml files as custom loaders.
+        """ Loads yaml files as custom loaders.
+
+        YAML files found in the following three locations will be auto-loaded
+        into the registry for data loading.
+
+        1.  .specviz folder in the user's HOME directory
+        2.  the current working directory
+        3.  the linelists directory delivered with this package.
+
+        The io_registry will be updated with the YAML schematics for each of the
+        different filetypes.  Errors in loading the registry will write an error
+        to the log.
+
         """
         cur_path = os.path.join(os.path.dirname(__file__), '..', 'io',
                                 'yaml_loaders')
@@ -147,6 +183,8 @@ class LoaderRegistry(Registry):
 
 
 class YAMLLoader(yaml.YAMLObject):
+    """ Helper to load YAML files
+    """
     yaml_tag = u'!CustomLoader'
 
     def __init__(self, extension, name, data, dispersion, uncertainty, mask,

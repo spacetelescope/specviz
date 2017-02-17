@@ -1,3 +1,6 @@
+"""
+Spectrum Layer Plotting
+"""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
@@ -9,20 +12,49 @@ from itertools import cycle
 import logging
 import numpy as np
 
-AVAILABLE_COLORS = [(0, 0, 0),
-                          (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
-                          (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
-                          (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
-                          (0.5058823529411764, 0.4470588235294118, 0.6980392156862745),
-                          (0.8, 0.7254901960784313, 0.4549019607843137),
-                          (0.39215686274509803, 0.7098039215686275, 0.803921568627451),
-                          (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
-                          (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
-                          (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
-                          (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)]
+__all__ = [
+    'LinePlot',
+]
+
+AVAILABLE_COLORS = cycle([
+    (0, 0, 0),
+    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
+    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
+    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
+    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745),
+    (0.8, 0.7254901960784313, 0.4549019607843137),
+    (0.39215686274509803, 0.7098039215686275, 0.803921568627451),
+    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
+    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
+    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
+    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)
+])
 
 
 class LinePlot(object):
+    """
+    Plot representation of a layer
+
+    Parameters
+    ----------
+    layer: `Spectrum1DRefLayer`
+        The layer to plot
+
+    plot: LinePlot
+        LinePlot instance to reuse.
+
+    visible: bool
+        If True, the plot will be visible
+
+    style: str
+        The plotting style
+
+    pen: str
+        If defined, the pen style to use.
+
+    err_pen: str
+        If defined, the pen style to use for the error/uncertainty.
+    """
     def __init__(self, layer, plot=None, visible=True, style='line',
                  pen=None, err_pen=None):
         self._layer = layer
@@ -35,9 +67,8 @@ class LinePlot(object):
         self.line_width = 1
         self.mode = None
         self.checked = True
-        self._available_colors = cycle(AVAILABLE_COLORS)
 
-        r, g, b = next(self._available_colors)
+        r, g, b = next(AVAILABLE_COLORS)
         r, g, b = r * 255, g * 255, b * 255
 
         rand_pen = pg.mkPen(QColor(r, g, b, 255), width=self.line_width)
@@ -66,6 +97,21 @@ class LinePlot(object):
 
     @staticmethod
     def from_layer(layer, **kwargs):
+        """Create a LinePlot from a layer
+
+        Parameters
+        ----------
+        layer: `Spectrum1DRefLayer`
+            The layer to create from.
+
+        kwargs: dict
+            Other arguments for `LinePlot` class.
+
+        Returns
+        -------
+        plot_container:
+            The new LinePlot
+        """
         plot_data_item = pg.PlotDataItem(layer.dispersion, layer.data)
 
         plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
@@ -91,6 +137,20 @@ class LinePlot(object):
         return plot_container
 
     def change_units(self, x, y=None, z=None):
+        """
+        Change the displayed units
+
+        Parameters
+        ----------
+        x: `~astropy.units`
+            The new units for the dispersion
+
+        y: `~astropy.units`
+            The new units for the flux
+
+        z: `~astropy.units`
+            The new units for the multi-spectral dimension.
+        """
         if x is None or not self._layer.dispersion_unit.is_equivalent(
                 x, equivalencies=spectral()):
             logging.error("Failed to convert x-axis plot units. {} to {"
@@ -107,6 +167,18 @@ class LinePlot(object):
         self.update()
 
     def set_plot_visibility(self, show=None, inactive=None):
+        """
+        Set visibility and active state
+
+        Parameters
+        ----------
+        show: bool
+            If True, show the plot
+
+        inactive: bool
+            If True, set plot style to indicate this is not
+            the active plot.
+        """
         if show is not None:
             if show:
                 self._plot.setPen(self._pen_stash['pen_on'])
@@ -118,6 +190,14 @@ class LinePlot(object):
                 self._plot.setPen(self._pen_stash['pen_inactive'])
 
     def set_error_visibility(self, show=None):
+        """
+        Show the error/uncertainty
+
+        Parameters
+        ----------
+        show: bool
+            If True, show the error/uncertainty info.
+        """
         if self.error is not None and show is not None:
             if show:
                 self.error.setOpts(pen=self._pen_stash['error_pen_on'])
@@ -170,6 +250,14 @@ class LinePlot(object):
             self.error.setOpts(pen=pg.mkPen(pen))
 
     def set_mode(self, mode):
+        """
+        Set the line plotting mode
+
+        Parameters
+        ----------
+        mode: 'line' | 'scatter | 'histogram'
+            The plot mode
+        """
         if mode in ['line', 'scatter', 'histogram']:
             self.mode = mode
         else:
@@ -178,12 +266,28 @@ class LinePlot(object):
         self.update()
 
     def set_line_width(self, width):
+        """
+        Set the line plot width
+
+        Parameters
+        ----------
+        width: float
+            The width of the line
+        """
         self.line_width = width
         _pen = pg.mkPen(self._plot.opts['pen'])
         _pen.setWidth(self.line_width)
         self.pen = _pen
 
     def update(self, autoscale=False):
+        """
+        Refresh the plot
+
+        Parameters
+        ----------
+        autoscale: bool
+            If True, rescale the plot to match the data.
+        """
         if hasattr(self.layer, '_model'):
             disp = self.layer.unmasked_dispersion.compressed().value
             data = self.layer.unmasked_data.compressed().value
@@ -193,13 +297,20 @@ class LinePlot(object):
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
-        disp = np.append(disp, disp[-1]) if self.mode is 'histogram' else disp
-        # data = data[:-1] if self.mode is 'histogram' else data
+        #-- Changes specific for scatter plot rendering
+        symbol = 'o' if self.mode == 'scatter' else None
+        pen = None if self.mode == 'scatter' else self.pen
 
-        self._plot.setData(disp, data, symbol='o' if self.mode is 'scatter' else None,
-                           stepMode=True if self.mode is 'histogram' else False,
-                           pen=None if self.mode is 'scatter' else self.pen)
+        #-- changes specific for histrogram rendering
+        stepMode = True if self.mode == 'histogram' else False
+        disp = np.append(disp, disp[-1]) if self.mode == 'histogram' else disp
+
+        self._plot.setData(disp,
+                           data,
+                           symbol=symbol,
+                           stepMode=stepMode,
+                           pen=pen)
 
         if self.error is not None:
-            self.error.setData(x=disp[:-1] if self.mode is 'histogram' else disp,
+            self.error.setData(x=disp[:-1] if self.mode == 'histogram' else disp,
                                y=data, height=uncert)
