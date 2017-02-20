@@ -87,6 +87,10 @@ class LayerListPlugin(Plugin):
             self._copy_model
         )
 
+        self.button_apply_model.clicked.connect(
+            lambda: dispatch.on_paste_model.emit(layer=self.current_layer)
+        )
+
     def _copy_model(self):
         layer_item = self.current_layer_item
         layer = layer_item.data(0, Qt.UserRole)
@@ -94,17 +98,28 @@ class LayerListPlugin(Plugin):
         if hasattr(layer, 'model'):
             self._copied_model = layer
 
+        if self._copied_model is not None:
+            self.button_apply_model.setEnabled(True)
+        else:
+            self.button_apply_model.setEnabled(False)
+
     @DispatchHandle.register_listener("on_paste_model")
-    def _paste_model(self, data):
+    def _paste_model(self, data=None, layer=None):
         if self._copied_model is None:
             logging.error("No copied model; unable to paste.")
             return
 
-        layer = Spectrum1DRefLayer.from_parent(data)
+        if data is not None:
+            layer = Spectrum1DRefLayer.from_parent(data)
+
         new_model_layer = self._copied_model.from_parent(parent=layer,
                                                          model=self._copied_model.model,
                                                          copy=True)
-        dispatch.on_add_window.emit(layer=[layer, new_model_layer])
+
+        if data is not None:
+            dispatch.on_add_window.emit(layer=[layer, new_model_layer])
+        else:
+            dispatch.on_add_layer.emit(layer=new_model_layer)
 
     @property
     def current_layer(self):
@@ -410,6 +425,13 @@ class UiLayerListPlugin:
         plugin.button_copy_model.setIconSize(QSize(25, 25))
         plugin.button_copy_model.setMinimumSize(QSize(35, 35))
 
+        plugin.button_apply_model = QToolButton(plugin)
+        plugin.button_apply_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Paste-96.png")))
+        plugin.button_apply_model.setEnabled(False)
+        plugin.button_apply_model.setIconSize(QSize(25, 25))
+        plugin.button_apply_model.setMinimumSize(QSize(35, 35))
+
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
             ICON_PATH, "Delete-48.png")))
@@ -426,6 +448,7 @@ class UiLayerListPlugin:
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
         plugin.layout_horizontal.addWidget(plugin.button_copy_model)
+        plugin.layout_horizontal.addWidget(plugin.button_apply_model)
         plugin.layout_horizontal.addStretch()
         plugin.layout_horizontal.addWidget(plugin.button_change_color)
         plugin.layout_horizontal.addWidget(plugin.button_remove_layer)

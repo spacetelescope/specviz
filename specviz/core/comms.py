@@ -239,7 +239,7 @@ dispatch.register_event("on_clicked_layer", args=["layer_item"])
 dispatch.register_event("on_changed_layer", args=["layer_item"])
 dispatch.register_event("on_changed_model", args=["model_item"])
 dispatch.register_event("on_copy_model")
-dispatch.register_event("on_paste_model", args=["data"])
+dispatch.register_event("on_paste_model", args=["data", "layer"])
 
 dispatch.register_event("on_add_data", args=["data"])
 dispatch.register_event("on_add_model", args=["layer"])
