@@ -21,7 +21,7 @@ def fits_identify(*args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['fits', 'fit'])
+            args[0].lower().split('.')[-1] in ['fits', 'fit', 'fits.gz'])
 
 
 @data_loader(label="Simple Fits", identifier=fits_identify)
