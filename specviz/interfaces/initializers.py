@@ -1,11 +1,9 @@
 """
-This module is used to initialize spectral models to the
-data at hand.
+This module is used to initialize spectral models to the data at hand.
 
-This is used by model-fitting code that has
-to create spectral model instances with sensible parameter
-values such that they can be used as first guesses by the
-fitting algorithms.
+This is used by model-fitting code that has to create spectral model
+instances with sensible parameter values such that they can be used as
+first guesses by the fitting algorithms.
 """
 import numpy as np
 
@@ -128,7 +126,7 @@ class _LineProfile1DInitializer(object):
     def __init__(self, factor=1.0):
         self._factor = factor
 
-    def _set_width_attribute(self, instance, name, fwhm, sigma):
+    def _set_width_attribute(self, instance, name, fwhm):
         '''
         Each line profile class has its own way of naming
         and defining the width parameter. Subclasses should
@@ -145,9 +143,6 @@ class _LineProfile1DInitializer(object):
 
         fwhm : float
             FWHM
-
-        sigma : float
-            standard deviation
         '''
         raise NotImplementedError
 
@@ -176,31 +171,30 @@ class _LineProfile1DInitializer(object):
         # 2nd moment of the X coordinate.
         dx = x - np.mean(x)
         fwhm = 2 * np.sqrt(np.sum((dx * dx) * y) / np.sum(y))
-        sigma = fwhm / 2.355
 
         # amplitude is derived from area.
         delta_x = x[1:] - x[:-1]
         sum_y = np.sum((y[1:] - np.min(y[1:])) * delta_x)
-        height = sum_y / (sigma * np.sqrt( 2 * np.pi))
+        height = sum_y / (fwhm / 2.355 * np.sqrt( 2 * np.pi))
 
         name = _get_model_name(instance)
 
         _setattr(instance, name, AMPLITUDE, height * self._factor)
         _setattr(instance, name, POSITION, centroid)
 
-        self._set_width_attribute(instance, name, fwhm, sigma)
+        self._set_width_attribute(instance, name, fwhm)
 
         return instance
 
 
-class _LineProfileWidth1DInitializer(_LineProfile1DInitializer):
-    def _set_width_attribute(self, instance, name, fwhm, sigma):
+class _Width_LineProfile1DInitializer(_LineProfile1DInitializer):
+    def _set_width_attribute(self, instance, name, fwhm):
         _setattr(instance, name, WIDTH, fwhm)
 
 
-class _LineProfileSigma1DInitializer(_LineProfile1DInitializer):
-    def _set_width_attribute(self, instance, name, fwhm, sigma):
-        _setattr(instance, name, WIDTH, sigma)
+class _Sigma_LineProfile1DInitializer(_LineProfile1DInitializer):
+    def _set_width_attribute(self, instance, name, fwhm):
+        _setattr(instance, name, WIDTH, fwhm / 2.355)
 
 
 def _setattr(instance, mname, pname, value):
@@ -243,13 +237,13 @@ _initializers = {
     'BrokenPowerLaw1D':           _WideBand1DInitializer,
     'ExponentialCutoffPowerLaw1D':_WideBand1DInitializer,
     'LogParabola1D':              _WideBand1DInitializer,
-    'Box1D':                      _LineProfileWidth1DInitializer,
-    'Gaussian1D':                 _LineProfileSigma1DInitializer,
-    'GaussianAbsorption1D':       _LineProfileSigma1DInitializer,
-    'Lorentz1D':                  _LineProfileWidth1DInitializer,
-    'Voigt1D':                    _LineProfileWidth1DInitializer,
-    'MexicanHat1D':               _LineProfileSigma1DInitializer,
-    'Trapezoid1D':                _LineProfileWidth1DInitializer,
+    'Box1D':                      _Width_LineProfile1DInitializer,
+    'Gaussian1D':                 _Sigma_LineProfile1DInitializer,
+    'GaussianAbsorption1D':       _Sigma_LineProfile1DInitializer,
+    'Lorentz1D':                  _Width_LineProfile1DInitializer,
+    'Voigt1D':                    _Width_LineProfile1DInitializer,
+    'MexicanHat1D':               _Sigma_LineProfile1DInitializer,
+    'Trapezoid1D':                _Width_LineProfile1DInitializer,
     'Linear1D':                   _Linear1DInitializer,
     'Spline1D':                   spline.Spline1DInitializer,
     'BlackBody':                  blackbody.BlackBodyInitializer,

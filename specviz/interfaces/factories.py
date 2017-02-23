@@ -63,6 +63,7 @@ class ModelFactory(Factory):
         'Shift': models.Shift,
         'Sine': models.Sine1D,
         'Voigt': models.Voigt1D,
+        'Box1D': models.Box1D,
         'Spline': Spline1D,
         'BlackBody': BlackBody,
 
