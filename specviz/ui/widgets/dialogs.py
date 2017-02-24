@@ -5,6 +5,8 @@ from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 
+from qtpy.uic import loadUi
+import os
 
 class UiTopAxisDialog(QDialog):
     """
@@ -219,3 +221,22 @@ class UnitChangeDialog(UiUnitChangeDialog):
 
     def reject(self):
         super(UnitChangeDialog, self).reject()
+
+
+class KernelDialog(QDialog):
+    def __init__(self, *args, **kwargs):
+        super(KernelDialog, self).__init__(*args, **kwargs)
+
+        # self.ui = loadUi(
+        #     os.path.abspath(
+        #         os.path.join(
+        #             __file__, '..', 'qt', 'uic', 'source', 'kernel_dialog.ui')
+        #     )
+        # )
+
+    def setup_connections(self):
+        self.ui.kernel_combo_box.currentIndexChanged.connect(self._on_select)
+
+    def _on_select(self, index):
+        if index == 0:
+            pass

@@ -5,6 +5,9 @@ import os
 
 from ..ui.widgets.plugin import Plugin
 from ..ui.widgets.utils import ICON_PATH
+from ..ui.widgets.dialogs import KernelDialog
+
+from ..analysis.filters import smooth
 
 
 class ToolTrayPlugin(Plugin):
@@ -18,6 +21,8 @@ class ToolTrayPlugin(Plugin):
     _all_categories = {}
 
     def setup_ui(self):
+        self._smoothing_kernel_dialog = KernelDialog()
+
         # ---
         # Selections setup
         self.add_tool_bar_actions(
@@ -50,12 +55,13 @@ class ToolTrayPlugin(Plugin):
             category='Interactions',
             enabled=False)
 
-        self.add_tool_bar_actions(
-            name="Detrend",
-            description='Detrend tool',
-            icon_path=os.path.join(ICON_PATH, "Line Chart-48.png"),
-            category='Interactions',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Smooth",
+        #     description='Smooth tool',
+        #     icon_path=os.path.join(ICON_PATH, "Line Chart-48.png"),
+        #     category='Interactions',
+        #     enabled=False,
+        #     callback=self._smoothing_kernel_dialog)
 
         # ---
         # Setup transformations buttons
@@ -76,4 +82,8 @@ class ToolTrayPlugin(Plugin):
             enabled=False)
 
     def setup_connections(self):
+        self._smoothing_kernel_dialog.accepted.connect(
+            self._perform_smooth)
+
+    def _perform_smooth(self):
         pass
