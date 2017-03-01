@@ -1,0 +1,20 @@
+--- !CustomLoader
+name: SDSS-III/IV spec
+extension: fits
+wcs:
+    hdu: 0
+dispersion:
+    hdu: 1
+    col: 1
+    unit: 'dex(Angstrom)'
+data:
+    hdu: 1
+    col: 0
+    unit: '1e-17 erg / (Angstrom cm2 s)'
+uncertainty:
+    hdu: 1
+    col: 2
+    type: 'ivar'
+meta:
+    author: Benjamin Alan Weaver
+
