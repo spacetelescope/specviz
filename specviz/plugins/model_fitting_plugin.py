@@ -208,7 +208,9 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
                 new_para_item.setFlags(
-                    new_para_item.flags() | Qt.ItemIsEditable)
+                    new_para_item.flags() | Qt.ItemIsEditable |
+                Qt.ItemIsUserCheckable)
+                new_para_item.setCheckState(0, Qt.Unchecked)
 
             self.tree_widget_current_models.addTopLevelItem(new_item)
             self.tree_widget_current_models.expandItem(new_item)
@@ -435,6 +437,19 @@ class ModelFittingPlugin(Plugin):
 
         # Update the model parameters with those in the gui
         # self.update_model_layer()
+
+        # need to grab flags and set model params.fixed = True if checked
+        # if hasattr(current_layer.model, '_submodels'):
+        #     models = current_layer.model._submodels
+        # else:
+        #     models = [current_layer.model]
+        #
+        # for model in models:
+        #     model_item = self.get_model_item(model)
+        #     for i in range(model_item.childCount()):
+        #         param_item = model_item.child(i)
+        #         if param_item.checkState(0):
+        #             setattr(model, param_item.text(0), )
 
         # block signals before fitting to stop from reading
         # model parameters from UI
