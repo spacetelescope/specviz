@@ -236,6 +236,12 @@ class ModelFittingPlugin(Plugin):
                         param_item.setText(1, "{:4.4g}".format(
                             model.parameters[i]))
 
+        # turn signals back on after fitting a model and
+        # update the layer without validation
+        if self.tree_widget_current_models.signalsBlocked():
+            self.current_layer.model = layer.model
+            self.tree_widget_current_models.blockSignals(False)
+
     @DispatchHandle.register_listener("on_remove_model")
     def remove_model_item(self, model=None):
         if model is None:
@@ -430,6 +436,9 @@ class ModelFittingPlugin(Plugin):
         # Update the model parameters with those in the gui
         # self.update_model_layer()
 
+        # block signals before fitting to stop from reading
+        # model parameters from UI
+        self.tree_widget_current_models.blockSignals(True)
         # Create fitted layer
         self.fit_model_thread(
             model_layer=current_layer,

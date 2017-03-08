@@ -58,11 +58,12 @@ class ModelFactory(Factory):
         'PowerLaw': models.PowerLaw1D,
         'Linear': models.Linear1D,
         'Const': models.Const1D,
-        'Redshift': models.RedshiftScaleFactor,
+        'RedshiftScaleFactor': models.RedshiftScaleFactor,
         'Scale': models.Scale,
         'Shift': models.Shift,
         'Sine': models.Sine1D,
         'Voigt': models.Voigt1D,
+        'Box1D': models.Box1D,
         'Spline': Spline1D,
         'BlackBody': BlackBody,
 
