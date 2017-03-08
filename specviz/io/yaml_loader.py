@@ -244,13 +244,12 @@ class FitsYamlRegister(YamlRegister):
         data, unit, mask = _read_table_column(tab, self._reference.data['col'])
 
         # Find flux unit, if not in column
-        if unit is None:
-            # Get flux unit from YAML
-            if self._reference.data.get('unit') is not None:
-                unit = u.Unit(self._reference.data['unit'])
-            # Get flux unit from header
-            else:
-                unit = _flux_unit_from_header(meta['header'])
+        # Get flux unit from YAML
+        if self._reference.data.get('unit') is not None:
+            unit = u.Unit(self._reference.data['unit'])
+        # Get flux unit from header
+        elif unit is None:
+            unit = _flux_unit_from_header(meta['header'])
 
         # Get data mask, if not in column.
         # 0/False = good data (unlike Layers)
