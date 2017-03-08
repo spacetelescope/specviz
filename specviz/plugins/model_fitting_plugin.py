@@ -111,8 +111,9 @@ class ModelFittingPlugin(Plugin):
         if isinstance(layer, Spectrum1DRefModelLayer):
             mask = self.active_window.get_roi_mask(layer._parent)
 
-            initialize(model, layer._parent.dispersion[mask].compressed(),
-                       layer._parent.data[mask].compressed())
+            # pass raw data arrays to avoid unit-based issues in initialization
+            initialize(model, layer._parent.dispersion[mask].compressed().value,
+                       layer._parent.data[mask].compressed().value)
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
             if layer.model is not None:
@@ -122,8 +123,8 @@ class ModelFittingPlugin(Plugin):
         else:
             mask = self.active_window.get_roi_mask(layer)
 
-            initialize(model, layer.dispersion[mask].compressed(),
-                       layer.data[mask].compressed())
+            initialize(model, layer.dispersion[mask].compressed().value,
+                       layer.data[mask].compressed().value)
 
             # If a layer is selected, but it's not a `ModelLayer`,
             # create a new `ModelLayer`
