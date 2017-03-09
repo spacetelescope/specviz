@@ -85,7 +85,9 @@ package_info['package_data'][PACKAGENAME].append('external/glue/*')
 package_info['package_data'][PACKAGENAME].append('io/loaders/*')
 package_info['package_data'][PACKAGENAME].append('io/yaml_loaders/*')
 package_info['package_data'][PACKAGENAME].append('ui/icons/*.png')
+package_info['package_data'][PACKAGENAME].append('ui/icons/*.svg')
 package_info['package_data'][PACKAGENAME].append('ui/icons/application/*')
+package_info['package_data'][PACKAGENAME].append('ui/stylesheets/*')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}

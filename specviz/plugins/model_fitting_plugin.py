@@ -604,6 +604,7 @@ class UiModelFittingPlugin:
 
         plugin.tree_widget_current_models = QTreeWidget(
             plugin.group_box_current_models)
+        plugin.tree_widget_current_models.setStyleSheet(STYLE)
         # self.tree_widget_current_models.setMinimumSize(QSize(0, 150))
         plugin.tree_widget_current_models.setAllColumnsShowFocus(False)
         plugin.tree_widget_current_models.setHeaderHidden(False)
@@ -701,3 +702,28 @@ class UiModelFittingPlugin:
         plugin.layout_vertical.addWidget(plugin.group_box_add_model)
         plugin.layout_vertical.addWidget(plugin.group_box_current_models)
         plugin.layout_vertical.addWidget(plugin.group_box_fitting)
+
+STYLE = """
+QTreeWidget::indicator:unchecked {{
+    image: url({1});
+    }}
+QCheckBox::indicator:unchecked:hover {{
+    image: url({1});
+}}
+
+QCheckBox::indicator:unchecked:pressed {{
+    image: url({1});
+}}
+
+QTreeWidget::indicator:checked {{
+    image: url({0});
+}}
+
+QCheckBox::indicator:checked:hover {{
+    image: url({0});
+}}
+
+QCheckBox::indicator:checked:pressed {{
+    image: url({0});
+}}
+""".format(os.path.join(ICON_PATH, 'lock.svg'), os.path.join(ICON_PATH, 'unlock.svg'))
