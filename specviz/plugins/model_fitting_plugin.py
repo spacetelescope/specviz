@@ -64,6 +64,11 @@ class ModelFittingPlugin(Plugin):
         self.tree_widget_current_models.itemChanged.connect(
             self._model_parameter_validation)
 
+        # When the model parameters in the model tree are locked/unlocked
+        self.tree_widget_current_models.itemClicked.connect(
+            self._fix_model_parameter
+        )
+
         # When the model list delete button is pressed
         self.button_remove_model.clicked.connect(
             lambda: self.remove_model_item())
@@ -422,6 +427,13 @@ class ModelFittingPlugin(Plugin):
 
         dispatch.on_changed_model.emit(model_item=model_item)
 
+    def _fix_model_parameter(self, model_item, col=0):
+        parent = model_item.parent()
+        if parent is not None:
+            model = parent.data(0, Qt.UserRole)
+            param = getattr(model, model_item.text(0))
+            param.fixed = bool(model_item.checkState(col))
+
     def fit_model_layer(self):
         current_layer = self.current_layer
 
@@ -437,19 +449,6 @@ class ModelFittingPlugin(Plugin):
 
         # Update the model parameters with those in the gui
         # self.update_model_layer()
-
-        # need to grab flags and set model params.fixed = True if checked
-        # if hasattr(current_layer.model, '_submodels'):
-        #     models = current_layer.model._submodels
-        # else:
-        #     models = [current_layer.model]
-        #
-        # for model in models:
-        #     model_item = self.get_model_item(model)
-        #     for i in range(model_item.childCount()):
-        #         param_item = model_item.child(i)
-        #         if param_item.checkState(0):
-        #             setattr(model, param_item.text(0), )
 
         # block signals before fitting to stop from reading
         # model parameters from UI
@@ -726,4 +725,5 @@ QCheckBox::indicator:checked:hover {{
 QCheckBox::indicator:checked:pressed {{
     image: url({0});
 }}
-""".format(os.path.join(ICON_PATH, 'lock.svg'), os.path.join(ICON_PATH, 'unlock.svg'))
+""".format(os.path.join(ICON_PATH, 'lock.svg'),
+           os.path.join(ICON_PATH, 'unlock.svg'))
