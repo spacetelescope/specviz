@@ -205,12 +205,16 @@ class YAMLLoader(yaml.YAMLObject):
         self.filter = None
 
     def set_filter(self):
-        if isinstance(self.extension, list):
-            filter_string = ' '.join(['*.{}'.format(x)
-                                       for x in self.extension])
-            self.filter = "{} ({})".format(self.name, filter_string)
-        else:
-            self.filter = "{} (*.{})".format(self.name, self.extension)
+        if not isinstance(self.extension, list):
+            self.extension = [self.extension]
+
+        filter_string = ' '.join(['*.{}'.format(x)
+                                   for x in self.extension])
+
+        if "fits" in self.extension:
+            filter_string += " *fits.gz"
+
+        self.filter = "{} ({})".format(self.name, filter_string)
 
 
 # Create loader registry instance
