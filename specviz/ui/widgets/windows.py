@@ -94,12 +94,17 @@ class MainWindow(UiMainWindow):
             self._set_activated_window(mdi_sub_window)
 
     @DispatchHandle.register_listener("on_add_roi")
-    def add_roi(self, *args, **kwargs):
+    def add_roi(self, *args, bounds=None, **kwargs):
         mdi_sub_window = self.mdi_area.activeSubWindow()
 
         if mdi_sub_window is not None:
             window = mdi_sub_window.widget()
-            window.add_roi()
+            window.add_roi(bounds=bounds)
+
+    def get_roi_bounds(self):
+        sw = self.mdi_area.activeSubWindow().widget()
+
+        return sw.get_roi_bounds()
 
     @DispatchHandle.register_listener("on_status_message")
     def update_message(self, message, timeout=0):

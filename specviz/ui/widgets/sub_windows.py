@@ -202,16 +202,20 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return mask
 
-    def add_roi(self, *args, **kwargs):
-        view_range = self._plot_item.viewRange()
-        x_len = (view_range[0][1] - view_range[0][0]) * 0.5
-        x_pos = x_len * 0.5 + view_range[0][0]
+    def add_roi(self, *args, bounds=None, **kwargs):
+        if bounds is None:
+            view_range = self._plot_item.viewRange()
+            x_len = (view_range[0][1] - view_range[0][0]) * 0.5
+            x_pos = x_len * 0.5 + view_range[0][0]
+            start, stop = x_pos, x_pos + x_len
+        else:
+            start, stop = bounds
 
         def remove():
             self._plot_item.removeItem(roi)
             self._rois.remove(roi)
 
-        roi = LinearRegionItem(values=[x_pos, x_pos + x_len])
+        roi = LinearRegionItem(values=[start, stop])
         self._rois.append(roi)
         self._plot_item.addItem(roi)
 
@@ -224,6 +228,16 @@ class PlotSubWindow(UiPlotSubWindow):
             lambda: dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
             lambda: dispatch.on_updated_rois.emit(rois=self._rois))
+
+    def get_roi_bounds(self):
+        bounds = []
+
+        for roi in self._rois:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            bounds.append(list(roi.getRegion()))
+
+        return bounds
 
     def get_plot(self, layer):
         for plot in self._plots:
