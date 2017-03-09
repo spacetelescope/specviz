@@ -24,7 +24,7 @@ def fits_identify(*args, **kwargs):
             args[0].lower().split('.')[-1] in ['fits', 'fit', 'fits.gz'])
 
 
-@data_loader(label="Simple Fits", identifier=fits_identify)
+@data_loader(label="Simple Fits", identifier=fits_identify, extensions=["fits", "fit"])
 def simple_generic_loader(file_name, **kwargs):
     """
     Basic FITS file loader
@@ -43,7 +43,7 @@ def simple_generic_loader(file_name, **kwargs):
     data: Spectrum1DRef
         The data.
     """
-    name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
+    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
