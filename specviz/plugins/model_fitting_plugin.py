@@ -412,8 +412,8 @@ class ModelFittingPlugin(Plugin):
 
         try:
             txt = "{:4.4g}".format(float(model_item.text(col)))
-            model_item.setData(col, Qt.UserRole, float(model_item.text(col)))
             model_item.setText(col, txt)
+            model_item.setData(col, Qt.UserRole, float(model_item.text(col)))
         except ValueError:
             prev_val = model_item.data(col, Qt.UserRole)
             model_item.setText(col, str(prev_val))

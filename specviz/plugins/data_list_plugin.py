@@ -35,6 +35,10 @@ class DataListPlugin(Plugin):
         self.file_load_thread.result.connect(
             self._data_loaded)
 
+        # Store the most recent file selector
+        self._file_filter = None
+        self._directory = ""
+
         # Add tool tray buttons
         self.button_open_data = self.add_tool_bar_actions(
             name="Open",
@@ -125,17 +129,22 @@ class DataListPlugin(Plugin):
         """
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters(["Auto (*)"] + [x for x in
-                               io_registry.get_formats(Spectrum1DRef)[
-                                   'Format']])
 
-        if dialog.exec_():
-            file_names = dialog.selectedFiles()
-            selected_filter = dialog.selectedNameFilter().replace(" (*)", "")
+        filters = ["Auto (*)"] + [x for x in
+                                  io_registry.get_formats(
+                                      Spectrum1DRef)['Format']]
 
-            return file_names[0], selected_filter
+        file_names, self._file_filter = dialog.getOpenFileNames(
+            directory=self._directory,
+            filter=";;".join(filters),
+            initialFilter=self._file_filter)
 
-        return None, None
+        if len(file_names) == 0:
+            return None, None
+
+        self._directory = file_names[0]
+
+        return file_names[0], self._file_filter
 
     @DispatchHandle.register_listener("on_file_read")
     def read_file(self, file_name, file_filter=None):
