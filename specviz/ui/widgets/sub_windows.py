@@ -7,6 +7,7 @@ from functools import reduce
 
 import numpy as np
 import pyqtgraph as pg
+from itertools import cycle
 
 from astropy.units import Quantity
 
@@ -26,6 +27,21 @@ from .linelists_window import LineListsWindow
 pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 pg.setConfigOptions(antialias=False)
+
+
+AVAILABLE_COLORS = [
+    (0, 0, 0),
+    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
+    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
+    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
+    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745),
+    (0.8, 0.7254901960784313, 0.4549019607843137),
+    (0.39215686274509803, 0.7098039215686275, 0.803921568627451),
+    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
+    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
+    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
+    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)
+]
 
 
 class UiPlotSubWindow(QMainWindow):
@@ -123,6 +139,9 @@ class PlotSubWindow(UiPlotSubWindow):
         self._setup_connections()
 
         self.linelists = []
+
+        # Initial color list for this sub window
+        self._available_colors = cycle(AVAILABLE_COLORS)
 
     def _setup_connections(self):
         # Connect cursor position to UI element
@@ -275,7 +294,7 @@ class PlotSubWindow(UiPlotSubWindow):
                             "windows do not match.")
             return
 
-        new_plot = LinePlot.from_layer(layer)
+        new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
 
         if len(self._plots) == 0:
             self.change_units(new_plot.layer.dispersion_unit,

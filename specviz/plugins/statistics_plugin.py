@@ -58,7 +58,7 @@ class StatisticsPlugin(Plugin):
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
         stat_dict = statistics.stats(current_layer.data.compressed().value,
-                                     mask=mask)
+                                     mask=mask[~current_layer.data.mask] if mask is not None else None)
 
         self.line_edit_mean.setText("{0:4.4g}".format(
             stat_dict['mean']))

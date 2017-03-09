@@ -8,26 +8,11 @@ from qtpy.QtGui import *
 
 from astropy.units import spectral_density, spectral
 import pyqtgraph as pg
-from itertools import cycle
 import logging
 import numpy as np
 
 __all__ = [
     'LinePlot',
-]
-
-AVAILABLE_COLORS = [
-    (0, 0, 0),
-    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
-    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
-    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
-    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745),
-    (0.8, 0.7254901960784313, 0.4549019607843137),
-    (0.39215686274509803, 0.7098039215686275, 0.803921568627451),
-    (0.2980392156862745, 0.4470588235294118, 0.6901960784313725),
-    (0.3333333333333333, 0.6588235294117647, 0.40784313725490196),
-    (0.7686274509803922, 0.3058823529411765, 0.3215686274509804),
-    (0.5058823529411764, 0.4470588235294118, 0.6980392156862745)
 ]
 
 
@@ -56,7 +41,7 @@ class LinePlot(object):
         If defined, the pen style to use for the error/uncertainty.
     """
     def __init__(self, layer, plot=None, visible=True, style='line',
-                 pen=None, err_pen=None):
+                 pen=None, err_pen=None, color=(0, 0, 0)):
         self._layer = layer
         self.style = style
         self._plot = plot
@@ -68,8 +53,7 @@ class LinePlot(object):
         self.mode = None
         self.checked = True
 
-        available_colors = cycle(AVAILABLE_COLORS)
-        r, g, b = next(available_colors)
+        r, g, b = color
         r, g, b = r * 255, g * 255, b * 255
 
         rand_pen = pg.mkPen(QColor(r, g, b, 255), width=self.line_width)

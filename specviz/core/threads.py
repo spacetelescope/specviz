@@ -112,7 +112,7 @@ class FileLoadThread(QThread):
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
 
-        if file_filter == 'Auto':
+        if file_filter == 'Auto (*)':
             all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
 
             #-- sort loaders by priorty given in the definition
