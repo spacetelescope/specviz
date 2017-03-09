@@ -106,13 +106,14 @@ class LoaderRegistry(Registry):
         """
 
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
+        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
         #
         # Leaving in list format incase other locations want to be added
         # in the future
-        check_paths = [usr_path]
+        check_paths = [init_path, usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -121,7 +122,11 @@ class LoaderRegistry(Registry):
             for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
                 mod = mod.split('.')[0]
                 sys.path.insert(0, path)
-                mod = importlib.import_module(mod)
+
+                try:
+                    mod = importlib.import_module(mod)
+                except ImportError:
+                    pass
 
                 # for _, func in members:
                 #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:
@@ -148,10 +153,11 @@ class LoaderRegistry(Registry):
                                 'yaml_loaders')
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
         lines_path = os.path.join(os.path.dirname(__file__), '../data/linelists')
+        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path, lines_path]
+        check_paths = [init_path, usr_path, cur_path, lines_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
