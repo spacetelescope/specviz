@@ -125,14 +125,13 @@ class LoaderRegistry(Registry):
 
                 try:
                     mod = importlib.import_module(mod)
+                    sys.path.pop(0)
                 except ImportError:
-                    pass
+                    logging.warning("Unable to import {} in {}.".format(mod, path))
 
                 # for _, func in members:
                 #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:
                 #         self._members.append(func)
-
-                sys.path.pop(0)
 
     def _load_yaml(self):
         """ Loads yaml files as custom loaders.
