@@ -111,16 +111,15 @@ class FileLoadThread(QThread):
         logging.info("Attempting to read file {} with {}.".format(file_name, file_filter))
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
+        all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
 
         if file_filter == 'Auto (*)':
-            all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
-
             #-- sort loaders by priorty given in the definition
             all_priority = [getattr(io_registry.get_reader(fmt, Spectrum1DRef), 'priority', 0) for fmt in all_formats]
             all_registry = sorted(zip(all_formats, all_priority), key=lambda item: item[1], reverse=True)
             all_formats = [item[0] for item in all_registry]
         else:
-            all_formats = [file_filter]
+            all_formats = [x for x in all_formats if file_filter in x]
 
         for format in all_formats:
             logging.info("Trying to load with {}".format(format))
