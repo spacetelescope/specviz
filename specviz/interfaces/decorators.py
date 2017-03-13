@@ -65,3 +65,22 @@ def data_loader(label, identifier, priority=-1, extensions=None, **kwargs):
         return wrapper
 
     return decorator
+
+
+def data_writer(spectrum, label, **kwargs):
+    def decorator(func):
+        logging.info("Added {} to writer registry.".format(label))
+
+        func.loader_wrapper = True
+
+        if label in io_registry.get_formats()['Format']:
+            return
+
+        io_registry.register_writer(label, Spectrum1DRef, func)
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+
+    return decorator
