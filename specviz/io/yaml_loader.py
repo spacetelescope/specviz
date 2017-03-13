@@ -287,10 +287,6 @@ class FitsYamlRegister(YamlRegister):
             # Overrides wavelength unit from YAML
             if self._reference.dispersion.get('unit') is not None:
                 disp_unit = u.Unit(self._reference.dispersion['unit'])
-                if isinstance(disp_unit, u.LogUnit):
-                    dispersion_quantity = (dispersion * disp_unit).physical
-                    dispersion = dispersion_quantity.value
-                    disp_unit = dispersion_quantity.unit
 
             # If no unit, try to use WCS
             if disp_unit == u.dimensionless_unscaled:

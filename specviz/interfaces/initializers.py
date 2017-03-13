@@ -219,9 +219,7 @@ def _setattr(instance, mname, pname, value):
         The value to assign.
     """
     try:
-        # conflicts happen when we try to set a parameter value
-        # as a Quantity. Use the raw value instead.
-        setattr(instance, _p_names[mname][pname], value.value)
+        setattr(instance, _p_names[mname][pname], value)
     except KeyError:
         pass
 
