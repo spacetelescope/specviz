@@ -1,13 +1,6 @@
 import logging
 from astropy import convolution
-
-
-smoothing_kernels = {
-    'gaussian': convolution.Gaussian1DKernel,
-    'box': convolution.Box1DKernel,
-    'trapezoid': convolution.Trapezoid1DKernel,
-    'mexican_hat': convolution.MexicanHat1DKernel
-}
+from collections import OrderedDict
 
 
 def smooth(data, kernel, *args, **kwargs):
@@ -30,11 +23,12 @@ def smooth(data, kernel, *args, **kwargs):
     new_data : :class:`~specviz.core.data.Spectrum1DRefLayer`
         The new, convolved, data layer.
     """
-    if kernel not in smoothing_kernels.keys():
+    print(kernel)
+    kernel = getattr(convolution, kernel)(*args, **kwargs)
+
+    if kernel is None:
         logging.error("Kernel {} is not currently supported.".format(kernel))
         return
-
-    kernel = smoothing_kernels.get(kernel)(*args, **kwargs)
 
     raw_data = convolution.convolve(data.data, kernel)
 

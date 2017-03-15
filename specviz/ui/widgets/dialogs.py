@@ -5,8 +5,8 @@ from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 
-from qtpy.uic import loadUi
-import os
+import logging
+
 
 class UiTopAxisDialog(QDialog):
     """
@@ -223,20 +223,99 @@ class UnitChangeDialog(UiUnitChangeDialog):
         super(UnitChangeDialog, self).reject()
 
 
-class KernelDialog(QDialog):
+class UiSmoothingDialog(QDialog):
+    """
+    Initialize all the TopAxisDialog Qt UI elements.
+    """
     def __init__(self, *args, **kwargs):
-        super(KernelDialog, self).__init__(*args, **kwargs)
+        super(UiSmoothingDialog, self).__init__(*args, **kwargs)
+        size_policy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        self.setSizePolicy(size_policy)
 
-        # self.ui = loadUi(
-        #     os.path.abspath(
-        #         os.path.join(
-        #             __file__, '..', 'qt', 'uic', 'source', 'kernel_dialog.ui')
-        #     )
-        # )
+        # Dialog settings
+        self.setWindowTitle("Smoothing Dialog")
+
+        self.layout_vertical = QVBoxLayout(self)
+        self.layout_horizontal = QHBoxLayout()
+        self.layout_vertical.addLayout(self.layout_horizontal)
+
+        # Define header selectors
+        self.label_axis_mode = QLabel(self)
+        self.combo_box_kernel = QComboBox(self)
+
+        self.label_axis_mode.setText("Kernel")
+
+        self.layout_horizontal.addWidget(self.label_axis_mode)
+        self.layout_horizontal.addWidget(self.combo_box_kernel)
+
+        # Define velocity
+        self.group_box = QGroupBox(self)
+        self.label_stddev = QLabel(self.group_box)
+        self.line_edit_stddev = QLineEdit(self.group_box)
+
+        self.group_box.setTitle("Parameters")
+        self.label_stddev.setText("Standard Deviation")
+
+        self.layout_horizontal_2 = QHBoxLayout(self.group_box)
+        self.layout_horizontal_2.addWidget(self.label_stddev)
+        self.layout_horizontal_2.addWidget(self.line_edit_stddev)
+
+        self.layout_vertical.addWidget(self.group_box)
+
+        # Add a spacer
+        self.layout_vertical.addStretch(1)
+
+        # Buttons
+        self.button_box = QDialogButtonBox(self)
+        self.button_box.setOrientation(Qt.Horizontal)
+        self.button_box.setStandardButtons(QDialogButtonBox.Cancel
+                                           | QDialogButtonBox.Ok)
+        self.button_box.setObjectName("buttonBox")
+        self.layout_vertical.addWidget(self.button_box)
+
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+
+class SmoothingDialog(UiSmoothingDialog):
+    def __init__(self, *args, **kwargs):
+        super(SmoothingDialog, self).__init__(*args, **kwargs)
+
+        self.combo_box_kernel.addItem("Gaussian")
+
+        self._selected_ind = None
+        self._kernel = None
+        self._args = None
+
+        self.setup_connections()
+
+        self._on_select(0)
 
     def setup_connections(self):
-        self.ui.kernel_combo_box.currentIndexChanged.connect(self._on_select)
+        self.combo_box_kernel.currentIndexChanged.connect(self._on_select)
 
     def _on_select(self, index):
-        if index == 0:
-            pass
+        pass
+
+    def accept(self):
+        self._kernel = 'Gaussian1DKernel'
+
+        try:
+            self._args = [float(self.line_edit_stddev.text())]
+
+            super(SmoothingDialog, self).accept()
+        except ValueError as e:
+            logging.error(e)
+
+    def reject(self):
+        super(SmoothingDialog, self).reject()
+
+    @property
+    def kernel(self):
+        return self._kernel
+
+    @property
+    def args(self):
+        return self._args
