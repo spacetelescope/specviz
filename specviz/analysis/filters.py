@@ -32,6 +32,7 @@ def smooth(data, kernel, *args, **kwargs):
 
     raw_data = convolution.convolve(data.data, kernel)
 
-    new_data = data.__class__.copy(data, data=raw_data)
+    new_data = data.__class__.copy(data, data=raw_data,
+                                   name="Smoothed {}".format(data.name))
 
     return new_data

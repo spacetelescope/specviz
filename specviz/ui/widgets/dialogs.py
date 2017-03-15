@@ -249,6 +249,7 @@ class UiSmoothingDialog(QDialog):
 
         self.layout_horizontal.addWidget(self.label_axis_mode)
         self.layout_horizontal.addWidget(self.combo_box_kernel)
+        self.layout_horizontal.setStretch(1, 1)
 
         # Define velocity
         self.group_box = QGroupBox(self)
