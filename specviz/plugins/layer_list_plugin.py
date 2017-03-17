@@ -103,7 +103,7 @@ class LayerListPlugin(Plugin):
         all_formats = all_formats[np.array(write_mask)]
         all_filters = ";;".join(list(all_formats))
 
-        data = self.current_layer._parent
+        data = self.current_layer
 
         path, format = QFileDialog.getSaveFileName(filter=all_filters)
 

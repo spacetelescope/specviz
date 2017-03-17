@@ -205,11 +205,13 @@ class DataListPlugin(Plugin):
             self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
             self.button_create_sub_window.setEnabled(True)
+            self.button_apply_model.setEnabled(True)
             # self.button_add_to_sub_window.setEnabled(True)
         else:
             self.label_unopened.show()
             self.button_remove_data.setEnabled(False)
             self.button_create_sub_window.setEnabled(False)
+            self.button_apply_model.setEnabled(False)
             # self.button_add_to_sub_window.setEnabled(False)
 
 
@@ -262,7 +264,7 @@ class UiDataListPlugin:
             ICON_PATH, "Paste-96.png")))
         plugin.button_apply_model.setIconSize(QSize(25, 25))
         plugin.button_apply_model.setMinimumSize(QSize(35, 35))
-        plugin.button_apply_model.setEnabled(True)
+        plugin.button_apply_model.setEnabled(False)
 
         plugin.button_remove_data = QToolButton(plugin)
         plugin.button_remove_data.setIcon(QIcon(os.path.join(
