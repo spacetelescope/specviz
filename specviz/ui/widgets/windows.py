@@ -94,7 +94,7 @@ class MainWindow(UiMainWindow):
             self._set_activated_window(mdi_sub_window)
 
     @DispatchHandle.register_listener("on_add_roi")
-    def add_roi(self, *args, bounds=None, **kwargs):
+    def add_roi(self, bounds=None, *args, **kwargs):
         mdi_sub_window = self.mdi_area.activeSubWindow()
 
         if mdi_sub_window is not None:
