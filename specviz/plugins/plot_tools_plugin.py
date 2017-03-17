@@ -32,7 +32,7 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
             category=('Selections', 4),
             priority=1,
-            callback=dispatch.on_add_roi.emit,
+            callback=lambda: dispatch.on_add_roi.emit(),
             enabled=False)
 
         # Change top axis
