@@ -109,6 +109,10 @@ class FileLoadThread(QThread):
         classes. In other words, this is brittle code.
         """
         logging.info("Attempting to read file {} with {}.".format(file_name, file_filter))
+
+        if not (file_name and file_filter):
+            return
+
         file_name = str(file_name)
         file_ext = os.path.splitext(file_name)[-1]
         all_formats = io_registry.get_formats(Spectrum1DRef)['Format']

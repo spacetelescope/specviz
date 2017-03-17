@@ -10,7 +10,8 @@ from ..core.data import Spectrum1DRef
 
 __all__ = ['data_loader']
 
-def data_loader(label, identifier, priority=-1, extensions=None, **kwargs):
+def data_loader(label, identifier, priority=-1, extensions=None, writer=None,
+                **kwargs):
     """
     A decorator that registers a function and identifies with an Astropy io
     registry object.
@@ -56,6 +57,10 @@ def data_loader(label, identifier, priority=-1, extensions=None, **kwargs):
             return
 
         io_registry.register_reader(format, Spectrum1DRef, func)
+
+        if writer is not None:
+            io_registry.register_writer(format, Spectrum1DRef, writer)
+
         io_registry.register_identifier(format, Spectrum1DRef,
                                         identifier)
 
@@ -73,10 +78,12 @@ def data_writer(spectrum, label, **kwargs):
 
         func.loader_wrapper = True
 
-        if label in io_registry.get_formats()['Format']:
-            return
+        loaders = io_registry.get_formats(Spectrum1DRef)['Format'].data
+        format = [x for x in loaders if label in x]
 
-        io_registry.register_writer(label, Spectrum1DRef, func)
+        format = label if len(format) == 0 else format[0]
+
+        io_registry.register_writer(format, Spectrum1DRef, func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
