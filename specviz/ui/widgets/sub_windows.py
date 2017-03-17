@@ -143,6 +143,9 @@ class PlotSubWindow(UiPlotSubWindow):
         # Initial color list for this sub window
         self._available_colors = cycle(AVAILABLE_COLORS)
 
+        # Incorporate event filter
+        self.installEventFilter(self)
+
     def _setup_connections(self):
         # Connect cursor position to UI element
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
@@ -201,6 +204,19 @@ class PlotSubWindow(UiPlotSubWindow):
             mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
 
         return mask
+
+    def eventFilter(self, widget, event):
+        if (event.type() == QEvent.KeyPress):
+            key = event.key()
+
+            if key == Qt.Key_Delete or key == Qt.Key_Backspace:
+                for roi in self._rois:
+                    if roi.mouseHovering:
+                        roi.sigRemoveRequested.emit(roi)
+
+                return True
+
+        return QWidget.eventFilter(self, widget, event)
 
     def add_roi(self, *args, bounds=None, **kwargs):
         if bounds is None:
