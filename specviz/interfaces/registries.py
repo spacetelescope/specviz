@@ -106,13 +106,14 @@ class LoaderRegistry(Registry):
         """
 
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
+        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
         #
         # Leaving in list format incase other locations want to be added
         # in the future
-        check_paths = [usr_path]
+        check_paths = [init_path, usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -121,13 +122,16 @@ class LoaderRegistry(Registry):
             for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
                 mod = mod.split('.')[0]
                 sys.path.insert(0, path)
-                mod = importlib.import_module(mod)
+
+                try:
+                    mod = importlib.import_module(mod)
+                    sys.path.pop(0)
+                except ImportError:
+                    logging.warning("Unable to import {} in {}.".format(mod, path))
 
                 # for _, func in members:
                 #     if hasattr(func, 'loader_wrapper') and func.loader_wrapper:
                 #         self._members.append(func)
-
-                sys.path.pop(0)
 
     def _load_yaml(self):
         """ Loads yaml files as custom loaders.
@@ -148,10 +152,11 @@ class LoaderRegistry(Registry):
                                 'yaml_loaders')
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
         lines_path = os.path.join(os.path.dirname(__file__), '../data/linelists')
+        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path, lines_path]
+        check_paths = [init_path, usr_path, cur_path, lines_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -172,10 +177,10 @@ class LoaderRegistry(Registry):
                     loader = AsciiYamlRegister(custom_loader)
 
                 try:
-                    io_registry.register_reader(custom_loader.name,
+                    io_registry.register_reader(custom_loader.filter,
                                                 Spectrum1DRef,
                                                 loader.reader)
-                    io_registry.register_identifier(custom_loader.name,
+                    io_registry.register_identifier(custom_loader.filter,
                                                     Spectrum1DRef,
                                                     loader.identify)
                 except io_registry.IORegistryError as e:
@@ -200,12 +205,16 @@ class YAMLLoader(yaml.YAMLObject):
         self.filter = None
 
     def set_filter(self):
-        if isinstance(self.extension, list):
-            filter_string = ' '.join(['*.{}'.format(x)
-                                       for x in self.extension])
-            self.filter = "{} ({})".format(self.name, filter_string)
-        else:
-            self.filter = "{} (*.{})".format(self.name, self.extension)
+        if not isinstance(self.extension, list):
+            self.extension = [self.extension]
+
+        filter_string = ' '.join(['*.{}'.format(x)
+                                   for x in self.extension])
+
+        if "fits" in self.extension:
+            filter_string += " *fits.gz"
+
+        self.filter = "{} ({})".format(self.name, filter_string)
 
 
 # Create loader registry instance

@@ -73,7 +73,8 @@ def stats(data, mask=None):
     else:
         y = data
 
-    mask = np.ones(y.shape, dtype=bool) if mask is None else np.array(mask)
+    if mask is None or mask.shape > y.shape:
+        mask = np.ones(y.shape, dtype=bool)
 
     return {'mean':    np.mean(y[mask]),
             'median':  np.median(y[mask]),

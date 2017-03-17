@@ -80,8 +80,13 @@ class MainWindow(UiMainWindow):
                        **kwargs):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
         window = window or PlotSubWindow()
-        window.add_plot(layer=layer)
-        window.setWindowTitle(layer.name)
+
+        if not isinstance(layer, list):
+            layer = [layer]
+
+        for l in layer:
+            window.add_plot(layer=l)
+            window.setWindowTitle(l.name)
 
         if window is not None:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
@@ -89,12 +94,17 @@ class MainWindow(UiMainWindow):
             self._set_activated_window(mdi_sub_window)
 
     @DispatchHandle.register_listener("on_add_roi")
-    def add_roi(self, *args, **kwargs):
+    def add_roi(self, bounds=None, *args, **kwargs):
         mdi_sub_window = self.mdi_area.activeSubWindow()
 
         if mdi_sub_window is not None:
             window = mdi_sub_window.widget()
-            window.add_roi()
+            window.add_roi(bounds=bounds)
+
+    def get_roi_bounds(self):
+        sw = self.mdi_area.activeSubWindow().widget()
+
+        return sw.get_roi_bounds()
 
     @DispatchHandle.register_listener("on_status_message")
     def update_message(self, message, timeout=0):

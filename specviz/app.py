@@ -21,7 +21,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
 from .ui.widgets.utils import ICON_PATH
-from .io import *
+from .core.comms import dispatch, DispatchHandle
 
 
 class App(object):
@@ -29,8 +29,17 @@ class App(object):
         super(App, self).__init__()
         self.viewer = Viewer()
 
-        # if len(argv) > 1:
-        #     self.controller.read_file(sys.argv[1])
+        if len(argv) > 1:
+            file_name = argv[1]
+
+            for arg in argv:
+                if '--format=' in arg:
+                    file_filter = arg.strip("--format=")
+                    break
+            else:
+                file_filter = "Auto (*)"
+
+            dispatch.on_file_read.emit(file_name, file_filter=file_filter)
 
 def setup():
     qapp = QApplication(sys.argv)

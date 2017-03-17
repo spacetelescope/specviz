@@ -217,7 +217,9 @@ def buildModelFromFile(fname):
         # single model
         model = _build_single_model(in_map)
 
-    return model, expression, directory
+    roi_bounds = in_map.get("roi_bounds", [])
+
+    return model, expression, directory, roi_bounds
 
 
 
@@ -364,7 +366,7 @@ def _writeToFile(out_model_dict, model_directory, parent):
         f.close()
 
 
-def _writeSingleComponentModel(model, model_directory, parent):
+def _writeSingleComponentModel(model, model_directory, parent, roi_bounds):
     """
 Handles the case of a spectral model with a single component.
 
@@ -388,11 +390,12 @@ Handles the case of a spectral model with a single component.
 
     model_name, model_dict = _build_output_dict_single(model)
     out_model_dict[model_name] = model_dict
+    out_model_dict["roi_bounds"] = roi_bounds
 
     _writeToFile(out_model_dict, model_directory, parent)
 
 
-def _writeCompoundModel(compound_model, model_directory, parent, expression):
+def _writeCompoundModel(compound_model, model_directory, parent, expression, roi_bounds):
     """
     Handles the case of a compound model
 
@@ -418,11 +421,13 @@ def _writeCompoundModel(compound_model, model_directory, parent, expression):
         out_model_dict[MODEL_NAME][model_name] = model_dict
 
     out_model_dict[EXPRESSION_NAME] = expression
+    out_model_dict["roi_bounds"] = roi_bounds
 
     _writeToFile(out_model_dict, model_directory, parent)
 
 
-def saveModelToFile(parent, model, model_directory, expression=None):
+def saveModelToFile(parent, model, model_directory, expression=None,
+                    roi_bounds=None):
     """
     Saves spectral model to file.
 
@@ -444,9 +449,9 @@ def saveModelToFile(parent, model, model_directory, expression=None):
         The formula associated with the compound model
     """
     if not hasattr(model, '_format_expression'):
-        _writeSingleComponentModel(model, model_directory, parent)
+        _writeSingleComponentModel(model, model_directory, parent, roi_bounds)
     else:
-        _writeCompoundModel(model, model_directory, parent, expression)
+        _writeCompoundModel(model, model_directory, parent, expression, roi_bounds)
 
 
 #--------------------------------------------------------------------#
