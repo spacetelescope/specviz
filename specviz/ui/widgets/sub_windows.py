@@ -218,7 +218,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return QWidget.eventFilter(self, widget, event)
 
-    def add_roi(self, *args, bounds=None, **kwargs):
+    def add_roi(self, bounds=None, *args, **kwargs):
         if bounds is None:
             view_range = self._plot_item.viewRange()
             x_len = (view_range[0][1] - view_range[0][0]) * 0.5
