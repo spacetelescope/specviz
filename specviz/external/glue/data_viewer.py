@@ -149,11 +149,11 @@ class SpecVizViewer(BaseVizViewer):
 
         if isinstance(self._layer_widget.layer, Subset):
             subset = self._layer_widget.layer
-            cid = subset.data.id[self._options_widget.file_att[0]]
+            cid = subset.data.id[self._options_widget.file_att]
             mask = subset.to_mask(None)
             component = subset.data.get_component(cid)
         else:
-            cid = self._layer_widget.layer.id[self._options_widget.file_att[0]]
+            cid = self._layer_widget.layer.id[self._options_widget.file_att]
             mask = None
             component = self._layer_widget.layer.get_component(cid)
 

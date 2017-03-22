@@ -35,4 +35,3 @@ class OptionsWidget(QWidget):
             self.file_helper.append_data(data.data)
         else:
             self.file_helper.append_data(data)
-        print(self.file_att)
