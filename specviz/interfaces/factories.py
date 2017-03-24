@@ -10,6 +10,7 @@ import logging
 # LOCAL
 from ..analysis.models.spline import Spline1D
 from ..analysis.models.blackbody import BlackBody
+from ..analysis.models.gaussian_absorption import GaussianAbsorption
 
 # THIRD-PARTY
 from astropy.modeling import models, fitting
@@ -48,7 +49,7 @@ class ModelFactory(Factory):
     """
     all_models = {
         'Gaussian': models.Gaussian1D,
-        'GaussianAbsorption': models.GaussianAbsorption1D,
+        'GaussianAbsorption': GaussianAbsorption,
         'Lorentz': models.Lorentz1D,
         'MexicanHat': models.MexicanHat1D,
         'Trapezoid': models.Trapezoid1D,
