@@ -7,7 +7,7 @@ first guesses by the fitting algorithms.
 """
 import numpy as np
 
-from ..analysis.models import spline, blackbody
+from ..analysis.models import spline, blackbody, gaussian_absorption
 
 __all__ = [
     'initialize'
@@ -240,7 +240,7 @@ _initializers = {
     'LogParabola1D':              _WideBand1DInitializer,
     'Box1D':                      _Width_LineProfile1DInitializer,
     'Gaussian1D':                 _Sigma_LineProfile1DInitializer,
-    'GaussianAbsorption':         _Sigma_LineProfile1DInitializer,
+    'GaussianAbsorption':         gaussian_absorption.GaussianAbsorptionInitializer,
     'Lorentz1D':                  _Width_LineProfile1DInitializer,
     'Voigt1D':                    _Width_LineProfile1DInitializer,
     'MexicanHat1D':               _Sigma_LineProfile1DInitializer,
