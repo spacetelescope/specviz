@@ -7,7 +7,7 @@ first guesses by the fitting algorithms.
 """
 import numpy as np
 
-from ..analysis.models import spline, blackbody
+from ..analysis.models import spline, blackbody, gaussian_absorption
 
 __all__ = [
     'initialize'
@@ -218,7 +218,10 @@ def _setattr(instance, mname, pname, value):
     value: any
         The value to assign.
     """
+    # this has to handle both Quantities and plain floats
     try:
+        setattr(instance, _p_names[mname][pname], value.value)
+    except AttributeError:
         setattr(instance, _p_names[mname][pname], value)
     except KeyError:
         pass
@@ -237,7 +240,7 @@ _initializers = {
     'LogParabola1D':              _WideBand1DInitializer,
     'Box1D':                      _Width_LineProfile1DInitializer,
     'Gaussian1D':                 _Sigma_LineProfile1DInitializer,
-    'GaussianAbsorption1D':       _Sigma_LineProfile1DInitializer,
+    'GaussianAbsorption':         gaussian_absorption.GaussianAbsorptionInitializer,
     'Lorentz1D':                  _Width_LineProfile1DInitializer,
     'Voigt1D':                    _Width_LineProfile1DInitializer,
     'MexicanHat1D':               _Sigma_LineProfile1DInitializer,
@@ -251,7 +254,7 @@ _initializers = {
 # This maps the standard names used in the code to the actual names used by astropy.
 _p_names = {
     'Gaussian1D':                 {AMPLITUDE:'amplitude',  POSITION:'mean', WIDTH:'stddev'},
-    'GaussianAbsorption1D':       {AMPLITUDE:'amplitude',  POSITION:'mean', WIDTH:'stddev'},
+    'GaussianAbsorption':         {AMPLITUDE:'amplitude',  POSITION:'mean', WIDTH:'stddev'},
     'Lorentz1D':                  {AMPLITUDE:'amplitude',  POSITION:'x_0',  WIDTH:'fwhm'},
     'Voigt1D':                    {AMPLITUDE:'amplitude_L',POSITION:'x_0',  WIDTH:'fwhm_G'},
     'Box1D':                      {AMPLITUDE:'amplitude',  POSITION:'x_0',  WIDTH:'width'},
