@@ -108,6 +108,8 @@ class FileLoadThread(QThread):
         depend on the intrincacies of the registries, loaders, and data
         classes. In other words, this is brittle code.
         """
+        file_filter = 'Auto (*)' if file_filter is None else file_filter
+
         logging.info("Attempting to read file {} with {}.".format(file_name, file_filter))
 
         if not (file_name and file_filter):
