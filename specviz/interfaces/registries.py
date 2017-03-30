@@ -113,7 +113,7 @@ class LoaderRegistry(Registry):
         #
         # Leaving in list format incase other locations want to be added
         # in the future
-        check_paths = [init_path, usr_path]
+        check_paths = [usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
