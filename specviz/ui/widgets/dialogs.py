@@ -275,7 +275,9 @@ class DataUnitValidator(QValidator):
         try:
             unit = Unit(p_str)
 
-            if unit.is_equivalent(self._layer.unit, equivalencies=spectral()):
+            if unit.is_equivalent(self._layer.unit,
+                                  equivalencies=spectral_density(
+                                      self._layer.dispersion.data)):
                 return (QValidator.Acceptable, p_str, p_int)
             else:
                 return (QValidator.Intermediate, p_str, p_int)
@@ -299,8 +301,7 @@ class DispersionUnitValidator(QValidator):
             unit = Unit(p_str)
 
             if unit.is_equivalent(self._layer.dispersion_unit,
-                                  equivalencies=spectral_density(
-                                      self._layer.dispersion.data)):
+                                  equivalencies=spectral()):
                 return (QValidator.Acceptable, p_str, p_int)
             else:
                 return (QValidator.Intermediate, p_str, p_int)
