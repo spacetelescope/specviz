@@ -27,14 +27,6 @@ class DataListPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         super(DataListPlugin, self).__init__(*args, **kwargs)
 
-        self.file_load_thread = FileLoadThread()
-
-        self.file_load_thread.status.connect(
-            dispatch.on_status_message.emit)
-
-        self.file_load_thread.result.connect(
-            self._data_loaded)
-
         # Store the most recent file selector
         self._file_filter = None
         self._directory = ""
@@ -71,6 +63,18 @@ class DataListPlugin(Plugin):
 
         self.button_apply_model.clicked.connect(
             self.apply_model)
+
+    @property
+    def file_load_thread(self):
+        file_load_thread = FileLoadThread()
+
+        file_load_thread.status.connect(
+            dispatch.on_status_message.emit)
+
+        file_load_thread.result.connect(
+            self._data_loaded)
+
+        return file_load_thread
 
     @DispatchHandle.register_listener("on_add_data")
     def _data_loaded(self, data):
