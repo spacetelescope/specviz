@@ -18,7 +18,7 @@ BrokenPowerLaw            `~astropy.modeling.powerlaws.BrokenPowerLaw1D`
 Const                     `~astropy.modeling.functional_models.Const1D`
 ExponentialCutoffPowerLaw `~astropy.modeling.powerlaws.ExponentialCutoffPowerLaw1D`
 Gaussian                  `~astropy.modeling.functional_models.Gaussian1D`
-GaussianAbsorption        `~astropy.modeling.functional_models.GaussianAbsorption1D`
+GaussianAbsorption        `~astropy.modeling.functional_models.Gaussian1D` with negative amplitude
 Linear                    `~astropy.modeling.functional_models.Linear1D`
 LogParabola               `~astropy.modeling.powerlaws.LogParabola1D`
 Lorentz                   `~astropy.modeling.functional_models.Lorentz1D`
