@@ -66,16 +66,17 @@ class DataListPlugin(Plugin):
         self.button_apply_model.clicked.connect(
             self.apply_model)
 
-    def _file_load_result(self, data, thread):
-        self._data_loaded(data)
+    def _file_load_result(self, data, thread, auto_open):
+        self._data_loaded(data, auto_open=auto_open)
         self._loader_threads.remove(thread)
 
     @DispatchHandle.register_listener("on_add_data")
-    def _data_loaded(self, data):
+    def _data_loaded(self, data, auto_open=True):
         dispatch.on_added_data.emit(data=data)
 
         # Open the data automatically
-        dispatch.on_add_window.emit(data=data)
+        if auto_open:
+            dispatch.on_add_window.emit(data=data)
 
     def apply_model(self):
         for data in self.get_selected_data():
@@ -145,14 +146,14 @@ class DataListPlugin(Plugin):
         return file_names[0], self._file_filter
 
     @DispatchHandle.register_listener("on_file_read")
-    def read_file(self, file_name, file_filter=None):
+    def read_file(self, file_name, file_filter=None, auto_open=True):
         file_load_thread = FileLoadThread()
 
         file_load_thread.status.connect(
             dispatch.on_status_message.emit)
 
         file_load_thread.result.connect(
-            lambda d, t=file_load_thread: self._file_load_result(d, t))
+            lambda d, t=file_load_thread: self._file_load_result(d, t, auto_open))
 
         self._loader_threads.append(file_load_thread)
 
