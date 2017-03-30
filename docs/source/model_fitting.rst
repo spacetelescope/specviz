@@ -69,12 +69,12 @@ To fit a model:
    fit to your data.
 #. Click the lock icon next to any parameter to choose whether it should be kept
    fixed (closed lock) or allowed to vary (open lock) during fitting.
-#. Select the desired fitter from ``Fitting Routine`` using its drop-down menu.
+#. Select the desired fitter from ``Fitting`` using its drop-down menu.
 #. Click ``Perform Fit``. This may take up to a few seconds, depending on the
    complexity of the fit.
 #. The associated model parameters will be adjusted accordingly.
 
-The ``Arithmetic Behavior`` text box is used to define the relationship between
+The ``Arithmetic`` text box is used to define the relationship between
 different models for the same layer. If nothing is defined, the default is to
 add all the models together. To describe a non-default model relationship,
 adjust the math operators, as shown in the examples below and
@@ -104,7 +104,7 @@ plus a running numerical suffix.
 
 These names can be re-defined by clicking on the default name and typing a new
 name. Note that re-defining names will require that any eventual expression in
-the ``Arithmetic Behavior`` text box should be edited accordingly.
+the ``Arithmetic`` text box should be edited accordingly.
 
 For now, we are limited to only alphanumeric characters (and no white spaces) when
 re-naming models.
@@ -126,8 +126,7 @@ This implies that, to change the regions of interest that define the spline,
 one has no other way than removing the spline from the list of models. Then,
 redefine the regions of interest, and add a new spline to the list. To change
 a spline parameter, there is no need do discard the spline. Just do it in the
-same way as with other models: just type in the new value for the parameter and
-click on ``Update Layer``.
+same way as with other models: just type in the new value for the parameter.
 
 Subsequently, when the fitter iterates the compound model in search of a best
 solution, the spline model will act as a constant. That is, it will be used to
