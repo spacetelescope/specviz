@@ -52,7 +52,6 @@ To add a model:
 #. Select the desired model name from the ``Add Model`` drop-down box and click
    ``Select`` to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
-#. Scroll down (if needed) and click ``Create Layer``.
 #. A new model layer will be created under ``Layers`` (left panel) and it is
    attached to the selected data layer.
 
@@ -65,12 +64,13 @@ To fine-tune model parameters:
 #. Expand the model listing under ``Current Models`` on the right of the viewer.
 #. Double-click on the desired model parameter value in the listing.
    When you see a blinking cursor, enter the new value and press ``Enter``.
-#. Scroll down (if needed) and click ``Update Layer``.
 
 To fit a model:
 
 #. Select the model layer under ``Layers`` that contains the model(s) you wish to
    fit to your data.
+#. Click the lock icon next to any parameter to choose whether it should be kept
+   fixed (closed lock) or allowed to vary (open lock) during fitting.
 #. Select the desired fitter from ``Fitting Routine`` using its drop-down menu.
 #. Click ``Perform Fit``. This may take up to a few seconds, depending on the
    complexity of the fit.
@@ -79,8 +79,8 @@ To fit a model:
 The ``Arithmetic Behavior`` text box is used to define the relationship between
 different models for the same layer. If nothing is defined, the default is to
 add all the models together. To describe a non-default model relationship,
-enter the model names and math operators, as shown in the examples below and
-then press ``Create Layer`` or ``Update Layer`` to produce the compound model::
+adjust the math operators, as shown in the examples below and
+then press ``Enter`` to produce the compound model::
 
     Linear1 + Gaussian1
 
