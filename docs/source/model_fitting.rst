@@ -14,19 +14,17 @@ Currently, the following models are available:
 ========================= ==========================================================
 SpecViz Model Name        Astropy Model Class
 ========================= ==========================================================
-BlackBody                 `~astropy.analytic_functions.blackbody`
 BrokenPowerLaw            `~astropy.modeling.powerlaws.BrokenPowerLaw1D`
 Const                     `~astropy.modeling.functional_models.Const1D`
 ExponentialCutoffPowerLaw `~astropy.modeling.powerlaws.ExponentialCutoffPowerLaw1D`
 Gaussian                  `~astropy.modeling.functional_models.Gaussian1D`
-GaussianAbsorption        `~astropy.modeling.functional_models.GaussianAbsorption1D`
+GaussianAbsorption        `~astropy.modeling.functional_models.Gaussian1D` with negative amplitude
 Linear                    `~astropy.modeling.functional_models.Linear1D`
 LogParabola               `~astropy.modeling.powerlaws.LogParabola1D`
 Lorentz                   `~astropy.modeling.functional_models.Lorentz1D`
 MexicanHat                `~astropy.modeling.functional_models.MexicanHat1D`
 Trapezoid                 `~astropy.modeling.functional_models.Trapezoid1D`
 PowerLaw                  `~astropy.modeling.powerlaws.PowerLaw1D`
-Redshift                  `~astropy.modeling.functional_models.Redshift`
 Scale                     `~astropy.modeling.functional_models.Scale`
 Shift                     `~astropy.modeling.functional_models.Shift`
 Sine                      `~astropy.modeling.functional_models.Sine1D`
