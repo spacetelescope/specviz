@@ -11,7 +11,9 @@ __all__ = ['BlackBody']
 
 class BlackBody(Fittable1DModel):
     """
-    Produce a blackbody flux spectrum
+    Produce a blackbody flux spectrum.
+
+    Note that the wave and flux arrays used to Quantity
 
     Notes
     -----
@@ -27,7 +29,7 @@ class BlackBody(Fittable1DModel):
 
     def evaluate(self, x, temp, norm):
         """
-        Evaluate the blackbody for a given temperature over a wavalength range
+        Evaluate the blackbody for a given temperature over a wavelength range.
 
         Parameters
         ----------
@@ -73,10 +75,10 @@ class BlackBodyInitializer(object):
         instance: BlackBody
             The `BlackBody` model
 
-        wave: numpy.ndarray
+        wave: Quantity
             The wavelength range.
 
-        flux: numpy.ndarray
+        flux: Quantity
             The source flux to normalize to.
         """
         instance.wave = wave
