@@ -23,13 +23,12 @@ emission and absorption lines in addition to regions of flat continuua).
 SpecViz incorporates various methods for fitting such models to data. For more
 details, see :ref:`doc_model_fitting`.
 
-Furthermore, SpecViz allows for overplotting or simple combining of spectra at
-different wavelengths.
+Furthermore, SpecViz allows for overplotting or simple combining of spectra.
 
 SpecViz will soon include the ability to
-   - Process spectra using averaging, splicing, detrending, and Fourier filtering tools.
-   - Support overplotting and interactively renormalizing data from spectral templates.
-   - Overplot of spectral line identifications taken from a variety of line lists.
+   - Measure the average of multiple spectra, splice a spectrum, and apply Fourier filters.
+   - Interactively renormalize data from spectral templates.
+   - Overplot spectral line lists.
    - And more...
 
 Demo
