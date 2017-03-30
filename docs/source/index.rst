@@ -35,7 +35,7 @@ Demo
 ----
 
 .. image:: https://i.vimeocdn.com/video/571749719_640.jpg
-   :target: https://vimeo.com/167441251
+   :target: https://stsci.box.com/s/6ynrfshzrix3yaxvd3c8bcs4hzltpadz
 
 
 Installation and Setup
