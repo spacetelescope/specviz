@@ -1,6 +1,7 @@
 import logging
 from astropy import convolution
 from collections import OrderedDict
+import numpy as np
 
 
 def smooth(data, kernel, *args, **kwargs):
@@ -23,7 +24,6 @@ def smooth(data, kernel, *args, **kwargs):
     new_data : :class:`~specviz.core.data.Spectrum1DRefLayer`
         The new, convolved, data layer.
     """
-    print(kernel)
     kernel = getattr(convolution, kernel)(*args, **kwargs)
 
     if kernel is None:
@@ -32,7 +32,10 @@ def smooth(data, kernel, *args, **kwargs):
 
     raw_data = convolution.convolve(data.data, kernel)
 
-    new_data = data.__class__.copy(data, data=raw_data,
-                                   name="Smoothed {}".format(data.name))
+    new_data = data.__class__(data=raw_data, unit=data.unit,
+                              dispersion=data.dispersion,
+                              uncertainty=np.zeros(data.uncertainty.array.shape),
+                              dispersion_unit=data.dispersion_unit,
+                              name="Smoothed {}".format(data.name))
 
     return new_data

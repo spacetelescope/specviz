@@ -255,6 +255,6 @@ dispatch.register_event("on_remove_model", args=["model"])
 dispatch.register_event("on_remove_all_data")
 
 dispatch.register_event("on_file_open", args=["file_name"])
-dispatch.register_event("on_file_read", args=["file_name", "file_filter"])
+dispatch.register_event("on_file_read", args=["file_name", "file_filter", "auto_open"])
 
 dispatch.register_event("on_status_message", args=["message", "timeout"])

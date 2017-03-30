@@ -113,7 +113,7 @@ class LoaderRegistry(Registry):
         #
         # Leaving in list format incase other locations want to be added
         # in the future
-        check_paths = [init_path, usr_path]
+        check_paths = [usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -156,7 +156,7 @@ class LoaderRegistry(Registry):
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [init_path, usr_path, cur_path, lines_path]
+        check_paths = [usr_path, cur_path, lines_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)

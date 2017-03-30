@@ -27,13 +27,7 @@ class DataListPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         super(DataListPlugin, self).__init__(*args, **kwargs)
 
-        self.file_load_thread = FileLoadThread()
-
-        self.file_load_thread.status.connect(
-            dispatch.on_status_message.emit)
-
-        self.file_load_thread.result.connect(
-            self._data_loaded)
+        self._loader_threads = []
 
         # Store the most recent file selector
         self._file_filter = None
@@ -72,12 +66,17 @@ class DataListPlugin(Plugin):
         self.button_apply_model.clicked.connect(
             self.apply_model)
 
+    def _file_load_result(self, data, thread, auto_open):
+        self._data_loaded(data, auto_open=auto_open)
+        self._loader_threads.remove(thread)
+
     @DispatchHandle.register_listener("on_add_data")
-    def _data_loaded(self, data):
+    def _data_loaded(self, data, auto_open=True):
         dispatch.on_added_data.emit(data=data)
 
         # Open the data automatically
-        dispatch.on_add_window.emit(data=data)
+        if auto_open:
+            dispatch.on_add_window.emit(data=data)
 
     def apply_model(self):
         for data in self.get_selected_data():
@@ -147,9 +146,19 @@ class DataListPlugin(Plugin):
         return file_names[0], self._file_filter
 
     @DispatchHandle.register_listener("on_file_read")
-    def read_file(self, file_name, file_filter=None):
-        self.file_load_thread(file_name=file_name, file_filter=file_filter)
-        self.file_load_thread.start()
+    def read_file(self, file_name, file_filter=None, auto_open=True):
+        file_load_thread = FileLoadThread()
+
+        file_load_thread.status.connect(
+            dispatch.on_status_message.emit)
+
+        file_load_thread.result.connect(
+            lambda d, t=file_load_thread: self._file_load_result(d, t, auto_open))
+
+        self._loader_threads.append(file_load_thread)
+
+        file_load_thread(file_name, file_filter)
+        file_load_thread.start()
 
     @DispatchHandle.register_listener("on_added_data")
     def add_data_item(self, data):
