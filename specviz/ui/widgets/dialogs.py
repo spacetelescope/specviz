@@ -5,6 +5,9 @@ from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 
+from astropy.units import Unit
+from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
+
 import logging
 
 
@@ -209,18 +212,105 @@ class UiUnitChangeDialog(QDialog):
 class UnitChangeDialog(UiUnitChangeDialog):
     def __init__(self, parent=None):
         super(UnitChangeDialog, self).__init__(parent)
+        self._layer = None
+        self._flux_unit = None
+        self._disp_unit = None
 
-        self.flux_unit = ''
-        self.disp_unit = ''
+        self.line_edit_disp_unit.textChanged.connect(self.check_state)
+        self.line_edit_disp_unit.textChanged.emit(self.line_edit_disp_unit.text())
+
+        self.line_edit_flux_unit.textChanged.connect(self.check_state)
+        self.line_edit_flux_unit.textChanged.emit(self.line_edit_flux_unit.text())
+
+    def set_layer(self, layer):
+        self._layer = layer
+
+        self.line_edit_flux_unit.setValidator(DataUnitValidator(self._layer))
+        self.line_edit_disp_unit.setValidator(DispersionUnitValidator(self._layer))
+
+        self.line_edit_disp_unit.setText("{}".format(self._layer.dispersion_unit))
+        self.line_edit_flux_unit.setText("{}".format(self._layer.unit))
+
+    @property
+    def disp_unit(self):
+        return self.line_edit_disp_unit.text()
+
+    @property
+    def flux_unit(self):
+        return self.line_edit_flux_unit.text()
 
     def accept(self):
-        self.flux_unit = self.line_edit_flux_unit.text()
-        self.disp_unit = self.line_edit_disp_unit.text()
-
         super(UnitChangeDialog, self).accept()
 
     def reject(self):
         super(UnitChangeDialog, self).reject()
+
+    def check_state(self, *args, **kwargs):
+        sender = self.sender()
+
+        validator = sender.validator()
+
+        if validator is None:
+            return
+
+        state = validator.validate(sender.text(), 0)[0]
+
+        if state == QValidator.Acceptable:
+            color = '#c4df9b' # green
+        elif state == QValidator.Intermediate:
+            color = '#fff79a' # yellow
+        else:
+            color = '#f6989d' # red
+
+        sender.setStyleSheet('QLineEdit { background-color: %s }' % color)
+
+
+class DataUnitValidator(QValidator):
+    def __init__(self, layer, *args, **kwargs):
+        super(DataUnitValidator, self).__init__(*args, **kwargs)
+
+        self._layer = layer
+
+    def validate(self, p_str, p_int):
+        try:
+            unit = Unit(p_str)
+
+            if unit.is_equivalent(self._layer.unit, equivalencies=spectral()):
+                return (QValidator.Acceptable, p_str, p_int)
+            else:
+                return (QValidator.Intermediate, p_str, p_int)
+        except ValueError as e:
+            return (QValidator.Intermediate, p_str, p_int)
+
+        return (QValidator.Invalid, p_str, p_int)
+
+    def fixup(self, p_str):
+        p_str.replace(p_str, "{}".format(self._layer.unit))
+
+
+class DispersionUnitValidator(QValidator):
+    def __init__(self, layer, *args, **kwargs):
+        super(DispersionUnitValidator, self).__init__(*args, **kwargs)
+
+        self._layer = layer
+
+    def validate(self, p_str, p_int):
+        try:
+            unit = Unit(p_str)
+
+            if unit.is_equivalent(self._layer.dispersion_unit,
+                                  equivalencies=spectral_density(
+                                      self._layer.dispersion.data)):
+                return (QValidator.Acceptable, p_str, p_int)
+            else:
+                return (QValidator.Intermediate, p_str, p_int)
+        except ValueError as e:
+            return (QValidator.Intermediate, p_str, p_int)
+
+        return (QValidator.Invalid, p_str, p_int)
+
+    def fixup(self, p_str):
+        p_str.replace(p_str, "{}".format(self._layer.dispersion_unit))
 
 
 class UiSmoothingDialog(QDialog):

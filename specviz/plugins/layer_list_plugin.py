@@ -473,6 +473,7 @@ class UiLayerListPlugin:
         plugin.button_export.setEnabled(False)
         plugin.button_export.setMinimumSize(QSize(35, 35))
         plugin.button_export.setIconSize(QSize(25, 25))
+        plugin.button_export.setToolTip("Export spectrum to a file.")
 
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
         plugin.layout_horizontal.addWidget(plugin.button_copy_model)
