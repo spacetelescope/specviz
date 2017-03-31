@@ -191,7 +191,11 @@ class DataListPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_remove_all_data")
     def remove_all_data(self):
-        self.list_widget_data_list.clear()
+        print('*' * 100, self.list_widget_data_list.count())
+        for i in range(self.list_widget_data_list.count()):
+            item = self.list_widget_data_list.takeItem(i - 1)
+            print(i)
+            item.deleteLayer()
 
     def get_data_item(self, data):
         for i in range(self.list_widget_data_list.count()):
