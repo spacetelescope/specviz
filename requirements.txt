@@ -7,6 +7,6 @@ scipy
 astropy
 sphinx_automodapi 
 sphinx_rtd_theme
-git+https://github.com/nmearl/specutils.git
-git+https://github.com/nmearl/pyqtgraph.git
+specutils
+pyqtgraph
 -e .

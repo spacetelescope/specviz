@@ -81,7 +81,8 @@ class PluginRegistry(Registry):
                 for cls_name, cls_plugin in cls_members:
                     self._members.append(cls_plugin())
 
-                sys.path.pop(0)
+                if path != cur_path:
+                    sys.path.pop(0)
 
 
 class LoaderRegistry(Registry):
