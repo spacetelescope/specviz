@@ -14,27 +14,28 @@ Viewer
 
 To open a file:
 
-#. Click on the folder icon on top left or select ``File -> Open`` from menu.
-#. Select the desired filename and data type in the file dialog and click
+#. Click on the folder icon on top left corner or select ``File -> Open`` from menu.
+#. Select the desired file and data type in the file dialog and click
    "Open".
-#. The file will be listed under "Data" (top half of left panel).
-#. To remove the file from "Data", click on "trash can" icon under "Data".
+#. The file will be listed in the "Data List" window (top half of left panel).
+#. To remove the file from "Data", click on "trash can" icon at lower right
+corner of the "Data List" window.
 
-Once a spectrum is loaded, remember to **click on the plot icon**
-(left-most button right above "Layers" at the center of the left panel)
-to display the spectrum. It will be plotted in the center display window.
-Some basic statistics are shown on top right.
-Its data layer will be listed under "Layers" (bottom half of left panel).
+To plot the spectrum that is now loaded, **click on the plot icon**
+(lower left corner of the Data window). It will be plotted in the central
+window. Basic statistics for the displayed spectrum will be shown in the
+"Statistics" window at the lower left.
 
-If multiple files are opened, each file will have its own plot (overplotting
-is not yet supported). To work on the file of interest, click on its plot
-window to bring it in focus.
+Each spectrum loaded will have its own layer, as shown the "Layer List" window
+at the lower left. New layers are created each time a spectrum is
+modified or a fit is performed, and the original spectrum is untouched. To
+work on the file of interest, click on its plot window to bring it in focus.
 
 To adjust plot display:
 
-#. If your mouse has center wheel, the wheel can be used to zoom in and out
+#. If your mouse has center wheel, it can be used to zoom in and out
    while the cursor is over the plot.
-#. Click on the "big wheel" icon on top of the plot to change top axis display
+#. Click on the "big wheel" icon on top of the plot to change top axis parameters
    or displayed units.
 #. Left click on the plot to bring up a context menu.
 #. Select "View All" to view all available data (if zoomed in).
@@ -48,9 +49,9 @@ To select a region of interest (ROI):
 #. Select the layer from "Layers" list (if you have multiple).
 #. Click on the "rectangle" icon on the top left of the plot. An adjustable
    rectangle will appear on plot display.
-#. Click and drag the edges to adjust dispersion coverage. As the region
-   changes, basic statistics under "Statistic" on top right of the viewer will
-   also update accordingly.
+#. Click and drag the edges to adjust wavelength coverage. As the region
+   changes, basic statistics in the "Statistics" window on bottom left of the viewer
+    will also update accordingly.
 #. Click inside the rectangle and drag to reposition it without resizing.
 #. Click the left-most "knife" button under "Layers" (bottom left of the left
    panel) to create a new layer slice from the ROI.
