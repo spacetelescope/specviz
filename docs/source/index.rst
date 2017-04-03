@@ -26,10 +26,10 @@ details, see :ref:`doc_model_fitting`.
 Furthermore, SpecViz allows for overplotting or combining of spectra.
 
 SpecViz will soon include the ability to
-   - measure the average of multiple spectra, detrending, and apply Fourier filters.
-   - interactively renormalize data from spectral templates.
-   - overplot spectral line lists.
-   - and more...
+   - Measure the average of multiple spectra, detrending, and apply Fourier filters.
+   - Interactively renormalize data from spectral templates.
+   - Overplot spectral line lists.
+   - And more...
 
 Demo
 ----
