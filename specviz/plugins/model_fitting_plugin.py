@@ -216,7 +216,8 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setFlags(
                     new_para_item.flags() | Qt.ItemIsEditable |
                 Qt.ItemIsUserCheckable)
-                new_para_item.setCheckState(0, Qt.Unchecked)
+                new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
+                                                          else Qt.Unchecked)
 
             self.tree_widget_current_models.addTopLevelItem(new_item)
             self.tree_widget_current_models.expandItem(new_item)
