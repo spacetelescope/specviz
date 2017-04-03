@@ -434,6 +434,8 @@ class ModelFittingPlugin(Plugin):
             model = parent.data(0, Qt.UserRole)
             param = getattr(model, model_item.text(0))
             param.fixed = bool(model_item.checkState(col))
+            dispatch.on_changed_model.emit(model_item=model_item)
+
 
     def fit_model_layer(self):
         current_layer = self.current_layer
