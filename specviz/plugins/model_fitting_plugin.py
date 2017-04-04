@@ -214,8 +214,7 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
                 new_para_item.setFlags(
-                    new_para_item.flags() | Qt.ItemIsEditable |
-                Qt.ItemIsUserCheckable)
+                    new_para_item.flags() | Qt.ItemIsUserCheckable)
                 new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
