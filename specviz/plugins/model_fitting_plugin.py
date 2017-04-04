@@ -388,13 +388,17 @@ class ModelFittingPlugin(Plugin):
             all_names = self.tree_widget_current_models.findItems(
                 name, Qt.MatchExactly, 0)
 
-            if len(all_names) > 0:
-                name = "{}{}".format(name, len(all_names))
+            if len(all_names) > 1:
+                name = "{}{}".format(name, len(all_names) - 1)
+
+            # Remove whitespace
+            name = name.replace(" ", "_")
+
+            model._name = name
 
             self.tree_widget_current_models.blockSignals(True)
             model_item.setText(0, name)
             self.tree_widget_current_models.blockSignals(False)
-            model._name = name
 
         self._update_arithmetic_text(self.current_layer)
 
