@@ -14,19 +14,17 @@ Currently, the following models are available:
 ========================= ==========================================================
 SpecViz Model Name        Astropy Model Class
 ========================= ==========================================================
-BlackBody                 `~astropy.analytic_functions.blackbody`
 BrokenPowerLaw            `~astropy.modeling.powerlaws.BrokenPowerLaw1D`
 Const                     `~astropy.modeling.functional_models.Const1D`
 ExponentialCutoffPowerLaw `~astropy.modeling.powerlaws.ExponentialCutoffPowerLaw1D`
 Gaussian                  `~astropy.modeling.functional_models.Gaussian1D`
-GaussianAbsorption        `~astropy.modeling.functional_models.GaussianAbsorption1D`
+GaussianAbsorption        `~astropy.modeling.functional_models.Gaussian1D` with negative amplitude
 Linear                    `~astropy.modeling.functional_models.Linear1D`
 LogParabola               `~astropy.modeling.powerlaws.LogParabola1D`
 Lorentz                   `~astropy.modeling.functional_models.Lorentz1D`
 MexicanHat                `~astropy.modeling.functional_models.MexicanHat1D`
 Trapezoid                 `~astropy.modeling.functional_models.Trapezoid1D`
 PowerLaw                  `~astropy.modeling.powerlaws.PowerLaw1D`
-Redshift                  `~astropy.modeling.functional_models.Redshift`
 Scale                     `~astropy.modeling.functional_models.Scale`
 Shift                     `~astropy.modeling.functional_models.Shift`
 Sine                      `~astropy.modeling.functional_models.Sine1D`
@@ -44,19 +42,18 @@ Simplex             `~astropy.modeling.fitting.SimplexLSQFitter`
 SLSQP               `~astropy.modeling.fitting.SLSQPLSQFitter`
 =================== ============================================
 
-To add a model:
+To use a model:
 
-#. Select the desired layer from ``Layers`` (left panel). For example, you can
-   choose the layer containing your emission or absorption line.
-   See :ref:`doc_viewer` on how to create a layer for ROI.
-#. Select the desired model name from the ``Add Model`` drop-down box and click
+#. Select the layer you wish to operate on from the LAYERS window in the upper left.
+#. Create and position a region of interest (ROI) as described in the :ref:`doc_viewer` section of
+     the documentation.”
+#. Select the desired model from the ``Add Model`` drop-down box and click
    ``Select`` to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
-#. Scroll down (if needed) and click ``Create Layer``.
 #. A new model layer will be created under ``Layers`` (left panel) and it is
    attached to the selected data layer.
 
-To fine-tune model parameters:
+To edit model parameters or enter a better first estimate of the model parameters:
 
 #. Select the model layer under ``Layers`` (left panel) that contains the desired
    model.
@@ -65,22 +62,23 @@ To fine-tune model parameters:
 #. Expand the model listing under ``Current Models`` on the right of the viewer.
 #. Double-click on the desired model parameter value in the listing.
    When you see a blinking cursor, enter the new value and press ``Enter``.
-#. Scroll down (if needed) and click ``Update Layer``.
 
 To fit a model:
 
 #. Select the model layer under ``Layers`` that contains the model(s) you wish to
    fit to your data.
-#. Select the desired fitter from ``Fitting Routine`` using its drop-down menu.
+#. Click the lock icon next to any parameter to choose whether it should be kept
+   fixed (closed lock) or allowed to vary (open lock) during fitting.
+#. Select the desired fitter from ``Fitting`` using its drop-down menu.
 #. Click ``Perform Fit``. This may take up to a few seconds, depending on the
    complexity of the fit.
 #. The associated model parameters will be adjusted accordingly.
 
-The ``Arithmetic Behavior`` text box is used to define the relationship between
+The ``Arithmetic`` text box is used to define the relationship between
 different models for the same layer. If nothing is defined, the default is to
 add all the models together. To describe a non-default model relationship,
-enter the model names and math operators, as shown in the examples below and
-then press ``Create Layer`` or ``Update Layer`` to produce the compound model::
+adjust the math operators, as shown in the examples below and
+then press ``Enter`` to produce the compound model::
 
     Linear1 + Gaussian1
 
@@ -104,9 +102,9 @@ When added to the ``Current Models`` list, a model will receive a default name
 that is generated from the model type (as listed in the drop down model selector)
 plus a running numerical suffix.
 
-These names can be re-defined by clicking on the default name and typing a new
-name. Note that re-defining names will require that any eventual expression in
-the ``Arithmetic Behavior`` text box should be edited accordingly.
+These names can be changed by clicking on the default name and entering a new
+name. Note that changing model names will require that any expression in
+the ``Arithmetic`` text box be edited accordingly.
 
 For now, we are limited to only alphanumeric characters (and no white spaces) when
 re-naming models.
@@ -118,18 +116,17 @@ Spline model
 Note that the Spline model is of an intrinsically different nature than the
 other models included in the drop down list of models. The Spline model, when
 added to a pre-existing list of models, or when added by itself to an empty
-list, will immediately be fitted to the data within the currently defined
-Regions Of Interest. That is, being a linear model, there is no need to iterate
+list, will immediately be fit to the data within the currently defined
+Regions Of Interest (ROIs). That is, being a linear model, there is no need to iterate
 in search of a "best fit" spline. It is just computed once and for all, and kept
 as part of the compound model that is built from the models in the list and the
 arithmetic behavior expression.
 
 This implies that, to change the regions of interest that define the spline,
-one has no other way than removing the spline from the list of models. Then,
-redefine the regions of interest, and add a new spline to the list. To change
+one must remove the spline from the list of models. Then, the user must redefine
+the ROIs and add a new spline to the list of models to be fit. To change
 a spline parameter, there is no need do discard the spline. Just do it in the
-same way as with other models: just type in the new value for the parameter and
-click on ``Update Layer``.
+same way as with other models: just type in the new value for the parameter.
 
 Subsequently, when the fitter iterates the compound model in search of a best
 solution, the spline model will act as a constant. That is, it will be used to
@@ -138,14 +135,14 @@ accessed, and varied, by the fitter. Thus, the spline parameters are not fitted,
 they are just a convenient mechanism that enables user access to the parameter's
 values.
 
-The documentation for the spline model cane be seen here:
+The documentation for the spline model can be seen here:
 
 http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.UnivariateSpline.html
 
 Note that SpecViz provides access, at this point, to just two of the parameters
 in the scipy implementation of th spline function. Pay special attention to the
 ``smooth`` parameter. SpecViz initializes it to a 'best guess' (``len(wavelength)``).
-Too small of a value in here may cause the spline to enter an infinite loop.
+Too small of a value may cause the spline to enter an infinite loop.
 Change the ``smooth`` value with care, trying to stay close to the default
 value.
 
@@ -156,7 +153,7 @@ value.
 
 
 Saving and Exporting Models to File
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Selecting a model layer under "Layers" will enable the
 :ref:`Save <doc_model_save>` (the "floppy disk" icon) and
