@@ -81,6 +81,9 @@ class ModelFittingPlugin(Plugin):
         self.button_perform_fit.clicked.connect(
             self.fit_model_layer)
 
+        # Update model name when a user makes changes
+        self.tree_widget_current_models.itemChanged.connect(self._update_model_name)
+
         # ---
         # IO
         # Attach the model save/read buttons
@@ -213,9 +216,10 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setText(0, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
-                new_para_item.setFlags(
-                    new_para_item.flags() | Qt.ItemIsEditable |
-                Qt.ItemIsUserCheckable)
+                new_para_item.setFlags(new_para_item.flags() |
+                                       Qt.ItemIsEditable |
+                                       Qt.ItemIsUserCheckable)
+
                 new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
@@ -380,7 +384,21 @@ class ModelFittingPlugin(Plugin):
         model = model_item.data(0, Qt.UserRole)
 
         if hasattr(model, '_name'):
-            model._name = model_item.text(0)
+            name = model_item.text(0)
+            all_names = self.tree_widget_current_models.findItems(
+                name, Qt.MatchExactly, 0)
+
+            if len(all_names) > 1:
+                name = "{}{}".format(name, len(all_names) - 1)
+
+            # Remove whitespace
+            name = name.replace(" ", "_")
+
+            model._name = name
+
+            self.tree_widget_current_models.blockSignals(True)
+            model_item.setText(0, name)
+            self.tree_widget_current_models.blockSignals(False)
 
         self._update_arithmetic_text(self.current_layer)
 
@@ -435,6 +453,8 @@ class ModelFittingPlugin(Plugin):
             model = parent.data(0, Qt.UserRole)
             param = getattr(model, model_item.text(0))
             param.fixed = bool(model_item.checkState(col))
+            dispatch.on_changed_model.emit(model_item=model_item)
+
 
     def fit_model_layer(self):
         current_layer = self.current_layer
