@@ -59,8 +59,8 @@ class Viewer(object):
                     instance_plugin.toggleViewAction())
 
         # Resize the widgets now that they are all present
-        # for ip in instance_plugins[::-1]:
-        #     ip.setMinimumSize(ip.sizeHint())
+        for ip in instance_plugins[::-1]:
+            ip.setMinimumSize(ip.sizeHint())
         #     QApplication.processEvents()
 
         # Sort actions based on priority
