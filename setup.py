@@ -131,9 +131,13 @@ setup(name=PACKAGENAME,
           'pyyaml',
           'pyqtgraph',
           'scipy',
-          'pyqt5',
           'qtpy'
       ],
+      extras_require={
+          ':python_version >= "3.5"': [
+              'pyqt5',
+          ],
+      },
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,

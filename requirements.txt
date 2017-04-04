@@ -3,9 +3,10 @@ cython
 numpy
 scipy
 astropy
+sphinx
 sphinx_automodapi 
 sphinx_rtd_theme
 specutils
 pyqtgraph
-pyqt5
+pyqt5; python_version >= '3.5'
 qtpy
