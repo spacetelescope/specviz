@@ -81,6 +81,9 @@ class ModelFittingPlugin(Plugin):
         self.button_perform_fit.clicked.connect(
             self.fit_model_layer)
 
+        # Update model name when a user makes changes
+        self.tree_widget_current_models.itemChanged.connect(self._update_model_name)
+
         # ---
         # IO
         # Attach the model save/read buttons
@@ -379,7 +382,17 @@ class ModelFittingPlugin(Plugin):
         model = model_item.data(0, Qt.UserRole)
 
         if hasattr(model, '_name'):
-            model._name = model_item.text(0)
+            name = model_item.text(0)
+            all_names = self.tree_widget_current_models.findItems(
+                name, Qt.MatchExactly, 0)
+
+            if len(all_names) > 0:
+                name = "{}{}".format(name, len(all_names))
+
+            self.tree_widget_current_models.blockSignals(True)
+            model_item.setText(0, name)
+            self.tree_widget_current_models.blockSignals(False)
+            model._name = name
 
         self._update_arithmetic_text(self.current_layer)
 
