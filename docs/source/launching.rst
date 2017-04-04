@@ -15,6 +15,6 @@ as a command line argument, as follows::
     $ specviz filename
 
 
-You may also include the name of a custom loader as second optional argument
+You may also include the name of a custom loader as second optional argument::
 
     $ specviz filename --format="my-custom-format"

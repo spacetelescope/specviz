@@ -9,4 +9,6 @@ sphinx_automodapi
 sphinx_rtd_theme
 specutils
 pyqtgraph
+pyqt5
+qtpy
 -e .

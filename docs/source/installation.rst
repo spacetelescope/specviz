@@ -31,6 +31,14 @@ any terminal::
     $ specviz
 
 
+Uninstalling
+^^^^^^^^^^^^
+
+To uninstall via Anaconda, simply type the following at a command line::
+
+    $ conda uninstall specviz
+
+
 Install via source
 ------------------
 
@@ -70,6 +78,14 @@ This uses the ``pip`` installation system, so please note that
 Likewise, the ``pip`` command will use your default Python to install.
 You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
 environment.
+
+
+Uninstalling
+^^^^^^^^^^^^
+
+To uninstall via ``pip``, simply type the following at a command line::
+
+    $ pip uninstall specviz
 
 
 Known Issues

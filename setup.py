@@ -131,6 +131,7 @@ setup(name=PACKAGENAME,
           'pyyaml',
           'pyqtgraph',
           'scipy',
+          'pyqt5',
           'qtpy'
       ],
       author=AUTHOR,
