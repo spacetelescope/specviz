@@ -80,6 +80,24 @@ You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
 environment.
 
 
+PyQt/PySide bindings
+^^^^^^^^^^^^^^^^^^^^
+
+SpecViz requires PyQt. Currently, only python environments with 3.5 or higher
+installed can use ``pip`` to install PyQt5, in which case simply type::
+
+    $ pip install pyqt5
+
+to install it on your system.
+
+In any other case, PyQt can be installed via anaconda::
+
+    $ conda install pyqt
+
+SpecViz works with with PyQt4 and PySide, but it is recommended that users use
+PyQt5 if available.
+
+
 Uninstalling
 ^^^^^^^^^^^^
 

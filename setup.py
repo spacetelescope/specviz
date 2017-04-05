@@ -133,11 +133,11 @@ setup(name=PACKAGENAME,
           'scipy',
           'qtpy'
       ],
-      extras_require={
-          ':python_version >= "3.5"': [
-              'pyqt5',
-          ],
-      },
+      # extras_require={
+      #     ':python_version >= "3.5"': [
+      #         'pyqt5',
+      #     ],
+      # },
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
