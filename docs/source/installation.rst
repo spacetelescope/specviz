@@ -31,21 +31,13 @@ any terminal::
     $ specviz
 
 
-PyQt5 version (optional)
-^^^^^^^^^^^^^^^^^^^^^^^^
+Uninstalling
+^^^^^^^^^^^^
 
-While the PyQt4 version of SpecViz is currently the default distributed, it
-is recommended that you upgrade to using the PyQt5 version if you know that
-you do not have any system conflicts. Note that this is entirely optional,
-but encouraged due to the fact that `Qt4 development and support has ended
-<http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_. ::
+To uninstall via Anaconda, simply type the following at a command line::
 
-    $ conda install --channel https://conda.anaconda.org/spyder-ide pyqt5
-    $ conda install --channel https://conda.anaconda.org/nmearl specviz
+    $ conda uninstall specviz
 
-SpecViz can then be launched via the command line::
-
-    $ specviz
 
 Install via source
 ------------------
@@ -60,42 +52,7 @@ handled automatically by the setup functions, with the exception of PyQt/PySide.
 * Numpy
 * Scipy
 * PyQtGraph
-
-
-Installing PyQt/PySide
-^^^^^^^^^^^^^^^^^^^^^^
-
-The easiest way to install PyQt/PySide is through some package manager.
-Please keep in mind that PyQt5 is the recommended PyQt implementation as
-`Qt4 development and support has ended <http://blog.qt.io/blog/2015/05/26/qt-4-8-7-released/>`_.
-
-Below are instructions for installing using *either* `Homebrew <http://brew
-.sh/>`_ *or* `Anaconda <https://www.continuum.io/downloads>`__.
-
-PyQt5
-"""""
-
-Homebrew
-   `Install using Homebrew for Qt5 <http://brewformulas.org/Pyqt5>`_.
-
-Anaconda
-   Installing PyQt5 with Anaconda will require installing from the Spyder-IDE
-   channel as it is not currently a core package (but they're working on it).
-   ::
-
-    $ conda install --channel https://anaconda.org/m-labs/pyqt5 pyqt5
-
-
-PyQt4
-"""""
-
-Homebrew
-   `Install using Homebrew for Qt4 <http://brewformulas.org/Pyqt4>`_.
-
-Anaconda
-   Install using Anaconda::
-
-    $ conda install pyqt
+* qtpy
 
 
 Installing
@@ -109,21 +66,44 @@ activate it first before installing: ``$ source activate <environment_name>``.
 
     $ git clone https://github.com/spacetelescope/specviz.git
     $ cd specviz
-    $ git checkout tags/v0.1.2rc3
+    $ git checkout tags/v0.3.0
     $ pip install -r requirements.txt
 
-.. note::
+This uses the ``pip`` installation system, so please note that
 
-   This uses the ``pip`` installation system, so please note that
+1. You need to have ``pip`` installed (included in most Python installations).
+2. You do **not** need to run ``python setup.py install``.
+3. You do **not** need to install the dependencies by hand (except for PyQt).
 
-   1. You need to have ``pip`` installed (included in most Python
-      installations).
-   2. You do **not** need to run ``python setup.py install``.
-   3. You do **not** need to install the dependencies by hand (except for PyQt).
+Likewise, the ``pip`` command will use your default Python to install.
+You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
+environment.
 
-   Likewise, the ``pip`` command will use your default Python to install.
-   You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
-   environment.
+
+PyQt/PySide bindings
+^^^^^^^^^^^^^^^^^^^^
+
+SpecViz requires PyQt. Currently, only python environments with 3.5 or higher
+installed can use ``pip`` to install PyQt5, in which case simply type::
+
+    $ pip install pyqt5
+
+to install it on your system.
+
+In any other case, PyQt can be installed via anaconda::
+
+    $ conda install pyqt
+
+SpecViz works with with PyQt4 and PySide, but it is recommended that users use
+PyQt5 if available.
+
+
+Uninstalling
+^^^^^^^^^^^^
+
+To uninstall via ``pip``, simply type the following at a command line::
+
+    $ pip uninstall specviz
 
 
 Known Issues
@@ -154,19 +134,3 @@ This issue can be solved with the following command::
 
     $ conda uninstall pyqt5 qt5
 
-
-.. _doc_launching:
-
-Launching SpecViz
-=================
-
-Once you've installed SpecViz, you can launch it via the command line::
-
-    $ specviz
-
-
-If you only wish to inspect a single FITS or ASCII file using the default
-:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
-as a command line argument, as follows::
-
-    $ specviz filename

@@ -234,6 +234,8 @@ class UiDataListPlugin:
 
         # List widget for the data sets
         plugin.list_widget_data_list = QListWidget(plugin)
+        plugin.list_widget_data_list.setMinimumHeight(50)
+        plugin.list_widget_data_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Ignored)
 
         # Allow for multiple selections
         plugin.list_widget_data_list.setSelectionMode(
@@ -252,6 +254,8 @@ class UiDataListPlugin:
             border: 1px solid #faebcc;
             border-radius: 4px;
         }""")
+        plugin.label_unopened.setSizePolicy(QSizePolicy.Preferred,
+                                            QSizePolicy.Fixed)
 
         plugin.layout_vertical.addWidget(plugin.label_unopened)
         plugin.layout_vertical.addWidget(plugin.list_widget_data_list)

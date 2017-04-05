@@ -44,19 +44,22 @@ SLSQP               `~astropy.modeling.fitting.SLSQPLSQFitter`
 
 To use a model:
 
-#. Select the layer you wish to operate on from the LAYERS window in the upper left.
-#. Create and position a region of interest (ROI) as described in the :ref:`doc_viewer` section of
-     the documentation.”
+#. Select the layer you wish to operate on from the "Layer List" window in the
+   bottom left. For example, you can choose the layer containing your emission
+   or absorption line.
+#. Create and position a region of interest (ROI) as described in the
+   :ref:`doc_viewer` section of the documentation.
 #. Select the desired model from the ``Add Model`` drop-down box and click
    ``Select`` to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
-#. A new model layer will be created under ``Layers`` (left panel) and it is
-   attached to the selected data layer.
+#. A new model layer will be created under your data layer in the "Layer List"
+   window.
 
-To edit model parameters or enter a better first estimate of the model parameters:
+To edit model parameters or enter a better first estimate of the model
+parameters:
 
-#. Select the model layer under ``Layers`` (left panel) that contains the desired
-   model.
+#. Select the model layer in the "Layer List" window that contains the
+   desired model.
 #. If desired, double-click on the model name to rename it. When you see a
    blinking cursor, enter its new name and press "Enter".
 #. Expand the model listing under ``Current Models`` on the right of the viewer.
@@ -135,7 +138,7 @@ accessed, and varied, by the fitter. Thus, the spline parameters are not fitted,
 they are just a convenient mechanism that enables user access to the parameter's
 values.
 
-The documentation for the spline model can be seen here:
+The documentation for the spline model can be found here:
 
 http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.UnivariateSpline.html
 
@@ -152,44 +155,45 @@ value.
     Model arithmetic is a work in progress.
 
 
-Saving and Exporting Models to File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Saving and exporting models to a file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Selecting a model layer under "Layers" will enable the
 :ref:`Save <doc_model_save>` (the "floppy disk" icon) and
 :ref:`doc_model_export` (the "out the door" icon) buttons under
-"Current Models" on the right of the viewer. Saving a model to a file will
-enable SpecViz to read back that model into a new model layer. Exporting a model
+"Current Models" on the right of the viewer. When a model is saved as a file on
+disk, it can later be read into SpecViz as described below. Exporting a model
 to a file wil create a Python script in a ``.py`` file. This file can be
 directly imported by Python in a command-line session.
 
-Click on either button to get a file dialog window. Type in a file name.
-If this file name does not end with the correct suffix, the suffix will
-automatically be appended. Click "Save", or just the Return/Enter key.
-The correct suffix for saved and exported files are ``.yaml`` and ``.py``,
-respectively.
+Click on either button to get a file dialog window. Provide a name for the model
+file, if this file name does not end with the
+correct suffix, the suffix will automatically be appended. Click "Save", or
+just press the Return/Enter key. The correct suffix for saved and exported files are
+``.yaml`` and ``.py``, respectively.
 
 
 .. _doc_model_save:
 
-Save and Load
+Save and load
 ^^^^^^^^^^^^^
 
 Saving the model to a file works in the same way as :ref:`doc_model_export`.
 The difference is that a saved model can be later read back into SpecViz via
-the "Load" button (the "folder" icon), also under "Current Models".
+the "Load" button (the "folder" icon), also under "Current Models", whereas the
+exported model cannot.
 
 For the "Load" button to be enabled, a data (spectrum) layer (not a model layer)
-must be selected under "Layers" listing. The selected ``.yaml`` model file will
-generate a model that will be attached to a new model layer associated under the
-selected data layer.
+must be selected in the "Layer List" window. The selected ``.yaml`` model file
+will generate a model that will be attached to a new model layer associated
+with the selected data layer.
 
-The file is writen using the YAML format. Being a plain text file with a
+The file is writen in the YAML format. Being a plain text file with a
 self-explanatory structure, it can be edited at will by the user, e.g., to add
 bounds, fixed flags, and ties to the model parameters. Note that these extra,
 user-defined attributes, won't be accessible from SpecViz's user interface.
-They will however, be accessible by the fitter when a fit is run on the
-model. They will also be written ou correctly, either when saving or exporting
+They will however, be used by the fitter when a fit is run on the
+model. They will also be written out correctly, either when saving or exporting
 the model.
 
 .. note::
@@ -205,8 +209,8 @@ Export
 
 This will save the model in the currently selected model layer to a file
 that can be directly imported by Python. The file is just a plain text
-file with the model expressed recorded as a Python expression. The model
-is associated to a variable named ``'model1'``.
+file with the model given as a Python expression. The model
+is associated a variable named ``'model1'``.
 
 The following example uses the ``'test3.py'`` file name, and a model comprised
 of a constant and a gaussian:
@@ -228,11 +232,11 @@ of a constant and a gaussian:
      -------------- ------------- ------------- -------------
      0.297160787184 2.25396100263 15117.1710847 948.493577186
 
-The file can be edited at will by the user, e.g., to add bounds, fixed flags,
+The file can be edited by the user, e.g., to add bounds, fixed flags,
 and ties to the model parameters.
 
-.. note::
+.. warning::
 
-    Security issues importing model this way into Python and usage of advanced
-    features like bounds and fixed flags are work in progress.
+    Security issues with importing model this way into Python and usage of
+    advanced features like bounds and fixed flags are work in progress.
 

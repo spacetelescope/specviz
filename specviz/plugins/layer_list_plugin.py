@@ -426,6 +426,7 @@ class UiLayerListPlugin:
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)
+        plugin.tree_widget_layer_list.setMinimumHeight(50)
         plugin.tree_widget_layer_list.setHeaderHidden(True)
 
         plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
