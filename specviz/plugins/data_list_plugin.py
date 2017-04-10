@@ -89,7 +89,7 @@ class DataListPlugin(Plugin):
 
         Returns
         -------
-        data : specviz.core.data.Spectrum1DRef
+        data : specutils.core.generic.Spectrum1DRef
             The `Data` object of the currently selected row.
         """
         data_item = self.list_widget_data_list.currentItem()
@@ -105,8 +105,8 @@ class DataListPlugin(Plugin):
     @DispatchHandle.register_listener("on_file_open")
     def open_file(self, file_name=None):
         """
-        Creates a `specviz.core.data.Data` object from the `Qt` open file
-        dialog, and adds it to the data item list in the UI.
+        Creates a :code:`specutils.core.generic.Spectrum1DRef` object from the `Qt`
+        open file dialog, and adds it to the data item list in the UI.
         """
         if file_name is None:
             file_name, selected_filter = self.open_file_dialog()
@@ -167,7 +167,7 @@ class DataListPlugin(Plugin):
 
         Parameters
         ----------
-        data : specviz.core.data.Spectrum1DRef
+        data : specutils.core.generic.Spectrum1DRef
             The `Data` object to add to the list widget.
         """
         new_item = QListWidgetItem(data.name, self.list_widget_data_list)
