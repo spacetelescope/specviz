@@ -1,5 +1,5 @@
 --- !CustomLoader
-name: SDSS Optical Fits
+name: SDSS-III/IV Optical FITS (spec file)
 extension: [fits]
 wcs:
   hdu: 0
