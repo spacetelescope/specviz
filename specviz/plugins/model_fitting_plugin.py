@@ -64,6 +64,11 @@ class ModelFittingPlugin(Plugin):
         self.tree_widget_current_models.itemChanged.connect(
             self._model_parameter_validation)
 
+        # When the model parameters in the model tree are locked/unlocked
+        self.tree_widget_current_models.itemClicked.connect(
+            self._fix_model_parameter
+        )
+
         # When the model list delete button is pressed
         self.button_remove_model.clicked.connect(
             lambda: self.remove_model_item())
@@ -75,6 +80,9 @@ class ModelFittingPlugin(Plugin):
         # Attach the fit button
         self.button_perform_fit.clicked.connect(
             self.fit_model_layer)
+
+        # Update model name when a user makes changes
+        self.tree_widget_current_models.itemChanged.connect(self._update_model_name)
 
         # ---
         # IO
@@ -111,8 +119,9 @@ class ModelFittingPlugin(Plugin):
         if isinstance(layer, Spectrum1DRefModelLayer):
             mask = self.active_window.get_roi_mask(layer._parent)
 
-            initialize(model, layer._parent.dispersion[mask].compressed(),
-                       layer._parent.data[mask].compressed())
+            # pass raw data arrays to avoid unit-based issues in initialization
+            initialize(model, layer._parent.dispersion[mask].compressed().value,
+                       layer._parent.data[mask].compressed().value)
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
             if layer.model is not None:
@@ -122,8 +131,8 @@ class ModelFittingPlugin(Plugin):
         else:
             mask = self.active_window.get_roi_mask(layer)
 
-            initialize(model, layer.dispersion[mask].compressed(),
-                       layer.data[mask].compressed())
+            initialize(model, layer.dispersion[mask].compressed().value,
+                       layer.data[mask].compressed().value)
 
             # If a layer is selected, but it's not a `ModelLayer`,
             # create a new `ModelLayer`
@@ -207,8 +216,12 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setText(0, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
-                new_para_item.setFlags(
-                    new_para_item.flags() | Qt.ItemIsEditable)
+                new_para_item.setFlags(new_para_item.flags() |
+                                       Qt.ItemIsEditable |
+                                       Qt.ItemIsUserCheckable)
+
+                new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
+                                                          else Qt.Unchecked)
 
             self.tree_widget_current_models.addTopLevelItem(new_item)
             self.tree_widget_current_models.expandItem(new_item)
@@ -371,7 +384,21 @@ class ModelFittingPlugin(Plugin):
         model = model_item.data(0, Qt.UserRole)
 
         if hasattr(model, '_name'):
-            model._name = model_item.text(0)
+            name = model_item.text(0)
+            all_names = self.tree_widget_current_models.findItems(
+                name, Qt.MatchExactly, 0)
+
+            if len(all_names) > 1:
+                name = "{}{}".format(name, len(all_names) - 1)
+
+            # Remove whitespace
+            name = name.replace(" ", "_")
+
+            model._name = name
+
+            self.tree_widget_current_models.blockSignals(True)
+            model_item.setText(0, name)
+            self.tree_widget_current_models.blockSignals(False)
 
         self._update_arithmetic_text(self.current_layer)
 
@@ -419,6 +446,15 @@ class ModelFittingPlugin(Plugin):
             model_item.setText(col, str(prev_val))
 
         dispatch.on_changed_model.emit(model_item=model_item)
+
+    def _fix_model_parameter(self, model_item, col=0):
+        parent = model_item.parent()
+        if parent is not None:
+            model = parent.data(0, Qt.UserRole)
+            param = getattr(model, model_item.text(0))
+            param.fixed = bool(model_item.checkState(col))
+            dispatch.on_changed_model.emit(model_item=model_item)
+
 
     def fit_model_layer(self):
         current_layer = self.current_layer
@@ -487,13 +523,15 @@ class ModelFittingPlugin(Plugin):
 
     def save_model(self):
         model, formula = self._prepare_model_for_save()
+        roi_bounds = self.active_window.get_roi_bounds()
 
         if model:
             global _model_directory
             yaml_model_io.saveModelToFile(self,
                                           model,
                                           _model_directory,
-                                          expression=formula)
+                                          expression=formula,
+                                          roi_bounds=roi_bounds)
 
     def export_model(self):
         model, formula = self._prepare_model_for_save()
@@ -519,7 +557,7 @@ class ModelFittingPlugin(Plugin):
             return
         fname = fname[0][0]
 
-        compound_model, formula, _model_directory = yaml_model_io.buildModelFromFile(
+        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(
             fname)
 
         # Put new model in its own sub-layer under current layer.
@@ -544,6 +582,9 @@ class ModelFittingPlugin(Plugin):
 
             dispatch.on_update_model.emit(layer=layer)
             dispatch.on_add_model.emit(layer=layer)
+
+        for bound in roi_bounds:
+            current_window.add_roi(bounds=bound)
 
 
 class UiModelFittingPlugin:
@@ -589,6 +630,7 @@ class UiModelFittingPlugin:
 
         plugin.tree_widget_current_models = QTreeWidget(
             plugin.group_box_current_models)
+        plugin.tree_widget_current_models.setStyleSheet(STYLE)
         # self.tree_widget_current_models.setMinimumSize(QSize(0, 150))
         plugin.tree_widget_current_models.setAllColumnsShowFocus(False)
         plugin.tree_widget_current_models.setHeaderHidden(False)
@@ -686,3 +728,29 @@ class UiModelFittingPlugin:
         plugin.layout_vertical.addWidget(plugin.group_box_add_model)
         plugin.layout_vertical.addWidget(plugin.group_box_current_models)
         plugin.layout_vertical.addWidget(plugin.group_box_fitting)
+
+STYLE = """
+QTreeWidget::indicator:unchecked {{
+    image: url({1});
+    }}
+QCheckBox::indicator:unchecked:hover {{
+    image: url({1});
+}}
+
+QCheckBox::indicator:unchecked:pressed {{
+    image: url({1});
+}}
+
+QTreeWidget::indicator:checked {{
+    image: url({0});
+}}
+
+QCheckBox::indicator:checked:hover {{
+    image: url({0});
+}}
+
+QCheckBox::indicator:checked:pressed {{
+    image: url({0});
+}}
+""".format(os.path.join(ICON_PATH, 'lock.svg'),
+           os.path.join(ICON_PATH, 'unlock.svg'))

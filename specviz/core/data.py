@@ -10,7 +10,7 @@ import re
 
 # THIRD-PARTY
 import numpy as np
-from astropy.units import Quantity, spectral_density, spectral
+from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
 from ..third_party.py_expression_eval import Parser
 from specutils.core.generic import Spectrum1DRef
 
@@ -21,6 +21,26 @@ __all__ = [
     'Spectrum1DRefModelLayer',
 ]
 
+def _make_quantity(data, unit):
+    """
+    Get a LogQuantity if the a LogUnit is used rather than a regular Quantity.
+
+    Parameters
+    ----------
+    data: numpy.ndarray
+        the data
+    unit: ~astropy.unit.Unit or ~astropy.unit.LogUnit
+        The data units
+
+    Returns
+    -------
+    ~astropy.unit.Quantity or ~astropy.unit.LogQuantity
+        depending on the unit type
+    """
+    if isinstance(unit, LogUnit):
+        return LogQuantity(data, unit=unit)
+    else:
+        return Quantity(data, unit=unit)
 
 class Spectrum1DRefLayer(Spectrum1DRef):
     """
@@ -141,7 +161,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         """Flux quantity with mask applied. Returns a masked array
         containing a Quantity object."""
         data = np.ma.array(
-            Quantity(self._data, unit=self.unit),
+            _make_quantity(self._data, unit=self.unit),
             mask=self.full_mask)
 
         return data
@@ -153,7 +173,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
-            Quantity(self._dispersion, unit=self.dispersion_unit),
+            _make_quantity(self._dispersion, unit=self.dispersion_unit),
             mask=self.full_mask)
 
         return dispersion
@@ -163,7 +183,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         """Flux uncertainty with mask applied. Returns a masked array
         containing a Quantity object."""
         uncertainty = np.ma.array(
-            Quantity(self._uncertainty.array, unit=self.unit),
+            _make_quantity(self._uncertainty.array, unit=self.unit),
             mask=self.full_mask)
 
         return uncertainty
@@ -172,7 +192,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
     def unmasked_data(self):
         """Flux quantity with no layer mask applied."""
         data = np.ma.array(
-            Quantity(self._data, unit=self.unit),
+            _make_quantity(self._data, unit=self.unit),
             mask=self.mask)
 
         return data
@@ -183,7 +203,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
-            Quantity(self._dispersion, unit=self.dispersion_unit),
+            _make_quantity(self._dispersion, unit=self.dispersion_unit),
             mask=self.mask)
 
         return dispersion
@@ -193,7 +213,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         """Flux uncertainty with mask applied. Returns a masked array
         containing a Quantity object."""
         uncertainty = np.ma.array(
-            Quantity(self._uncertainty.array, unit=self.unit),
+            _make_quantity(self._uncertainty.array, unit=self.unit),
             mask=self.mask)
 
         return uncertainty
@@ -332,7 +352,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         self._model = model
 
     @classmethod
-    def from_parent(cls, parent, model=None, layer_mask=None):
+    def from_parent(cls, parent, model=None, layer_mask=None, copy=False):
         """
         Create a duplicate child layer from a parent layer
 
@@ -347,12 +367,18 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         layer_mask: layer
             The layer defining the valid data mask.
 
+        copy : bool
+            Copy the model if one is provided.
+
         Returns
         -------
         child_layer:
             The new layer.
         """
         if model is not None:
+            if copy:
+                model = model.copy()
+
             data = model(parent.dispersion.data.value)
         else:
             data = np.zeros(parent.dispersion.shape)
@@ -397,7 +423,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         mask for cases wherein a slice of the spectrum is being used.
         """
         data = np.ma.array(
-            Quantity(self._data, unit=self.unit),
+            _make_quantity(self._data, unit=self.unit),
             mask=self.parent_mask)
 
         return data
@@ -411,7 +437,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         self._dispersion = super(Spectrum1DRefLayer, self).dispersion
 
         dispersion = np.ma.array(
-            Quantity(self._dispersion, unit=self.dispersion_unit),
+            _make_quantity(self._dispersion, unit=self.dispersion_unit),
             mask=self.parent_mask)
 
         return dispersion
@@ -424,7 +450,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         wherein a slice of the spectrum is being used.
         """
         uncertainty = np.ma.array(
-            Quantity(self._uncertainty.array, unit=self.unit),
+            _make_quantity(self._uncertainty.array, unit=self.unit),
             mask=self.parent_mask)
 
         return uncertainty

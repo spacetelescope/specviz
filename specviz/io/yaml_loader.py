@@ -243,14 +243,12 @@ class FitsYamlRegister(YamlRegister):
         # Read flux column
         data, unit, mask = _read_table_column(tab, self._reference.data['col'])
 
-        # Find flux unit, if not in column
-        if unit is None:
-            # Get flux unit from YAML
-            if self._reference.data.get('unit') is not None:
-                unit = u.Unit(self._reference.data['unit'])
-            # Get flux unit from header
-            else:
-                unit = _flux_unit_from_header(meta['header'])
+        # First try to get flux unit from YAML
+        if self._reference.data.get('unit') is not None:
+            unit = u.Unit(self._reference.data['unit'])
+        # Get flux unit from header if there wasn't one in the table column
+        elif unit is None:
+            unit = _flux_unit_from_header(meta['header'])
 
         # Get data mask, if not in column.
         # 0/False = good data (unlike Layers)
@@ -289,10 +287,6 @@ class FitsYamlRegister(YamlRegister):
             # Overrides wavelength unit from YAML
             if self._reference.dispersion.get('unit') is not None:
                 disp_unit = u.Unit(self._reference.dispersion['unit'])
-                if isinstance(disp_unit, u.LogUnit):
-                    dispersion_quantity = (dispersion * disp_unit).physical
-                    dispersion = dispersion_quantity.value
-                    disp_unit = dispersion_quantity.unit
 
             # If no unit, try to use WCS
             if disp_unit == u.dimensionless_unscaled:

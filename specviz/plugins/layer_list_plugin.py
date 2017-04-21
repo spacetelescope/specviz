@@ -9,12 +9,13 @@ from qtpy.QtCore import *
 from qtpy.QtGui import *
 from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..core.data import Spectrum1DRefLayer
+from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
 
 from ..ui.widgets.utils import ICON_PATH
 
 from astropy.units import spectral_density, spectral
 import logging
+import numpy as np
 
 
 class LayerListPlugin(Plugin):
@@ -23,6 +24,11 @@ class LayerListPlugin(Plugin):
     """
     name = "Layer List"
     location = "left"
+
+    def __init__(self, *args, **kwargs):
+        super(LayerListPlugin, self).__init__(*args, **kwargs)
+
+        self._copied_model = None
 
     def setup_ui(self):
         UiLayerListPlugin(self)
@@ -75,8 +81,64 @@ class LayerListPlugin(Plugin):
 
         # Allow changing of plot color
         self.button_change_color.clicked.connect(
-            self._change_plot_color
-        )
+            self._change_plot_color)
+
+        # Handle exporting layer objects
+        self.button_export.clicked.connect(
+            self._export_layer)
+
+        self.button_copy_model.clicked.connect(
+            self._copy_model)
+
+        self.button_apply_model.clicked.connect(
+            lambda: dispatch.on_paste_model.emit(layer=self.current_layer))
+
+    def _export_layer(self):
+        from astropy.io import registry as io_registry
+
+        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].data
+        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].data
+
+        write_mask = [True if x == 'Yes' else False for x in writable_formats]
+        all_formats = all_formats[np.array(write_mask)]
+        all_filters = ";;".join(list(all_formats))
+
+        data = self.current_layer
+
+        path, format = QFileDialog.getSaveFileName(filter=all_filters)
+
+        if path and format:
+            data.write(path, format=format)
+
+    def _copy_model(self):
+        layer_item = self.current_layer_item
+        layer = layer_item.data(0, Qt.UserRole)
+
+        if hasattr(layer, 'model'):
+            self._copied_model = layer
+
+        if self._copied_model is not None:
+            self.button_apply_model.setEnabled(True)
+        else:
+            self.button_apply_model.setEnabled(False)
+
+    @DispatchHandle.register_listener("on_paste_model")
+    def _paste_model(self, data=None, layer=None):
+        if self._copied_model is None:
+            logging.error("No copied model; unable to paste.")
+            return
+
+        if data is not None:
+            layer = Spectrum1DRefLayer.from_parent(data)
+
+        new_model_layer = self._copied_model.from_parent(parent=layer,
+                                                         model=self._copied_model.model,
+                                                         copy=True)
+
+        if data is not None:
+            dispatch.on_add_window.emit(layer=[layer, new_model_layer])
+        else:
+            dispatch.on_add_layer.emit(layer=new_model_layer)
 
     @property
     def current_layer(self):
@@ -303,11 +365,22 @@ class LayerListPlugin(Plugin):
             self.button_remove_layer.setEnabled(True)
             self.button_layer_slice.setEnabled(True)
             self.button_change_color.setEnabled(True)
+            self.button_export.setEnabled(True)
+
+            layer = layer_item.data(0, Qt.UserRole)
+
+            if hasattr(layer, 'model'):
+                self.button_copy_model.setEnabled(True)
+            else:
+                self.button_copy_model.setEnabled(False)
         else:
             self.button_layer_arithmetic.setEnabled(False)
             self.button_remove_layer.setEnabled(False)
             self.button_layer_slice.setEnabled(False)
             self.button_change_color.setEnabled(False)
+            self.button_export.setEnabled(True)
+
+            self.button_copy_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_activated_window")
     def update_layer_list(self, window):
@@ -353,6 +426,7 @@ class UiLayerListPlugin:
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)
+        plugin.tree_widget_layer_list.setMinimumHeight(50)
         plugin.tree_widget_layer_list.setHeaderHidden(True)
 
         plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
@@ -365,6 +439,20 @@ class UiLayerListPlugin:
         plugin.button_layer_arithmetic.setEnabled(False)
         plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
         plugin.button_layer_arithmetic.setMinimumSize(QSize(35, 35))
+
+        plugin.button_copy_model = QToolButton(plugin)
+        plugin.button_copy_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Copy-96.png")))
+        plugin.button_copy_model.setEnabled(False)
+        plugin.button_copy_model.setIconSize(QSize(25, 25))
+        plugin.button_copy_model.setMinimumSize(QSize(35, 35))
+
+        plugin.button_apply_model = QToolButton(plugin)
+        plugin.button_apply_model.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Paste-96.png")))
+        plugin.button_apply_model.setEnabled(False)
+        plugin.button_apply_model.setIconSize(QSize(25, 25))
+        plugin.button_apply_model.setMinimumSize(QSize(35, 35))
 
         plugin.button_remove_layer = QToolButton(plugin)
         plugin.button_remove_layer.setIcon(QIcon(os.path.join(
@@ -380,9 +468,20 @@ class UiLayerListPlugin:
         plugin.button_change_color.setMinimumSize(QSize(35, 35))
         plugin.button_change_color.setIconSize(QSize(25, 25))
 
+        plugin.button_export = QToolButton(plugin)
+        plugin.button_export.setIcon(QIcon(os.path.join(
+            ICON_PATH, "Export-48.png")))
+        plugin.button_export.setEnabled(False)
+        plugin.button_export.setMinimumSize(QSize(35, 35))
+        plugin.button_export.setIconSize(QSize(25, 25))
+        plugin.button_export.setToolTip("Export spectrum to a file.")
+
         plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
+        plugin.layout_horizontal.addWidget(plugin.button_copy_model)
+        plugin.layout_horizontal.addWidget(plugin.button_apply_model)
         plugin.layout_horizontal.addStretch()
         plugin.layout_horizontal.addWidget(plugin.button_change_color)
+        plugin.layout_horizontal.addWidget(plugin.button_export)
         plugin.layout_horizontal.addWidget(plugin.button_remove_layer)
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)

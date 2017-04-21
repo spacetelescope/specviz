@@ -9,10 +9,10 @@ from astropy.wcs import WCS
 from astropy.units import Unit
 from astropy.nddata import StdDevUncertainty
 
-from ...interfaces import data_loader
+from ...interfaces.decorators import data_loader, data_writer
 from ...core.data import Spectrum1DRef
 
-__all__ = ['fits_identify', 'simple_generic_loader']
+__all__ = ['fits_identify', 'simple_generic_loader', 'simple_generic_writer']
 
 
 def fits_identify(*args, **kwargs):
@@ -21,10 +21,36 @@ def fits_identify(*args, **kwargs):
     Registry.
     """
     return (isinstance(args[0], str) and
-            args[0].lower().split('.')[-1] in ['fits', 'fit'])
+            args[0].lower().split('.')[-1] in ['fits', 'fit', 'fits.gz'])
 
 
-@data_loader(label="Simple Fits", identifier=fits_identify)
+
+def simple_generic_writer(data, file_name, **kwargs):
+    """
+    Basic `Spectrum1DRef` FITS writer.
+    """
+    # Create fits columns
+    flux_col = fits.Column(name='FLUX', format='E', array=data.data.data.value)
+    disp_col = fits.Column(name='WAVE', format='E', array=data.dispersion.data.value)
+    uncert_col = fits.Column(name='UNCERT', format='E', array=data.uncertainty.array)
+    mask_col = fits.Column(name='MASK', format='L', array=data.mask)
+
+    cols = fits.ColDefs([flux_col, disp_col, uncert_col, mask_col])
+
+    # Create the bin table
+    tbhdu = fits.BinTableHDU.from_columns(cols)
+
+    # Create header
+    prihdu = fits.PrimaryHDU(header=data.meta.get('header')
+                                    or data.wcs.to_header())
+
+    # Compose
+    thdulist = fits.HDUList([prihdu, tbhdu])
+    thdulist.writeto("{}.fits".format(file_name), overwrite=True)
+
+
+@data_loader(label="Simple Fits", identifier=fits_identify, extensions=["fits", "fit"],
+             writer=simple_generic_writer)
 def simple_generic_loader(file_name, **kwargs):
     """
     Basic FITS file loader
@@ -43,7 +69,7 @@ def simple_generic_loader(file_name, **kwargs):
     data: Spectrum1DRef
         The data.
     """
-    name = os.path.basename(file_name.name.rstrip(os.sep)).rsplit('.', 1)[0]
+    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header

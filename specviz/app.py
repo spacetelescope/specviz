@@ -21,7 +21,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtCore import QTimer
 from .ui.viewer import Viewer
 from .ui.widgets.utils import ICON_PATH
-from .io import *
+from .core.comms import dispatch, DispatchHandle
 
 
 class App(object):
@@ -29,8 +29,17 @@ class App(object):
         super(App, self).__init__()
         self.viewer = Viewer()
 
-        # if len(argv) > 1:
-        #     self.controller.read_file(sys.argv[1])
+        if len(argv) > 1:
+            file_name = argv[1]
+
+            for arg in argv:
+                if '--format=' in arg:
+                    file_filter = arg.strip("--format=")
+                    break
+            else:
+                file_filter = "Auto (*)"
+
+            dispatch.on_file_read.emit(file_name, file_filter=file_filter)
 
 def setup():
     qapp = QApplication(sys.argv)
@@ -77,12 +86,22 @@ def sigint_handler(*args):
 
 
 def glue_setup():
+
     try:
-        from .external.glue.data_viewer import SpecVizViewer
-        from glue.config import qt_client
-        qt_client.add(SpecVizViewer)
+        import glue  # noqa
     except ImportError:
         logging.warning("Failed to import SpecVizViewer; Glue installation not found.")
+        return
+
+    # Check that the version of glue is recent enough
+    from distutils.version import LooseVersion
+    from glue import __version__
+    if LooseVersion(__version__) < LooseVersion('0.10.2'):
+        raise Exception("glue 0.10.2 or later is required for the specviz plugin")
+
+    from .external.glue.data_viewer import SpecVizViewer
+    from glue.config import qt_client
+    qt_client.add(SpecVizViewer)
 
 
 if __name__ == '__main__':

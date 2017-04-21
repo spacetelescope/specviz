@@ -32,7 +32,7 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Merge Vertical-48.png"),
             category=('Selections', 4),
             priority=1,
-            callback=dispatch.on_add_roi.emit,
+            callback=lambda: dispatch.on_add_roi.emit(),
             enabled=False)
 
         # Change top axis
@@ -91,14 +91,14 @@ class PlotToolsPlugin(Plugin):
 
     def _show_unit_change_dialog(self):
         # Populate the text fields with the current units
-        self._unit_change_dialog.line_edit_flux_unit.setText("{}".format(self.current_layer.unit))
-        self._unit_change_dialog.line_edit_disp_unit.setText("{}".format(self.current_layer.dispersion_unit))
+        self._unit_change_dialog.set_layer(self.current_layer)
 
         if self._unit_change_dialog.exec_():
             x_text = self._unit_change_dialog.disp_unit
             y_text = self._unit_change_dialog.flux_unit
 
-            x_unit = y_unit = None
+            x_unit = self.current_layer.dispersion_unit
+            y_unit = self.current_layer.unit
 
             try:
                 x_unit = Unit(x_text) if x_text else None

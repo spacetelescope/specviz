@@ -5,6 +5,10 @@ import os
 
 from ..ui.widgets.plugin import Plugin
 from ..ui.widgets.utils import ICON_PATH
+from ..ui.widgets.dialogs import SmoothingDialog
+from ..core.comms import dispatch, DispatchHandle
+
+from ..analysis.filters import smooth
 
 
 class ToolTrayPlugin(Plugin):
@@ -18,6 +22,8 @@ class ToolTrayPlugin(Plugin):
     _all_categories = {}
 
     def setup_ui(self):
+        self._smoothing_kernel_dialog = SmoothingDialog()
+
         # ---
         # Selections setup
         self.add_tool_bar_actions(
@@ -50,12 +56,13 @@ class ToolTrayPlugin(Plugin):
             category='Interactions',
             enabled=False)
 
-        self.add_tool_bar_actions(
-            name="Detrend",
-            description='Detrend tool',
+        self.button_smooth = self.add_tool_bar_actions(
+            name="Smooth",
+            description='Smooth tool',
             icon_path=os.path.join(ICON_PATH, "Line Chart-48.png"),
             category='Interactions',
-            enabled=False)
+            enabled=False,
+            callback=self._smoothing_kernel_dialog.exec_)
 
         # ---
         # Setup transformations buttons
@@ -76,4 +83,19 @@ class ToolTrayPlugin(Plugin):
             enabled=False)
 
     def setup_connections(self):
-        pass
+        self._smoothing_kernel_dialog.accepted.connect(
+            self._perform_smooth)
+
+    def _perform_smooth(self):
+        new_data = smooth(self.current_layer,
+                          self._smoothing_kernel_dialog.kernel,
+                          *self._smoothing_kernel_dialog.args)
+
+        dispatch.on_add_layer.emit(layer=new_data)
+
+    @DispatchHandle.register_listener("on_activated_window")
+    def toggle_enabled(self, window):
+        if window:
+            self.button_smooth.setEnabled(True)
+        else:
+            self.button_smooth.setEnabled(False)
