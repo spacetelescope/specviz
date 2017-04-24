@@ -2,7 +2,7 @@ pyyaml
 numpy
 scipy
 astropy
-sphinx>=1.4.3
+sphinx==1.4.8
 sphinx_automodapi 
 sphinx_rtd_theme
 specutils
