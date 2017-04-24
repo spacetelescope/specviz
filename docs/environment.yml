@@ -9,7 +9,7 @@ dependencies:
   - astropy
   - specutils
   - pyqtgraph
-  - sphinx
+  - sphinx==1.4.8
   - pip:
     - sphinx_automodapi
     - sphinx_rtd_theme
