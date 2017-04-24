@@ -122,22 +122,7 @@ setup(name=PACKAGENAME,
       version=VERSION,
       description=DESCRIPTION,
       scripts=scripts,
-      install_requires=[
-          'astropy',
-          'numpy',
-          'cython',
-          'specutils',
-          'numpy>=1.10',
-          'pyyaml',
-          'pyqtgraph',
-          'scipy',
-          'qtpy'
-      ],
-      # extras_require={
-      #     ':python_version >= "3.5"': [
-      #         'pyqt5',
-      #     ],
-      # },
+      install_requires=metadata.get('install_requires', 'astropy').strip().split(),
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,

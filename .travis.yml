@@ -5,7 +5,7 @@ os:
   - osx
 
 # Setting sudo to false opts in to Travis-CI container-based builds.
-sudo: true
+sudo: false
 
 # The apt packages below are needed for sphinx builds. A full list of packages
 # that can be included can be found here:
@@ -26,7 +26,7 @@ env:
         # to repeat them for all configurations.
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='sphinx_automodapi sphinx_rtd_theme'
+        - PIP_DEPENDENCIES='sphinx==1.4.8 sphinx_automodapi sphinx_rtd_theme'
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
@@ -57,7 +57,6 @@ matrix:
         - env: PYTHON_VERSION=3.5 ASTROPY_VERSION=development
 
 before_install:
-
     # If there are matplotlib tests, comment these out to
     # Make sure that interactive matplotlib backends work
     # - export DISPLAY=:99.0
@@ -95,4 +94,4 @@ after_success:
     # If coveralls.io is set up for this package, uncomment the line
     # below and replace "packagename" with the name of your package.
     # The coveragerc file may be customized as needed for your package.
-# - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls --rcfile='packagename/tests/coveragerc'; fi
+    # - if [[ $SETUP_CMD == 'test --coverage' ]]; then coveralls --rcfile='packagename/tests/coveragerc'; fi

@@ -19,7 +19,7 @@ To open a file:
    "Open".
 #. The file will be listed in the "Data List" window (top half of left panel).
 #. To remove the file from "Data", click on "trash can" icon at lower right
-corner of the "Data List" window.
+   corner of the "Data List" window.
 
 To plot the spectrum that is now loaded, **click on the plot icon**
 (lower left corner of the Data window). It will be plotted in the central
@@ -51,7 +51,7 @@ To select a region of interest (ROI):
    rectangle will appear on plot display.
 #. Click and drag the edges to adjust wavelength coverage. As the region
    changes, basic statistics in the "Statistics" window on bottom left of the viewer
-    will also update accordingly.
+   will also update accordingly.
 #. Click inside the rectangle and drag to reposition it without resizing.
 #. Click the left-most "knife" button under "Layers" (bottom left of the left
    panel) to create a new layer slice from the ROI.

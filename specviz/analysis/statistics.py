@@ -17,7 +17,7 @@ def extract(data, x_range):
 
     Parameters
     ----------
-    data : `~specviz.core.data.Data`
+    data : specutils.core.generic.Spectrum1DRef
         Contains the spectrum to be extracted.
 
     x_range : tuple
@@ -25,7 +25,7 @@ def extract(data, x_range):
 
     Returns
     -------
-    result : `~specviz.core.data.Data`
+    result : specutils.core.generic.Spectrum1DRef
         Spectrum data with extracted region.
 
     Examples
@@ -50,11 +50,11 @@ def extract(data, x_range):
 
 def stats(data, mask=None):
     """Compute basic statistics for a spectral region
-    contained in a `~specviz.core.data.Data` instance.
+    contained in a :code:`specutils.core.generic.Spectrum1DRef` instance.
 
     Parameters
     ----------
-    data : `~specviz.core.data.Data`
+    data : specutils.core.generic.Spectrum1DRef
         Typically this is returned by the :func:`extract` function.
 
     Returns
@@ -85,8 +85,8 @@ def stats(data, mask=None):
 
 def eq_width(cont1_stats, cont2_stats, line, mask=None):
     """Compute an equivalent width given stats for two continuum
-    regions, and a `~specviz.core.data.Data` instance with the extracted
-    spectral line region.
+    regions, and a :code:`specutils.core.generic.Spectrum1DRef` instance with the
+    extracted spectral line region.
 
     This uses for now a very simple continuum subtraction method; i.e.,
     it just subtracts a constant from the line spectrum, where the
@@ -150,7 +150,7 @@ def fwzi(cont1_stats, cont2_stats, line):
     cont1_stats, cont2_stats : dict
         This is returned by the :func:`stats` function.
 
-    line : `~specviz.core.data.Data`
+    line : specutils.core.generic.Spectrum1DRef
         This is returned by the :func:`extract` function.
 
     Returns
@@ -213,7 +213,7 @@ def centroid(line, avg_cont, mask=None):
 
     Parameters
     ----------
-    data : `~specviz.core.data.Data`
+    data : specutils.core.generic.Spectrum1DRef
         Extracted spectrum data.
 
     Returns

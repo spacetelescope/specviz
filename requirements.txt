@@ -1,9 +1,8 @@
 pyyaml
-cython
 numpy
 scipy
 astropy
-sphinx
+sphinx>=1.4.3
 sphinx_automodapi 
 sphinx_rtd_theme
 specutils
