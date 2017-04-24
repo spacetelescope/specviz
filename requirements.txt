@@ -1,5 +1,4 @@
 pyyaml
-cython
 numpy
 scipy
 astropy
