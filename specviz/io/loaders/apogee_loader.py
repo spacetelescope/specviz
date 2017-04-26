@@ -15,8 +15,8 @@ from astropy.nddata import StdDevUncertainty
 
 import numpy as np
 
-from specviz.interfaces import data_loader
-from specviz.core.data import Spectrum1DRef
+from ...interfaces import data_loader
+from ...core.data import Spectrum1DRef
 
 __all__ = ['apVisit_identify', 'apStar_identify', 'aspcapStar_identify',
            'apVisit_loader', 'apStar_loader', 'aspcapStar_loader']
