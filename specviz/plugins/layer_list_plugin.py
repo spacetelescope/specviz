@@ -7,6 +7,7 @@ from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
+from qtpy import compat
 from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.dialogs import LayerArithmeticDialog
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
@@ -105,7 +106,7 @@ class LayerListPlugin(Plugin):
 
         data = self.current_layer
 
-        path, format = QFileDialog.getSaveFileName(filter=all_filters)
+        path, format = compat.getsavefilename(filters=all_filters)
 
         if path and format:
             data.write(path, format=format)
