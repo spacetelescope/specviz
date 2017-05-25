@@ -7,6 +7,7 @@ from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
+from qtpy import compat
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
@@ -545,11 +546,10 @@ class ModelFittingPlugin(Plugin):
 
     def load_model(self):
         global _model_directory
-        fname = QFileDialog.getOpenFileNames(
-            self,
-            'Read model file',
-            _model_directory,
-            yaml_model_io.MODEL_FILE_FILTER)
+        fname = compat.getopenfilenames(parent=self,
+                                        caption='Read model file',
+                                        basedir=_model_directory,
+                                        filters=yaml_model_io.MODEL_FILE_FILTER)
 
         # File dialog returns a tuple with a list of file names.
         # We get the first name from the first tuple element.
