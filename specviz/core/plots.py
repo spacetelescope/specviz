@@ -75,6 +75,7 @@ class LinePlot(object):
                            'error_pen_off': pg.mkPen(None)}
         self.set_plot_visibility(True)
         self.set_error_visibility(True)
+        self.set_mask_visibility(True)
 
         if self._plot is not None:
             self.change_units(self._layer.dispersion_unit,
@@ -189,6 +190,23 @@ class LinePlot(object):
             else:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
 
+    def set_mask_visibility(self, show=None):
+        """
+        Show masked data
+        
+        Parameters
+        ----------
+        show: bool
+            If True, display data points with mask value True.
+        """
+        if show is not None:
+            if show:
+                self.show_masked_data = True
+            else:
+                self.show_masked_data = False
+
+        self.update()
+
     @property
     def plot(self):
         return self._plot
@@ -277,11 +295,20 @@ class LinePlot(object):
             disp = self.layer.unmasked_dispersion.compressed().value
             data = self.layer.unmasked_data.compressed().value
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
+        elif self.show_masked_data:
+            disp = self.layer.dispersion.data.value
+            data = self.layer.data.data.value
+            uncert = self.layer.raw_uncertainty.data.value
         else:
             disp = self.layer.dispersion.compressed().value
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
+        # if hasattr(self.layer, 'mask'):
+        #     if self.layer.mask is not None and self.show_masked_data:
+        #         disp = disp[~self.layer.mask]
+        #         data = data[~self.layer.mask]
+        #         uncert = data[~self.layer.mask]
         #-- Changes specific for scatter plot rendering
         symbol = 'o' if self.mode == 'scatter' else None
         pen = None if self.mode == 'scatter' else self.pen

@@ -122,6 +122,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._is_selected = True
         self._layer_items = []
         self.disable_errors = False
+        self.disable_mask = False
 
         DispatchHandle.setup(self)
 
@@ -278,12 +279,13 @@ class PlotSubWindow(UiPlotSubWindow):
             bottom="Wavelength [{}]".format(
                 x_label or str(self._plots[0].layer.dispersion_unit)))
 
-    def set_visibility(self, layer, show_data, show_uncert, inactive=None):
+    def set_visibility(self, layer, show_data, show_uncert, show_masked, inactive=None):
         plot = self.get_plot(layer)
 
         if plot is not None:
             plot.set_plot_visibility(show_data, inactive=inactive)
             plot.set_error_visibility(show_uncert)
+            plot.set_mask_visibility(show_masked)
 
     def set_plot_style(self, layer, mode=None, line_width=None):
         plot = self.get_plot(layer)
@@ -363,11 +365,11 @@ class PlotSubWindow(UiPlotSubWindow):
         for plot in self._plots:
             if plot.checked:
                 if plot.layer == layer:
-                    self.set_visibility(plot.layer, True, not self.disable_errors)
+                    self.set_visibility(plot.layer, True, not self.disable_errors, not self.disable_mask)
                 else:
-                    self.set_visibility(plot.layer, True, False)
+                    self.set_visibility(plot.layer, True, False, False)
             else:
-                self.set_visibility(plot.layer, False, False)
+                self.set_visibility(plot.layer, False, False, False)
 
 
 #--------  Line lists and line labels handling.
