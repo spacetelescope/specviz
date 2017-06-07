@@ -87,7 +87,6 @@ class MainWindow(UiMainWindow):
 
         for l in layer:
             dispatch.on_add_layer.emit(layer=l, window=window)
-            # window.add_plot(layer=l)
             window.setWindowTitle(l.name)
 
         if window is not None and is_new_window:

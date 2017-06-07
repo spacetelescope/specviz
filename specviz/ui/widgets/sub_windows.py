@@ -320,8 +320,6 @@ class PlotSubWindow(UiPlotSubWindow):
     @DispatchHandle.register_listener("on_add_layer")
     def add_plot(self, layer, window=None):
         if window is not None and window != self:
-            logging.warning("Attempted to add container to plot, but sub "
-                            "windows do not match.")
             return
 
         # Make sure the new plot layer has the same sampling as the current
@@ -340,10 +338,15 @@ class PlotSubWindow(UiPlotSubWindow):
         new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
 
         if len(self._plots) == 0:
-            self.change_units(new_plot.layer.dispersion_unit,
-                              new_plot.layer.unit)
+            is_convert_success = self.change_units(
+                new_plot.layer.dispersion_unit, new_plot.layer.unit)
         else:
-            new_plot.change_units(*self._plot_units)
+            is_convert_success = new_plot.change_units(*self._plot_units)
+
+            if not is_convert_success[0] or not is_convert_success[1]:
+                logging.error("Unable to convert units of '{}' to current plot"
+                              " units.".format(new_plot.layer.name))
+                return
 
         if new_plot.error is not None:
             self._plot_item.addItem(new_plot.error)

@@ -136,20 +136,26 @@ class LinePlot(object):
         z: `~astropy.units`
             The new units for the multi-spectral dimension.
         """
+        is_convert_success = [True, True, True]
+
         if x is None or not self._layer.dispersion_unit.is_equivalent(
                 x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units. {} to {"
-                          "}".format(self._layer.dispersion_unit, x))
+            logging.error("Failed to convert x-axis plot units. {} to"
+                          " {}".format(self._layer.dispersion_unit, x))
             x = None
+            is_convert_success[0] = False
 
         if y is None or not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.layer.dispersion)):
             logging.error("Failed to convert y-axis plot units.")
             y = self._layer.unit
+            is_convert_success[1] = False
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
         self.update()
+
+        return is_convert_success
 
     def set_plot_visibility(self, show=None, inactive=None):
         """
