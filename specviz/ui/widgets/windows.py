@@ -75,20 +75,22 @@ class MainWindow(UiMainWindow):
         dispatch.on_activated_window.emit(
             window=window.widget() if window is not None else None)
 
-    @DispatchHandle.register_listener("on_add_window")
+    @DispatchHandle.register_listener("on_add_window", "on_add_to_window")
     def add_sub_window(self, data=None, layer=None, window=None, *args,
                        **kwargs):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
+        is_new_window = window is None
         window = window or PlotSubWindow()
 
         if not isinstance(layer, list):
             layer = [layer]
 
         for l in layer:
-            window.add_plot(layer=l)
+            dispatch.on_add_layer.emit(layer=l, window=window)
+            # window.add_plot(layer=l)
             window.setWindowTitle(l.name)
 
-        if window is not None:
+        if window is not None and is_new_window:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
             window.show()
             self._set_activated_window(mdi_sub_window)

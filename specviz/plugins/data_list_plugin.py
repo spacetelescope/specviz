@@ -4,9 +4,12 @@ Plugin to manage the loaded data
 import os
 
 from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
-from qtpy.QtGui import *
+from qtpy.QtWidgets import (QWidget, QFileDialog, QToolButton, QHBoxLayout,
+                            QSizePolicy, QListWidget, QAbstractItemView,
+                            QListWidgetItem)
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QIcon
+from qtpy.uic import loadUi
 from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
@@ -57,7 +60,8 @@ class DataListPlugin(Plugin):
         # Connect the add to current plot window button
         self.button_add_to_sub_window.clicked.connect(
             lambda: dispatch.on_add_to_window.emit(
-                data=self.current_data))
+                data=self.current_data,
+                window=self.active_window))
 
         # When the data list delete button is pressed
         self.button_remove_data.clicked.connect(
@@ -215,17 +219,15 @@ class DataListPlugin(Plugin):
 
     def toggle_buttons(self):
         if self.current_data_item is not None:
-            self.label_unopened.hide()
             self.button_remove_data.setEnabled(True)
             self.button_create_sub_window.setEnabled(True)
             self.button_apply_model.setEnabled(True)
-            # self.button_add_to_sub_window.setEnabled(True)
+            self.button_add_to_sub_window.setEnabled(True)
         else:
-            self.label_unopened.show()
             self.button_remove_data.setEnabled(False)
             self.button_create_sub_window.setEnabled(False)
             self.button_apply_model.setEnabled(False)
-            # self.button_add_to_sub_window.setEnabled(False)
+            self.button_add_to_sub_window.setEnabled(False)
 
 
 class UiDataListPlugin:
@@ -235,29 +237,13 @@ class UiDataListPlugin:
         # List widget for the data sets
         plugin.list_widget_data_list = QListWidget(plugin)
         plugin.list_widget_data_list.setMinimumHeight(50)
-        plugin.list_widget_data_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Ignored)
+        plugin.list_widget_data_list.setSizePolicy(QSizePolicy.Preferred,
+                                                   QSizePolicy.Ignored)
 
         # Allow for multiple selections
         plugin.list_widget_data_list.setSelectionMode(
             QAbstractItemView.ExtendedSelection)
 
-        # Label box to show when no data set has been loaded
-        plugin.label_unopened = QLabel(plugin)
-        plugin.label_unopened.setAlignment(Qt.AlignCenter | Qt.AlignHCenter)
-        plugin.label_unopened.setText("Click the folder icon to open a data set")
-        plugin.label_unopened.setWordWrap(True)
-        plugin.label_unopened.setStyleSheet("""
-        QLabel {
-            color: #8a6d3b;
-            background-color: #fcf8e3;
-            padding: 10px;
-            border: 1px solid #faebcc;
-            border-radius: 4px;
-        }""")
-        plugin.label_unopened.setSizePolicy(QSizePolicy.Preferred,
-                                            QSizePolicy.Fixed)
-
-        plugin.layout_vertical.addWidget(plugin.label_unopened)
         plugin.layout_vertical.addWidget(plugin.list_widget_data_list)
 
         plugin.layout_horizontal = QHBoxLayout()
@@ -297,3 +283,11 @@ class UiDataListPlugin:
         plugin.layout_horizontal.addWidget(plugin.button_remove_data)
 
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
+
+
+class UiInterpolationDialog(QWidget):
+    def __init__(self, *args, **kwargs):
+        super(UiInterpolationDialog, self).__init__(*args, **kwargs)
+        # Load the interpolation warning dialog
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "qt",
+                            "dialog_resample_warning.ui"), self)

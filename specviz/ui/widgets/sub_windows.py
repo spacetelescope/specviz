@@ -324,6 +324,19 @@ class PlotSubWindow(UiPlotSubWindow):
                             "windows do not match.")
             return
 
+        # Make sure the new plot layer has the same sampling as the current
+        # layers
+        def comp_disp(plot, layer):
+            lstep = np.mean(layer.dispersion[1:] - layer.dispersion[:-1])
+            pstep = np.mean(plot.layer.dispersion[1:] - plot.layer.dispersion[:-1])
+
+            return lstep == pstep
+
+        if not all(filter(lambda p: comp_disp(p, layer=layer), self._plots)):
+            logging.error("New layer {} does not have the same dispersion as"
+                          "current plot data.".format(layer.name))
+            return
+
         new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
 
         if len(self._plots) == 0:
