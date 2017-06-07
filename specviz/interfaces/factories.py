@@ -109,7 +109,6 @@ class FitterFactory(Factory):
     all_fitters = {
         'Levenberg-Marquardt': fitting.LevMarLSQFitter,
         'Simplex': fitting.SimplexLSQFitter,
-        'SLSQP': fitting.SLSQPLSQFitter,
     }
 
     @classmethod
