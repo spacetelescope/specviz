@@ -66,6 +66,10 @@ class StatisticsPlugin(Plugin):
             stat_dict['median']))
         self.line_edit_std_dev.setText("{0:4.4g}".format(
             stat_dict['stddev']))
+        self.line_edit_rms.setText("{0:4.4g}".format(
+            stat_dict['rms']))
+        self.line_edit_snr.setText("{0:4.4g}".format(
+            stat_dict['snr']))
         self.line_edit_total.setText("{0:4.4g}".format(
             stat_dict['total']))
         self.line_edit_data_point_count.setText("{0:4.4g}".format(
@@ -221,6 +225,30 @@ class UiStatisticsPlugin:
         plugin.layout_form_tab_basic.setWidget(2, QFormLayout.FieldRole,
                                                plugin.line_edit_std_dev)
 
+        plugin.label_rms = QLabel(plugin.tab_basic)
+        plugin.label_rms.setText("RMS")
+
+        plugin.line_edit_rms = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_rms.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_rms.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
+                                               plugin.label_rms)
+        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.FieldRole,
+                                               plugin.line_edit_rms)
+
+        plugin.label_snr = QLabel(plugin.tab_basic)
+        plugin.label_snr.setText("SNR")
+
+        plugin.line_edit_snr = QLineEdit(plugin.tab_basic)
+        plugin.line_edit_snr.setStyleSheet(
+            LINE_EDIT_CSS)
+        plugin.line_edit_snr.setReadOnly(True)
+        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
+                                               plugin.label_snr)
+        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
+                                               plugin.line_edit_snr)
+
         plugin.label_total = QLabel(plugin.tab_basic)
         plugin.label_total.setText("Total")
 
@@ -228,9 +256,9 @@ class UiStatisticsPlugin:
         plugin.line_edit_total.setStyleSheet(
             LINE_EDIT_CSS)
         plugin.line_edit_total.setReadOnly(True)
-        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.LabelRole,
+        plugin.layout_form_tab_basic.setWidget(5, QFormLayout.LabelRole,
                                                plugin.label_total)
-        plugin.layout_form_tab_basic.setWidget(3, QFormLayout.FieldRole,
+        plugin.layout_form_tab_basic.setWidget(5, QFormLayout.FieldRole,
                                                plugin.line_edit_total)
 
         plugin.label_data_point_count = QLabel(plugin.tab_basic)
@@ -240,9 +268,9 @@ class UiStatisticsPlugin:
         plugin.line_edit_data_point_count.setStyleSheet(
             LINE_EDIT_CSS)
         plugin.line_edit_data_point_count.setReadOnly(True)
-        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.LabelRole,
+        plugin.layout_form_tab_basic.setWidget(6, QFormLayout.LabelRole,
                                                plugin.label_data_point_count)
-        plugin.layout_form_tab_basic.setWidget(4, QFormLayout.FieldRole,
+        plugin.layout_form_tab_basic.setWidget(6, QFormLayout.FieldRole,
                                                plugin.line_edit_data_point_count)
 
         # Measured tab setup
