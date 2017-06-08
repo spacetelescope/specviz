@@ -338,7 +338,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
 
-        if not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
+        if True or not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
             logging.error("New layer {} does not have the same dispersion as"
                           "current plot data.".format(layer.name))
 
