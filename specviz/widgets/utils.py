@@ -2,7 +2,8 @@ import os
 from contextlib import contextmanager
 
 QWIDGETSIZE_MAX = ((1 << 24) - 1)
-ICON_PATH = os.path.abspath(os.path.join(__file__, '..', '..', 'icons'))
+ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                         '..', 'data', 'qt', 'icons'))
 
 
 @contextmanager
