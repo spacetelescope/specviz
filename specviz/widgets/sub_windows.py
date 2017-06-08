@@ -11,8 +11,9 @@ from itertools import cycle
 
 from astropy.units import Quantity
 
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
+from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
+                            QLineEdit, QPushButton, QWidget)
+from qtpy.QtCore import QEvent, Qt
 
 from specviz.core.comms import dispatch, DispatchHandle
 from specviz.core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
@@ -20,6 +21,8 @@ from specviz.core.plots import LinePlot
 from specviz.core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
+from .dialogs import ResampleDialog
+from ...analysis.utils import resample
 
 from .linelists_window import LineListsWindow
 
@@ -326,14 +329,36 @@ class PlotSubWindow(UiPlotSubWindow):
         # layers
         def comp_disp(plot, layer):
             lstep = np.mean(layer.dispersion[1:] - layer.dispersion[:-1])
-            pstep = np.mean(plot.layer.dispersion[1:] - plot.layer.dispersion[:-1])
+            pstep = np.mean(plot.layer.dispersion[1:] -
+                            plot.layer.dispersion[:-1])
+
+            print(lstep, pstep, lstep == pstep)
 
             return lstep == pstep
 
-        if not all(filter(lambda p: comp_disp(p, layer=layer), self._plots)):
+        print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
+
+        if not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
             logging.error("New layer {} does not have the same dispersion as"
                           "current plot data.".format(layer.name))
-            return
+
+            resample_dialog = ResampleDialog()
+
+            if resample_dialog.exec_():
+                in_data = np.ones(layer.dispersion.data.value.shape,
+                                  [('wave', float), ('data', float),
+                                   ('err', float)])
+
+                in_data['wave'] = layer.dispersion.data.value
+                in_data['data'] = layer.data.data.value
+                in_data['err'] = layer.uncertainty.data.value
+                wave_out = self._plots[0].layer.dispersion.data.value
+                out_data = resample(in_data, 'wave', wave_out, ('flux', 'err'))
+
+                new_data = layer.copy(data=out_data['data'],
+                                      dispersion=wave_out,
+                                      uncertainty=out_data['err'])
+                layer = layer.__class__.from_parent(new_data)
 
         new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
 
@@ -346,6 +371,8 @@ class PlotSubWindow(UiPlotSubWindow):
             if not is_convert_success[0] or not is_convert_success[1]:
                 logging.error("Unable to convert units of '{}' to current plot"
                               " units.".format(new_plot.layer.name))
+
+                dispatch.on_remove_layer.emit(layer=layer)
                 return
 
         if new_plot.error is not None:

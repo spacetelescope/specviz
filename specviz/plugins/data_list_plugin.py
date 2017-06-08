@@ -280,9 +280,4 @@ class UiDataListPlugin:
         plugin.layout_vertical.addLayout(plugin.layout_horizontal)
 
 
-class UiInterpolationDialog(QWidget):
-    def __init__(self, *args, **kwargs):
-        super(UiInterpolationDialog, self).__init__(*args, **kwargs)
-        # Load the interpolation warning dialog
-        loadUi(os.path.join(os.path.dirname(__file__), "ui", "qt",
-                            "dialog_resample_warning.ui"), self)
+

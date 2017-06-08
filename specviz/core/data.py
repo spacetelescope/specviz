@@ -246,8 +246,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         data_unit: `~astropy.units`
             The flux units.
         """
-        if self.dispersion_unit.is_equivalent(disp_unit,
-                                              equivalencies=spectral()):
+        if disp_unit is not None and \
+                self.dispersion_unit.is_equivalent(disp_unit,
+                                                   equivalencies=spectral()):
             self._dispersion = self.dispersion.data.to(
                 disp_unit, equivalencies=spectral()).value
 
@@ -256,9 +257,10 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         else:
             logging.warning("Units are not compatible.")
 
-        if self.unit.is_equivalent(data_unit,
-                                   equivalencies=spectral_density(
-                                       self.dispersion.data)):
+        if data_unit is not None and \
+                self.unit.is_equivalent(data_unit,
+                                        equivalencies=spectral_density(
+                                            self.dispersion.data)):
             self._data = self.data.data.to(
                 data_unit, equivalencies=spectral_density(
                     self.dispersion.data)).value

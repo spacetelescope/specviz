@@ -4,11 +4,13 @@ UI Dialog definitions
 from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *
+from qtpy.uic import loadUi
 
 from astropy.units import Unit
 from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
 
 import logging
+import os
 
 
 class UiTopAxisDialog(QDialog):
@@ -411,3 +413,20 @@ class SmoothingDialog(UiSmoothingDialog):
     @property
     def args(self):
         return self._args
+
+
+class ResampleDialog(QDialog):
+    def __init__(self, *args, **kwargs):
+        super(ResampleDialog, self).__init__(*args, **kwargs)
+        # Load the interpolation warning dialog
+        loadUi(os.path.join(os.path.dirname(__file__), "..", "qt",
+                            "dialog_resample_warning.ui"), self)
+
+    def accept(self):
+        self._method_index = self.method_combo_box.currentIndex()
+
+        super(ResampleDialog, self).accept()
+
+    @property
+    def method_index(self):
+        return self._method_index
