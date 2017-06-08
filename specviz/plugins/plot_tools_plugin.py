@@ -9,8 +9,8 @@ from astropy.units import Unit
 
 from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
-from ..ui.widgets.plugin import Plugin
+from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
+from ..widgets.plugin import Plugin
 
 
 class PlotToolsPlugin(Plugin):

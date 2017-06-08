@@ -14,8 +14,8 @@ from qtpy.QtWidgets import *
 from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
-from ..ui.widgets.dialogs import LayerArithmeticDialog
-from ..ui.widgets.plugin import Plugin
+from ..widgets.dialogs import LayerArithmeticDialog
+from ..widgets.plugin import Plugin
 
 
 class LayerListPlugin(Plugin):
@@ -428,6 +428,8 @@ class UiLayerListPlugin:
         plugin.tree_widget_layer_list = QTreeWidget(plugin)
         plugin.tree_widget_layer_list.setMinimumHeight(50)
         plugin.tree_widget_layer_list.setHeaderHidden(True)
+        plugin.tree_widget_layer_list.setSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Ignored)
 
         plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
 

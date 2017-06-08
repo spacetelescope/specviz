@@ -6,8 +6,8 @@ import os
 from specviz.widgets.utils import ICON_PATH
 from ..analysis.filters import smooth
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.dialogs import SmoothingDialog
-from ..ui.widgets.plugin import Plugin
+from ..widgets.dialogs import SmoothingDialog
+from ..widgets.plugin import Plugin
 
 
 class ToolTrayPlugin(Plugin):

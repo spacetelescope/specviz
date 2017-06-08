@@ -13,7 +13,7 @@ from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
-from ..ui.widgets.plugin import Plugin
+from ..widgets.plugin import Plugin
 
 
 class DataListPlugin(Plugin):

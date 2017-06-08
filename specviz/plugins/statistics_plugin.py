@@ -5,11 +5,12 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy.QtCore import *
-from qtpy.QtGui import *
-from qtpy.QtWidgets import *
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import (QLabel, QLineEdit, QWidget, QTabWidget,
+                            QFormLayout, QSizePolicy, QVBoxLayout)
 
-from specviz.widgets import Plugin
+from ..widgets.plugin import Plugin
 from ..analysis import statistics
 from ..core.comms import DispatchHandle
 

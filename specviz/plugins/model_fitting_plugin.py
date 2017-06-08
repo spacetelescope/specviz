@@ -17,7 +17,7 @@ from ..core.threads import FitModelThread
 from ..interfaces.factories import ModelFactory, FitterFactory
 from ..interfaces.initializers import initialize
 from ..interfaces.model_io import yaml_model_io, py_model_io
-from ..ui.widgets.plugin import Plugin
+from ..widgets.plugin import Plugin
 
 # To memorize last visited directory.
 _model_directory = os.environ["HOME"]
