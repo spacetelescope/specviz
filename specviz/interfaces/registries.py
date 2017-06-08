@@ -150,10 +150,10 @@ class LoaderRegistry(Registry):
 
         """
         cur_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                'data', 'yaml_loaders'))
+                                                '..', 'data', 'yaml_loaders'))
         usr_path = os.path.abspath(os.path.join(os.path.expanduser('~'),
                                                 '.specviz'))
-        lines_path = os.path.join(os.path.dirname(__file__), 'data',
+        lines_path = os.path.join(os.path.dirname(__file__), '..', 'data',
                                   'linelists')
         init_path = os.getcwd()
 
