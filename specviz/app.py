@@ -161,7 +161,7 @@ def setup():
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
     app = App(sys.argv)
-    app.viewer.main_window.show()
+    app.main_window.show()
 
     return qapp, app
 
