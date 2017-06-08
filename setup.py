@@ -32,7 +32,7 @@ metadata = dict(conf.items('metadata'))
 
 PACKAGENAME = metadata.get('package_name', 'specviz')
 DESCRIPTION = metadata.get('description', 'An interactive astronomical analysis tool')
-AUTHOR = metadata.get('author', 'Nicholas Earl')
+AUTHOR = metadata.get('author', 'JDADF Developers')
 AUTHOR_EMAIL = metadata.get('author_email', '')
 LICENSE = metadata.get('license', 'unknown')
 URL = metadata.get('url', 'https://specviz.readthedocs.io')
