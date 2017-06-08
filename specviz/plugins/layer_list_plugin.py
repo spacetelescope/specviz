@@ -1,22 +1,21 @@
 """
 Plugin to manage the layers
 """
+import logging
 import os
 
-from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
+import numpy as np
+from astropy.units import spectral_density, spectral
+from qtpy import compat
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-from qtpy import compat
+from qtpy.QtWidgets import *
+
+from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.dialogs import LayerArithmeticDialog
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
-
-from ..ui.widgets.utils import ICON_PATH
-
-from astropy.units import spectral_density, spectral
-import logging
-import numpy as np
+from ..ui.widgets.dialogs import LayerArithmeticDialog
+from ..ui.widgets.plugin import Plugin
 
 
 class LayerListPlugin(Plugin):

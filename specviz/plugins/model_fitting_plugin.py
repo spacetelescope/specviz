@@ -1,24 +1,23 @@
 """
 Plugin enabling model definition and fitting
 """
+import logging
 import os
 
-from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
+import numpy as np
+from qtpy import compat
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-from qtpy import compat
+from qtpy.QtWidgets import *
+
+from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
-from ..interfaces.model_io import yaml_model_io, py_model_io
-from ..interfaces.initializers import initialize
-from ..interfaces.factories import ModelFactory, FitterFactory
 from ..core.threads import FitModelThread
-
-from ..ui.widgets.utils import ICON_PATH
-
-import numpy as np
-import logging
+from ..interfaces.factories import ModelFactory, FitterFactory
+from ..interfaces.initializers import initialize
+from ..interfaces.model_io import yaml_model_io, py_model_io
+from ..ui.widgets.plugin import Plugin
 
 # To memorize last visited directory.
 _model_directory = os.environ["HOME"]

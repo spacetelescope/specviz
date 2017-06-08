@@ -14,10 +14,10 @@ from astropy.units import Quantity
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 
-from ...core.comms import dispatch, DispatchHandle
-from ...core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from ...core.plots import LinePlot
-from ...core.annotation import LineIDMarker
+from specviz.core.comms import dispatch, DispatchHandle
+from specviz.core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from specviz.core.plots import LinePlot
+from specviz.core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 

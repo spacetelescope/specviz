@@ -1,11 +1,10 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-from ...core.comms import dispatch, DispatchHandle
+from qtpy.QtWidgets import *
 
-from ...ui.widgets.utils import ICON_PATH
+from specviz.core.comms import DispatchHandle
 
 
 class PluginMeta(type):

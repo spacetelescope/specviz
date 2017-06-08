@@ -3,19 +3,17 @@ Plugin to manage the loaded data
 """
 import os
 
-from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
+import astropy.io.registry as io_registry
+from qtpy import compat
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-from qtpy import compat
+from qtpy.QtWidgets import *
+
+from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
-
-import logging
-
-import astropy.io.registry as io_registry
+from ..ui.widgets.plugin import Plugin
 
 
 class DataListPlugin(Plugin):
