@@ -32,7 +32,7 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='scipy numpy sphinx_rtd_theme'
         - EVENT_TYPE='pull_request push'
 
         

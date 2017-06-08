@@ -4,12 +4,12 @@ Plugin to manage the loaded data
 import os
 
 import astropy.io.registry as io_registry
-from qtpy.QtWidgets import (QWidget, QFileDialog, QToolButton, QHBoxLayout,
+from qtpy.QtWidgets import (QToolButton, QHBoxLayout,
                             QSizePolicy, QListWidget, QAbstractItemView,
                             QListWidgetItem)
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QIcon
-from qtpy.uic import loadUi
+from qtpy import compat
 
 from ..core.comms import dispatch, DispatchHandle
 from ..widgets.utils import ICON_PATH

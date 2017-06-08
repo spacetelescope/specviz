@@ -1,9 +1,11 @@
 """
 UI Dialog definitions
 """
-from qtpy.QtWidgets import *
-from qtpy.QtGui import *
-from qtpy.QtCore import *
+from qtpy.QtWidgets import (QSizePolicy, QVBoxLayout, QHBoxLayout, QLabel,
+                            QComboBox, QDialog, QGroupBox, QLineEdit,
+                            QDialogButtonBox, QFormLayout)
+from qtpy.QtGui import QDoubleValidator, QValidator
+from qtpy.QtCore import Qt
 from qtpy.uic import loadUi
 
 from astropy.units import Unit
@@ -11,6 +13,8 @@ from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spec
 
 import logging
 import os
+
+from .utils import UI_PATH
 
 
 class UiTopAxisDialog(QDialog):
@@ -419,8 +423,7 @@ class ResampleDialog(QDialog):
     def __init__(self, *args, **kwargs):
         super(ResampleDialog, self).__init__(*args, **kwargs)
         # Load the interpolation warning dialog
-        loadUi(os.path.join(os.path.dirname(__file__), "..", "qt",
-                            "dialog_resample_warning.ui"), self)
+        loadUi(os.path.join(UI_PATH, "dialog_resample_warning.ui"), self)
 
     def accept(self):
         self._method_index = self.method_combo_box.currentIndex()

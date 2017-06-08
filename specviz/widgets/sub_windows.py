@@ -22,7 +22,7 @@ from specviz.core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 from .dialogs import ResampleDialog
-from ...analysis.utils import resample
+from ..analysis.utils import resample
 
 from .linelists_window import LineListsWindow
 
@@ -336,7 +336,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
             return lstep == pstep
 
-        print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
+        # print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
 
         if not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
             logging.error("New layer {} does not have the same dispersion as"
