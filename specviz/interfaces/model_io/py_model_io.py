@@ -14,7 +14,7 @@ import re
 import sys
 
 from io import StringIO
-from qtpy.QtWidgets import QFileDialog
+from qtpy import compat
 
 MODEL_FILE_FILTER = "Pyhton files (*.py)"
 
@@ -113,7 +113,10 @@ def _writeToFile(expression_string, model_directory, parent, header):
         The 'header' string contains the import statements that refer to
         each component type that appear in the expression.
     """
-    fname = QFileDialog.getSaveFileName(parent, 'Export to .py file', model_directory)[0]
+
+    fname = compat.getsavefilename(parent=parent,
+                                   caption='Export to .py file',
+                                   basedir=model_directory)[0]
 
     if len(fname) > 0:
         # enforce correct suffix.

@@ -7,6 +7,7 @@ from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
+from qtpy import compat
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
 from ..interfaces.model_io import yaml_model_io, py_model_io
@@ -286,6 +287,7 @@ class ModelFittingPlugin(Plugin):
                     break
 
         self.update_model_formula()
+        self.toggle_fitting()
 
     def get_model_item(self, model):
         root = self.tree_widget_current_models.invisibleRootItem()
@@ -330,6 +332,7 @@ class ModelFittingPlugin(Plugin):
         model = self.get_compound_model(model_dict=model_dict)
 
         if model is None:
+            dispatch.on_update_model.emit(layer=model_layer)
             return
 
         model_layer.model = model
@@ -491,7 +494,9 @@ class ModelFittingPlugin(Plugin):
         else:
             self.button_remove_model.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_add_model", "on_remove_model")
+    # this is also called in response to the "on_remove_model" signal,
+    # however indirectly via the remove_model_item method.
+    @DispatchHandle.register_listener("on_add_model")
     def toggle_fitting(self, *args, **kwargs):
         root = self.tree_widget_current_models.invisibleRootItem()
 
@@ -545,11 +550,10 @@ class ModelFittingPlugin(Plugin):
 
     def load_model(self):
         global _model_directory
-        fname = QFileDialog.getOpenFileNames(
-            self,
-            'Read model file',
-            _model_directory,
-            yaml_model_io.MODEL_FILE_FILTER)
+        fname = compat.getopenfilenames(parent=self,
+                                        caption='Read model file',
+                                        basedir=_model_directory,
+                                        filters=yaml_model_io.MODEL_FILE_FILTER)
 
         # File dialog returns a tuple with a list of file names.
         # We get the first name from the first tuple element.
@@ -582,6 +586,7 @@ class ModelFittingPlugin(Plugin):
 
             dispatch.on_update_model.emit(layer=layer)
             dispatch.on_add_model.emit(layer=layer)
+            dispatch.on_remove_model.emit(layer=layer)
 
         for bound in roi_bounds:
             current_window.add_roi(bounds=bound)

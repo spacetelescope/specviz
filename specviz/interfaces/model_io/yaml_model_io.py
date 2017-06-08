@@ -13,7 +13,7 @@ import yaml
 from io import StringIO
 from ast import literal_eval
 
-from qtpy.QtWidgets import QFileDialog
+from qtpy import compat
 from ...interfaces.factories import ModelFactory
 from ...core.data import Spectrum1DRefModelLayer
 
@@ -354,7 +354,10 @@ def _writeToFile(out_model_dict, model_directory, parent):
         The parent widget to make the file dialog belong to.
         May be None.
     """
-    fname = QFileDialog.getSaveFileName(parent, 'Save to file', model_directory)[0]
+
+    fname = compat.getsavefilename(parent=parent,
+                                   caption='Save to file',
+                                   basedir=model_directory)[0]
 
     if len(fname) > 0:
         # enforce correct suffix.

@@ -7,6 +7,7 @@ from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
+from qtpy import compat
 from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
@@ -126,17 +127,14 @@ class DataListPlugin(Plugin):
             The chosen filter (this indicates which custom loader from the
             registry to use).
         """
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.ExistingFile)
 
         filters = ["Auto (*)"] + [x for x in
                                   io_registry.get_formats(
                                       Spectrum1DRef)['Format']]
 
-        file_names, self._file_filter = dialog.getOpenFileNames(
-            directory=self._directory,
-            filter=";;".join(filters),
-            initialFilter=self._file_filter)
+        file_names, self._file_filter = compat.getopenfilenames(basedir=self._directory,
+                                                                filters=";;".join(filters),
+                                                                selectedfilter=self._file_filter)
 
         if len(file_names) == 0:
             return None, None
