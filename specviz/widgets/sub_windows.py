@@ -351,7 +351,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
                 in_data['wave'] = layer.dispersion.data.value
                 in_data['data'] = layer.data.data.value
-                in_data['err'] = layer.uncertainty.data.value
+                in_data['err'] = layer.uncertainty.data.array
                 wave_out = self._plots[0].layer.dispersion.data.value
                 out_data = resample(in_data, 'wave', wave_out, ('flux', 'err'))
 
