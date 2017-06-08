@@ -94,8 +94,9 @@ scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
 package_info = get_package_info()
 
 # Add the project-global data
-package_info['package_data'].setdefault(PACKAGENAME, [])
-package_info['package_data'][PACKAGENAME].append('data/*')
+package_info['package_data'].setdefault(
+    PACKAGENAME, ['data' + x[0].split('data')[-1] + '/*' for x in os.walk(
+        os.path.abspath(os.path.join(PACKAGENAME, 'data')))])
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
