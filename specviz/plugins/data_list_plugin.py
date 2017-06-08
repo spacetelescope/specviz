@@ -3,21 +3,19 @@ Plugin to manage the loaded data
 """
 import os
 
-from ..ui.widgets.plugin import Plugin
+import astropy.io.registry as io_registry
 from qtpy.QtWidgets import (QWidget, QFileDialog, QToolButton, QHBoxLayout,
                             QSizePolicy, QListWidget, QAbstractItemView,
                             QListWidgetItem)
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
+
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
-
-import logging
-
-import astropy.io.registry as io_registry
+from ..widgets.plugin import Plugin
 
 
 class DataListPlugin(Plugin):
@@ -130,17 +128,14 @@ class DataListPlugin(Plugin):
             The chosen filter (this indicates which custom loader from the
             registry to use).
         """
-        dialog = QFileDialog(self)
-        dialog.setFileMode(QFileDialog.ExistingFile)
 
         filters = ["Auto (*)"] + [x for x in
                                   io_registry.get_formats(
                                       Spectrum1DRef)['Format']]
 
-        file_names, self._file_filter = dialog.getOpenFileNames(
-            directory=self._directory,
-            filter=";;".join(filters),
-            initialFilter=self._file_filter)
+        file_names, self._file_filter = compat.getopenfilenames(basedir=self._directory,
+                                                                filters=";;".join(filters),
+                                                                selectedfilter=self._file_filter)
 
         if len(file_names) == 0:
             return None, None

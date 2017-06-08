@@ -12,13 +12,13 @@ __all__ = ["OptionsWidget"]
 
 class OptionsWidget(QWidget):
 
-    file_att = CurrentComboDataProperty('ui.combo_file_attribute')
+    file_att = CurrentComboDataProperty('qt.combo_file_attribute')
 
     def __init__(self, parent=None, data_viewer=None):
 
         super(OptionsWidget, self).__init__(parent=parent)
 
-        self.ui = load_ui('viewer_options.ui', self,
+        self.ui = load_ui('viewer_options.qt', self,
                           directory=os.path.dirname(__file__))
 
         self.file_helper = ComponentIDComboHelper(self.ui.combo_file_attribute,

@@ -10,13 +10,13 @@ __all__ = ["LayerWidget"]
 
 class LayerWidget(QWidget):
 
-    layer = CurrentComboDataProperty('ui.combo_active_layer')
+    layer = CurrentComboDataProperty('qt.combo_active_layer')
 
     def __init__(self, parent=None, data_viewer=None):
 
         super(LayerWidget, self).__init__(parent=parent)
 
-        self.ui = load_ui('layer_widget.ui', self,
+        self.ui = load_ui('layer_widget.qt', self,
                           directory=os.path.dirname(__file__))
 
         self._layers = []

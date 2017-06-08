@@ -1,19 +1,18 @@
 """
 Manage and execute the various statistical operations
 """
-from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
-from ..core.comms import dispatch, DispatchHandle
-from ..analysis import statistics
-from qtpy.QtGui import *
-
 import logging
-import pyqtgraph as pg
-import numpy as np
-import astropy.units as u
-from functools import reduce
 
+import numpy as np
+import pyqtgraph as pg
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor
+from qtpy.QtWidgets import (QLabel, QLineEdit, QWidget, QTabWidget,
+                            QFormLayout, QSizePolicy, QVBoxLayout)
+
+from ..widgets.plugin import Plugin
+from ..analysis import statistics
+from ..core.comms import DispatchHandle
 
 LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
 

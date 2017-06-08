@@ -3,12 +3,11 @@ Holder for the general UI operations
 """
 import os
 
-from ..ui.widgets.plugin import Plugin
-from ..ui.widgets.utils import ICON_PATH
-from ..ui.widgets.dialogs import SmoothingDialog
-from ..core.comms import dispatch, DispatchHandle
-
+from specviz.widgets.utils import ICON_PATH
 from ..analysis.filters import smooth
+from ..core.comms import dispatch, DispatchHandle
+from ..widgets.dialogs import SmoothingDialog
+from ..widgets.plugin import Plugin
 
 
 class ToolTrayPlugin(Plugin):

@@ -11,7 +11,7 @@ import re
 # THIRD-PARTY
 import numpy as np
 from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
-from ..third_party.py_expression_eval import Parser
+from py_expression_eval import Parser
 from specutils.core.generic import Spectrum1DRef
 
 logging.basicConfig(level=logging.INFO)
