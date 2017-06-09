@@ -15,6 +15,7 @@ import logging
 import os
 
 from .utils import UI_PATH
+from .resources import *
 
 
 class UiTopAxisDialog(QDialog):
@@ -425,11 +426,27 @@ class ResampleDialog(QDialog):
         # Load the interpolation warning dialog
         loadUi(os.path.join(UI_PATH, "dialog_resample_warning.ui"), self)
 
+        self._methods = {
+            "Linear": 'linear',
+            "Nearest": 'nearest',
+            "Zeroth-order Spline": 'zero',
+            "First-order Spline": 'slinear',
+            "Second-order Spline": 'quadratic',
+            "Third-order Spline": 'cubic'
+        }
+
+        # Update the available options
+        self.method_combo_box.clear()
+        self.method_combo_box.addItems(list(self._methods.keys()))
+
+        # Set default
+        self._current_method = 'linear'
+
     def accept(self):
-        self._method_index = self.method_combo_box.currentIndex()
+        self._current_method = self._methods[self.method_combo_box.currentText()]
 
         super(ResampleDialog, self).accept()
 
     @property
-    def method_index(self):
-        return self._method_index
+    def method(self):
+        return self._current_method

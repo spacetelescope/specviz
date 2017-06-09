@@ -32,7 +32,7 @@ import sys
 try:
     import astropy_helpers
 except ImportError:
-    # Building from inside the docs/ directory?
+        # Building from inside the docs/ directory?
     if os.path.basename(os.getcwd()) == 'docs':
         a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
         if os.path.isdir(a_h_path):
@@ -59,14 +59,6 @@ highlight_language = 'none'
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
 
-# Configuration for intersphinx
-intersphinx_mapping = {
-    'python': ('http://docs.python.org/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
-    'astropy': ('http://docs.astropy.org/en/latest/', None),
-    }
-
 # To perform a Sphinx version check that needs to be more specific than
 # major.minor, call `check_sphinx_version("x.y.z")` here.
 # check_sphinx_version("1.2.1")
@@ -79,6 +71,8 @@ exclude_patterns.append('_templates')
 # be used globally.
 rst_epilog += """
 """
+
+extensions.append('sphinx_automodapi.smart_resolver')
 
 # -- Project information ------------------------------------------------------
 
@@ -118,11 +112,7 @@ release = package.__version__
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes. To override the custom theme, set this to the
 # name of a builtin theme or the name of a custom theme in html_theme_path.
-#html_theme = None
-
 html_theme = "sphinx_rtd_theme"
-
-
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}

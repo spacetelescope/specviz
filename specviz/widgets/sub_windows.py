@@ -336,7 +336,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
 
-        if True or not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
+        if not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
             logging.error("New layer {} does not have the same dispersion as "
                           "current plot data.".format(layer.name))
 
@@ -350,15 +350,28 @@ class PlotSubWindow(UiPlotSubWindow):
                 in_data['wave'] = layer.dispersion.data.value
                 in_data['data'] = layer.data.data.value
                 in_data['err'] = layer.uncertainty.array
-                wave_out = self._plots[0].layer.dispersion.data.value
-                out_data = resample(in_data, 'wave', wave_out, ('data', 'err'))
 
-                new_data = layer.__class__.copy(layer, data=out_data['data'],
-                                                dispersion=wave_out,
-                                                uncertainty=out_data['err'])
+                pstep = np.mean(
+                    self._plots[0].layer.dispersion.data.value[1:] -
+                    self._plots[0].layer.dispersion.data.value[:-1])
+                wave_out = np.arange(layer.dispersion.data.value[0],
+                                     layer.dispersion.data.value[-1], pstep)
+
+                out_data = resample(in_data, 'wave', wave_out, ('data', 'err'),
+                                    kind=resample_dialog.method)
+
+                new_data = layer.__class__.copy(
+                    layer,
+                    data=out_data['data'],
+                    dispersion=wave_out,
+                    uncertainty=layer.uncertainty.__class__(
+                        np.zeros(wave_out.shape)),
+                    mask=None)
+
                 layer = layer.__class__.from_parent(new_data)
 
-        new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
+        new_plot = LinePlot.from_layer(layer,
+                                       color=next(self._available_colors))
 
         if len(self._plots) == 0:
             is_convert_success = self.change_units(
@@ -384,8 +397,8 @@ class PlotSubWindow(UiPlotSubWindow):
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
 
-        dispatch.on_added_plot.emit(plot=new_plot, window=window)
         dispatch.on_added_layer.emit(layer=layer)
+        dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @DispatchHandle.register_listener("on_removed_layer")
     def remove_plot(self, layer, window=None):

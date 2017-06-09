@@ -265,10 +265,11 @@ class Spectrum1DRefLayer(Spectrum1DRef):
                 data_unit, equivalencies=spectral_density(
                     self.dispersion.data)).value
 
-            self._uncertainty = self._uncertainty.__class__(
-                self.raw_uncertainty.data.to(
-                    data_unit, equivalencies=spectral_density(
-                        self.dispersion.data)).value)
+            if self._uncertainty is not None:
+                self._uncertainty = self._uncertainty.__class__(
+                    self.raw_uncertainty.data.to(
+                        data_unit, equivalencies=spectral_density(
+                            self.dispersion.data)).value)
 
             # Finally, change the unit
             self._unit = data_unit
