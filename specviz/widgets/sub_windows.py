@@ -332,14 +332,12 @@ class PlotSubWindow(UiPlotSubWindow):
             pstep = np.mean(plot.layer.dispersion[1:] -
                             plot.layer.dispersion[:-1])
 
-            print(lstep, pstep, lstep == pstep)
-
             return lstep == pstep
 
         # print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
 
         if True or not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
-            logging.error("New layer {} does not have the same dispersion as"
+            logging.error("New layer {} does not have the same dispersion as "
                           "current plot data.".format(layer.name))
 
             resample_dialog = ResampleDialog()
@@ -351,13 +349,13 @@ class PlotSubWindow(UiPlotSubWindow):
 
                 in_data['wave'] = layer.dispersion.data.value
                 in_data['data'] = layer.data.data.value
-                in_data['err'] = layer.uncertainty.data.array
+                in_data['err'] = layer.uncertainty.array
                 wave_out = self._plots[0].layer.dispersion.data.value
-                out_data = resample(in_data, 'wave', wave_out, ('flux', 'err'))
+                out_data = resample(in_data, 'wave', wave_out, ('data', 'err'))
 
-                new_data = layer.copy(data=out_data['data'],
-                                      dispersion=wave_out,
-                                      uncertainty=out_data['err'])
+                new_data = layer.__class__.copy(layer, data=out_data['data'],
+                                                dispersion=wave_out,
+                                                uncertainty=out_data['err'])
                 layer = layer.__class__.from_parent(new_data)
 
         new_plot = LinePlot.from_layer(layer, color=next(self._available_colors))
@@ -387,6 +385,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._dynamic_axis._layer = self._plots[0].layer
 
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
+        dispatch.on_added_layer.emit(layer=layer)
 
     @DispatchHandle.register_listener("on_removed_layer")
     def remove_plot(self, layer, window=None):

@@ -180,7 +180,7 @@ class LayerListPlugin(Plugin):
 
         return layers
 
-    @DispatchHandle.register_listener("on_add_layer")
+    @DispatchHandle.register_listener("on_added_layer")
     def add_layer_item(self, layer, unique=True, *args, **kwargs):
         """
         Adds a `Layer` object to the loaded layer list widget.
