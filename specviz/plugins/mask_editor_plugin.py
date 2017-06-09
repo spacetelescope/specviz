@@ -39,23 +39,20 @@ class MaskEditorPlugin(Plugin):
         current_window = self.active_window
         roi_mask = current_window.get_roi_mask(layer=layer)
         layer.mask[roi_mask] = True
-        current_window.set_active_plot(layer)
+        current_window.update_plot(layer)
 
     def _unmask_data(self):
         layer = self.current_layer
         current_window = self.active_window
         roi_mask = current_window.get_roi_mask(layer=layer)
         layer.mask[roi_mask] = False
-        current_window.set_active_plot(layer)
+        current_window.update_plot(layer)
 
     def _toggle_mask(self, state):
         if self.active_window is not None:
             layer = self.current_layer
             current_window = self.active_window
-            if state:
-                current_window.disable_mask = False
-            else:
-                current_window.disable_mask = True
+            current_window.disable_mask = not state
             current_window.set_active_plot(layer)
 
     @DispatchHandle.register_listener("on_updated_rois")
@@ -82,6 +79,7 @@ class UiMaskEditorPlugin:
         plugin.radio_horizontal_layout.setSpacing(0)
 
         plugin.radio_show_mask = QRadioButton("Show Masked Data")
+        plugin.radio_show_mask.setChecked(False)
         plugin.radio_horizontal_layout.addWidget(plugin.radio_show_mask)
         plugin.group_box_layout.addLayout(plugin.radio_horizontal_layout)
 

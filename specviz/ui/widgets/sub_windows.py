@@ -122,7 +122,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._is_selected = True
         self._layer_items = []
         self.disable_errors = False
-        self.disable_mask = False
+        self.disable_mask = True
 
         DispatchHandle.setup(self)
 
@@ -337,6 +337,9 @@ class PlotSubWindow(UiPlotSubWindow):
         if new_plot.error is not None:
             self._plot_item.addItem(new_plot.error)
 
+        if new_plot.mask is not None:
+            self._plot_item.addItem(new_plot.mask)
+
         self._plots.append(new_plot)
         self._plot_item.addItem(new_plot.plot)
 
@@ -358,6 +361,9 @@ class PlotSubWindow(UiPlotSubWindow):
 
                 if plot.error is not None:
                     self._plot_item.removeItem(plot.error)
+
+                if plot.mask is not None:
+                    self._plot_item.removeItem(plot.mask)
 
                 self._plots.remove(plot)
 
