@@ -80,8 +80,7 @@ class PlotToolsPlugin(Plugin):
                     ('2', lambda: self._set_plot_style(line_width=2)),
                     ('3', lambda: self._set_plot_style(line_width=3))
                 ])),
-                ('Show Errors', ['checkable', lambda x: self._toggle_errors(x)]),
-                ('Show Masked Data', ['checkable', lambda x: self._toggle_mask(x)])
+                ('Show Errors', ['checkable', lambda x: self._toggle_errors(x)])
             ])
         )
 
@@ -138,13 +137,6 @@ class PlotToolsPlugin(Plugin):
             layer = self.current_layer
             current_window = self.active_window
             current_window.disable_errors = not state
-            current_window.set_active_plot(layer)
-
-    def _toggle_mask(self, state):
-        if self.active_window is not None:
-            layer = self.current_layer
-            current_window = self.active_window
-            current_window.disable_mask = not state
             current_window.set_active_plot(layer)
 
     @DispatchHandle.register_listener("on_activated_window")
