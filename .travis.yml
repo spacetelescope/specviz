@@ -32,13 +32,13 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='sphinx_automodapi'
+        - PIP_DEPENDENCIES='six pyyaml numpy scipy astropy specutils==0.2.2 pyqtgraph qtpy py_expression_eval sphinx_rtd_theme'
         - EVENT_TYPE='pull_request push'
 
         
         # List other runtime dependencies for the package that are available as
         # conda packages here.
-        - CONDA_DEPENDENCIES='pyqt'
+        - CONDA_DEPENDENCIES=''
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.

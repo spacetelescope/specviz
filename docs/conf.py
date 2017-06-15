@@ -32,7 +32,7 @@ import sys
 try:
     import astropy_helpers
 except ImportError:
-    # Building from inside the docs/ directory?
+        # Building from inside the docs/ directory?
     if os.path.basename(os.getcwd()) == 'docs':
         a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
         if os.path.isdir(a_h_path):
@@ -54,7 +54,7 @@ setup_cfg = dict(conf.items('metadata'))
 # -- General configuration ----------------------------------------------------
 
 # By default, highlight as Python 3.
-highlight_language = 'python3'
+highlight_language = 'none'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
@@ -71,6 +71,8 @@ exclude_patterns.append('_templates')
 # be used globally.
 rst_epilog += """
 """
+
+extensions.append('sphinx_automodapi.smart_resolver')
 
 # -- Project information ------------------------------------------------------
 
@@ -110,18 +112,14 @@ release = package.__version__
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes. To override the custom theme, set this to the
 # name of a builtin theme or the name of a custom theme in html_theme_path.
-#html_theme = None
-
 html_theme = "sphinx_rtd_theme"
-
-
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = ''
+html_logo = '_static/stsci_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -140,7 +138,7 @@ html_title = '{0} v{1}'.format(project, release)
 htmlhelp_basename = project + 'doc'
 
 
-# -- Options for LaTeX output -------------------------------------------------
+    # -- Options for LaTeX output -------------------------------------------------
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).

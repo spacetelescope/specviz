@@ -1,17 +1,75 @@
-Documentation
-=============
+.. SpecViz documentation master file, created by
+   sphinx-quickstart on Mon Feb  8 02:58:02 2016.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-This is the documentation for specviz.
-SpecViz is a tool for 1-D spectral visualization and analysis of astronomical data
+SpecViz: 1D Spectral Visualization Tool
+=======================================
+
+SpecViz is a tool for visualization and quick-look analysis of 1D astronomical
+spectra. It is written in the Python programming language, and therefore can be
+run anywhere Python is supported (see :ref:`doc_installation`). SpecViz is
+capable of reading data from FITS and ASCII tables (see :ref:`doc_custom_loaders`).
+
+SpecViz allows spectra to be easily plotted and examined. It supports
+instrument-specific data quality handling, flexible spectral units conversions,
+custom plotting attributes, plot annotations, tiled plots, and other features.
+
+SpecViz notably includes a measurement tool for spectral lines which
+enables the user, with a few mouse actions, to perform and record measurements.
+It has a model fitting capability that enables the user to create simple
+(e.g., single Gaussian) or multi-component models (e.g., multiple Gaussians for
+emission and absorption lines in addition to regions of flat continuua).
+SpecViz incorporates various methods for fitting such models to data. For more
+details, see :ref:`doc_model_fitting`.
+
+Furthermore, SpecViz allows for overplotting or combining of spectra.
+
+SpecViz will soon include the ability to
+   - Measure the average of multiple spectra, detrending, and apply Fourier filters.
+   - Interactively renormalize data from spectral templates.
+   - Overplot spectral line lists.
+   - And more...
+
+Demo
+----
+
+.. image:: _static/demo.png
+   :target: https://stsci.box.com/s/6ynrfshzrix3yaxvd3c8bcs4hzltpadz
+
+
+Installation and Setup
+----------------------
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
 
-  specviz/index.rst
+   specviz/installation
+   specviz/launching
 
-.. note:: The layout of this directory is simply a suggestion.  To follow
-          traditional practice, do *not* edit this page, but instead place
-          all documentation for the affiliated package inside ``specviz/``.
-          The traditional practice was intended to allow the affiliated
-          package to eventually be merged into the main astropy package.
-          You can follow this practice or choose your own layout.
+
+Using SpecViz
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   specviz/viewer
+   specviz/model_fitting
+   specviz/custom_loaders
+
+
+References/API
+--------------
+
+.. toctree::
+   :maxdepth: 1
+
+   specviz/api
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
