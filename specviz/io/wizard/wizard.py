@@ -7,6 +7,8 @@
 
 import os
 import sys
+import uuid
+import tempfile
 from collections import OrderedDict
 
 import yaml
@@ -20,8 +22,15 @@ from qtpy.uic import loadUi
 
 from astropy.wcs import WCS
 from astropy import units as u
+import astropy.io.registry as io_registry
 
 import pyqtgraph as pg
+
+from ...core.comms import dispatch
+from ...core.data import Spectrum1DRef
+from ...interfaces.registries import load_yaml_reader
+
+from .parse_fits import simplify_arrays, parse_fits
 
 
 def represent_dict_order(self, data):
@@ -353,8 +362,8 @@ class BaseImportWizard(QDialog):
     def as_yaml_dict(self):
         raise NotImplementedError()
 
-    def as_yaml(self):
-        yaml_dict = self.as_yaml_dict()
+    def as_yaml(self, name=None):
+        yaml_dict = self.as_yaml_dict(name=name)
         string = yaml.dump(yaml_dict, default_flow_style=False)
         string = '--- !CustomLoader\n' + string
         return string
@@ -390,14 +399,14 @@ class BaseImportWizard(QDialog):
 class FITSImportWizard(BaseImportWizard):
     dataset_label = 'HDU'
 
-    def as_yaml_dict(self):
+    def as_yaml_dict(self, name=None):
         """
         Convert the current configuration to a dictionary that can then be
         serialized to YAML
         """
 
         yaml_dict = OrderedDict()
-        yaml_dict['name'] = self.ui.loader_name.text()
+        yaml_dict['name'] = name or self.ui.loader_name.text()
         yaml_dict['extension'] = ['fits']
         if self.helper_disp.component_name.startswith('WCS::'):
             yaml_dict['wcs'] = {
@@ -427,9 +436,50 @@ class FITSImportWizard(BaseImportWizard):
         return yaml_dict
 
 
-if __name__ == "__main__":
+def open_wizard():
 
-    from parse_fits import simplify_arrays, parse_fits
+    # NOTE: for now we only deal with FITS files, but this is where we would need
+    # to add different filters.
+
+    filters = ["FITS (*.fits)"]
+    filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
+
+    if filename == '':
+        return
+
+    if file_filter == 'FITS (*.fits)':
+        dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
+        val = dialog.exec_()
+    else:
+        raise NotImplementedError(file_filter)
+
+    if val == 0:
+        return
+
+    # Make temporary YAML file
+    yaml_file = tempfile.mktemp()
+    with open(yaml_file, 'w') as f:
+        f.write(dialog.as_yaml(name=str(uuid.uuid4())))
+
+    # Temporarily load YAML file
+    yaml_filter = load_yaml_reader(yaml_file)
+
+    # Emit signal to indicate that file should be read
+    dispatch.on_file_read.emit(file_name=filename,
+                               file_filter=yaml_filter)
+
+    # Remove YAML loader - this is a big hack at the moment since there is no
+    # official way in Astropy to unregister a reader/writer/identifier
+    # FIXME: how do we determine when the file has been read?
+    import time
+    time.sleep(1)
+    io_registry._readers.pop((yaml_filter, Spectrum1DRef))
+    io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
+
+
+
+
+if __name__ == "__main__":
 
     app = QApplication([])
     dialog = FITSImportWizard(simplify_arrays(parse_fits(sys.argv[1])))

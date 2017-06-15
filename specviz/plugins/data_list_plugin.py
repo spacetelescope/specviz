@@ -8,6 +8,8 @@ from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
 from qtpy import compat
+
+from ..io.wizard import open_wizard
 from ..core.comms import dispatch, DispatchHandle
 from ..ui.widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
@@ -42,6 +44,14 @@ class DataListPlugin(Plugin):
             category=('Loaders', 5),
             priority=1,
             callback=lambda: dispatch.on_file_open.emit())
+
+        self.button_wizard = self.add_tool_bar_actions(
+            name="Wizard",
+            description='Open data with wizard',
+            icon_path=os.path.join(ICON_PATH, "Wizard-128.png"),
+            category=('Loaders', 5),
+            priority=1,
+            callback=open_wizard)
 
     def setup_ui(self):
         UiDataListPlugin(self)
