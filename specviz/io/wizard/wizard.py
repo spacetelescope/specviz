@@ -7,7 +7,9 @@
 
 import os
 import sys
+from collections import OrderedDict
 
+import yaml
 import numpy as np
 
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit
@@ -18,6 +20,12 @@ from astropy import units as u
 
 import pyqtgraph as pg
 
+
+def represent_dict_order(self, data):
+    return self.represent_mapping('tag:yaml.org,2002:map', data.items())
+
+
+yaml.add_representer(OrderedDict, represent_dict_order)
 
 # We list here the units that appear in the pre-defined list of units for each
 # component. If a unit is not found, 'Custom' will be selected and a field will
@@ -42,6 +50,9 @@ class YAMLPreviewWidget(QWidget):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.text_editor)
         self.setLayout(self.layout)
+
+    def set_text(self, text):
+        self.text_editor.setPlainText(text)
 
 
 class ComponentHelper(object):
@@ -92,6 +103,10 @@ class ComponentHelper(object):
 
     @property
     def dataset_name(self):
+        return self.combo_dataset.currentIndex()
+
+    @property
+    def dataset_name(self):
         return self.combo_dataset.currentText()
 
     @property
@@ -99,12 +114,24 @@ class ComponentHelper(object):
         return self.datasets[self.dataset_name]
 
     @property
+    def component_index(self):
+        return self.combo_component.currentIndex()
+
+    @property
+    def component_name(self):
+        return self.combo_component.currentData()
+
+    @property
     def component(self):
         return self.combo_component.currentData()
 
     @property
     def unit(self):
-        return self.combo_units.currentText() or self.custom_units.text()
+        combo_text = self.combo_units.currentText()
+        if combo_text == 'Custom':
+            return self.custom_units.text()
+        else:
+            return combo_text
 
     @property
     def data(self):
@@ -198,8 +225,8 @@ class BaseImportWizard(QDialog):
         self.ui = loadUi(os.path.join(os.path.dirname(__file__), 'wizard.ui'), self)
 
         for label in [self.ui.label_dispersion_dataset,
-                      self.ui.label_dispersion_dataset,
-                      self.ui.label_dispersion_dataset]:
+                      self.ui.label_data_dataset,
+                      self.ui.label_uncertainty_dataset]:
             label.setText(label.text().replace('{{dataset}}', self.dataset_label))
 
         self.helper_disp = ComponentHelper(self.datasets,
@@ -230,8 +257,11 @@ class BaseImportWizard(QDialog):
         self.yaml_preview.hide()
         self.ui.button_yaml.clicked.connect(self._toggle_yaml_preview)
 
-        self.ui.combo_uncertainty_type.addItem('Standard Deviation')
-        self.ui.combo_uncertainty_type.addItem('Inverse Variance')
+        self.ui.button_ok.clicked.connect(self.accept)
+        self.ui.button_cancel.clicked.connect(self.reject)
+
+        self.ui.combo_uncertainty_type.addItem('Standard Deviation', userData='std')
+        self.ui.combo_uncertainty_type.addItem('Inverse Variance', userData='ivar')
 
         pg.setConfigOption('foreground', 'k')
 
@@ -253,6 +283,10 @@ class BaseImportWizard(QDialog):
 
         # Force a preview update in case initial guess is good
         self._update_preview()
+
+    def accept(self, event=None):
+        print(self.as_yaml())
+        super(BaseImportWizard, self).accept()
 
     def _update_preview(self, event=None):
 
@@ -289,14 +323,58 @@ class BaseImportWizard(QDialog):
     def _toggle_yaml_preview(self, event):
         if self.ui.button_yaml.isChecked():
             self.yaml_preview.setWindowFlags(Qt.Drawer)
+            self.yaml_preview.set_text(self.as_yaml())
             self.yaml_preview.show()
         else:
             self.yaml_preview.setWindowFlags(Qt.Drawer)
+            self.yaml_preview.set_text('')
             self.yaml_preview.hide()
+
+    def as_yaml_dict(self):
+        raise NotImplementedError()
+
+    def as_yaml(self):
+        yaml_dict = self.as_yaml_dict()
+        string = yaml.dump(yaml_dict, default_flow_style=False)
+        string = '--- !CustomLoader\n' + string
+        return string
 
 
 class FITSImportWizard(BaseImportWizard):
     dataset_label = 'HDU'
+
+    def as_yaml_dict(self):
+        """
+        Convert the current configuration to a dictionary that can then be
+        serialized to YAML
+        """
+
+        yaml_dict = OrderedDict()
+        yaml_dict['name'] = 'Wizard'
+        yaml_dict['extension'] = ['fits']
+        if self.helper_disp.component_name.startswith('WCS::'):
+            yaml_dict['wcs'] = {
+            'hdu': self.helper_disp.dataset_name,
+            }
+        else:
+            yaml_dict['dispersion'] = {
+                            'hdu': self.helper_disp.dataset_name,
+                            'col': self.helper_disp.component_name,
+                            'unit': self.helper_disp.unit
+                    }
+        yaml_dict['data'] = {
+                        'hdu': self.helper_data.dataset_name,
+                        'col': self.helper_data.component_name,
+                        'unit': self.helper_data.unit
+                    }
+        yaml_dict['uncertainty'] = {
+                        'hdu': self.helper_unce.dataset_name,
+                        'col': self.helper_unce.component_name,
+                        'type': self.ui.combo_uncertainty_type.currentData()
+                    }
+        yaml_dict['meta'] = {'author': 'Wizard'}
+
+        return yaml_dict
 
 
 if __name__ == "__main__":
