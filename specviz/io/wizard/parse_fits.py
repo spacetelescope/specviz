@@ -60,8 +60,6 @@ def parse_fits(filename):
 
                 for column in hdu.columns:
 
-                    print(column.unit)
-
                     if column.unit is None:
                         unit = None
                     else:

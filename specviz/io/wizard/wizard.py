@@ -12,8 +12,10 @@ from collections import OrderedDict
 import yaml
 import numpy as np
 
-from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
 from qtpy.QtCore import Qt
+from qtpy import compat
 from qtpy.uic import loadUi
 
 from astropy.wcs import WCS
@@ -46,11 +48,18 @@ class YAMLPreviewWidget(QWidget):
 
     def __init__(self, parent=None):
         super(YAMLPreviewWidget, self).__init__(parent=parent)
-        self.setWindowFlags(Qt.Drawer)
+        self.setWindowFlags(Qt.Sheet)
         self.text_editor = QPlainTextEdit()
+        self.close_button = QPushButton('Close')
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.text_editor)
+        self.layout.addWidget(self.close_button)
         self.setLayout(self.layout)
+        self.close_button.clicked.connect(self.hide)
+        self.resize(400, 500)
+        font = QFont('Courier')
+        self.text_editor.setFont(font)
+        self.text_editor.setReadOnly(True)
 
     def set_text(self, text):
         self.text_editor.setPlainText(text)
@@ -263,7 +272,7 @@ class BaseImportWizard(QDialog):
                                            self.ui.label_uncertainty_status,
                                            allow_wcs=False)
 
-        self.yaml_preview = YAMLPreviewWidget(self.ui)
+        self.yaml_preview = YAMLPreviewWidget(self)
         self.yaml_preview.hide()
         self.ui.button_yaml.clicked.connect(self._toggle_yaml_preview)
 
@@ -280,6 +289,8 @@ class BaseImportWizard(QDialog):
                                          background=None)
         self.layout_preview.addWidget(self.plot_widget)
 
+        self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
+
         self.ui.combo_dispersion_component.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_data_component.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_uncertainty_component.currentIndexChanged.connect(self._update_preview)
@@ -291,11 +302,13 @@ class BaseImportWizard(QDialog):
         self.ui.combo_data_units.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_uncertainty_units.currentIndexChanged.connect(self._update_preview)
 
+        self.ui.button_save_yaml.clicked.connect(self.save_yaml)
+
         # Force a preview update in case initial guess is good
         self._update_preview()
+        self._clear_loader_name_status()
 
     def accept(self, event=None):
-        print(self.as_yaml())
         super(BaseImportWizard, self).accept()
 
     def _update_preview(self, event=None):
@@ -334,14 +347,8 @@ class BaseImportWizard(QDialog):
             self.plot_widget.addItem(err)
 
     def _toggle_yaml_preview(self, event):
-        if self.ui.button_yaml.isChecked():
-            self.yaml_preview.setWindowFlags(Qt.Drawer)
-            self.yaml_preview.set_text(self.as_yaml())
-            self.yaml_preview.show()
-        else:
-            self.yaml_preview.setWindowFlags(Qt.Drawer)
-            self.yaml_preview.set_text('')
-            self.yaml_preview.hide()
+        self.yaml_preview.set_text(self.as_yaml())
+        self.yaml_preview.show()
 
     def as_yaml_dict(self):
         raise NotImplementedError()
@@ -351,6 +358,33 @@ class BaseImportWizard(QDialog):
         string = yaml.dump(yaml_dict, default_flow_style=False)
         string = '--- !CustomLoader\n' + string
         return string
+
+    def _clear_loader_name_status(self):
+        self.ui.label_loader_name_status.setText('')
+        self.ui.label_loader_name_status.setStyleSheet('')
+
+    def save_yaml(self, event=None):
+
+        if self.ui.loader_name.text() == "":
+            self.ui.label_loader_name_status.setText('Enter a name for the loader')
+            self.ui.label_loader_name_status.setStyleSheet('color: red')
+            return
+
+        specviz_dir = os.path.join(os.path.expanduser('~'), '.specviz')
+        if not os.path.exists(specviz_dir):
+            os.mkdir(specviz_dir)
+
+        filename = compat.getsavefilename(parent=self,
+                                          caption='Export loader to .yaml file',
+                                          basedir=os.path.expanduser('~/.specviz'))[0]
+
+        if filename == '':
+            return
+
+        string = self.as_yaml()
+        with open(filename, 'w') as f:
+            f.write(string)
+
 
 
 class FITSImportWizard(BaseImportWizard):
@@ -363,7 +397,7 @@ class FITSImportWizard(BaseImportWizard):
         """
 
         yaml_dict = OrderedDict()
-        yaml_dict['name'] = 'Wizard'
+        yaml_dict['name'] = self.ui.loader_name.text()
         yaml_dict['extension'] = ['fits']
         if self.helper_disp.component_name.startswith('WCS::'):
             yaml_dict['wcs'] = {
@@ -376,7 +410,7 @@ class FITSImportWizard(BaseImportWizard):
                             'unit': self.helper_disp.unit
                     }
             yaml_dict['wcs'] = {
-            'hdu': 0
+            'hdu': self.helper_disp.dataset_name
             }
         yaml_dict['data'] = {
                         'hdu': self.helper_data.dataset_name,
