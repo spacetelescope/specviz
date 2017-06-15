@@ -16,6 +16,7 @@ from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTe
 from qtpy.QtCore import Qt
 from qtpy.uic import loadUi
 
+from astropy.wcs import WCS
 from astropy import units as u
 
 import pyqtgraph as pg
@@ -63,7 +64,7 @@ class ComponentHelper(object):
     """
 
     def __init__(self, datasets, combo_dataset, combo_component, combo_units,
-                 valid_units, custom_units, label_status):
+                 valid_units, custom_units, label_status, allow_wcs=True):
 
         self.datasets = datasets
 
@@ -73,6 +74,7 @@ class ComponentHelper(object):
         self.valid_units = valid_units
         self.custom_units = custom_units
         self.label_status = label_status
+        self.allow_wcs = allow_wcs
 
         # Initialize combo box of datasets. We don't expect this to change
         # so we can just do it here.
@@ -145,16 +147,22 @@ class ComponentHelper(object):
         self.combo_component.clear()
         self.combo_component.setEnabled(True)
         model = self.combo_component.model()
-        for icomponent, component_name in enumerate(self.dataset):
-            component = self.dataset[component_name]
-            col_shape = component['shape']
-            self.combo_component.addItem(component_name + ' - shape={0}'.format(col_shape),
-                                         userData=component_name)
+        icomponent = 0
+        for component_name, component in self.dataset.items():
+            if isinstance(component['data'], WCS):
+                if not self.allow_wcs:
+                    continue
+                label = component_name
+            else:
+                col_shape = component['shape']
+                label = component_name + ' - shape={0}'.format(col_shape)
+            self.combo_component.addItem(label, userData=component_name)
             # Check whether component is 1-dimensional - we allow arrays that
             # are multi-dimensional but where all but one dimension is 1.
-            if np.product(col_shape) != np.max(col_shape):
+            if component['ndim'] != 1:
                 item = model.item(icomponent)
                 item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
+            icomponent += 1
         self.combo_component.blockSignals(False)
         self.combo_component.currentIndexChanged.emit(self.combo_component.currentIndex())
         self._component_changed()
@@ -243,7 +251,8 @@ class BaseImportWizard(QDialog):
                                            self.ui.combo_data_units,
                                            DATA_UNITS,
                                            self.ui.value_data_units,
-                                           self.ui.label_data_status)
+                                           self.ui.label_data_status,
+                                           allow_wcs=False)
 
         self.helper_unce = ComponentHelper(self.datasets,
                                            self.ui.combo_uncertainty_dataset,
@@ -251,7 +260,8 @@ class BaseImportWizard(QDialog):
                                            self.ui.combo_uncertainty_units,
                                            DATA_UNITS,
                                            self.ui.value_uncertainty_units,
-                                           self.ui.label_uncertainty_status)
+                                           self.ui.label_uncertainty_status,
+                                           allow_wcs=False)
 
         self.yaml_preview = YAMLPreviewWidget(self.ui)
         self.yaml_preview.hide()
@@ -296,6 +306,9 @@ class BaseImportWizard(QDialog):
 
         if x is None or y is None:
             return
+
+        if isinstance(x, WCS):
+            x = x.all_pix2world(np.arange(len(y)), 0)[0]
 
         self.plot_widget.clear()
 

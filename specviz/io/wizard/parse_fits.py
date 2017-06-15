@@ -38,14 +38,9 @@ def parse_fits(filename):
                 # Extract spectral WCS
                 wcs_spec = wcs.sub([WCSSUB_SPECTRAL])
 
-                # Find shape of data along spectral axis
-                n_spec = hdu.data.shape[hdu.data.ndim - 1 - wcs.wcs.spec]
-
                 # Find spectral coordinates
-                pix = np.arange(n_spec)
-                parsed_hdu['WCS::Spectral'] = {'data': wcs_spec.all_pix2world(pix, 0)[0],
+                parsed_hdu['WCS::Spectral'] = {'data': wcs_spec,
                                                'ndim': 1,
-                                               'shape': (n_spec,),
                                                'unit': wcs_spec.wcs.cunit[0]}
 
             if isinstance(hdu, (fits.PrimaryHDU, fits.ImageHDU)):
@@ -88,12 +83,14 @@ def parse_fits(filename):
 def simplify_arrays(datasets):
 
     for dataset in datasets.values():
-        for array in dataset.values():
-            shape = array['data'].shape
+        for component in dataset.values():
+            if isinstance(component['data'], WCS):
+                continue
+            shape = component['data'].shape
             if np.product(shape) == np.max(shape):
-                array['data'] = array['data'].ravel()
-                array['ndim'] = array['data'].ndim
-                array['shape'] = array['data'].shape
+                component['data'] = component['data'].ravel()
+                component['ndim'] = component['data'].ndim
+                component['shape'] = component['data'].shape
     return datasets
 
 
