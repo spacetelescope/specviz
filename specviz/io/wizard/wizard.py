@@ -1,3 +1,10 @@
+# The import wizard is implemented in a way that is not specific to any given
+# file format, but instead has the concept that a file can include one or more
+# datasets, and a dataset can include one or more components. In the case of
+# a FITS file, the datasets are HDUs, and components can be columns, standalone
+# components (in the case of a Primary or ImageHDU), or spectral WCS for
+# example.
+
 import os
 import sys
 
@@ -8,21 +15,25 @@ from qtpy.QtCore import Qt
 from qtpy.uic import loadUi
 
 from astropy import units as u
-from astropy.io import fits
 
 import pyqtgraph as pg
 
-from parse_fits import parse_fits, simplify_arrays
 
-# Units are case-sensitive so we can't simply convert all units to lowercase,
-# hence why we have different capitalizations here.
+# We list here the units that appear in the pre-defined list of units for each
+# component. If a unit is not found, 'Custom' will be selected and a field will
+# allow the user to edit the units. Here we should add any common units to make
+# it easier for users.
+DISPERSION_UNITS = [u.Angstrom, u.nm, u.um, u.mm, u.cm, u.m,
+                    u.Hz, u.kHz, u.MHz, u.GHz, u.THz]
+DATA_UNITS = [u.uJy, u.mJy, u.Jy, u.erg / u.cm**2 / u.s / u.Hz,
+              u.erg / u.cm**2 / u.s / u.um, u.erg / u.cm**2 / u.s]
 
-DISPERSION_UNITS = [u.Angstrom, u.nm, u.um, u.mm, u.cm, u.m, u.Hz, u.kHz, u.MHz, u.GHz, u.THz]
-DATA_UNITS = [u.uJy, u.mJy, u.Jy, u.erg / u.cm**2 / u.s / u.Hz, u.erg / u.cm**2 / u.s / u.um, u.erg / u.cm**2 / u.s]
-
-# Main wizard classes
 
 class YAMLPreviewWidget(QWidget):
+    """
+    A YAML preview widget that appears as a drawer on the side of the main
+    import widget.
+    """
 
     def __init__(self, parent=None):
         super(YAMLPreviewWidget, self).__init__(parent=parent)
@@ -33,53 +44,63 @@ class YAMLPreviewWidget(QWidget):
         self.setLayout(self.layout)
 
 
-class ImportWizard(QDialog):
-    pass
+class ComponentHelper(object):
+    """
+    Since for each component we need to define the logic between the dataset,
+    component, and unit selection, we use this helper class to manage this and
+    then use it three times.
+    """
 
+    def __init__(self, datasets, combo_dataset, combo_component, combo_units,
+                 valid_units, custom_units, label_status):
 
-class HDUColumnHelper(object):
+        self.datasets = datasets
 
-    def __init__(self, hdulist, combo_hdu, combo_column, label_status,
-                 combo_units, valid_units, custom_units):
-
-        self.hdulist = hdulist
-        self.combo_hdu = combo_hdu
-        self.combo_column = combo_column
-        self.label_status = label_status
+        self.combo_dataset = combo_dataset
+        self.combo_component = combo_component
         self.combo_units = combo_units
-        self.custom_units = custom_units
         self.valid_units = valid_units
+        self.custom_units = custom_units
+        self.label_status = label_status
 
-        self.combo_hdu.clear()
+        # Initialize combo box of datasets. We don't expect this to change
+        # so we can just do it here.
 
-        for hdu_name, hdu in self.hdulist.items():
-            self.combo_hdu.addItem(hdu_name)
+        self.combo_dataset.clear()
 
-        self.combo_hdu.currentIndexChanged.connect(self._hdu_changed)
-        self.combo_column.currentIndexChanged.connect(self._column_changed)
+        for dataset_name, dataset in self.datasets.items():
+            self.combo_dataset.addItem(dataset_name)
+
+        # Similarly, we set up the combo of pre-defined units
 
         self.combo_units.clear()
 
         for unit in valid_units:
             self.combo_units.addItem(str(unit), userData=unit)
         self.combo_units.addItem('Custom', userData='Custom')
-        self.combo_units.currentIndexChanged.connect(self._unit_changed)
 
+        # Set up callbacks for various events
+        self.combo_dataset.currentIndexChanged.connect(self._dataset_changed)
+        self.combo_component.currentIndexChanged.connect(self._component_changed)
+        self.combo_units.currentIndexChanged.connect(self._unit_changed)
         self.custom_units.textChanged.connect(self._custom_unit_changed)
 
+        # We now force combos to update
+        self._dataset_changed()
         self._unit_changed()
+        self._custom_unit_changed()
 
     @property
-    def hdu_name(self):
-        return self.combo_hdu.currentText()
+    def dataset_name(self):
+        return self.combo_dataset.currentText()
 
     @property
-    def hdu(self):
-        return self.hdulist[self.hdu_name]
+    def dataset(self):
+        return self.datasets[self.dataset_name]
 
     @property
-    def column(self):
-        return self.combo_column.currentData()
+    def component(self):
+        return self.combo_component.currentData()
 
     @property
     def unit(self):
@@ -87,53 +108,46 @@ class HDUColumnHelper(object):
 
     @property
     def data(self):
-        if self.column is None:
+        if self.component is None:
             return None
         else:
-            return self.hdu[self.column]['data']
+            return self.dataset[self.component]['data']
 
-    def _hdu_changed(self, event=None):
-        self.combo_column.blockSignals(True)
-        self.combo_column.clear()
-        self.combo_column.setEnabled(True)
-        model = self.combo_column.model()
-        for icolumn, column_name in enumerate(self.hdu):
-            column = self.hdu[column_name]
-            col_shape = column['shape']
-            self.combo_column.addItem(column_name + ' - shape={0}'.format(col_shape),
-                                      userData=column_name)
-            # Check whether column is 1-dimensional - we allow arrays that
+    def _dataset_changed(self, event=None):
+        self.combo_component.blockSignals(True)
+        self.combo_component.clear()
+        self.combo_component.setEnabled(True)
+        model = self.combo_component.model()
+        for icomponent, component_name in enumerate(self.dataset):
+            component = self.dataset[component_name]
+            col_shape = component['shape']
+            self.combo_component.addItem(component_name + ' - shape={0}'.format(col_shape),
+                                         userData=component_name)
+            # Check whether component is 1-dimensional - we allow arrays that
             # are multi-dimensional but where all but one dimension is 1.
             if np.product(col_shape) != np.max(col_shape):
-                item = model.item(icolumn)
+                item = model.item(icomponent)
                 item.setFlags(item.flags() & ~Qt.ItemIsEnabled)
-        self.combo_column.blockSignals(False)
-        self.combo_column.currentIndexChanged.emit(self.combo_column.currentIndex())
-        self._column_changed()
+        self.combo_component.blockSignals(False)
+        self.combo_component.currentIndexChanged.emit(self.combo_component.currentIndex())
+        self._component_changed()
 
-    def _column_changed(self):
+    def _component_changed(self):
 
-        unit = self.hdu[self.column]['unit']
-
-        print("UNIT", unit)
+        unit = self.dataset[self.component]['unit']
 
         if unit is None:
             unit = ''
             custom_unit = True
         else:
-            try:
-                unit = u.Unit(unit)
-            except ValueError:
-                custom_unit = True
+            for valid_unit in self.valid_units:
+                if unit == valid_unit:
+                    unit = valid_unit
+                    custom_unit = False
+                    break
             else:
-                for valid_unit in self.valid_units:
-                    if unit == valid_unit:
-                        unit = valid_unit
-                        custom_unit = False
-                        break
-                else:
-                    unit = str(unit)
-                    custom_unit = True
+                unit = str(unit)
+                custom_unit = True
 
         if custom_unit:
             index = self.combo_units.findText('Custom')
@@ -158,54 +172,59 @@ class HDUColumnHelper(object):
         if unit == '':
             self.label_status.setText('')
         else:
-            u.Unit(unit)
-            # try:
-            #     Unit(unit)
-            # except:
-            #     self.label_status.setText('Invalid units')
-            #     self.label_status.setStyleSheet('color: red')
-            # else:
-            #     self.label_status.setText('Valid units')
-            #     self.label_status.setStyleSheet('color: green')
+            try:
+                u.Unit(unit)
+            except:
+                self.label_status.setText('Invalid units')
+                self.label_status.setStyleSheet('color: red')
+            else:
+                self.label_status.setText('Valid units')
+                self.label_status.setStyleSheet('color: green')
 
 
-class FITSImportWizard(ImportWizard):
+class BaseImportWizard(QDialog):
     """
-    A wizard to help with importing spectra from files
+    A wizard to help with importing spectra from files.
     """
 
-    def __init__(self, filename, parent=None):
+    dataset_label = 'Dataset'
 
-        super(FITSImportWizard, self).__init__(parent=parent)
+    def __init__(self, datasets, parent=None):
 
-        self.ui = loadUi(os.path.join(os.path.dirname(__file__), 'fits_wizard.ui'), self)
+        super(BaseImportWizard, self).__init__(parent=parent)
 
-        self.hdulist = simplify_arrays(parse_fits(filename))
+        self.datasets = datasets
 
-        self.helper_disp = HDUColumnHelper(self.hdulist,
-                                           self.ui.combo_dispersion_hdu,
-                                           self.ui.combo_dispersion_column,
-                                           self.ui.label_dispersion_status,
+        self.ui = loadUi(os.path.join(os.path.dirname(__file__), 'wizard.ui'), self)
+
+        for label in [self.ui.label_dispersion_dataset,
+                      self.ui.label_dispersion_dataset,
+                      self.ui.label_dispersion_dataset]:
+            label.setText(label.text().replace('{{dataset}}', self.dataset_label))
+
+        self.helper_disp = ComponentHelper(self.datasets,
+                                           self.ui.combo_dispersion_dataset,
+                                           self.ui.combo_dispersion_component,
                                            self.ui.combo_dispersion_units,
                                            DISPERSION_UNITS,
-                                           self.ui.value_dispersion_units)
+                                           self.ui.value_dispersion_units,
+                                           self.ui.label_dispersion_status)
 
-        self.helper_data = HDUColumnHelper(self.hdulist,
-                                           self.ui.combo_data_hdu,
-                                           self.ui.combo_data_column,
-                                           self.ui.label_data_status,
+        self.helper_data = ComponentHelper(self.datasets,
+                                           self.ui.combo_data_dataset,
+                                           self.ui.combo_data_component,
                                            self.ui.combo_data_units,
                                            DATA_UNITS,
-                                           self.ui.value_data_units)
+                                           self.ui.value_data_units,
+                                           self.ui.label_data_status)
 
-
-        self.helper_unce = HDUColumnHelper(self.hdulist,
-                                           self.ui.combo_uncertainty_hdu,
-                                           self.ui.combo_uncertainty_column,
-                                           self.ui.label_uncertainty_status,
+        self.helper_unce = ComponentHelper(self.datasets,
+                                           self.ui.combo_uncertainty_dataset,
+                                           self.ui.combo_uncertainty_component,
                                            self.ui.combo_uncertainty_units,
                                            DATA_UNITS,
-                                           self.ui.value_uncertainty_units)
+                                           self.ui.value_uncertainty_units,
+                                           self.ui.label_uncertainty_status)
 
         self.yaml_preview = YAMLPreviewWidget(self.ui)
         self.yaml_preview.hide()
@@ -221,9 +240,9 @@ class FITSImportWizard(ImportWizard):
                                          background=None)
         self.layout_preview.addWidget(self.plot_widget)
 
-        self.ui.combo_dispersion_column.currentIndexChanged.connect(self._update_preview)
-        self.ui.combo_data_column.currentIndexChanged.connect(self._update_preview)
-        self.ui.combo_uncertainty_column.currentIndexChanged.connect(self._update_preview)
+        self.ui.combo_dispersion_component.currentIndexChanged.connect(self._update_preview)
+        self.ui.combo_data_component.currentIndexChanged.connect(self._update_preview)
+        self.ui.combo_uncertainty_component.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_uncertainty_type.currentIndexChanged.connect(self._update_preview)
 
         # NOTE: if we are worried about performance, we could have a separate
@@ -232,7 +251,10 @@ class FITSImportWizard(ImportWizard):
         self.ui.combo_data_units.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_uncertainty_units.currentIndexChanged.connect(self._update_preview)
 
-    def _update_preview(self, event):
+        # Force a preview update in case initial guess is good
+        self._update_preview()
+
+    def _update_preview(self, event=None):
 
         x = self.helper_disp.data
         y = self.helper_data.data
@@ -255,9 +277,9 @@ class FITSImportWizard(ImportWizard):
         self.plot_widget.plot(x, y, pen=pen)
         self.plot_widget.autoRange()
 
-        self.plot_widget.setLabels(left='{0} [{1}]'.format(self.helper_data.column,
+        self.plot_widget.setLabels(left='{0} [{1}]'.format(self.helper_data.component,
                                                            self.helper_data.unit),
-                                   bottom='{0} [{1}]'.format(self.helper_disp.column,
+                                   bottom='{0} [{1}]'.format(self.helper_disp.component,
                                                              self.helper_disp.unit))
 
         if yerr is not None and yerr.shape == y.shape:
@@ -273,11 +295,14 @@ class FITSImportWizard(ImportWizard):
             self.yaml_preview.hide()
 
 
+class FITSImportWizard(BaseImportWizard):
+    dataset_label = 'HDU'
+
+
 if __name__ == "__main__":
 
-    app = QApplication([])
-    # dialog = FITSImportWizard('spectra/spec1d.1100.013.11002293.fits')
-    dialog = FITSImportWizard(sys.argv[1])
-    dialog.exec_()
+    from parse_fits import simplify_arrays, parse_fits
 
-# app.exec_()
+    app = QApplication([])
+    dialog = FITSImportWizard(simplify_arrays(parse_fits(sys.argv[1])))
+    dialog.exec_()

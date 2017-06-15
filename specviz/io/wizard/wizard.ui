@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>572</width>
+    <width>580</width>
     <height>823</height>
    </rect>
   </property>
@@ -23,7 +23,7 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>This wizard will take you through the steps to read in your spectrum from your FITS file. Once you are done, you have the option to save this configuration as a YAML file which will allow you to read in similar files automatically in future.</string>
+      <string>This wizard will take you through the steps to read in your spectrum from your data file. Once you are done, you have the option to save this configuration as a YAML file which will allow you to read in similar files automatically in future.</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignJustify|Qt::AlignVCenter</set>
@@ -36,15 +36,15 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="2" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_dispersion_column"/>
+      <widget class="QComboBox" name="combo_dispersion_component"/>
      </item>
      <item row="11" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_uncertainty_hdu"/>
+      <widget class="QComboBox" name="combo_uncertainty_dataset"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_dispersion_hdu">
+      <widget class="QLabel" name="label_dispersion_dataset">
        <property name="text">
-        <string>HDU the dispersion is stored in:</string>
+        <string>{{dataset}} the dispersion is stored in:</string>
        </property>
       </widget>
      </item>
@@ -71,7 +71,7 @@
      <item row="4" column="2">
       <widget class="QLabel" name="label_dispersion_status">
        <property name="text">
-        <string>Status Line</string>
+        <string>{{status line}}</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -88,7 +88,7 @@
      <item row="9" column="2">
       <widget class="QLabel" name="label_data_status">
        <property name="text">
-        <string>Status Line</string>
+        <string>{{status line}}</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -103,16 +103,16 @@
       </widget>
      </item>
      <item row="11" column="0">
-      <widget class="QLabel" name="label_uncertainty_hdu">
+      <widget class="QLabel" name="label_uncertainty_dataset">
        <property name="text">
-        <string>HDU the uncertainty is stored in</string>
+        <string>{{dataset}} the uncertainty is stored in</string>
        </property>
       </widget>
      </item>
      <item row="7" column="0">
-      <widget class="QLabel" name="label_data_column">
+      <widget class="QLabel" name="label_data_component">
        <property name="text">
-        <string>Which column is the data stored in?</string>
+        <string>Which component is the data stored in?</string>
        </property>
       </widget>
      </item>
@@ -130,33 +130,33 @@
       </widget>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="label_data_hdu">
+      <widget class="QLabel" name="label_data_dataset">
        <property name="text">
-        <string>HDU the data is stored in</string>
+        <string>{{dataset}} the data is stored in</string>
        </property>
       </widget>
      </item>
      <item row="12" column="0">
-      <widget class="QLabel" name="label_uncertainty_column">
+      <widget class="QLabel" name="label_uncertainty_component">
        <property name="text">
-        <string>Which column is the uncertainty stored in?</string>
+        <string>Which component is the uncertainty stored in?</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_dispersion_hdu"/>
+      <widget class="QComboBox" name="combo_dispersion_dataset"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_dispersion_column">
+      <widget class="QLabel" name="label_dispersion_component">
        <property name="text">
-        <string>Which column is the data stored in?</string>
+        <string>Which component is the data stored in?</string>
        </property>
       </widget>
      </item>
      <item row="15" column="2">
       <widget class="QLabel" name="label_uncertainty_status">
        <property name="text">
-        <string>Status Line</string>
+        <string>{{status line}}</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -191,10 +191,10 @@
       </widget>
      </item>
      <item row="12" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_uncertainty_column"/>
+      <widget class="QComboBox" name="combo_uncertainty_component"/>
      </item>
      <item row="7" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_data_column"/>
+      <widget class="QComboBox" name="combo_data_component"/>
      </item>
      <item row="14" column="0">
       <widget class="QLabel" name="label_uncertainty_units">
@@ -218,7 +218,7 @@
       </widget>
      </item>
      <item row="6" column="1" colspan="2">
-      <widget class="QComboBox" name="combo_data_hdu"/>
+      <widget class="QComboBox" name="combo_data_dataset"/>
      </item>
      <item row="14" column="2">
       <widget class="QLineEdit" name="value_uncertainty_units">
