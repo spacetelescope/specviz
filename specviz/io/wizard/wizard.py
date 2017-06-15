@@ -362,6 +362,9 @@ class FITSImportWizard(BaseImportWizard):
                             'col': self.helper_disp.component_name,
                             'unit': self.helper_disp.unit
                     }
+            yaml_dict['wcs'] = {
+            'hdu': 0
+            }
         yaml_dict['data'] = {
                         'hdu': self.helper_data.dataset_name,
                         'col': self.helper_data.component_name,
