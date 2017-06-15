@@ -17,6 +17,7 @@ def _parse_unit(unit):
     unit = u.Unit(unit, parse_strict='silent')
     return unit
 
+
 def parse_fits(filename):
 
     parsed_hdus = {}

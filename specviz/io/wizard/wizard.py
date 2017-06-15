@@ -395,7 +395,6 @@ class BaseImportWizard(QDialog):
             f.write(string)
 
 
-
 class FITSImportWizard(BaseImportWizard):
     dataset_label = 'HDU'
 
@@ -410,27 +409,27 @@ class FITSImportWizard(BaseImportWizard):
         yaml_dict['extension'] = ['fits']
         if self.helper_disp.component_name.startswith('WCS::'):
             yaml_dict['wcs'] = {
-            'hdu': self.helper_disp.dataset_name,
+                'hdu': self.helper_disp.dataset_name,
             }
         else:
             yaml_dict['dispersion'] = {
-                            'hdu': self.helper_disp.dataset_name,
-                            'col': self.helper_disp.component_name,
-                            'unit': self.helper_disp.unit
-                    }
+                'hdu': self.helper_disp.dataset_name,
+                'col': self.helper_disp.component_name,
+                'unit': self.helper_disp.unit
+            }
             yaml_dict['wcs'] = {
-            'hdu': self.helper_disp.dataset_name
+                'hdu': self.helper_disp.dataset_name
             }
         yaml_dict['data'] = {
-                        'hdu': self.helper_data.dataset_name,
-                        'col': self.helper_data.component_name,
-                        'unit': self.helper_data.unit
-                    }
+            'hdu': self.helper_data.dataset_name,
+            'col': self.helper_data.component_name,
+            'unit': self.helper_data.unit
+        }
         yaml_dict['uncertainty'] = {
-                        'hdu': self.helper_unce.dataset_name,
-                        'col': self.helper_unce.component_name,
-                        'type': self.ui.combo_uncertainty_type.currentData()
-                    }
+            'hdu': self.helper_unce.dataset_name,
+            'col': self.helper_unce.component_name,
+            'type': self.ui.combo_uncertainty_type.currentData()
+        }
         yaml_dict['meta'] = {'author': 'Wizard'}
 
         return yaml_dict
@@ -475,8 +474,6 @@ def open_wizard():
     time.sleep(1)
     io_registry._readers.pop((yaml_filter, Spectrum1DRef))
     io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
-
-
 
 
 if __name__ == "__main__":
