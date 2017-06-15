@@ -7,6 +7,8 @@ def test_simple_stats():
     truth = {'mean': 1,
             'median': 1,
             'stddev': 0,
+            'rms': 1.0,
+            'snr': 1.0,
             'total': 9,
             'npoints': 10}
 
