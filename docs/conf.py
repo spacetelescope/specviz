@@ -72,7 +72,7 @@ exclude_patterns.append('_templates')
 rst_epilog += """
 """
 
-extensions.append('sphinx_automodapi.smart_resolver')
+extensions += ['sphinx_automodapi.smart_resolver']
 
 # -- Project information ------------------------------------------------------
 
