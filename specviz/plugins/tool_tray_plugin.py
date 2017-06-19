@@ -64,6 +64,7 @@ class ToolTrayPlugin(Plugin):
             enabled=False,
             callback=self._smoothing_kernel_dialog.exec_)
 
+
         # ---
         # Setup transformations buttons
         self.add_tool_bar_actions(
