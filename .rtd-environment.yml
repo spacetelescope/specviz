@@ -9,8 +9,6 @@ dependencies:
     - jupyter
     - matplotlib
     - numpy
-    - scikit-image
-    - scikit-learn
     - scipy
     - docutils
-    - Sphinx >=1.5.1,<=1.5.6
+    - Sphinx >=1.5.1,<1.6
