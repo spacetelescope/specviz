@@ -423,6 +423,11 @@ class LayerListPlugin(Plugin):
 
 class UiLayerListPlugin:
     def __init__(self, plugin):
+        plugin.layout_vertical = QVBoxLayout()
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical.setSpacing(6)
+
+        plugin.contents.setLayout(plugin.layout_vertical)
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)

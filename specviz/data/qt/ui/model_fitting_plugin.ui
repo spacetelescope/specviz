@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>dialog_resample_warning</class>
+ <widget class="QWidget" name="dialog_resample_warning">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>292</width>
-    <height>423</height>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -218,9 +218,45 @@ QCheckBox::indicator:checked:pressed {{
        <widget class="QComboBox" name="combo_box_fitting"/>
       </item>
       <item>
+       <widget class="Spoiler" name="advanced_settings" native="true">
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="max_iterations_label">
+           <property name="text">
+            <string>Max Iterations</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="max_iterations_line_edit"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="relative_error_label">
+           <property name="text">
+            <string>Relative Error</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="relative_error_line_edit"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="epsilon_label">
+           <property name="text">
+            <string>Epsilon</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="epsilon_line_edit"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="button_perform_fit">
         <property name="text">
-         <string>PushButton</string>
+         <string>Perform Fit</string>
         </property>
        </widget>
       </item>
@@ -229,6 +265,14 @@ QCheckBox::indicator:checked:pressed {{
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Spoiler</class>
+   <extends>QWidget</extends>
+   <header>specviz.widgets.spoiler</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources/resources.qrc"/>
  </resources>

@@ -6,7 +6,7 @@ import os
 import astropy.io.registry as io_registry
 from qtpy.QtWidgets import (QToolButton, QHBoxLayout,
                             QSizePolicy, QListWidget, QAbstractItemView,
-                            QListWidgetItem)
+                            QListWidgetItem, QVBoxLayout)
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QIcon
 from qtpy import compat
@@ -227,6 +227,11 @@ class DataListPlugin(Plugin):
 
 class UiDataListPlugin:
     def __init__(self, plugin):
+        plugin.layout_vertical = QVBoxLayout()
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical.setSpacing(6)
+
+        plugin.contents.setLayout(plugin.layout_vertical)
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         # List widget for the data sets
