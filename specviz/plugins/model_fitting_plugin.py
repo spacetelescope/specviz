@@ -45,6 +45,9 @@ class ModelFittingPlugin(Plugin):
     def setup_ui(self):
         loadUi(os.path.join(UI_PATH, "model_fitting_plugin.ui"), self.contents)
 
+        # Hide the advanced settings initially
+        self.contents.group_box_advanced_settings.hide()
+
     def setup_connections(self):
         # Enable/disable buttons depending on selection
         self.contents.tree_widget_current_models.itemSelectionChanged.connect(
@@ -97,6 +100,10 @@ class ModelFittingPlugin(Plugin):
 
         self.contents.button_export_model.clicked.connect(
             self.export_model)
+
+        self.contents.check_box_advanced_settings.clicked.connect(
+            lambda state: self.contents.group_box_advanced_settings.setHidden(not state)
+        )
 
     @property
     def current_model(self):

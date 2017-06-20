@@ -67,28 +67,29 @@
       <item>
        <widget class="QTreeWidget" name="tree_widget_current_models">
         <property name="styleSheet">
-         <string notr="true">QTreeWidget::indicator:unchecked {{
-    image: url({1});
-    }}
-QCheckBox::indicator:unchecked:hover {{
-    image: url({1});
-}}
+         <string notr="true">QTreeWidget::indicator:unchecked {
+    image: url(:/icons/lock.svg);
+}
 
-QCheckBox::indicator:unchecked:pressed {{
-    image: url({1});
-}}
+QCheckBox::indicator:unchecked:hover {
+    image: url(:/icons/lock.svg);
+}
 
-QTreeWidget::indicator:checked {{
-    image: url({0});
-}}
+QCheckBox::indicator:unchecked:pressed {
+    image: url(:/icons/lock.svg);
+}
 
-QCheckBox::indicator:checked:hover {{
-    image: url({0});
-}}
+QTreeWidget::indicator:checked {
+    image: url(:/icons/unlock.svg);
+}
 
-QCheckBox::indicator:checked:pressed {{
-    image: url({0});
-}}</string>
+QCheckBox::indicator:checked:hover {
+    image: url(:/icons/unlock.svg);
+}
+
+QCheckBox::indicator:checked:pressed {
+    image: url(:/icons/unlock.svg);
+}</string>
         </property>
         <property name="columnCount">
          <number>2</number>
@@ -218,7 +219,45 @@ QCheckBox::indicator:checked:pressed {{
        <widget class="QComboBox" name="combo_box_fitting"/>
       </item>
       <item>
-       <widget class="Spoiler" name="advanced_settings" native="true">
+       <widget class="QCheckBox" name="check_box_advanced_settings">
+        <property name="styleSheet">
+         <string notr="true">.QCheckBox::indicator:unchecked {
+    image: url(:/icons/icons8-Forward-96.png);
+	height: 20px;
+	width: 20px;
+}
+
+.QCheckBox::indicator:unchecked:pressed {
+    image: url(:/icons/icons8-Forward-96.png);
+	height: 20px;
+	width: 20px;
+}
+
+.QCheckBox::indicator:checked {
+    image: url(:/icons/icons8-Expand Arrow-96.png);
+	height: 20px;
+	width: 20px;
+}
+
+.QCheckBox::indicator:checked:pressed {
+    image: url(:/icons/icons8-Expand Arrow-96.png);
+	height: 20px;
+	width: 20px;
+}</string>
+        </property>
+        <property name="text">
+         <string>Advanced settings</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="group_box_advanced_settings">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
           <widget class="QLabel" name="max_iterations_label">
@@ -265,14 +304,6 @@ QCheckBox::indicator:checked:pressed {{
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>Spoiler</class>
-   <extends>QWidget</extends>
-   <header>specviz.widgets.spoiler</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="../resources/resources.qrc"/>
  </resources>
