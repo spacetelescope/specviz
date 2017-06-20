@@ -9,6 +9,7 @@ from qtpy import compat
 from qtpy.QtCore import Qt
 # from qtpy.QtGui import
 from qtpy.QtWidgets import QTreeWidgetItem
+from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
 from specviz.widgets.utils import ICON_PATH
@@ -47,6 +48,16 @@ class ModelFittingPlugin(Plugin):
 
         # Hide the advanced settings initially
         self.contents.group_box_advanced_settings.hide()
+
+        # Create validators advanced settings inputs
+        max_iter_valid = QIntValidator(1, 9999, self)
+        self.contents.max_iterations_line_edit.setValidator(max_iter_valid)
+
+        rel_err_valid = QDoubleValidator(0, 9999.0, 20, self)
+        self.contents.relative_error_line_edit.setValidator(rel_err_valid)
+
+        eps_valid = QDoubleValidator(0, 9999.0, 20, self)
+        self.contents.epsilon_line_edit.setValidator(eps_valid)
 
     def setup_connections(self):
         # Enable/disable buttons depending on selection
@@ -466,6 +477,12 @@ class ModelFittingPlugin(Plugin):
             param.fixed = bool(model_item.checkState(col))
             dispatch.on_changed_model.emit(model_item=model_item)
 
+    def _compose_fit_kwargs(self):
+        return {
+            'maxiter': int(self.contents.max_iterations_line_edit.text()),
+            'acc': float(self.contents.relative_error_line_edit.text()),
+            'epsilon': float(self.contents.epsilon_line_edit.text())
+        }
 
     def fit_model_layer(self):
         current_layer = self.current_layer
@@ -490,7 +507,9 @@ class ModelFittingPlugin(Plugin):
         self.fit_model_thread(
             model_layer=current_layer,
             fitter_name=self.contents.combo_box_fitting.currentText(),
-            mask=mask)
+            mask=mask,
+            kwargs=self._compose_fit_kwargs()
+        )
 
         self.fit_model_thread.start()
 

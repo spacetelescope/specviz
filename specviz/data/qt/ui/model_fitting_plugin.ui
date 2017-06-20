@@ -267,7 +267,11 @@ QCheckBox::indicator:checked:pressed {
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLineEdit" name="max_iterations_line_edit"/>
+          <widget class="QLineEdit" name="max_iterations_line_edit">
+           <property name="text">
+            <string>100</string>
+           </property>
+          </widget>
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="relative_error_label">
@@ -277,7 +281,11 @@ QCheckBox::indicator:checked:pressed {
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QLineEdit" name="relative_error_line_edit"/>
+          <widget class="QLineEdit" name="relative_error_line_edit">
+           <property name="text">
+            <string>1e-07</string>
+           </property>
+          </widget>
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="epsilon_label">
@@ -287,7 +295,11 @@ QCheckBox::indicator:checked:pressed {
           </widget>
          </item>
          <item row="2" column="1">
-          <widget class="QLineEdit" name="epsilon_line_edit"/>
+          <widget class="QLineEdit" name="epsilon_line_edit">
+           <property name="text">
+            <string>1.4901161193847656e-08</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
