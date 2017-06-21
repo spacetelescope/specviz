@@ -365,10 +365,11 @@ class PlotSubWindow(UiPlotSubWindow):
                     data=out_data['data'],
                     dispersion=wave_out,
                     uncertainty=layer.uncertainty.__class__(
-                        np.zeros(wave_out.shape)),
+                        out_data['err']),
                     mask=None)
 
-                layer = layer.__class__.from_parent(new_data)
+                layer = layer.__class__.from_parent(
+                    new_data, name="Interpolated {}".format(layer.name))
 
         new_plot = LinePlot.from_layer(layer,
                                        color=next(self._available_colors))
