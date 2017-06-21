@@ -39,7 +39,7 @@ class Plugin(QDockWidget):
         self.scroll_area.setFrameShadow(QFrame.Plain)
         self.scroll_area.setLineWidth(0)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setGeometry(QRect(0, 0, 306, 553))
+        # self.scroll_area.setGeometry(QRect(0, 0, 100, 553))
 
         # The main widget inside the scroll area
         self.contents = QWidget()
@@ -47,8 +47,8 @@ class Plugin(QDockWidget):
         self.scroll_area.setWidget(self.contents)
 
         self.setWidget(self.scroll_area)
-
         self.setWindowTitle(self.name)
+
         self.setup_ui()
         self.setup_connections()
 

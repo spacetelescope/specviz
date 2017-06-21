@@ -528,10 +528,10 @@ class ModelFittingPlugin(Plugin):
         root = self.contents.tree_widget_current_models.invisibleRootItem()
 
         if root.childCount() > 0:
-            self.group_box_fitting.setEnabled(True)
+            self.contents.group_box_fitting.setEnabled(True)
             self.contents.button_save_model.setEnabled(True)
         else:
-            self.group_box_fitting.setEnabled(False)
+            self.contents.group_box_fitting.setEnabled(False)
             self.contents.button_save_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_selected_layer")

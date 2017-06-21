@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>292</width>
-    <height>675</height>
+    <height>565</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -59,7 +59,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="group_box_current_models">
      <property name="title">
       <string>Current Models</string>
      </property>
@@ -67,27 +67,27 @@
       <item>
        <widget class="QTreeWidget" name="tree_widget_current_models">
         <property name="styleSheet">
-         <string notr="true">QTreeWidget::indicator:unchecked {
+         <string notr="true">QTreeWidget::indicator:checked {
     image: url(:/icons/lock.svg);
-}
-
-QCheckBox::indicator:unchecked:hover {
-    image: url(:/icons/lock.svg);
-}
-
-QCheckBox::indicator:unchecked:pressed {
-    image: url(:/icons/lock.svg);
-}
-
-QTreeWidget::indicator:checked {
-    image: url(:/icons/unlock.svg);
 }
 
 QCheckBox::indicator:checked:hover {
-    image: url(:/icons/unlock.svg);
+    image: url(:/icons/lock.svg);
 }
 
 QCheckBox::indicator:checked:pressed {
+    image: url(:/icons/lock.svg);
+}
+
+QTreeWidget::indicator:unchecked {
+    image: url(:/icons/unlock.svg);
+}
+
+QCheckBox::indicator:unchecked:hover {
+    image: url(:/icons/unlock.svg);
+}
+
+QCheckBox::indicator:unchecked:pressed {
     image: url(:/icons/unlock.svg);
 }</string>
         </property>
@@ -195,7 +195,7 @@ QCheckBox::indicator:checked:pressed {
        </layout>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox_4">
+       <widget class="QGroupBox" name="group_box_arithmetic">
         <property name="title">
          <string>Arithmetic</string>
         </property>
@@ -210,7 +210,7 @@ QCheckBox::indicator:checked:pressed {
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_3">
+    <widget class="QGroupBox" name="group_box_fitting">
      <property name="title">
       <string>Fitting</string>
      </property>
@@ -223,14 +223,14 @@ QCheckBox::indicator:checked:pressed {
         <property name="styleSheet">
          <string notr="true">.QCheckBox::indicator:unchecked {
     image: url(:/icons/icons8-Forward-96.png);
-	height: 20px;
-	width: 20px;
+	height: 16px;
+	width: 16px;
 }
 
 .QCheckBox::indicator:unchecked:pressed {
     image: url(:/icons/icons8-Forward-96.png);
-	height: 20px;
-	width: 20px;
+	height: 16px;
+	width: 16px;
 }
 
 .QCheckBox::indicator:checked {
