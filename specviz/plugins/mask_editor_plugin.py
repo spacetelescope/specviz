@@ -1,7 +1,7 @@
 """
 Manage and execute the various statistical operations
 """
-from ..ui.widgets.plugin import Plugin
+from ..widgets.plugin import Plugin
 from qtpy.QtWidgets import (QGroupBox, QHBoxLayout, QPushButton, QRadioButton,
                             QVBoxLayout, QCheckBox)
 from qtpy.QtCore import *
@@ -68,7 +68,13 @@ class MaskEditorPlugin(Plugin):
 
 class UiMaskEditorPlugin:
     def __init__(self, plugin):
+        plugin.layout_vertical = QVBoxLayout()
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical.setSpacing(6)
         plugin.group_box = QGroupBox()
+
+        plugin.contents.setLayout(plugin.layout_vertical)
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.group_box_layout = QVBoxLayout(plugin.group_box)
         plugin.group_box_layout.setContentsMargins(10, 0, 0, 0)
