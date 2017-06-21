@@ -41,11 +41,12 @@ class LinePlot(object):
         If defined, the pen style to use for the error/uncertainty.
     """
     def __init__(self, layer, plot=None, visible=True, style='line',
-                 pen=None, err_pen=None, color=(0, 0, 0)):
+                 pen=None, err_pen=None, mask_pen=None, color=(0, 0, 0)):
         self._layer = layer
         self.style = style
         self._plot = plot
         self.error = None
+        self.mask = None
         self._plot_units = (self._layer.dispersion_unit,
                             self._layer.unit,
                             None)
@@ -68,13 +69,20 @@ class LinePlot(object):
         _err_pen = err_pen if err_pen is not None else pg.mkPen(
             color=(100, 100, 100, 50))
 
+        _mask_pen = mask_pen if mask_pen is not None else pg.mkPen(
+            color=(100, 100, 100, 50))
+
         self._pen_stash = {'pen_on': pg.mkPen(_pen),
                            'pen_inactive': pg.mkPen(_inactive_pen),
                            'pen_off': pg.mkPen(None),
                            'error_pen_on': _err_pen,
-                           'error_pen_off': pg.mkPen(None)}
+                           'error_pen_off': pg.mkPen(None),
+                           'mask_pen_on': _mask_pen,
+                           'mask_pen_off': pg.mkPen(None)}
+
         self.set_plot_visibility(True)
         self.set_error_visibility(True)
+        self.set_mask_visibility(False)
 
         if self._plot is not None:
             self.change_units(self._layer.dispersion_unit,
@@ -102,22 +110,23 @@ class LinePlot(object):
         plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
 
         if plot_container.layer.raw_uncertainty is not None:
-            # err_top = pg.PlotDataItem(
-            #     plot_container.layer.dispersion.value,
-            #     plot_container.layer.data.value +
-            #     plot_container.layer.uncertainty.array * 0.5)
-            # err_btm = pg.PlotDataItem(
-            #     plot_container.layer.dispersion.value,
-            #     plot_container.layer.data.value -
-            #     plot_container.layer.uncertainty.array * 0.5)
-            #
-            # plot_error_item = pg.FillBetweenItem(err_top, err_btm, 'r')
             plot_error_item = pg.ErrorBarItem(
                 x=plot_container.layer.dispersion.compressed().value,
                 y=plot_container.layer.data.compressed().value,
                 height=plot_container.layer.raw_uncertainty.compressed().value,
             )
             plot_container.error = plot_error_item
+
+        if plot_container.layer.mask is not None:
+            mask = plot_container.layer.mask
+            x = plot_container.layer.dispersion.data.value[mask]
+            y = plot_container.layer.data.data.value[mask]
+            plot_mask_item = pg.ScatterPlotItem(
+                x=x,
+                y=y,
+                symbol='x'
+            )
+            plot_container.mask = plot_mask_item
 
         return plot_container
 
@@ -195,6 +204,22 @@ class LinePlot(object):
             else:
                 self.error.setOpts(pen=self._pen_stash['error_pen_off'])
 
+    def set_mask_visibility(self, show=None):
+        """
+        Show masked data
+        
+        Parameters
+        ----------
+        show: bool
+            If True, display data points with mask value True.
+        """
+        if self.mask is not None and show is not None:
+            if show:
+                self.mask.setSymbol('x')
+                self.mask.setPen(pen=self._pen_stash['mask_pen_on'])
+            else:
+                self.mask.setSymbol(None)
+
     @property
     def plot(self):
         return self._plot
@@ -240,6 +265,17 @@ class LinePlot(object):
         if self.error is not None:
             self.error.setOpts(pen=pg.mkPen(pen))
 
+    @property
+    def mask_pen(self):
+        return self._pen_stash['mask_pen_on']
+
+    @mask_pen.setter
+    def mask_pen(self, pen):
+        self._pen_stash['mask_pen_on'] = pg.mkPen(pen)
+
+        if self.error is not None:
+            self.error.setPen(pen=pg.mkPen(pen))
+
     def set_mode(self, mode):
         """
         Set the line plotting mode
@@ -283,6 +319,7 @@ class LinePlot(object):
             disp = self.layer.unmasked_dispersion.compressed().value
             data = self.layer.unmasked_data.compressed().value
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
+
         else:
             disp = self.layer.dispersion.compressed().value
             data = self.layer.data.compressed().value
@@ -305,3 +342,8 @@ class LinePlot(object):
         if self.error is not None:
             self.error.setData(x=disp[:-1] if self.mode == 'histogram' else disp,
                                y=data, height=uncert)
+        if self.mask is not None:
+            mask = self.layer.mask
+            x = self.layer.dispersion.data.value[mask]
+            y = self.layer.data.data.value[mask]
+            self.mask.setData(x=x, y=y)

@@ -63,6 +63,10 @@ class StatisticsPlugin(Plugin):
             stat_dict['median']))
         self.contents.line_edit_std_dev.setText("{0:4.4g}".format(
             stat_dict['stddev']))
+        self.contents.line_edit_rms.setText("{0:4.4g}".format(
+            stat_dict['rms']))
+        self.contents.line_edit_snr.setText("{0:4.4g}".format(
+            stat_dict['snr']))
         self.contents.line_edit_total.setText("{0:4.4g}".format(
             stat_dict['total']))
         self.contents.line_edit_data_point_count.setText("{0:4.4g}".format(

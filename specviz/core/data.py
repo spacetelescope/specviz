@@ -12,6 +12,14 @@ import re
 import numpy as np
 from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
 from py_expression_eval import Parser
+
+# FIXME: the latest developer version of Astropy removes OrderedDict which is needed by
+# the current release of specutils, so we hackily add OrderedDict back to astropy to
+# make sure importing specutils does not crash.
+from collections import OrderedDict
+from astropy import utils
+utils.OrderedDict = OrderedDict
+
 from specutils.core.generic import Spectrum1DRef
 
 logging.basicConfig(level=logging.INFO)

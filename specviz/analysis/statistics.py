@@ -76,9 +76,14 @@ def stats(data, mask=None):
     if mask is None or mask.shape > y.shape:
         mask = np.ones(y.shape, dtype=bool)
 
-    return {'mean':    np.mean(y[mask]),
+    mean = np.mean(y[mask])
+    rms = np.sqrt(y[mask].dot(y[mask])/len(y[mask]))
+
+    return {'mean':    mean,
             'median':  np.median(y[mask]),
             'stddev':  np.std(y[mask]),
+            'rms':     rms,
+            'snr':     mean / rms,
             'total':   np.trapz(y[mask]),
             'npoints': len(y[mask])}
 
