@@ -4,6 +4,19 @@
 
 from astropy.tests.pytest_plugins import *
 
+# Since pytest might execute some tests that use Qt without having
+# started a QApplication instance, we start QApplication here and
+# keep a global reference for the duration of the testing
+
+app, qapp = None, None
+
+def pytest_configure(config):
+    global app, qapp
+    from .app import setup
+    app, qapp = setup()
+    from astropy.tests.pytest_plugins import pytest_configure
+    return pytest_configure(config)
+
 ## Uncomment the following line to treat all DeprecationWarnings as
 ## exceptions
 # enable_deprecations_as_exceptions()
