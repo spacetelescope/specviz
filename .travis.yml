@@ -25,6 +25,7 @@ env:
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
         - ASTROPY_VERSION=stable
+        - SETUP_XVFB=true
         - SETUP_CMD='test'
         - PIP_DEPENDENCIES='sphinx==1.4.8 sphinx_automodapi sphinx_rtd_theme'
         # For this package-template, we include examples of Cython modules,
