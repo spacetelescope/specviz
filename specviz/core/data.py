@@ -64,12 +64,19 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         Arguments passed to the
         `~spectutils.core.generic.Spectrum1DRef` object.
     """
-    def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
-                 **kwargs):
+    def __init__(self, data, wcs=None, parent=None, layer_mask=None, dq=None,
+                 *args, **kwargs):
+
         super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, *args,
                                                  **kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
+        self._dq_def = self.meta.get('dq_def')
+        if self.mask is not None:
+            self._bit_mask = np.copy(self.mask)
+            self.mask = self.mask.astype(bool)
+        else:
+            self._bit_mask = None
 
     @classmethod
     def from_parent(cls, parent, layer_mask=None, name=None):
@@ -233,6 +240,15 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             return np.zeros(self._data.shape)
 
         return self.mask.astype(bool) | ~self.layer_mask.astype(bool)
+
+    @property
+    def bit_mask(self):
+        return self._bit_mask
+
+    @property
+    def dq_def(self):
+        """Table with DQ flag definitions"""
+        return self._dq_def
 
     def set_units(self, disp_unit, data_unit):
         """
