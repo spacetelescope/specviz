@@ -85,6 +85,32 @@ class PluginRegistry(Registry):
                     sys.path.pop(0)
 
 
+def load_yaml_reader(f_path):
+
+    custom_loader = yaml.load(open(f_path, 'r'))
+    custom_loader.set_filter()
+
+    # Figure out which of the two generic loaders to associate
+    # this yaml file with
+    if any(ext in custom_loader.extension for ext in ['fits']):
+        loader = FitsYamlRegister(custom_loader)
+    elif any(ext in custom_loader.extension
+             for ext in ['txt', 'data']):
+        loader = AsciiYamlRegister(custom_loader)
+
+    try:
+        io_registry.register_reader(custom_loader.filter,
+                                    Spectrum1DRef,
+                                    loader.reader)
+        io_registry.register_identifier(custom_loader.filter,
+                                        Spectrum1DRef,
+                                        loader.identify)
+    except io_registry.IORegistryError as e:
+        logging.error(e)
+
+    return custom_loader.filter
+
+
 class LoaderRegistry(Registry):
     """Loads and stores the IO data loaders
     """
@@ -107,7 +133,6 @@ class LoaderRegistry(Registry):
         """
 
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
-        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
@@ -166,26 +191,7 @@ class LoaderRegistry(Registry):
             for file_name in [x for x in os.listdir(path)
                               if x.endswith('yaml')]:
                 f_path = os.path.join(path, file_name)
-                custom_loader = yaml.load(open(f_path, 'r'))
-                custom_loader.set_filter()
-
-                # Figure out which of the two generic loaders to associate
-                # this yaml file with
-                if any(ext in custom_loader.extension for ext in ['fits']):
-                    loader = FitsYamlRegister(custom_loader)
-                elif any(ext in custom_loader.extension
-                         for ext in ['txt', 'data']):
-                    loader = AsciiYamlRegister(custom_loader)
-
-                try:
-                    io_registry.register_reader(custom_loader.filter,
-                                                Spectrum1DRef,
-                                                loader.reader)
-                    io_registry.register_identifier(custom_loader.filter,
-                                                    Spectrum1DRef,
-                                                    loader.identify)
-                except io_registry.IORegistryError as e:
-                    logging.error(e)
+                load_yaml_reader(f_path)
 
 
 class YAMLLoader(yaml.YAMLObject):
