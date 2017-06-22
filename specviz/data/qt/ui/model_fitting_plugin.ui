@@ -113,6 +113,9 @@ QCheckBox::indicator:unchecked:pressed {
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QToolButton" name="button_save_model">
+          <property name="toolTip">
+           <string>Save the model as a yaml file</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -130,6 +133,9 @@ QCheckBox::indicator:unchecked:pressed {
         </item>
         <item>
          <widget class="QToolButton" name="button_load_model">
+          <property name="toolTip">
+           <string>Open a previously saved model</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -147,6 +153,9 @@ QCheckBox::indicator:unchecked:pressed {
         </item>
         <item>
          <widget class="QToolButton" name="button_export_model">
+          <property name="toolTip">
+           <string>Export the model as a python script</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -177,6 +186,9 @@ QCheckBox::indicator:unchecked:pressed {
         </item>
         <item>
          <widget class="QToolButton" name="button_remove_model">
+          <property name="toolTip">
+           <string>Delete selected sub model</string>
+          </property>
           <property name="text">
            <string/>
           </property>
