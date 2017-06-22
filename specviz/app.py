@@ -37,9 +37,6 @@ from .widgets.windows import MainWindow
 
 class App(object):
     def __init__(self, hide_plugins=False):
-        args = docopt(__doc__, version="0.1.0")
-        self._parse_args(args)
-
         # Instantiate main window object
         self._all_tool_bars = {}
 
@@ -57,12 +54,17 @@ class App(object):
         # Setup up top-level connections
         self._setup_connections()
 
+        # Parse arguments
+        args = docopt(__doc__, version="0.1.0")
+        self._parse_args(args)
+
     def _parse_args(self, args):
         print(args)
 
-        if not args.get("load", False) and args.get("<path>") is not None:
+        if not args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
-
+            dispatch.on_file_read.emit(args.get("<path"),
+                                       file_filter=file_filter)
 
         # if len(argv) > 1:
         #     file_name = argv[1]
