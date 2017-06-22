@@ -504,17 +504,22 @@ def open_wizard():
     # Temporarily load YAML file
     yaml_filter = load_yaml_reader(yaml_file)
 
+    def remove_yaml_filter(data):
+
+        # Just some checking in the edge case where a user is simultaneously loading another file...
+        if data.name != os.path.basename(filename).split('.')[0]:
+            return
+
+        io_registry._readers.pop((yaml_filter, Spectrum1DRef))
+        io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
+
+        dispatch.unregister_listener("on_added_data", remove_yaml_filter)
+
+    dispatch.register_listener("on_added_data", remove_yaml_filter)
+
     # Emit signal to indicate that file should be read
     dispatch.on_file_read.emit(file_name=filename,
                                file_filter=yaml_filter)
-
-    # Remove YAML loader - this is a big hack at the moment since there is no
-    # official way in Astropy to unregister a reader/writer/identifier
-    # FIXME: how do we determine when the file has been read?
-    import time
-    time.sleep(1)
-    io_registry._readers.pop((yaml_filter, Spectrum1DRef))
-    io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
 
 
 if __name__ == "__main__":
