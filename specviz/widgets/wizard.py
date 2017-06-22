@@ -402,7 +402,7 @@ class BaseImportWizard(QDialog):
             _bit_mask_table = ascii_read(filename)
         except Exception as exc:
             traceback.print_exc()
-            self.label_filename.setText('An error occurred')
+            self.label_filename.setText('See terminal')
             self.label_filename.setStyleSheet('color: red')
             return
 
