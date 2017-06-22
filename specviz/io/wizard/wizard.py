@@ -123,15 +123,14 @@ class ComponentHelper(object):
 
     @property
     def dataset_name(self):
-        return self.combo_dataset.currentIndex()
-
-    @property
-    def dataset_name(self):
         return self.combo_dataset.currentText()
 
     @property
     def dataset(self):
-        return self.datasets[self.dataset_name]
+        if self.dataset_name:
+            return self.datasets[self.dataset_name]
+        else:
+            return None
 
     @property
     def component_index(self):
@@ -155,12 +154,17 @@ class ComponentHelper(object):
 
     @property
     def data(self):
-        if self.component is None:
+        if self.dataset is None or self.component is None:
             return None
         else:
             return self.dataset[self.component]['data']
 
     def _dataset_changed(self, event=None):
+
+        if self.dataset is None:
+            self.combo_component.setCurrentIndex(-1)
+            return
+
         self.combo_component.blockSignals(True)
         self.combo_component.clear()
         self.combo_component.setEnabled(True)
@@ -186,6 +190,10 @@ class ComponentHelper(object):
         self._component_changed()
 
     def _component_changed(self):
+
+        if self.dataset is None:
+            self.combo_units.setCurrentIndex(-1)
+            return
 
         unit = self.dataset[self.component]['unit']
 
@@ -298,6 +306,10 @@ class BaseImportWizard(QDialog):
                                          background=None)
         self.layout_preview.addWidget(self.plot_widget)
 
+        self.ui.bool_uncertainties.setChecked(False)
+        self.set_uncertainties_enabled(False)
+        self.ui.bool_uncertainties.toggled.connect(self.set_uncertainties_enabled)
+
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
 
         self.ui.combo_dispersion_component.currentIndexChanged.connect(self._update_preview)
@@ -317,10 +329,40 @@ class BaseImportWizard(QDialog):
         self._update_preview()
         self._clear_loader_name_status()
 
+    def set_uncertainties_enabled(self, enabled):
+
+        self.combo_uncertainty_dataset.blockSignals(not enabled)
+        self.combo_uncertainty_component.blockSignals(not enabled)
+        self.combo_uncertainty_units.blockSignals(not enabled)
+        self.combo_uncertainty_type.blockSignals(not enabled)
+
+        self.combo_uncertainty_dataset.setEnabled(enabled)
+        self.combo_uncertainty_component.setEnabled(enabled)
+        self.combo_uncertainty_units.setEnabled(enabled)
+        self.combo_uncertainty_type.setEnabled(enabled)
+
+        if enabled:
+            self.combo_uncertainty_dataset.setCurrentIndex(0)
+            self.combo_uncertainty_type.setCurrentIndex(0)
+        else:
+            self.combo_uncertainty_dataset.setCurrentIndex(-1)
+            self.combo_uncertainty_component.setCurrentIndex(-1)
+            self.combo_uncertainty_units.setCurrentIndex(-1)
+            self.combo_uncertainty_type.setCurrentIndex(-1)
+            self.value_uncertainty_units.hide()
+
+        self._update_preview()
+
+    @property
+    def uncertainties_enabled(self):
+        return self.bool_uncertainties.isChecked()
+
     def accept(self, event=None):
         super(BaseImportWizard, self).accept()
 
     def _update_preview(self, event=None):
+
+        self.plot_widget.clear()
 
         x = self.helper_disp.data
         y = self.helper_data.data
@@ -331,8 +373,6 @@ class BaseImportWizard(QDialog):
 
         if isinstance(x, WCS):
             x = x.all_pix2world(np.arange(len(y)), 0)[0]
-
-        self.plot_widget.clear()
 
         if x.shape != y.shape:
             # TODO: status message
@@ -425,11 +465,12 @@ class FITSImportWizard(BaseImportWizard):
             'col': self.helper_data.component_name,
             'unit': self.helper_data.unit
         }
-        yaml_dict['uncertainty'] = {
-            'hdu': self.helper_unce.dataset_name,
-            'col': self.helper_unce.component_name,
-            'type': self.ui.combo_uncertainty_type.currentData()
-        }
+        if self.ui.bool_uncertainties.isChecked():
+            yaml_dict['uncertainty'] = {
+                'hdu': self.helper_unce.dataset_name,
+                'col': self.helper_unce.component_name,
+                'type': self.ui.combo_uncertainty_type.currentData()
+            }
         yaml_dict['meta'] = {'author': 'Wizard'}
 
         return yaml_dict

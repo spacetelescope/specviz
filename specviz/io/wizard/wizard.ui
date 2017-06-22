@@ -528,6 +528,13 @@
        <item row="0" column="4" rowspan="11" colspan="3">
         <layout class="QVBoxLayout" name="layout_preview"/>
        </item>
+       <item row="10" column="1" colspan="2">
+        <widget class="QCheckBox" name="bool_uncertainties">
+         <property name="text">
+          <string>File includes uncertainties</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
     </layout>

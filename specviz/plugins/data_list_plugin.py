@@ -36,6 +36,14 @@ class DataListPlugin(Plugin):
         self._file_filter = None
         self._directory = ""
 
+        self.button_wizard = self.add_tool_bar_actions(
+            name="Open with Wizard",
+            description='Open data with wizard',
+            icon_path=os.path.join(ICON_PATH, "Open Folder-Wizard-48.png"),
+            category=('Loaders', 5),
+            priority=1,
+            callback=open_wizard)
+
         # Add tool tray buttons
         self.button_open_data = self.add_tool_bar_actions(
             name="Open",
@@ -44,14 +52,6 @@ class DataListPlugin(Plugin):
             category=('Loaders', 5),
             priority=1,
             callback=lambda: dispatch.on_file_open.emit())
-
-        self.button_wizard = self.add_tool_bar_actions(
-            name="Wizard",
-            description='Open data with wizard',
-            icon_path=os.path.join(ICON_PATH, "Wizard-128.png"),
-            category=('Loaders', 5),
-            priority=1,
-            callback=open_wizard)
 
     def setup_ui(self):
         UiDataListPlugin(self)
