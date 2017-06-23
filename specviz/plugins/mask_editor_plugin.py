@@ -4,9 +4,10 @@ Manage and execute the various statistical operations
 from ..ui.widgets.plugin import Plugin
 from qtpy.QtWidgets import (QGroupBox, QHBoxLayout, QPushButton, QRadioButton,
                             QVBoxLayout, QTreeWidget, QTreeWidgetItem)
-
+from qtpy.QtCore import Qt
 from ..core.comms import dispatch, DispatchHandle
 
+import numpy as np
 
 
 LINE_EDIT_CSS = "QLineEdit {background: #DDDDDD; border: 1px solid #cccccc;}"
@@ -26,6 +27,7 @@ class MaskEditorPlugin(Plugin):
         self.button_mask_data.clicked.connect(self._mask_data)
         self.button_unmask_data.clicked.connect(self._unmask_data)
         self.radio_show_mask.toggled.connect(self._toggle_mask)
+        self.tree_widget_dq.itemClicked.connect(self._toggle_bit)
 
     def _mask_data(self):
         layer = self.current_layer
@@ -48,6 +50,18 @@ class MaskEditorPlugin(Plugin):
             current_window.disable_mask = not state
             current_window.set_active_plot(layer)
 
+    def _toggle_bit(self, item, col=0):
+        root = self.tree_widget_dq.invisibleRootItem()
+        layer = self.current_layer
+        current_bitmask = np.zeros_like(layer._bit_mask)
+        for item in [root.child(j) for j in range(root.childCount())]:
+            if bool(item.checkState(col)):
+                current_bitmask |= layer._bit_mask & (1 << item.data(0, Qt.UserRole))
+
+        layer.mask = current_bitmask.astype(bool)
+
+        self.active_window.update_plot(layer)
+
     @DispatchHandle.register_listener("on_updated_rois")
     def toggle_mask_button(self, rois):
         if rois:
@@ -57,24 +71,25 @@ class MaskEditorPlugin(Plugin):
             self.button_mask_data.setEnabled(False)
             self.button_unmask_data.setEnabled(False)
 
-    # @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
-    # def load_dq_flags(self, layer_item=None, layer=None):
-    #     self.tree_widget_dq.clear()
-    #     if layer_item is None and layer is None:
-    #         return
-    #
-    #     layer = layer_item.data(0, Qt.UserRole)
-    #     if layer is not None:
-    #         if layer.dq_def is not None:
-    #             for row in layer.dq_def:
-    #                 new_item = QTreeWidgetItem()
-    #                 new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
-    #                 new_item.setCheckState(0, Qt.Checked)
-    #                 new_item.setText(0, str(row['BIT']))
-    #                 new_item.setText(1, row['NAME'])
-    #                 new_item.setText(2, row['DESCRIPTION'])
-    #                 self.tree_widget_dq.addTopLevelItem(new_item)
-    #
+    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
+    def load_dq_flags(self, layer_item=None, layer=None):
+        self.tree_widget_dq.clear()
+        if layer_item is None and layer is None:
+            return
+
+        layer = layer_item.data(0, Qt.UserRole)
+        if layer is not None:
+            if layer.mask_def is not None:
+                for row in layer.mask_def:
+                    new_item = QTreeWidgetItem()
+                    new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
+                    new_item.setCheckState(0, Qt.Checked)
+                    new_item.setText(0, str(row['BIT']))
+                    new_item.setData(0,Qt.UserRole, row['BIT'])
+                    new_item.setText(1, row['NAME'])
+                    new_item.setText(2, row['DESCRIPTION'])
+                    self.tree_widget_dq.addTopLevelItem(new_item)
+
 
 
 

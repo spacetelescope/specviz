@@ -71,7 +71,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
                                                  **kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
-        self._dq_def = self.meta.get('dq_def')
+        self._mask_def = self.meta.get('mask_def')
         if self.mask is not None:
             self._bit_mask = np.copy(self.mask)
             self.mask = self.mask.astype(bool)
@@ -246,9 +246,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         return self._bit_mask
 
     @property
-    def dq_def(self):
+    def mask_def(self):
         """Table with DQ flag definitions"""
-        return self._dq_def
+        return self._mask_def
 
     def set_units(self, disp_unit, data_unit):
         """
