@@ -261,15 +261,18 @@ class UnitChangeDialog(UiUnitChangeDialog):
             return
 
         state = validator.validate(sender.text(), 0)[0]
+        self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
 
         if state == QValidator.Acceptable:
             color = '#c4df9b' # green
+            self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
         elif state == QValidator.Intermediate:
             color = '#fff79a' # yellow
         else:
             color = '#f6989d' # red
 
-        sender.setStyleSheet('QLineEdit { background-color: %s }' % color)
+        sender.setStyleSheet(
+            "QLineEdit {{ background-color: {} }}".format(color))
 
 
 class DataUnitValidator(QValidator):
