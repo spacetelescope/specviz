@@ -7,6 +7,8 @@ import astropy.io.registry as io_registry
 from qtpy.QtWidgets import QListWidgetItem
 from qtpy.QtCore import Qt
 from qtpy import compat
+
+from ..io.wizard import open_wizard
 from qtpy.uic import loadUi
 
 from ..core.comms import dispatch, DispatchHandle
@@ -32,6 +34,14 @@ class DataListPlugin(Plugin):
         # Store the most recent file selector
         self._file_filter = None
         self._directory = ""
+
+        self.button_wizard = self.add_tool_bar_actions(
+            name="Open with Wizard",
+            description='Open data with wizard',
+            icon_path=os.path.join(ICON_PATH, "Open Folder-Wizard-48.png"),
+            category=('Loaders', 5),
+            priority=1,
+            callback=open_wizard)
 
         # Add tool tray buttons
         self.button_open_data = self.add_tool_bar_actions(
