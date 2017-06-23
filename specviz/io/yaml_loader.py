@@ -251,9 +251,9 @@ class FitsYamlRegister(YamlRegister):
         # Get data mask, if not in column.
         # 0/False = good data (unlike Layers)
         if mask is None:
-            mask = np.zeros(data.shape, dtype=np.bool)
+            mask = np.zeros(data.shape, dtype=np.int)
         else:
-            mask = mask.astype(np.bool)
+            mask = mask.astype(np.int)
 
         # Read in DQ column if it exists
         # 0/False = good (everything else bad)
@@ -265,7 +265,34 @@ class FitsYamlRegister(YamlRegister):
                     hdulist[self._reference.mask['hdu']], col_idx=self._reference.mask['col'])
 
             mask2 = _read_table_column(dqtab, self._reference.mask['col'])[0]  # Data only
-            mask |= mask2.astype(np.bool) # Combine with existing mask
+            mask |= mask2 # Combine with existing mask
+
+        mask_def = None
+        if hasattr(self._reference, 'mask_def') and self._reference.mask_def.get('file') is not None:
+            mask_file = self._reference.mask_def.get('file')
+
+            # first check if the mask file is distributed with the packaged
+            # then the ~/.specviz, then the current directory
+            mod_path = os.path.join(os.path.dirname(__file__), 'yaml_loaders')
+            usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
+            paths = [mod_path, usr_path, '.']
+            for path in paths:
+                if os.path.join(path, mask_file):
+                    try:
+                        logging.info("Trying to load {}".format(os.path.join(path, mask_file)))
+                        mask_def = ascii.read(os.path.join(path, mask_file))
+                        break
+                    except IOError:
+                        logging.info("Mask file {} does not exist".format(mask_file))
+
+            if self._reference.mask_def.get('name') is not None:
+                mask_def.columns[self._reference.mask_def.get('name')].name = 'NAME'
+            if self._reference.mask_def.get('bit') is not None:
+                mask_def.columns[self._reference.mask_def.get('bit')].name = 'BIT'
+            if self._reference.mask_def.get('description') is not None:
+                mask_def.columns[self._reference.mask_def.get('description')].name = 'DESCRIPTION'
+
+            meta['mask_def'] = mask_def
 
         # Wavelength constructed from WCS by default
         dispersion = None
@@ -312,7 +339,7 @@ class FitsYamlRegister(YamlRegister):
 
         return Spectrum1DRef(name=name, data=data, unit=unit, uncertainty=uncertainty,
                     mask=mask, wcs=wcs, dispersion=dispersion,
-                    dispersion_unit=disp_unit)
+                    dispersion_unit=disp_unit, meta=meta)
 
 
 class AsciiYamlRegister(YamlRegister):
