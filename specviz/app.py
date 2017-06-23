@@ -1,7 +1,5 @@
-"""SpecViz
-
-SpecViz is a tool for 1-D spectral visualization and analysis of astronomical
-data.
+"""SpecViz is a tool for 1-D spectral visualization and analysis of
+astronomical data.
 
 Usage:
   specviz
@@ -59,24 +57,10 @@ class App(object):
         self._parse_args(args)
 
     def _parse_args(self, args):
-        print(args)
-
         if not args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
             dispatch.on_file_read.emit(args.get("<path"),
                                        file_filter=file_filter)
-
-        # if len(argv) > 1:
-        #     file_name = argv[1]
-        #
-        #     for arg in argv:
-        #         if '--format=' in arg:
-        #             file_filter = arg.strip("--format=")
-        #             break
-        #     else:
-        #         file_filter = "Auto (*)"
-        #
-        #     dispatch.on_file_read.emit(file_name, file_filter=file_filter)
 
     def load_plugins(self, hidden=False):
         from .interfaces.registries import plugin_registry
@@ -171,7 +155,7 @@ class App(object):
 
 
 def setup():
-    qapp = QApplication()
+    qapp = QApplication(sys.argv)
     # qapp.setGraphicsSystem('native')
     qapp.setWindowIcon(QIcon(os.path.join(ICON_PATH, 'application',
                                           'icon.png')))
@@ -181,7 +165,7 @@ def setup():
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
-    app = App(sys.argv)
+    app = App()
     app.main_window.show()
 
     return qapp, app

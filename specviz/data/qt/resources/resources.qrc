@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>Open Folder-Wizard-48.png</file>
+    <file>Theatre Mask-48.png</file>
     <file>icons8-Open in Window-96.png</file>
     <file>icons8-New Window-96.png</file>
     <file>icons8-Forward-96.png</file>

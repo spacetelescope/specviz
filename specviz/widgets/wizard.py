@@ -7,17 +7,20 @@
 
 import os
 import sys
-import uuid
 import tempfile
+import uuid
 from collections import OrderedDict
 
-import yaml
+import astropy.io.registry as io_registry
 import numpy as np
-
+import pyqtgraph as pg
+import yaml
+from astropy import units as u
+from astropy.wcs import WCS
+from qtpy import compat
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
-from qtpy.QtCore import Qt
-from qtpy import compat
 from qtpy.uic import loadUi
 
 from astropy.wcs import WCS
@@ -26,11 +29,12 @@ import astropy.io.registry as io_registry
 
 import pyqtgraph as pg
 
-from ...core.comms import dispatch
-from ...core.data import Spectrum1DRef
-from ...interfaces.registries import load_yaml_reader
+from ..core.comms import dispatch
+from ..core.data import Spectrum1DRef
+from ..interfaces.registries import load_yaml_reader
+from ..widgets.utils import UI_PATH
 
-from .parse_fits import simplify_arrays, parse_fits
+from ..utils.parse_fits import simplify_arrays, parse_fits
 
 
 def represent_dict_order(self, data):
@@ -256,7 +260,7 @@ class BaseImportWizard(QDialog):
 
         self.datasets = datasets
 
-        self.ui = loadUi(os.path.join(os.path.dirname(__file__), 'wizard.ui'), self)
+        self.ui = loadUi(os.path.join(UI_PATH, 'wizard.ui'), self)
 
         for label in [self.ui.label_dispersion_dataset,
                       self.ui.label_data_dataset,

@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QListWidgetItem
 from qtpy.QtCore import Qt
 from qtpy import compat
 
-from ..io.wizard import open_wizard
+from ..widgets.wizard import open_wizard
 from qtpy.uic import loadUi
 
 from ..core.comms import dispatch, DispatchHandle
