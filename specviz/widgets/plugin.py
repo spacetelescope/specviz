@@ -4,7 +4,7 @@ from qtpy.QtCore import *
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 
-from specviz.core.comms import DispatchHandle
+from ..core.comms import DispatchHandle
 
 
 class PluginMeta(type):

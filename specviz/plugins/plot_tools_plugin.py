@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from astropy.units import Unit
 
-from specviz.widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.plugin import Plugin

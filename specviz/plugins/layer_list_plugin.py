@@ -11,7 +11,7 @@ from qtpy.QtCore import *
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
 
-from specviz.widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
 from ..widgets.dialogs import LayerArithmeticDialog

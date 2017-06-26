@@ -15,10 +15,10 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
 from qtpy.QtCore import QEvent, Qt
 
-from specviz.core.comms import dispatch, DispatchHandle
-from specviz.core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from specviz.core.plots import LinePlot
-from specviz.core.annotation import LineIDMarker
+from ..core.comms import dispatch, DispatchHandle
+from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from ..core.plots import LinePlot
+from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 from .dialogs import ResampleDialog

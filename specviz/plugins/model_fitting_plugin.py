@@ -12,7 +12,6 @@ from qtpy.QtWidgets import QTreeWidgetItem
 from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
-from specviz.widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
 from ..core.threads import FitModelThread

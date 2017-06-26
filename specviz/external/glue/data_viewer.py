@@ -7,9 +7,9 @@ from glue.core import message as msg
 from glue.utils import nonpartial
 from glue.viewers.common.qt.toolbar import BasicToolbar
 
-from specviz.ui.viewer import Viewer
-from specviz.core import dispatch
-from specviz.core import DispatchHandle
+from ...app import App as Viewer
+from ...core import dispatch
+from ...core import DispatchHandle
 
 from .viewer_options import OptionsWidget
 from .layer_widget import LayerWidget

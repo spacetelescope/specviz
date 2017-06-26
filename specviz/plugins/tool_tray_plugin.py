@@ -3,7 +3,7 @@ Holder for the general UI operations
 """
 import os
 
-from specviz.widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH
 from ..analysis.filters import smooth
 from ..core.comms import dispatch, DispatchHandle
 from ..widgets.dialogs import SmoothingDialog
