@@ -1,16 +1,16 @@
 """
 Manage plot attributes
 """
-import os
 import logging
+import os
 from collections import OrderedDict
 
 from astropy.units import Unit
 
+from ..widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
-from ..ui.widgets.utils import ICON_PATH
-from ..ui.widgets.plugin import Plugin
-from ..ui.widgets.dialogs import TopAxisDialog, UnitChangeDialog
+from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
+from ..widgets.plugin import Plugin
 
 
 class PlotToolsPlugin(Plugin):

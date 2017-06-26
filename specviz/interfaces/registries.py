@@ -174,10 +174,12 @@ class LoaderRegistry(Registry):
         to the log.
 
         """
-        cur_path = os.path.join(os.path.dirname(__file__), '..', 'io',
-                                'yaml_loaders')
-        usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
-        lines_path = os.path.join(os.path.dirname(__file__), '../data/linelists')
+        cur_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                '..', 'data', 'yaml_loaders'))
+        usr_path = os.path.abspath(os.path.join(os.path.expanduser('~'),
+                                                '.specviz'))
+        lines_path = os.path.join(os.path.dirname(__file__), '..', 'data',
+                                  'linelists')
         init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher

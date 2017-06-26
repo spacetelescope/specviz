@@ -1,0 +1,44 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>Open Folder-Wizard-48.png</file>
+    <file>Theatre Mask-48.png</file>
+    <file>icons8-Open in Window-96.png</file>
+    <file>icons8-New Window-96.png</file>
+    <file>icons8-Forward-96.png</file>
+    <file>icons8-Expand Arrow-96.png</file>
+    <file>Average Math-48.png</file>
+    <file>Average Value-48.png</file>
+    <file>Change Theme-50.png</file>
+    <file>Color Dropper-48.png</file>
+    <file>Combo Chart-48.png</file>
+    <file>Copy-96.png</file>
+    <file>Delete-48.png</file>
+    <file>Ellipse Stroked-50.png</file>
+    <file>Export-48.png</file>
+    <file>Generic Text-48.png</file>
+    <file>Globe Earth-48.png</file>
+    <file>icons8-Attention-528.png</file>
+    <file>Label-48.png</file>
+    <file>Line Chart-48.png</file>
+    <file>lock.svg</file>
+    <file>Math-48.png</file>
+    <file>Merge Vertical-48.png</file>
+    <file>Open Folder-48.png</file>
+    <file>Open in Browser-50.png</file>
+    <file>Paste-96.png</file>
+    <file>Pentagon-50.png</file>
+    <file>Rectangle Stroked-50.png</file>
+    <file>Remove Image-50.png</file>
+    <file>Ruler-48.png</file>
+    <file>Save-48.png</file>
+    <file>Settings 3-50.png</file>
+    <file>Settings-50.png</file>
+    <file>Split Horizontal-48.png</file>
+    <file>Stanley Knife-48.png</file>
+    <file>Template-50.png</file>
+    <file>unlock.svg</file>
+    <file>Vertical Flag-48.png</file>
+    <file>Width-48.png</file>
+    <file>icons8-Attention-528.png</file>
+  </qresource>
+</RCC>

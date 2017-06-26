@@ -1,45 +1,158 @@
-"""SpecViz front-end GUI access point.
-This script will start the GUI.
+"""SpecViz is a tool for 1-D spectral visualization and analysis of
+astronomical data.
 
+Usage:
+  specviz
+  specviz load <path> [--loader=<name>]
+  specviz config <path>
+  specviz (-h | --help)
+  specviz --version
+
+Options:
+  -h --help             Show this screen.
+  --version             Show version.
+  --loader=<name>       Custom loader for data set. Can also be a path.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-# STDLIB
+import logging
+import os
 import signal
 import sys
 import warnings
-import os
-import logging
 
-# THIRD-PARTY
 from astropy.utils.exceptions import AstropyUserWarning
-
-# LOCAL
-from qtpy.QtWidgets import QApplication
+from qtpy.QtCore import QTimer, Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtCore import QTimer
-from .ui.viewer import Viewer
-from .ui.widgets.utils import ICON_PATH
-from .core.comms import dispatch, DispatchHandle
+from qtpy.QtWidgets import QApplication, QMenu, QToolBar
+from docopt import docopt
+
+from .widgets.utils import ICON_PATH
+from .core.comms import dispatch
+from .widgets.windows import MainWindow
 
 
 class App(object):
-    def __init__(self, argv):
-        super(App, self).__init__()
-        self.viewer = Viewer()
+    def __init__(self, hide_plugins=False):
+        # Instantiate main window object
+        self._all_tool_bars = {}
 
-        if len(argv) > 1:
-            file_name = argv[1]
+        self.main_window = MainWindow()
+        self.menu_docks = QMenu("Plugins")
+        self.main_window.menu_bar.addMenu(self.menu_docks)
 
-            for arg in argv:
-                if '--format=' in arg:
-                    file_filter = arg.strip("--format=")
-                    break
-            else:
-                file_filter = "Auto (*)"
+        self.menu_docks.addSeparator()
 
-            dispatch.on_file_read.emit(file_name, file_filter=file_filter)
+        # self.main_window.setDockNestingEnabled(True)
+
+        # Load system and user plugins
+        self.load_plugins(hidden=hide_plugins)
+
+        # Setup up top-level connections
+        self._setup_connections()
+
+        # Parse arguments
+        args = docopt(__doc__, version="0.1.0")
+        self._parse_args(args)
+
+    def _parse_args(self, args):
+        if not args.get("load", False):
+            file_filter = args.get("--loader", "Auto (*)")
+            dispatch.on_file_read.emit(args.get("<path"),
+                                       file_filter=file_filter)
+
+    def load_plugins(self, hidden=False):
+        from .interfaces.registries import plugin_registry
+
+        instance_plugins = plugin_registry.members
+
+        for instance_plugin in sorted(instance_plugins,
+                                      key=lambda x: x.priority):
+            if instance_plugin.location != 'hidden':
+                if instance_plugin.location == 'right':
+                    location = Qt.RightDockWidgetArea
+                elif instance_plugin.location == 'top':
+                    location = Qt.TopDockWidgetArea
+                else:
+                    location = Qt.LeftDockWidgetArea
+
+                self.main_window.addDockWidget(location, instance_plugin)
+
+                if hidden:
+                    instance_plugin.hide()
+
+                # Add this dock's visibility action to the menu bar
+                self.menu_docks.addAction(
+                    instance_plugin.toggleViewAction())
+
+        # Resize the widgets now that they are all present
+        for ip in instance_plugins[::-1]:
+            ip.setMinimumSize(ip.sizeHint())
+        #     QApplication.processEvents()
+
+        # Sort actions based on priority
+        all_actions = [y for x in instance_plugins for y in x._actions]
+        all_categories = {}
+
+        for act in all_actions:
+            if all_categories.setdefault(act['category'][0], -1) < \
+                    act['priority']:
+                all_categories[act['category'][0]] = act['category'][1]
+
+        for k, v in all_categories.items():
+            tool_bar = self._get_tool_bar(k, v)
+
+            for act in sorted([x for x in all_actions
+                               if x['category'][0] == k],
+                              key=lambda x: x['priority'],
+                              reverse=True):
+                tool_bar.addAction(act['action'])
+
+            tool_bar.addSeparator()
+
+        # Sort tool bars based on priority
+        all_tool_bars = self._all_tool_bars.values()
+
+        for tb in sorted(all_tool_bars, key=lambda x: x['priority'],
+                         reverse=True):
+            self.main_window.addToolBar(tb['widget'])
+
+    def _get_tool_bar(self, name, priority):
+        if name is None:
+            name = "User Plugins"
+            priority = -1
+
+        if name not in self._all_tool_bars:
+            tool_bar = QToolBar(name)
+            tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            tool_bar.setMovable(False)
+
+            tool_bar.setStyleSheet("""
+                QToolBar {
+                    icon-size: 32px;
+                }
+
+                QToolBar QToolButton {
+                    height: 48px;
+                }
+            """)
+
+            self._all_tool_bars[name] = dict(widget=tool_bar,
+                                             priority=int(priority),
+                                             name=name)
+        else:
+            if self._all_tool_bars[name]['priority'] == 0:
+                self._all_tool_bars[name]['priority'] = priority
+
+        return self._all_tool_bars[name]['widget']
+
+    def _setup_connections(self):
+        # Listen for subwindow selection events, update layer list on selection
+        self.main_window.mdi_area.subWindowActivated.connect(
+            lambda wi: dispatch.on_selected_window.emit(
+            window=wi.widget() if wi is not None else None))
+
 
 def setup():
     qapp = QApplication(sys.argv)
@@ -52,8 +165,8 @@ def setup():
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
-    app = App(sys.argv)
-    app.viewer.main_window.show()
+    app = App()
+    app.main_window.show()
 
     return qapp, app
 

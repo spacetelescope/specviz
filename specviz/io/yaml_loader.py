@@ -15,9 +15,9 @@ from astropy.wcs import WCS
 from astropy.nddata import StdDevUncertainty
 
 # LOCAL
-from specviz.core.data import Spectrum1DRef
-from specviz.core import linelist
-from specviz.core.linelist import LineList
+from ..core.data import Spectrum1DRef
+from ..core import linelist
+from ..core.linelist import LineList
 
 __all__ = [
     'AsciiYamlRegister',

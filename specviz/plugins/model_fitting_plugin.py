@@ -1,24 +1,25 @@
 """
 Plugin enabling model definition and fitting
 """
+import logging
 import os
 
-from ..ui.widgets.plugin import Plugin
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
-from qtpy.QtGui import *
+import numpy as np
 from qtpy import compat
+from qtpy.QtCore import Qt
+# from qtpy.QtGui import
+from qtpy.QtWidgets import QTreeWidgetItem
+from qtpy.QtGui import QIntValidator, QDoubleValidator
+from qtpy.uic import loadUi
+
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefModelLayer
-from ..interfaces.model_io import yaml_model_io, py_model_io
-from ..interfaces.initializers import initialize
-from ..interfaces.factories import ModelFactory, FitterFactory
 from ..core.threads import FitModelThread
-
-from ..ui.widgets.utils import ICON_PATH
-
-import numpy as np
-import logging
+from ..interfaces.factories import ModelFactory, FitterFactory
+from ..interfaces.initializers import initialize
+from ..interfaces.model_io import yaml_model_io, py_model_io
+from ..widgets.plugin import Plugin
+from ..widgets.utils import UI_PATH
 
 # To memorize last visited directory.
 _model_directory = os.environ["HOME"]
@@ -42,60 +43,77 @@ class ModelFittingPlugin(Plugin):
             lambda layer: dispatch.on_update_model.emit(layer=layer))
 
     def setup_ui(self):
-        UiModelFittingPlugin(self)
+        loadUi(os.path.join(UI_PATH, "model_fitting_plugin.ui"), self.contents)
+
+        # Hide the advanced settings initially
+        self.contents.group_box_advanced_settings.hide()
+
+        # Create validators advanced settings inputs
+        max_iter_valid = QIntValidator(1, 9999, self)
+        self.contents.max_iterations_line_edit.setValidator(max_iter_valid)
+
+        rel_err_valid = QDoubleValidator(0, 9999.0, 20, self)
+        self.contents.relative_error_line_edit.setValidator(rel_err_valid)
+
+        eps_valid = QDoubleValidator(0, 9999.0, 20, self)
+        self.contents.epsilon_line_edit.setValidator(eps_valid)
 
     def setup_connections(self):
         # Enable/disable buttons depending on selection
-        self.tree_widget_current_models.itemSelectionChanged.connect(
+        self.contents.tree_widget_current_models.itemSelectionChanged.connect(
             self.toggle_buttons)
 
         # # Populate model dropdown
-        self.combo_box_models.addItems(
+        self.contents.combo_box_models.addItems(
             sorted(ModelFactory.all_models))
 
         # Populate fitting algorithm dropdown
-        self.combo_box_fitting.addItems(
+        self.contents.combo_box_fitting.addItems(
             sorted(FitterFactory.all_fitters))
 
         # When the add new model button is clicked, create a new model
-        self.button_select_model.clicked.connect(
+        self.contents.button_select_model.clicked.connect(
             self.add_model)
 
         # When the model items in the model tree change
-        self.tree_widget_current_models.itemChanged.connect(
+        self.contents.tree_widget_current_models.itemChanged.connect(
             self._model_parameter_validation)
 
         # When the model parameters in the model tree are locked/unlocked
-        self.tree_widget_current_models.itemClicked.connect(
+        self.contents.tree_widget_current_models.itemClicked.connect(
             self._fix_model_parameter
         )
 
         # When the model list delete button is pressed
-        self.button_remove_model.clicked.connect(
+        self.contents.button_remove_model.clicked.connect(
             lambda: self.remove_model_item())
 
         # When editing the formula is finished, send event
-        self.line_edit_model_arithmetic.editingFinished.connect(
+        self.contents.line_edit_model_arithmetic.editingFinished.connect(
             lambda: self.update_model_formula())
 
         # Attach the fit button
-        self.button_perform_fit.clicked.connect(
+        self.contents.button_perform_fit.clicked.connect(
             self.fit_model_layer)
 
         # Update model name when a user makes changes
-        self.tree_widget_current_models.itemChanged.connect(self._update_model_name)
+        self.contents.tree_widget_current_models.itemChanged.connect(self._update_model_name)
 
         # ---
         # IO
         # Attach the model save/read buttons
-        self.button_save_model.clicked.connect(
+        self.contents.button_save_model.clicked.connect(
             self.save_model)
 
-        self.button_load_model.clicked.connect(
+        self.contents.button_load_model.clicked.connect(
             self.load_model)
 
-        self.button_export_model.clicked.connect(
+        self.contents.button_export_model.clicked.connect(
             self.export_model)
+
+        self.contents.check_box_advanced_settings.clicked.connect(
+            lambda state: self.contents.group_box_advanced_settings.setHidden(not state)
+        )
 
     @property
     def current_model(self):
@@ -106,7 +124,7 @@ class ModelFittingPlugin(Plugin):
 
     @property
     def current_model_item(self):
-        return self.tree_widget_current_models.currentItem()
+        return self.contents.tree_widget_current_models.currentItem()
 
     def add_model(self):
         layer = self.current_layer
@@ -114,7 +132,7 @@ class ModelFittingPlugin(Plugin):
         if layer is None:
             return
 
-        model_name = self.combo_box_models.currentText()
+        model_name = self.contents.combo_box_models.currentText()
         model = ModelFactory.create_model(model_name)()
 
         if isinstance(layer, Spectrum1DRefModelLayer):
@@ -153,7 +171,7 @@ class ModelFittingPlugin(Plugin):
 
         # compound_model = self.get_compound_model(
         #     model_dict=model_inputs,
-        #     formula=self.line_edit_model_arithmetic.text())
+        #     formula=self.contents.line_edit_model_arithmetic.text())
 
         # Create new layer using current ROI masks, if they exist
         # mask = self.active_window.get_roi_mask(layer=layer)
@@ -195,7 +213,7 @@ class ModelFittingPlugin(Plugin):
             if not name:
                 count = 1
 
-                root = self.tree_widget_current_models.invisibleRootItem()
+                root = self.contents.tree_widget_current_models.invisibleRootItem()
 
                 for i in range(root.childCount()):
                     child = root.child(i)
@@ -224,8 +242,8 @@ class ModelFittingPlugin(Plugin):
                 new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
-            self.tree_widget_current_models.addTopLevelItem(new_item)
-            self.tree_widget_current_models.expandItem(new_item)
+            self.contents.tree_widget_current_models.addTopLevelItem(new_item)
+            self.contents.tree_widget_current_models.expandItem(new_item)
 
         self._update_arithmetic_text(layer)
 
@@ -252,9 +270,9 @@ class ModelFittingPlugin(Plugin):
 
         # turn signals back on after fitting a model and
         # update the layer without validation
-        if self.tree_widget_current_models.signalsBlocked():
+        if self.contents.tree_widget_current_models.signalsBlocked():
             self.current_layer.model = layer.model
-            self.tree_widget_current_models.blockSignals(False)
+            self.contents.tree_widget_current_models.blockSignals(False)
 
     @DispatchHandle.register_listener("on_remove_model")
     def remove_model_item(self, model=None):
@@ -270,7 +288,7 @@ class ModelFittingPlugin(Plugin):
             layer.model = None
 
         # Remove model from tree widget
-        root = self.tree_widget_current_models.invisibleRootItem()
+        root = self.contents.tree_widget_current_models.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
@@ -290,7 +308,7 @@ class ModelFittingPlugin(Plugin):
         self.toggle_fitting()
 
     def get_model_item(self, model):
-        root = self.tree_widget_current_models.invisibleRootItem()
+        root = self.contents.tree_widget_current_models.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
@@ -308,7 +326,7 @@ class ModelFittingPlugin(Plugin):
             A dictionary with the model instance as the key and a list of
             floats as the parameters values.
         """
-        root = self.tree_widget_current_models.invisibleRootItem()
+        root = self.contents.tree_widget_current_models.invisibleRootItem()
         models = {}
 
         for model_item in [root.child(j) for j in range(root.childCount())]:
@@ -341,7 +359,7 @@ class ModelFittingPlugin(Plugin):
 
     def get_compound_model(self, model_dict=None, formula=''):
         model_dict = model_dict or self.get_model_inputs()
-        formula = formula or self.line_edit_model_arithmetic.text()
+        formula = formula or self.contents.line_edit_model_arithmetic.text()
         models = []
 
         for model in model_dict:
@@ -375,7 +393,7 @@ class ModelFittingPlugin(Plugin):
             else:
                 expr = layer.model.name if layer.model is not None else ""
 
-            self.line_edit_model_arithmetic.setText(expr)
+            self.contents.line_edit_model_arithmetic.setText(expr)
 
             return expr
 
@@ -388,7 +406,7 @@ class ModelFittingPlugin(Plugin):
 
         if hasattr(model, '_name'):
             name = model_item.text(0)
-            all_names = self.tree_widget_current_models.findItems(
+            all_names = self.contents.tree_widget_current_models.findItems(
                 name, Qt.MatchExactly, 0)
 
             if len(all_names) > 1:
@@ -399,9 +417,9 @@ class ModelFittingPlugin(Plugin):
 
             model._name = name
 
-            self.tree_widget_current_models.blockSignals(True)
+            self.contents.tree_widget_current_models.blockSignals(True)
             model_item.setText(0, name)
-            self.tree_widget_current_models.blockSignals(False)
+            self.contents.tree_widget_current_models.blockSignals(False)
 
         self._update_arithmetic_text(self.current_layer)
 
@@ -411,7 +429,7 @@ class ModelFittingPlugin(Plugin):
         model_dict = self.get_model_inputs()
 
         model = self.get_compound_model(model_dict=model_dict,
-                                        formula=self.line_edit_model_arithmetic.text())
+                                        formula=self.contents.line_edit_model_arithmetic.text())
 
         if model is not None:
             model_layer.model = model
@@ -423,8 +441,8 @@ class ModelFittingPlugin(Plugin):
 
     @DispatchHandle.register_listener("on_selected_layer")
     def update_model_list(self, layer_item=None, layer=None):
-        self.tree_widget_current_models.clear()
-        self.line_edit_model_arithmetic.clear()
+        self.contents.tree_widget_current_models.clear()
+        self.contents.line_edit_model_arithmetic.clear()
 
         if layer_item is None and layer is None:
             return
@@ -458,6 +476,12 @@ class ModelFittingPlugin(Plugin):
             param.fixed = bool(model_item.checkState(col))
             dispatch.on_changed_model.emit(model_item=model_item)
 
+    def _compose_fit_kwargs(self):
+        return {
+            'maxiter': int(self.contents.max_iterations_line_edit.text()),
+            'acc': float(self.contents.relative_error_line_edit.text()),
+            'epsilon': float(self.contents.epsilon_line_edit.text())
+        }
 
     def fit_model_layer(self):
         current_layer = self.current_layer
@@ -477,48 +501,50 @@ class ModelFittingPlugin(Plugin):
 
         # block signals before fitting to stop from reading
         # model parameters from UI
-        self.tree_widget_current_models.blockSignals(True)
+        self.contents.tree_widget_current_models.blockSignals(True)
         # Create fitted layer
         self.fit_model_thread(
             model_layer=current_layer,
-            fitter_name=self.combo_box_fitting.currentText(),
-            mask=mask)
+            fitter_name=self.contents.combo_box_fitting.currentText(),
+            mask=mask,
+            kwargs=self._compose_fit_kwargs()
+        )
 
         self.fit_model_thread.start()
 
     def toggle_buttons(self):
-        root = self.tree_widget_current_models.invisibleRootItem()
+        root = self.contents.tree_widget_current_models.invisibleRootItem()
 
         if root.childCount() > 0:
-            self.button_remove_model.setEnabled(True)
+            self.contents.button_remove_model.setEnabled(True)
         else:
-            self.button_remove_model.setEnabled(False)
+            self.contents.button_remove_model.setEnabled(False)
 
     # this is also called in response to the "on_remove_model" signal,
     # however indirectly via the remove_model_item method.
     @DispatchHandle.register_listener("on_add_model")
     def toggle_fitting(self, *args, **kwargs):
-        root = self.tree_widget_current_models.invisibleRootItem()
+        root = self.contents.tree_widget_current_models.invisibleRootItem()
 
         if root.childCount() > 0:
-            self.group_box_fitting.setEnabled(True)
-            self.button_save_model.setEnabled(True)
+            self.contents.group_box_fitting.setEnabled(True)
+            self.contents.button_save_model.setEnabled(True)
         else:
-            self.group_box_fitting.setEnabled(False)
-            self.button_save_model.setEnabled(False)
+            self.contents.group_box_fitting.setEnabled(False)
+            self.contents.button_save_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_selected_layer")
     def toggle_io(self, layer_item, *args, **kwargs):
         if layer_item:
-            self.button_load_model.setEnabled(True)
+            self.contents.button_load_model.setEnabled(True)
         else:
-            self.button_load_model.setEnabled(False)
+            self.contents.button_load_model.setEnabled(False)
 
     # ---
     # IO
     def _prepare_model_for_save(self):
         model_dict = self.get_model_inputs()
-        formula = self.line_edit_model_arithmetic.text()
+        formula = self.contents.line_edit_model_arithmetic.text()
 
         if len(model_dict) == 0:
             return None, None
@@ -591,171 +617,28 @@ class ModelFittingPlugin(Plugin):
         for bound in roi_bounds:
             current_window.add_roi(bounds=bound)
 
-
-class UiModelFittingPlugin:
-    def __init__(self, plugin):
-        # Tree widget/model selector group box
-        plugin.group_box_add_model = QGroupBox()
-        plugin.group_box_add_model.setTitle("Add Model")
-        plugin.layout_horizontal_group_box_add_model = QHBoxLayout(
-            plugin.group_box_add_model)
-        plugin.layout_horizontal_group_box_add_model.setContentsMargins(11, 11,
-                                                                        11, 11)
-        plugin.layout_horizontal_group_box_add_model.setSpacing(6)
-
-        # Models combo box
-        plugin.combo_box_models = QComboBox(plugin.group_box_add_model)
-        plugin.combo_box_models.setStyleSheet("""QComboBox {width: 100px;}
-        """)
-        size_policy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(
-            plugin.combo_box_models.sizePolicy().hasHeightForWidth())
-        plugin.combo_box_models.setSizePolicy(size_policy)
-
-        plugin.button_select_model = QPushButton(plugin.group_box_add_model)
-        plugin.button_select_model.setText("Select")
-
-        plugin.layout_horizontal_group_box_add_model.addWidget(
-            plugin.combo_box_models)
-        plugin.layout_horizontal_group_box_add_model.addWidget(
-            plugin.button_select_model)
-
-        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
-
-        # Current models group box
-        plugin.group_box_current_models = QGroupBox(plugin.contents)
-        plugin.group_box_current_models.setTitle("Current Models")
-        plugin.layout_vertical_group_box_current_models = QVBoxLayout(
-            plugin.group_box_current_models)
-        plugin.layout_vertical_group_box_current_models.setContentsMargins(
-            11, 11, 11, 11)
-        plugin.layout_vertical_group_box_current_models.setSpacing(6)
-
-        plugin.tree_widget_current_models = QTreeWidget(
-            plugin.group_box_current_models)
-        plugin.tree_widget_current_models.setStyleSheet(STYLE)
-        # self.tree_widget_current_models.setMinimumSize(QSize(0, 150))
-        plugin.tree_widget_current_models.setAllColumnsShowFocus(False)
-        plugin.tree_widget_current_models.setHeaderHidden(False)
-        plugin.tree_widget_current_models.setColumnCount(2)
-        plugin.tree_widget_current_models.headerItem().setText(0, "Parameter")
-        plugin.tree_widget_current_models.headerItem().setText(1, "Value")
-        plugin.tree_widget_current_models.header().setVisible(True)
-        plugin.tree_widget_current_models.header().setCascadingSectionResizes(
-            False)
-        plugin.tree_widget_current_models.header().setDefaultSectionSize(130)
-
-        plugin.layout_vertical_group_box_current_models.addWidget(
-            plugin.tree_widget_current_models)
-
-        # Current models buttons
-        plugin.layout_horizontal_model_buttons = QHBoxLayout()
-        plugin.layout_horizontal_model_buttons.setContentsMargins(1, 1, 1, 12)
-        plugin.layout_horizontal_model_buttons.setSpacing(6)
-
-        plugin.button_save_model = QToolButton(plugin.group_box_current_models)
-        plugin.button_save_model.setEnabled(False)
-        plugin.button_save_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Save-48.png")))
-        plugin.button_save_model.setIconSize(QSize(25, 25))
-        plugin.button_save_model.setMinimumSize(QSize(35, 35))
-
-        plugin.button_load_model = QToolButton(plugin.group_box_current_models)
-        plugin.button_load_model.setEnabled(False)
-        plugin.button_load_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open Folder-48.png")))
-        plugin.button_load_model.setIconSize(QSize(25, 25))
-        plugin.button_load_model.setMinimumSize(QSize(35, 35))
-
-        plugin.button_export_model = QToolButton(plugin.group_box_current_models)
-        plugin.button_export_model.setEnabled(False)
-        plugin.button_export_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Export-48.png")))
-        plugin.button_export_model.setIconSize(QSize(25, 25))
-        plugin.button_export_model.setMinimumSize(QSize(35, 35))
-
-        plugin.button_remove_model = QToolButton(plugin.group_box_current_models)
-        plugin.button_remove_model.setEnabled(False)
-        plugin.button_remove_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        plugin.button_remove_model.setIconSize(QSize(25, 25))
-        plugin.button_remove_model.setMinimumSize(QSize(35, 35))
-
-        plugin.layout_horizontal_model_buttons.addWidget(plugin.button_save_model)
-        plugin.layout_horizontal_model_buttons.addWidget(plugin.button_load_model)
-        plugin.layout_horizontal_model_buttons.addWidget(
-            plugin.button_export_model)
-        plugin.layout_horizontal_model_buttons.addStretch()
-        plugin.layout_horizontal_model_buttons.addWidget(
-            plugin.button_remove_model)
-
-        plugin.layout_vertical_group_box_current_models.addLayout(
-            plugin.layout_horizontal_model_buttons)
-
-        # Arithmetic group box
-        plugin.group_box_model_arithmetic = QGroupBox(
-            plugin.group_box_current_models)
-        plugin.group_box_model_arithmetic.setTitle("Arithmetic")
-        plugin.layout_vertical_model_arithmetic = QVBoxLayout(
-            plugin.group_box_model_arithmetic)
-        plugin.layout_vertical_model_arithmetic.setContentsMargins(11, 11, 11,
-                                                                   11)
-        plugin.layout_vertical_model_arithmetic.setSpacing(6)
-
-        plugin.line_edit_model_arithmetic = QLineEdit(
-            plugin.group_box_model_arithmetic)
-        plugin.layout_vertical_model_arithmetic.addWidget(
-            plugin.line_edit_model_arithmetic)
-
-        plugin.layout_vertical_group_box_current_models.addWidget(
-            plugin.group_box_model_arithmetic)
-
-        # Fitting routines group box
-        plugin.group_box_fitting = QGroupBox(plugin.contents)
-        plugin.group_box_fitting.setTitle("Fitting")
-        plugin.group_box_fitting.setEnabled(False)
-
-        plugin.layout_vertical_fitting = QVBoxLayout(plugin.group_box_fitting)
-        plugin.layout_vertical_fitting.setContentsMargins(11, 11, 11, 11)
-        plugin.layout_vertical_fitting.setSpacing(6)
-
-        plugin.combo_box_fitting = QComboBox(plugin.group_box_fitting)
-
-        plugin.button_perform_fit = QPushButton(plugin.group_box_fitting)
-        plugin.button_perform_fit.setText("Perform fit")
-
-        plugin.layout_vertical_fitting.addWidget(plugin.combo_box_fitting)
-        plugin.layout_vertical_fitting.addWidget(plugin.button_perform_fit)
-
-        # Add group boxes
-        plugin.layout_vertical.addWidget(plugin.group_box_add_model)
-        plugin.layout_vertical.addWidget(plugin.group_box_current_models)
-        plugin.layout_vertical.addWidget(plugin.group_box_fitting)
-
-STYLE = """
-QTreeWidget::indicator:unchecked {{
-    image: url({1});
-    }}
-QCheckBox::indicator:unchecked:hover {{
-    image: url({1});
-}}
-
-QCheckBox::indicator:unchecked:pressed {{
-    image: url({1});
-}}
-
-QTreeWidget::indicator:checked {{
-    image: url({0});
-}}
-
-QCheckBox::indicator:checked:hover {{
-    image: url({0});
-}}
-
-QCheckBox::indicator:checked:pressed {{
-    image: url({0});
-}}
-""".format(os.path.join(ICON_PATH, 'lock.svg'),
-           os.path.join(ICON_PATH, 'unlock.svg'))
+# STYLE = """
+# QTreeWidget::indicator:unchecked {{
+#     image: url({1});
+#     }}
+# QCheckBox::indicator:unchecked:hover {{
+#     image: url({1});
+# }}
+#
+# QCheckBox::indicator:unchecked:pressed {{
+#     image: url({1});
+# }}
+#
+# QTreeWidget::indicator:checked {{
+#     image: url({0});
+# }}
+#
+# QCheckBox::indicator:checked:hover {{
+#     image: url({0});
+# }}
+#
+# QCheckBox::indicator:checked:pressed {{
+#     image: url({0});
+# }}
+# """.format(os.path.join(ICON_PATH, 'lock.svg'),
+#            os.path.join(ICON_PATH, 'unlock.svg'))

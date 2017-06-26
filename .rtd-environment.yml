@@ -1,0 +1,14 @@
+name: specviz
+
+channels:
+    - astropy
+
+dependencies:
+    - astropy
+    - Cython
+    - jupyter
+    - matplotlib
+    - numpy
+    - scipy
+    - docutils
+    - Sphinx >=1.5.1,<1.6

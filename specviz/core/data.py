@@ -11,7 +11,7 @@ import re
 # THIRD-PARTY
 import numpy as np
 from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
-from ..third_party.py_expression_eval import Parser
+from py_expression_eval import Parser
 
 # FIXME: the latest developer version of Astropy removes OrderedDict which is needed by
 # the current release of specutils, so we hackily add OrderedDict back to astropy to
@@ -254,8 +254,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         data_unit: `~astropy.units`
             The flux units.
         """
-        if self.dispersion_unit.is_equivalent(disp_unit,
-                                              equivalencies=spectral()):
+        if disp_unit is not None and \
+                self.dispersion_unit.is_equivalent(disp_unit,
+                                                   equivalencies=spectral()):
             self._dispersion = self.dispersion.data.to(
                 disp_unit, equivalencies=spectral()).value
 
@@ -264,17 +265,19 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         else:
             logging.warning("Units are not compatible.")
 
-        if self.unit.is_equivalent(data_unit,
-                                   equivalencies=spectral_density(
-                                       self.dispersion.data)):
+        if data_unit is not None and \
+                self.unit.is_equivalent(data_unit,
+                                        equivalencies=spectral_density(
+                                            self.dispersion.data)):
             self._data = self.data.data.to(
                 data_unit, equivalencies=spectral_density(
                     self.dispersion.data)).value
 
-            self._uncertainty = self._uncertainty.__class__(
-                self.raw_uncertainty.data.to(
-                    data_unit, equivalencies=spectral_density(
-                        self.dispersion.data)).value)
+            if self._uncertainty is not None:
+                self._uncertainty = self._uncertainty.__class__(
+                    self.raw_uncertainty.data.to(
+                        data_unit, equivalencies=spectral_density(
+                            self.dispersion.data)).value)
 
             # Finally, change the unit
             self._unit = data_unit

@@ -246,6 +246,7 @@ dispatch.register_event("on_add_model", args=["layer"])
 dispatch.register_event("on_add_window", args=["data", "window", "layer"])
 dispatch.register_event("on_add_layer", args=["window", "layer", "from_roi"])
 dispatch.register_event("on_add_roi", args=[])
+dispatch.register_event("on_add_to_window", args=["data", "window"])
 
 dispatch.register_event("on_update_model", args=["layer"])
 
