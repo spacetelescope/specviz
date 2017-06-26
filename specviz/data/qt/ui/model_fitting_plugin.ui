@@ -2,18 +2,13 @@
 <ui version="4.0">
  <class>dialog_resample_warning</class>
  <widget class="QWidget" name="dialog_resample_warning">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>292</width>
-    <height>675</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="layout_vertical">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetMinAndMaxSize</enum>
+   </property>
    <property name="leftMargin">
     <number>6</number>
    </property>
@@ -309,7 +304,7 @@ QCheckBox::indicator:unchecked:pressed {
          <item row="2" column="1">
           <widget class="QLineEdit" name="epsilon_line_edit">
            <property name="text">
-            <string>1.4901161193847656e-08</string>
+            <string>1.49e-08</string>
            </property>
           </widget>
          </item>

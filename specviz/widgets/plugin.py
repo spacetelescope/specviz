@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from qtpy.QtCore import *
-from qtpy.QtGui import *
-from qtpy.QtWidgets import *
+from qtpy.QtCore import Qt, QRect
+from qtpy.QtWidgets import (QDockWidget, QScrollArea, QFrame, QWidget, QMenu,
+                            QAction, QWidgetAction, QToolButton, QSizePolicy, QVBoxLayout)
+from qtpy.QtGui import QIcon
 
 from ..core.comms import DispatchHandle
 
@@ -34,12 +35,16 @@ class Plugin(QDockWidget):
         # GUI Setup
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
 
-        self.scroll_area = QScrollArea(self)
+        self.scroll_area = QScrollArea()
         self.scroll_area.setFrameShape(QFrame.NoFrame)
         self.scroll_area.setFrameShadow(QFrame.Plain)
         self.scroll_area.setLineWidth(0)
         self.scroll_area.setWidgetResizable(True)
-        # self.scroll_area.setGeometry(QRect(0, 0, 100, 553))
+        self.scroll_area.setGeometry(QRect(0, 0, 100, 100))
+        # self.scroll_area.setSizePolicy(
+        #     QSizePolicy.Fixed, QSizePolicy.Fixed)
+        # self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         # The main widget inside the scroll area
         self.contents = QWidget()
