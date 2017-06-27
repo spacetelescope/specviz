@@ -265,7 +265,17 @@ class FitsYamlRegister(YamlRegister):
                     hdulist[self._reference.mask['hdu']], col_idx=self._reference.mask['col'])
 
             mask2 = _read_table_column(dqtab, self._reference.mask['col'])[0]  # Data only
+            meta['bitmask'] = mask2.astype(np.int)
             mask |= mask2.astype(np.bool) # Combine with existing mask
+
+            if self._reference.mask.get('definition') is not None:
+                if self._reference.mask.get('definition') == 'sdss':
+
+                    mask_def = ascii.read(os.path.join(os.path.dirname(__file__),
+                                            '..', 'data', 'mask_definitions',
+                                            'sdss.ecsv'))
+                    meta['mask_def'] = mask_def
+
 
         # Wavelength constructed from WCS by default
         dispersion = None
@@ -312,7 +322,7 @@ class FitsYamlRegister(YamlRegister):
 
         return Spectrum1DRef(name=name, data=data, unit=unit, uncertainty=uncertainty,
                     mask=mask, wcs=wcs, dispersion=dispersion,
-                    dispersion_unit=disp_unit)
+                    dispersion_unit=disp_unit, meta=meta)
 
 
 class AsciiYamlRegister(YamlRegister):

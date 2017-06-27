@@ -15,5 +15,9 @@ uncertainty:
   hdu: 1
   col: 2
   type: 'ivar'
+mask:
+  hdu: 1
+  col: 4
+  definition: 'sdss'
 meta:
   author: STScI
