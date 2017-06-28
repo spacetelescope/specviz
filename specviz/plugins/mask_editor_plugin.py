@@ -5,7 +5,7 @@ from ..widgets.plugin import Plugin
 from qtpy.QtWidgets import (QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout,
                             QCheckBox, QTreeWidget, QTreeWidgetItem)
 from qtpy.QtCore import *
-from ..core.comms import DispatchHandle
+from ..core.comms import dispatch, DispatchHandle
 from qtpy.QtGui import *
 
 import numpy as np
@@ -35,20 +35,22 @@ class MaskEditorPlugin(Plugin):
         current_window = self.active_window
         roi_mask = current_window.get_roi_mask(layer=layer)
         current_item = self.tree_widget_dq.currentItem()
-        bit = current_item.data(0, Qt.UserRole)
-        layer.meta['bitmask'][roi_mask] |= (1 << bit)
-        layer.mask = layer.meta['bitmask'].astype(bool)
-        current_window.update_plot(layer)
+        if current_item is not None:
+            bit = current_item.data(0, Qt.UserRole)
+            layer.meta['bitmask'][roi_mask] |= (1 << bit)
+            layer.mask = layer.meta['bitmask'].astype(bool)
+            current_window.update_plot(layer)
 
     def _unmask_data(self):
         layer = self.current_layer
         current_window = self.active_window
         roi_mask = current_window.get_roi_mask(layer=layer)
         current_item = self.tree_widget_dq.currentItem()
-        bit = current_item.data(0, Qt.UserRole)
-        layer.meta['bitmask'][roi_mask] &= ~(1 << bit)
-        layer.mask = layer.meta['bitmask'].astype(bool)
-        current_window.update_plot(layer)
+        if current_item is not None:
+            bit = current_item.data(0, Qt.UserRole)
+            layer.meta['bitmask'][roi_mask] &= ~(1 << bit)
+            layer.mask = layer.meta['bitmask'].astype(bool)
+            current_window.update_plot(layer)
 
     def _toggle_mask(self, state):
         if self.active_window is not None:
@@ -64,7 +66,8 @@ class MaskEditorPlugin(Plugin):
         root = self.tree_widget_dq.invisibleRootItem()
         layer = self.current_layer
         current_bitmask = np.zeros_like(layer.data, dtype=np.int)
-        bitmask = layer.meta.get('bitmask', np.zeros_like(layer.data, dtype=np.int))
+        bitmask = layer.meta.get('bitmask', np.zeros(layer.data.shape[0], dtype=np.int))
+        print(np.all(bitmask))
         for item in [root.child(j) for j in range(root.childCount())]:
             if bool(item.checkState(col)):
                 current_bitmask |= bitmask & (1 << item.data(0, Qt.UserRole))
@@ -100,6 +103,15 @@ class MaskEditorPlugin(Plugin):
                     new_item.setText(1, row['NAME'])
                     new_item.setText(2, row['DESCRIPTION'])
                     self.tree_widget_dq.addTopLevelItem(new_item)
+            else:
+                new_item = QTreeWidgetItem()
+                new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
+                new_item.setCheckState(0, Qt.Checked)
+                new_item.setText(0, str(0))
+                new_item.setData(0, Qt.UserRole, 0)
+                new_item.setText(1, 'BAD_PIXEL')
+                new_item.setText(2, 'A bad pixel')
+                self.tree_widget_dq.addTopLevelItem(new_item)
 
 
 class UiMaskEditorPlugin:
@@ -147,7 +159,7 @@ class UiMaskEditorPlugin:
 
         plugin.group_box_dq = QGroupBox("Data Quality Flags")
         plugin.group_box_dq_layout = QVBoxLayout(plugin.group_box_dq)
-        plugin.group_box_dq_layout.setContentsMargins(10, 0, 0, 0)
+        plugin.group_box_dq_layout.setContentsMargins(10, 10, 10, 10)
 
         plugin.tree_widget_dq = QTreeWidget()
         plugin.tree_widget_dq.setColumnCount(3)

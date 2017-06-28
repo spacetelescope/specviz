@@ -275,6 +275,9 @@ class FitsYamlRegister(YamlRegister):
                                             '..', 'data', 'mask_definitions',
                                             'sdss.ecsv'))
                     meta['mask_def'] = mask_def
+            else:
+                meta['bitmask'] = mask.astype(np.int)
+
 
 
         # Wavelength constructed from WCS by default
@@ -385,6 +388,16 @@ class AsciiYamlRegister(YamlRegister):
         if hasattr(self._reference, 'mask') and self._reference.mask.get('col') is not None:
             try:
                 mask = tab[cols[self._reference.mask['col']]].data.astype(np.bool)
+                meta['bitmask'] = mask.astype(np.int)
+
+                if self._reference.mask.get('definition') is not None:
+                    if self._reference.mask.get('definition') == 'sdss':
+                        mask_def = ascii.read(
+                            os.path.join(os.path.dirname(__file__),
+                                         '..', 'data', 'mask_definitions',
+                                         'sdss.ecsv'))
+                        meta['mask_def'] = mask_def
+
             except IndexError:
                 pass  # Input has no mask column
 
