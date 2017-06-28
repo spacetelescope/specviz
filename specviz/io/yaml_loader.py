@@ -275,6 +275,12 @@ class FitsYamlRegister(YamlRegister):
                                             '..', 'data', 'mask_definitions',
                                             'sdss.ecsv'))
                     meta['mask_def'] = mask_def
+                elif self._reference.mask.get('definition') == 'jwst':
+
+                    mask_def = ascii.read(os.path.join(os.path.dirname(__file__),
+                                            '..', 'data', 'mask_definitions',
+                                            'jwst.ecsv'))
+                    meta['mask_def'] = mask_def
             else:
                 meta['bitmask'] = mask.astype(np.int)
 
@@ -397,7 +403,12 @@ class AsciiYamlRegister(YamlRegister):
                                          '..', 'data', 'mask_definitions',
                                          'sdss.ecsv'))
                         meta['mask_def'] = mask_def
-
+                    elif self._reference.mask.get('definition') == 'jwst':
+                        mask_def = ascii.read(
+                            os.path.join(os.path.dirname(__file__),
+                                         '..', 'data', 'mask_definitions',
+                                         'jwst.ecsv'))
+                        meta['mask_def'] = mask_def
             except IndexError:
                 pass  # Input has no mask column
 

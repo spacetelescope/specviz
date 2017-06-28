@@ -67,7 +67,6 @@ class MaskEditorPlugin(Plugin):
         layer = self.current_layer
         current_bitmask = np.zeros_like(layer.data, dtype=np.int)
         bitmask = layer.meta.get('bitmask', np.zeros(layer.data.shape[0], dtype=np.int))
-        print(np.all(bitmask))
         for item in [root.child(j) for j in range(root.childCount())]:
             if bool(item.checkState(col)):
                 current_bitmask |= bitmask & (1 << item.data(0, Qt.UserRole))
@@ -94,7 +93,7 @@ class MaskEditorPlugin(Plugin):
         layer = layer_item.data(0, Qt.UserRole)
         if layer is not None:
             if layer.meta.get('mask_def') is not None:
-                for row in layer.meta['mask_def']:
+                for row in layer.meta['mask_def'].filled():
                     new_item = QTreeWidgetItem()
                     new_item.setFlags(new_item.flags() | Qt.ItemIsUserCheckable)
                     new_item.setCheckState(0, Qt.Checked)
