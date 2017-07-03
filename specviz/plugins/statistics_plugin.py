@@ -39,9 +39,6 @@ class StatisticsPlugin(Plugin):
         current_layer = self._current_layer
 
         if self.active_window is None or current_layer is None:
-            logging.info(
-                "No window or layer item provided; cannot update statistics.")
-
             # Clear statistics information
             for att in self.__dict__:
                 if 'line_edit' in att:

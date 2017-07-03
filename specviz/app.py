@@ -31,6 +31,7 @@ from docopt import docopt
 from .widgets.utils import ICON_PATH
 from .core.comms import dispatch
 from .widgets.windows import MainWindow
+from .version import version
 
 
 class App(object):
@@ -53,13 +54,14 @@ class App(object):
         self._setup_connections()
 
         # Parse arguments
-        args = docopt(__doc__, version="0.1.0")
+        args = docopt(__doc__, version=version)
         self._parse_args(args)
 
     def _parse_args(self, args):
-        if not args.get("load", False):
+        print(args)
+        if args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
-            dispatch.on_file_read.emit(args.get("<path"),
+            dispatch.on_file_read.emit(args.get("<path>"),
                                        file_filter=file_filter)
 
     def load_plugins(self, hidden=False):
