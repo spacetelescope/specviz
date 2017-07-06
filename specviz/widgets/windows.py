@@ -1,8 +1,9 @@
 from qtpy.QtWidgets import *
 from qtpy.QtCore import *
 from qtpy.QtGui import *
-from specviz.core.comms import dispatch, DispatchHandle
-from specviz.core.data import Spectrum1DRefLayer
+
+from ..core.comms import dispatch, DispatchHandle
+from ..core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
 
 

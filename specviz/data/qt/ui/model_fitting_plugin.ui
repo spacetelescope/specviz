@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>292</width>
-    <height>423</height>
-   </rect>
-  </property>
+ <class>dialog_resample_warning</class>
+ <widget class="QWidget" name="dialog_resample_warning">
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="layout_vertical">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetMinAndMaxSize</enum>
+   </property>
    <property name="leftMargin">
     <number>6</number>
    </property>
@@ -59,7 +54,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="group_box_current_models">
      <property name="title">
       <string>Current Models</string>
      </property>
@@ -67,28 +62,29 @@
       <item>
        <widget class="QTreeWidget" name="tree_widget_current_models">
         <property name="styleSheet">
-         <string notr="true">QTreeWidget::indicator:unchecked {{
-    image: url({1});
-    }}
-QCheckBox::indicator:unchecked:hover {{
-    image: url({1});
-}}
+         <string notr="true">QTreeWidget::indicator:checked {
+    image: url(:/icons/lock.svg);
+}
 
-QCheckBox::indicator:unchecked:pressed {{
-    image: url({1});
-}}
+QCheckBox::indicator:checked:hover {
+    image: url(:/icons/lock.svg);
+}
 
-QTreeWidget::indicator:checked {{
-    image: url({0});
-}}
+QCheckBox::indicator:checked:pressed {
+    image: url(:/icons/lock.svg);
+}
 
-QCheckBox::indicator:checked:hover {{
-    image: url({0});
-}}
+QTreeWidget::indicator:unchecked {
+    image: url(:/icons/unlock.svg);
+}
 
-QCheckBox::indicator:checked:pressed {{
-    image: url({0});
-}}</string>
+QCheckBox::indicator:unchecked:hover {
+    image: url(:/icons/unlock.svg);
+}
+
+QCheckBox::indicator:unchecked:pressed {
+    image: url(:/icons/unlock.svg);
+}</string>
         </property>
         <property name="columnCount">
          <number>2</number>
@@ -112,6 +108,9 @@ QCheckBox::indicator:checked:pressed {{
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QToolButton" name="button_save_model">
+          <property name="toolTip">
+           <string>Save the model as a yaml file</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -129,6 +128,9 @@ QCheckBox::indicator:checked:pressed {{
         </item>
         <item>
          <widget class="QToolButton" name="button_load_model">
+          <property name="toolTip">
+           <string>Open a previously saved model</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -146,6 +148,9 @@ QCheckBox::indicator:checked:pressed {{
         </item>
         <item>
          <widget class="QToolButton" name="button_export_model">
+          <property name="toolTip">
+           <string>Export the model as a python script</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -176,6 +181,9 @@ QCheckBox::indicator:checked:pressed {{
         </item>
         <item>
          <widget class="QToolButton" name="button_remove_model">
+          <property name="toolTip">
+           <string>Delete selected sub model</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -194,7 +202,7 @@ QCheckBox::indicator:checked:pressed {{
        </layout>
       </item>
       <item>
-       <widget class="QGroupBox" name="groupBox_4">
+       <widget class="QGroupBox" name="group_box_arithmetic">
         <property name="title">
          <string>Arithmetic</string>
         </property>
@@ -209,7 +217,7 @@ QCheckBox::indicator:checked:pressed {{
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_3">
+    <widget class="QGroupBox" name="group_box_fitting">
      <property name="title">
       <string>Fitting</string>
      </property>
@@ -218,9 +226,95 @@ QCheckBox::indicator:checked:pressed {{
        <widget class="QComboBox" name="combo_box_fitting"/>
       </item>
       <item>
+       <widget class="QCheckBox" name="check_box_advanced_settings">
+        <property name="styleSheet">
+         <string notr="true">.QCheckBox::indicator:unchecked {
+    image: url(:/icons/icons8-Forward-96.png);
+	height: 16px;
+	width: 16px;
+}
+
+.QCheckBox::indicator:unchecked:pressed {
+    image: url(:/icons/icons8-Forward-96.png);
+	height: 16px;
+	width: 16px;
+}
+
+.QCheckBox::indicator:checked {
+    image: url(:/icons/icons8-Expand Arrow-96.png);
+	height: 20px;
+	width: 20px;
+}
+
+.QCheckBox::indicator:checked:pressed {
+    image: url(:/icons/icons8-Expand Arrow-96.png);
+	height: 20px;
+	width: 20px;
+}</string>
+        </property>
+        <property name="text">
+         <string>Advanced settings</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="group_box_advanced_settings">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="max_iterations_label">
+           <property name="text">
+            <string>Max Iterations</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="max_iterations_line_edit">
+           <property name="text">
+            <string>100</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="relative_error_label">
+           <property name="text">
+            <string>Relative Error</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="relative_error_line_edit">
+           <property name="text">
+            <string>1e-07</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="epsilon_label">
+           <property name="text">
+            <string>Epsilon</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="epsilon_line_edit">
+           <property name="text">
+            <string>1.49e-08</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="button_perform_fit">
         <property name="text">
-         <string>PushButton</string>
+         <string>Perform Fit</string>
         </property>
        </widget>
       </item>

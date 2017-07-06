@@ -68,15 +68,17 @@ To select a region of interest (ROI):
 To measure equivalent width and related properties:
 
 #. Select the layer from "Layers" list (if you have multiple).
-#. Click on the "rectangle with double arrow" icon that is next to the ROI icon
-   on the top  left of the plot. Three regions will appear and each can be
-   adjusted like an ROI.
-#. Position the orange region over the emission or absorption line of interest
+#. Add three ROIs.
+#. Position the orange ROI over the emission or absorption line of interest
    and adjust accordingly.
-#. Position each of the green regions over two different continuum areas, one
+#. Position each of the blue ROIs over two different continuum areas, one
    on each side of the emission/absorption line.
 #. As you adjust the regions, values for equivalent width etc. will be updated
    under the "Measured" tab under "Statistics" on top right of the viewer.
+
+.. note::
+
+  When multiple ROIs are present, the statistics in "Basic" tab reflect all data points contained in the ROIs.
 
 To fit a model to the selected ROI, see :ref:`doc_model_fitting`.
 

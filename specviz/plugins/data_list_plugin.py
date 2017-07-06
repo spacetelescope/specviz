@@ -4,18 +4,19 @@ Plugin to manage the loaded data
 import os
 
 import astropy.io.registry as io_registry
-from qtpy.QtWidgets import (QToolButton, QHBoxLayout,
-                            QSizePolicy, QListWidget, QAbstractItemView,
-                            QListWidgetItem)
-from qtpy.QtCore import Qt, QSize
-from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QListWidgetItem
+from qtpy.QtCore import Qt
 from qtpy import compat
+
+from ..widgets.wizard import open_wizard
+from qtpy.uic import loadUi
 
 from ..core.comms import dispatch, DispatchHandle
 from ..widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
 from ..widgets.plugin import Plugin
+from ..widgets.utils import UI_PATH
 
 
 class DataListPlugin(Plugin):
@@ -34,6 +35,14 @@ class DataListPlugin(Plugin):
         self._file_filter = None
         self._directory = ""
 
+        self.button_wizard = self.add_tool_bar_actions(
+            name="Open with Wizard",
+            description='Open data with wizard',
+            icon_path=os.path.join(ICON_PATH, "Open Folder-Wizard-48.png"),
+            category=('Loaders', 5),
+            priority=1,
+            callback=open_wizard)
+
         # Add tool tray buttons
         self.button_open_data = self.add_tool_bar_actions(
             name="Open",
@@ -44,28 +53,28 @@ class DataListPlugin(Plugin):
             callback=lambda: dispatch.on_file_open.emit())
 
     def setup_ui(self):
-        UiDataListPlugin(self)
+        loadUi(os.path.join(UI_PATH, "data_list_plugin.ui"), self.contents)
 
     def setup_connections(self):
         # Enable/disable buttons depending on selection
-        self.list_widget_data_list.itemSelectionChanged.connect(
+        self.contents.list_widget_data_list.itemSelectionChanged.connect(
             self.toggle_buttons)
 
         # Connect the create new sub window button
-        self.button_create_sub_window.clicked.connect(
+        self.contents.button_create_sub_window.clicked.connect(
             lambda: dispatch.on_add_window.emit(data=self.current_data))
 
         # Connect the add to current plot window button
-        self.button_add_to_sub_window.clicked.connect(
+        self.contents.button_add_to_sub_window.clicked.connect(
             lambda: dispatch.on_add_to_window.emit(
                 data=self.current_data,
                 window=self.active_window))
 
         # When the data list delete button is pressed
-        self.button_remove_data.clicked.connect(
+        self.contents.button_remove_data.clicked.connect(
             lambda: self.remove_data_item())
 
-        self.button_apply_model.clicked.connect(
+        self.contents.button_apply_model.clicked.connect(
             self.apply_model)
 
     def _file_load_result(self, data, thread, auto_open):
@@ -94,7 +103,7 @@ class DataListPlugin(Plugin):
         data : specutils.core.generic.Spectrum1DRef
             The `Data` object of the currently selected row.
         """
-        data_item = self.list_widget_data_list.currentItem()
+        data_item = self.contents.list_widget_data_list.currentItem()
 
         if data_item is not None:
             data = data_item.data(Qt.UserRole)
@@ -102,7 +111,7 @@ class DataListPlugin(Plugin):
 
     @property
     def current_data_item(self):
-        return self.list_widget_data_list.currentItem()
+        return self.contents.list_widget_data_list.currentItem()
 
     @DispatchHandle.register_listener("on_file_open")
     def open_file(self, file_name=None):
@@ -169,12 +178,12 @@ class DataListPlugin(Plugin):
         data : specutils.core.generic.Spectrum1DRef
             The `Data` object to add to the list widget.
         """
-        new_item = QListWidgetItem(data.name, self.list_widget_data_list)
+        new_item = QListWidgetItem(data.name, self.contents.list_widget_data_list)
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 
         new_item.setData(Qt.UserRole, data)
 
-        self.list_widget_data_list.setCurrentItem(new_item)
+        self.contents.list_widget_data_list.setCurrentItem(new_item)
 
     @DispatchHandle.register_listener("on_remove_data")
     def remove_data_item(self, data=None):
@@ -183,22 +192,22 @@ class DataListPlugin(Plugin):
 
         data_item = self.get_data_item(data)
 
-        self.list_widget_data_list.takeItem(
-            self.list_widget_data_list.row(data_item))
+        self.contents.list_widget_data_list.takeItem(
+            self.contents.list_widget_data_list.row(data_item))
 
         dispatch.on_removed_data.emit(data=self.current_data)
 
     @DispatchHandle.register_listener("on_remove_all_data")
     def remove_all_data(self):
-        print('*' * 100, self.list_widget_data_list.count())
-        for i in range(self.list_widget_data_list.count()):
-            item = self.list_widget_data_list.takeItem(i - 1)
+        print('*' * 100, self.contents.list_widget_data_list.count())
+        for i in range(self.contents.list_widget_data_list.count()):
+            item = self.contents.list_widget_data_list.takeItem(i - 1)
             print(i)
             item.deleteLayer()
 
     def get_data_item(self, data):
-        for i in range(self.list_widget_data_list.count()):
-            data_item = self.list_widget_data_list.item(i)
+        for i in range(self.contents.list_widget_data_list.count()):
+            data_item = self.contents.list_widget_data_list.item(i)
 
             if data_item.data(Qt.UserRole) == data:
                 return data_item
@@ -206,78 +215,16 @@ class DataListPlugin(Plugin):
     def get_selected_data(self):
         selected_data = []
 
-        for data_item in self.list_widget_data_list.selectedItems():
+        for data_item in self.contents.list_widget_data_list.selectedItems():
             data = data_item.data(Qt.UserRole)
             selected_data.append(data)
 
         return selected_data
 
     def toggle_buttons(self):
-        if self.current_data_item is not None:
-            self.button_remove_data.setEnabled(True)
-            self.button_create_sub_window.setEnabled(True)
-            self.button_apply_model.setEnabled(True)
-            self.button_add_to_sub_window.setEnabled(True)
-        else:
-            self.button_remove_data.setEnabled(False)
-            self.button_create_sub_window.setEnabled(False)
-            self.button_apply_model.setEnabled(False)
-            self.button_add_to_sub_window.setEnabled(False)
+        state = self.current_data_item is not None
 
-
-class UiDataListPlugin:
-    def __init__(self, plugin):
-        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
-
-        # List widget for the data sets
-        plugin.list_widget_data_list = QListWidget(plugin)
-        plugin.list_widget_data_list.setMinimumHeight(50)
-        plugin.list_widget_data_list.setSizePolicy(QSizePolicy.Preferred,
-                                                   QSizePolicy.Ignored)
-
-        # Allow for multiple selections
-        plugin.list_widget_data_list.setSelectionMode(
-            QAbstractItemView.ExtendedSelection)
-
-        plugin.layout_vertical.addWidget(plugin.list_widget_data_list)
-
-        plugin.layout_horizontal = QHBoxLayout()
-
-        plugin.button_create_sub_window = QToolButton(plugin)
-        plugin.button_create_sub_window.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Open in Browser-50.png")))
-        plugin.button_create_sub_window.setIconSize(QSize(25, 25))
-        plugin.button_create_sub_window.setMinimumSize(QSize(35, 35))
-        plugin.button_create_sub_window.setEnabled(False)
-
-        plugin.button_add_to_sub_window = QToolButton(plugin)
-        plugin.button_add_to_sub_window.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Change Theme-50.png")))
-        plugin.button_add_to_sub_window.setIconSize(QSize(25, 25))
-        plugin.button_add_to_sub_window.setMinimumSize(QSize(35, 35))
-        plugin.button_add_to_sub_window.setEnabled(False)
-
-        plugin.button_apply_model = QToolButton(plugin)
-        plugin.button_apply_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Paste-96.png")))
-        plugin.button_apply_model.setIconSize(QSize(25, 25))
-        plugin.button_apply_model.setMinimumSize(QSize(35, 35))
-        plugin.button_apply_model.setEnabled(False)
-
-        plugin.button_remove_data = QToolButton(plugin)
-        plugin.button_remove_data.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        plugin.button_remove_data.setEnabled(False)
-        plugin.button_remove_data.setIconSize(QSize(25, 25))
-        plugin.button_remove_data.setMinimumSize(QSize(35, 35))
-
-        plugin.layout_horizontal.addWidget(plugin.button_create_sub_window)
-        plugin.layout_horizontal.addWidget(plugin.button_add_to_sub_window)
-        plugin.layout_horizontal.addWidget(plugin.button_apply_model)
-        plugin.layout_horizontal.addStretch()
-        plugin.layout_horizontal.addWidget(plugin.button_remove_data)
-
-        plugin.layout_vertical.addLayout(plugin.layout_horizontal)
-
-
-
+        self.contents.button_remove_data.setEnabled(state)
+        self.contents.button_create_sub_window.setEnabled(state)
+        self.contents.button_apply_model.setEnabled(state)
+        self.contents.button_add_to_sub_window.setEnabled(state)

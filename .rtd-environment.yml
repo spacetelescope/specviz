@@ -6,7 +6,9 @@ channels:
 dependencies:
     - astropy
     - Cython
+    - jupyter
     - matplotlib
     - numpy
-#   - pip:
-#       - dependency_from_pip
+    - scipy
+    - docutils
+    - Sphinx >=1.5.1,<1.6

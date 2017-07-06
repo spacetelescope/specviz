@@ -1,31 +1,41 @@
-"""SpecViz front-end GUI access point.
-This script will start the GUI.
+"""SpecViz is a tool for 1-D spectral visualization and analysis of
+astronomical data.
 
+Usage:
+  specviz
+  specviz load <path> [--loader=<name>]
+  specviz config <path>
+  specviz (-h | --help)
+  specviz --version
+
+Options:
+  -h --help             Show this screen.
+  --version             Show version.
+  --loader=<name>       Custom loader for data set. Can also be a path.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import logging
 import os
-# STDLIB
 import signal
 import sys
 import warnings
 
-# THIRD-PARTY
 from astropy.utils.exceptions import AstropyUserWarning
 from qtpy.QtCore import QTimer, Qt
 from qtpy.QtGui import QIcon
-# LOCAL
 from qtpy.QtWidgets import QApplication, QMenu, QToolBar
+from docopt import docopt
 
-from specviz.widgets.utils import ICON_PATH
+from .widgets.utils import ICON_PATH
 from .core.comms import dispatch
 from .widgets.windows import MainWindow
+from .version import version
 
 
 class App(object):
-    def __init__(self, argv, hide_plugins=False):
+    def __init__(self, hide_plugins=False):
         # Instantiate main window object
         self._all_tool_bars = {}
 
@@ -42,20 +52,17 @@ class App(object):
 
         # Setup up top-level connections
         self._setup_connections()
-        self.parse_args(argv=argv)
 
-    def parse_args(self, argv):
-        if len(argv) > 1:
-            file_name = argv[1]
+        # Parse arguments
+        args = docopt(__doc__, version=version)
+        self._parse_args(args)
 
-            for arg in argv:
-                if '--format=' in arg:
-                    file_filter = arg.strip("--format=")
-                    break
-            else:
-                file_filter = "Auto (*)"
-
-            dispatch.on_file_read.emit(file_name, file_filter=file_filter)
+    def _parse_args(self, args):
+        print(args)
+        if args.get("load", False):
+            file_filter = args.get("--loader", "Auto (*)")
+            dispatch.on_file_read.emit(args.get("<path>"),
+                                       file_filter=file_filter)
 
     def load_plugins(self, hidden=False):
         from .interfaces.registries import plugin_registry
@@ -160,7 +167,7 @@ def setup():
     timer.start(500)  # You may change this if you wish.
     timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
 
-    app = App(sys.argv)
+    app = App()
     app.main_window.show()
 
     return qapp, app

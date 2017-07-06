@@ -15,10 +15,10 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
 from qtpy.QtCore import QEvent, Qt
 
-from specviz.core.comms import dispatch, DispatchHandle
-from specviz.core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from specviz.core.plots import LinePlot
-from specviz.core.annotation import LineIDMarker
+from ..core.comms import dispatch, DispatchHandle
+from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from ..core.plots import LinePlot
+from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 from .dialogs import ResampleDialog
@@ -125,6 +125,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._is_selected = True
         self._layer_items = []
         self.disable_errors = False
+        self.disable_mask = True
 
         DispatchHandle.setup(self)
 
@@ -281,12 +282,13 @@ class PlotSubWindow(UiPlotSubWindow):
             bottom="Wavelength [{}]".format(
                 x_label or str(self._plots[0].layer.dispersion_unit)))
 
-    def set_visibility(self, layer, show_data, show_uncert, inactive=None):
+    def set_visibility(self, layer, show_data, show_uncert, show_masked, inactive=None):
         plot = self.get_plot(layer)
 
         if plot is not None:
             plot.set_plot_visibility(show_data, inactive=inactive)
             plot.set_error_visibility(show_uncert)
+            plot.set_mask_visibility(show_masked)
 
     def set_plot_style(self, layer, mode=None, line_width=None):
         plot = self.get_plot(layer)
@@ -365,10 +367,11 @@ class PlotSubWindow(UiPlotSubWindow):
                     data=out_data['data'],
                     dispersion=wave_out,
                     uncertainty=layer.uncertainty.__class__(
-                        np.zeros(wave_out.shape)),
+                        out_data['err']),
                     mask=None)
 
-                layer = layer.__class__.from_parent(new_data)
+                layer = layer.__class__.from_parent(
+                    new_data, name="Interpolated {}".format(layer.name))
 
         new_plot = LinePlot.from_layer(layer,
                                        color=next(self._available_colors))
@@ -388,6 +391,9 @@ class PlotSubWindow(UiPlotSubWindow):
 
         if new_plot.error is not None:
             self._plot_item.addItem(new_plot.error)
+
+        if new_plot.mask is not None:
+            self._plot_item.addItem(new_plot.mask)
 
         self._plots.append(new_plot)
         self._plot_item.addItem(new_plot.plot)
@@ -412,17 +418,20 @@ class PlotSubWindow(UiPlotSubWindow):
                 if plot.error is not None:
                     self._plot_item.removeItem(plot.error)
 
+                if plot.mask is not None:
+                    self._plot_item.removeItem(plot.mask)
+
                 self._plots.remove(plot)
 
     def set_active_plot(self, layer, checked_state=None):
         for plot in self._plots:
             if plot.checked:
                 if plot.layer == layer:
-                    self.set_visibility(plot.layer, True, not self.disable_errors)
+                    self.set_visibility(plot.layer, True, not self.disable_errors, not self.disable_mask)
                 else:
-                    self.set_visibility(plot.layer, True, False)
+                    self.set_visibility(plot.layer, True, False, False)
             else:
-                self.set_visibility(plot.layer, False, False)
+                self.set_visibility(plot.layer, False, False, False)
 
 
 #--------  Line lists and line labels handling.

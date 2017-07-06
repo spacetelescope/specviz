@@ -5,7 +5,7 @@ from qtpy.QtWidgets import *
 from qtpy.QtGui import *
 from qtpy.QtCore import *
 
-from specviz.core.comms import dispatch, DispatchHandle
+from ..core.comms import dispatch
 
 
 #TODO work in progress

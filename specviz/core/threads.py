@@ -186,10 +186,11 @@ class FitModelThread(QThread):
         self.model_layer = None
         self.fitter_name = ""
 
-    def __call__(self, model_layer, fitter_name, mask=None):
+    def __call__(self, model_layer, fitter_name, mask=None, kwargs=None):
         self.model_layer = model_layer
         self.fitter_name = fitter_name
         self.mask = mask
+        self.kwargs = kwargs or {}
 
     def run(self):
         """
@@ -198,7 +199,8 @@ class FitModelThread(QThread):
         self.status.emit("Fitting model...", 0)
         model_layer, message = self.fit_model(self.model_layer,
                                               self.fitter_name,
-                                              self.mask)
+                                              self.mask,
+                                              self.kwargs)
 
         if not message:
             self.status.emit("Fit completed successfully!", 5000)
@@ -207,7 +209,7 @@ class FitModelThread(QThread):
 
         self.result.emit(model_layer)
 
-    def fit_model(self, model_layer, fitter_name, mask=None):
+    def fit_model(self, model_layer, fitter_name, mask=None, kwargs=None):
         """
         Fit the model
 
@@ -264,7 +266,10 @@ class FitModelThread(QThread):
         else:
             fitter = FitterFactory.default_fitter()
 
-        fitted_model = fitter(model, dispersion, flux, maxiter=2000)
+        # Ensure that the fitter contains the keys in kwargs
+        kwargs = {k: v for k, v in kwargs.items() if hasattr(fitter, k)}
+
+        fitted_model = fitter(model, dispersion, flux, **(kwargs or {}))
 
         if 'message' in fitter.fit_info:
             # The fitter 'message' should probably be logged at INFO level.

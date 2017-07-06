@@ -10,12 +10,14 @@ from qtpy import compat
 from qtpy.QtCore import *
 from qtpy.QtGui import *
 from qtpy.QtWidgets import *
+from qtpy.uic import loadUi
 
-from specviz.widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
 from ..widgets.dialogs import LayerArithmeticDialog
 from ..widgets.plugin import Plugin
+from ..widgets.utils import UI_PATH
 
 
 class LayerListPlugin(Plugin):
@@ -31,7 +33,11 @@ class LayerListPlugin(Plugin):
         self._copied_model = None
 
     def setup_ui(self):
-        UiLayerListPlugin(self)
+        # UiLayerListPlugin(self)
+        loadUi(os.path.join(UI_PATH, "layer_list_plugin.ui"), self.contents)
+
+        # Attached dialog
+        self.dialog_layer_arithmetic = LayerArithmeticDialog()
 
         # Add tool tray buttons
         self.button_layer_slice = self.add_tool_bar_actions(
@@ -47,31 +53,31 @@ class LayerListPlugin(Plugin):
     def setup_connections(self):
         # -- Communications setup
         # Listen for layer selection events, enable/disable buttons
-        self.tree_widget_layer_list.itemSelectionChanged.connect(
+        self.contents.tree_widget_layer_list.itemSelectionChanged.connect(
             lambda: self.toggle_buttons(self.current_layer_item))
 
         # Listen for layer selection events, update model tree on selection
-        self.tree_widget_layer_list.itemSelectionChanged.connect(
+        self.contents.tree_widget_layer_list.itemSelectionChanged.connect(
             lambda: dispatch.on_selected_layer.emit(
                 layer_item=self.current_layer_item))
 
         # When an interactable widget inside a layer item is clicked
-        self.tree_widget_layer_list.itemClicked.connect(
+        self.contents.tree_widget_layer_list.itemClicked.connect(
             lambda li, col: dispatch.on_clicked_layer.emit(
                 layer_item=li))
 
         # When an interactable widget inside a layer item is clicked
-        self.tree_widget_layer_list.itemChanged.connect(
+        self.contents.tree_widget_layer_list.itemChanged.connect(
             lambda li, col: dispatch.on_changed_layer.emit(
                 layer_item=li))
 
         # -- Widget connection setup
         # When the layer list delete button is pressed
-        self.button_remove_layer.clicked.connect(lambda:
+        self.contents.button_remove_layer.clicked.connect(lambda:
                                                  self.remove_layer_item())
 
         # When the arithmetic button is clicked, show math dialog
-        self.button_layer_arithmetic.clicked.connect(
+        self.contents.button_layer_arithmetic.clicked.connect(
             self._show_arithmetic_dialog)
 
         # Create a new layer based on any active ROIs
@@ -80,17 +86,17 @@ class LayerListPlugin(Plugin):
         #                                            from_roi=True))
 
         # Allow changing of plot color
-        self.button_change_color.clicked.connect(
+        self.contents.button_change_color.clicked.connect(
             self._change_plot_color)
 
         # Handle exporting layer objects
-        self.button_export.clicked.connect(
+        self.contents.button_export.clicked.connect(
             self._export_layer)
 
-        self.button_copy_model.clicked.connect(
+        self.contents.button_copy_model.clicked.connect(
             self._copy_model)
 
-        self.button_apply_model.clicked.connect(
+        self.contents.button_apply_model.clicked.connect(
             lambda: dispatch.on_paste_model.emit(layer=self.current_layer))
 
     def _export_layer(self):
@@ -118,9 +124,9 @@ class LayerListPlugin(Plugin):
             self._copied_model = layer
 
         if self._copied_model is not None:
-            self.button_apply_model.setEnabled(True)
+            self.contents.button_apply_model.setEnabled(True)
         else:
-            self.button_apply_model.setEnabled(False)
+            self.contents.button_apply_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_paste_model")
     def _paste_model(self, data=None, layer=None):
@@ -150,7 +156,7 @@ class LayerListPlugin(Plugin):
         layer : specviz.core.data.Spectrum1DRefLayer
             The `Layer` object of the currently selected row.
         """
-        layer_item = self.tree_widget_layer_list.currentItem()
+        layer_item = self.contents.tree_widget_layer_list.currentItem()
 
         if layer_item is not None:
             layer = layer_item.data(0, Qt.UserRole)
@@ -159,12 +165,12 @@ class LayerListPlugin(Plugin):
 
     @property
     def current_layer_item(self):
-        return self.tree_widget_layer_list.currentItem()
+        return self.contents.tree_widget_layer_list.currentItem()
 
     @property
     def all_layers(self):
         layers = []
-        root = self.tree_widget_layer_list.invisibleRootItem()
+        root = self.contents.tree_widget_layer_list.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
@@ -197,17 +203,17 @@ class LayerListPlugin(Plugin):
 
         new_item = QTreeWidgetItem(
             self.get_layer_item(layer._parent) or
-            self.tree_widget_layer_list)
+            self.contents.tree_widget_layer_list)
         new_item.setFlags(
             new_item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
         new_item.setText(0, layer.name)
         new_item.setData(0, Qt.UserRole, layer)
         new_item.setCheckState(0, Qt.Checked)
 
-        self.tree_widget_layer_list.setCurrentItem(new_item)
+        self.contents.tree_widget_layer_list.setCurrentItem(new_item)
 
     def get_layer_item(self, layer):
-        root = self.tree_widget_layer_list.invisibleRootItem()
+        root = self.contents.tree_widget_layer_list.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
@@ -226,7 +232,7 @@ class LayerListPlugin(Plugin):
         if layer is None:
             layer = self.current_layer
 
-        root = self.tree_widget_layer_list.invisibleRootItem()
+        root = self.contents.tree_widget_layer_list.invisibleRootItem()
 
         for i in range(root.childCount()):
             child = root.child(i)
@@ -350,7 +356,7 @@ class LayerListPlugin(Plugin):
 
         col = QColorDialog.getColor(
             plot._pen_stash['pen_on'].color(),
-            self.tree_widget_layer_list)
+            self.contents.tree_widget_layer_list)
 
         if col.isValid():
             plot.pen = col
@@ -361,30 +367,30 @@ class LayerListPlugin(Plugin):
 
     def toggle_buttons(self, layer_item):
         if layer_item is not None:
-            self.button_layer_arithmetic.setEnabled(True)
-            self.button_remove_layer.setEnabled(True)
+            self.contents.button_layer_arithmetic.setEnabled(True)
+            self.contents.button_remove_layer.setEnabled(True)
             self.button_layer_slice.setEnabled(True)
-            self.button_change_color.setEnabled(True)
-            self.button_export.setEnabled(True)
+            self.contents.button_change_color.setEnabled(True)
+            self.contents.button_export.setEnabled(True)
 
             layer = layer_item.data(0, Qt.UserRole)
 
             if hasattr(layer, 'model'):
-                self.button_copy_model.setEnabled(True)
+                self.contents.button_copy_model.setEnabled(True)
             else:
-                self.button_copy_model.setEnabled(False)
+                self.contents.button_copy_model.setEnabled(False)
         else:
-            self.button_layer_arithmetic.setEnabled(False)
-            self.button_remove_layer.setEnabled(False)
+            self.contents.button_layer_arithmetic.setEnabled(False)
+            self.contents.button_remove_layer.setEnabled(False)
             self.button_layer_slice.setEnabled(False)
-            self.button_change_color.setEnabled(False)
-            self.button_export.setEnabled(True)
+            self.contents.button_change_color.setEnabled(False)
+            self.contents.button_export.setEnabled(True)
 
-            self.button_copy_model.setEnabled(False)
+            self.contents.button_copy_model.setEnabled(False)
 
     @DispatchHandle.register_listener("on_activated_window")
     def update_layer_list(self, window):
-        self.tree_widget_layer_list.clear()
+        self.contents.tree_widget_layer_list.clear()
 
         if window is None:
             return
@@ -423,6 +429,11 @@ class LayerListPlugin(Plugin):
 
 class UiLayerListPlugin:
     def __init__(self, plugin):
+        plugin.layout_vertical = QVBoxLayout()
+        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
+        plugin.layout_vertical.setSpacing(6)
+
+        plugin.contents.setLayout(plugin.layout_vertical)
         plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
 
         plugin.tree_widget_layer_list = QTreeWidget(plugin)

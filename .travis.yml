@@ -32,17 +32,16 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='six pyyaml numpy scipy astropy specutils==0.2.2 pyqtgraph qtpy py_expression_eval sphinx_rtd_theme'
         - EVENT_TYPE='pull_request push'
 
         
         # List other runtime dependencies for the package that are available as
         # conda packages here.
-        - CONDA_DEPENDENCIES=''
+        - CONDA_DEPENDENCIES='pyqt scipy'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        # - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='sphinx<1.6 specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -82,16 +81,16 @@ matrix:
           env: SETUP_CMD='build_docs -w'
 
         # Now try Astropy dev and LTS vesions with the latest 3.x and 2.7.
-        - os: linux
-          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=development
-               EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: ASTROPY_VERSION=development
-               EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts
-        - os: linux
-          env: ASTROPY_VERSION=lts
+#        - os: linux
+#          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=development
+#               EVENT_TYPE='pull_request push cron'
+#        - os: linux
+#          env: ASTROPY_VERSION=development
+#               EVENT_TYPE='pull_request push cron'
+#        - os: linux
+#          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts NUMPY_VERSION=1.12
+#        - os: linux
+#          env: ASTROPY_VERSION=lts NUMPY_VERSION=1.12
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
