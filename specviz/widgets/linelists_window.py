@@ -1,9 +1,14 @@
 """
 Define all the line list-based windows and dialogs
 """
-from qtpy.QtWidgets import *
-from qtpy.QtGui import *
-from qtpy.QtCore import *
+from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
+                            QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
+                            QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
+                            QAction, QTableView, QMainWindow,
+                            QAbstractItemView, QLayout, QTextBrowser)
+from qtpy.QtGui import QPixmap, QIcon
+from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
+                         QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
 from ..core.comms import dispatch
 

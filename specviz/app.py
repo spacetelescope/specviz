@@ -201,18 +201,19 @@ def sigint_handler(*args):
 
 
 def glue_setup():
-
     try:
         import glue  # noqa
     except ImportError:
-        logging.warning("Failed to import SpecVizViewer; Glue installation not found.")
+        logging.warning("Failed to import SpecVizViewer; Glue installation "
+                        "not found.")
         return
 
     # Check that the version of glue is recent enough
     from distutils.version import LooseVersion
     from glue import __version__
     if LooseVersion(__version__) < LooseVersion('0.10.2'):
-        raise Exception("glue 0.10.2 or later is required for the specviz plugin")
+        raise Exception("glue 0.10.2 or later is required for the specviz "
+                        "plugin")
 
     from .external.glue.data_viewer import SpecVizViewer
     from glue.config import qt_client

@@ -16,6 +16,7 @@ import astropy.io.registry as io_registry
 from ..core.data import Spectrum1DRef
 from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
 from ..io.loaders import *
+from ..plugins import *
 
 __all__ = ['Registry',
            'PluginRegistry',
@@ -50,13 +51,11 @@ class PluginRegistry(Registry):
     def __init__(self):
         super(PluginRegistry, self).__init__()
 
-        cur_path = os.path.abspath(os.path.join(__file__, '..', '..',
-                                                'plugins'))
         usr_path = os.path.join(os.path.expanduser('~'), '.specviz')
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence
-        check_paths = [usr_path, cur_path]
+        check_paths = [usr_path]
 
         if not os.path.exists(usr_path):
             os.mkdir(usr_path)
@@ -65,10 +64,7 @@ class PluginRegistry(Registry):
             for mod in [x for x in os.listdir(path) if x.endswith('.py')]:
                 mod = mod.split('.')[0]
 
-                if path == cur_path:
-                    mod = "specviz.plugins.{}".format(mod)
-                else:
-                    sys.path.insert(0, path)
+                sys.path.insert(0, path)
 
                 mod = importlib.import_module(mod)
 
@@ -81,8 +77,7 @@ class PluginRegistry(Registry):
                 for cls_name, cls_plugin in cls_members:
                     self._members.append(cls_plugin())
 
-                if path != cur_path:
-                    sys.path.pop(0)
+                sys.path.pop(0)
 
 
 def load_yaml_reader(f_path):
@@ -128,7 +123,7 @@ class LoaderRegistry(Registry):
         Python modules (.py ending) found in the following locations will be
         auto-loaded into the registry for data loading.
 
-        1.  .specviz folder in the user's HOME directory
+        1. .specviz folder in the user's HOME directory
 
         """
 
@@ -165,9 +160,9 @@ class LoaderRegistry(Registry):
         YAML files found in the following three locations will be auto-loaded
         into the registry for data loading.
 
-        1.  .specviz folder in the user's HOME directory
-        2.  the current working directory
-        3.  the linelists directory delivered with this package.
+        1. .specviz folder in the user's HOME directory
+        2. the current working directory
+        3. the linelists directory delivered with this package.
 
         The io_registry will be updated with the YAML schematics for each of the
         different filetypes.  Errors in loading the registry will write an error
@@ -180,7 +175,6 @@ class LoaderRegistry(Registry):
                                                 '.specviz'))
         lines_path = os.path.join(os.path.dirname(__file__), '..', 'data',
                                   'linelists')
-        init_path = os.getcwd()
 
         # This order determines priority in case of duplicates; paths higher
         # in this list take precedence

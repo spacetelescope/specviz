@@ -3,7 +3,7 @@ Base contextual menu classes
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from qtpy.QtWidgets import *
+from qtpy.QtWidgets import QMenu
 
 
 class BaseContextMenu(QMenu):

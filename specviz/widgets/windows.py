@@ -1,6 +1,7 @@
-from qtpy.QtWidgets import *
-from qtpy.QtCore import *
-from qtpy.QtGui import *
+from qtpy.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QFrame, QMenu,
+                            QStatusBar, QMenuBar, QMdiArea)
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QBrush, QColor
 
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefLayer
