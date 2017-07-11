@@ -44,8 +44,8 @@ Installation and Setup
 .. toctree::
    :maxdepth: 2
 
-   specviz/installation
-   specviz/launching
+   installation
+   launching
 
 
 Using SpecViz
@@ -54,9 +54,9 @@ Using SpecViz
 .. toctree::
    :maxdepth: 2
 
-   specviz/viewer
-   specviz/model_fitting
-   specviz/custom_loaders
+   viewer
+   model_fitting
+   custom_loaders
 
 
 References/API
@@ -65,7 +65,7 @@ References/API
 .. toctree::
    :maxdepth: 1
 
-   specviz/api
+   api
 
 
 Indices and tables
