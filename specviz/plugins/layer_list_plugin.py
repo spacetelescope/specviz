@@ -7,10 +7,10 @@ import os
 import numpy as np
 from astropy.units import spectral_density, spectral
 from qtpy import compat
-from qtpy.QtCore import *
-from qtpy.QtGui import *
-from qtpy.QtWidgets import *
 from qtpy.uic import loadUi
+from qtpy.QtWidgets import QTreeWidgetItem
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QPixmap, QIcon
 
 from ..widgets.utils import ICON_PATH
 from ..core.comms import dispatch, DispatchHandle
@@ -33,6 +33,7 @@ class LayerListPlugin(Plugin):
         self._copied_model = None
 
     def setup_ui(self):
+        return
         # UiLayerListPlugin(self)
         loadUi(os.path.join(UI_PATH, "layer_list_plugin.ui"), self.contents)
 
@@ -51,6 +52,7 @@ class LayerListPlugin(Plugin):
                 from_roi=True))
 
     def setup_connections(self):
+        return
         # -- Communications setup
         # Listen for layer selection events, enable/disable buttons
         self.contents.tree_widget_layer_list.itemSelectionChanged.connect(
@@ -425,78 +427,3 @@ class LayerListPlugin(Plugin):
         plot.checked = layer_item.checkState(col) == Qt.Checked
 
         current_window.set_active_plot(layer)
-
-
-class UiLayerListPlugin:
-    def __init__(self, plugin):
-        plugin.layout_vertical = QVBoxLayout()
-        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
-        plugin.layout_vertical.setSpacing(6)
-
-        plugin.contents.setLayout(plugin.layout_vertical)
-        plugin.layout_vertical.setContentsMargins(11, 11, 11, 11)
-
-        plugin.tree_widget_layer_list = QTreeWidget(plugin)
-        plugin.tree_widget_layer_list.setMinimumHeight(50)
-        plugin.tree_widget_layer_list.setHeaderHidden(True)
-        plugin.tree_widget_layer_list.setSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Ignored)
-
-        plugin.layout_vertical.addWidget(plugin.tree_widget_layer_list)
-
-        plugin.layout_horizontal = QHBoxLayout()
-
-        plugin.button_layer_arithmetic = QToolButton(plugin)
-        plugin.button_layer_arithmetic.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Math-48.png")))
-        plugin.button_layer_arithmetic.setEnabled(False)
-        plugin.button_layer_arithmetic.setIconSize(QSize(25, 25))
-        plugin.button_layer_arithmetic.setMinimumSize(QSize(35, 35))
-
-        plugin.button_copy_model = QToolButton(plugin)
-        plugin.button_copy_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Copy-96.png")))
-        plugin.button_copy_model.setEnabled(False)
-        plugin.button_copy_model.setIconSize(QSize(25, 25))
-        plugin.button_copy_model.setMinimumSize(QSize(35, 35))
-
-        plugin.button_apply_model = QToolButton(plugin)
-        plugin.button_apply_model.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Paste-96.png")))
-        plugin.button_apply_model.setEnabled(False)
-        plugin.button_apply_model.setIconSize(QSize(25, 25))
-        plugin.button_apply_model.setMinimumSize(QSize(35, 35))
-
-        plugin.button_remove_layer = QToolButton(plugin)
-        plugin.button_remove_layer.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Delete-48.png")))
-        plugin.button_remove_layer.setEnabled(False)
-        plugin.button_remove_layer.setMinimumSize(QSize(35, 35))
-        plugin.button_remove_layer.setIconSize(QSize(25, 25))
-
-        plugin.button_change_color = QToolButton(plugin)
-        plugin.button_change_color.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Color Dropper-48.png")))
-        plugin.button_change_color.setEnabled(False)
-        plugin.button_change_color.setMinimumSize(QSize(35, 35))
-        plugin.button_change_color.setIconSize(QSize(25, 25))
-
-        plugin.button_export = QToolButton(plugin)
-        plugin.button_export.setIcon(QIcon(os.path.join(
-            ICON_PATH, "Export-48.png")))
-        plugin.button_export.setEnabled(False)
-        plugin.button_export.setMinimumSize(QSize(35, 35))
-        plugin.button_export.setIconSize(QSize(25, 25))
-        plugin.button_export.setToolTip("Export spectrum to a file.")
-
-        plugin.layout_horizontal.addWidget(plugin.button_layer_arithmetic)
-        plugin.layout_horizontal.addWidget(plugin.button_copy_model)
-        plugin.layout_horizontal.addWidget(plugin.button_apply_model)
-        plugin.layout_horizontal.addStretch()
-        plugin.layout_horizontal.addWidget(plugin.button_change_color)
-        plugin.layout_horizontal.addWidget(plugin.button_export)
-        plugin.layout_horizontal.addWidget(plugin.button_remove_layer)
-
-        plugin.layout_vertical.addLayout(plugin.layout_horizontal)
-
-        plugin.dialog_layer_arithmetic = LayerArithmeticDialog()

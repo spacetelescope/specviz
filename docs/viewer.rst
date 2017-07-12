@@ -3,7 +3,7 @@
 Viewer
 ======
 
-.. image:: ../_static/viewer.png
+.. image:: _static/viewer.png
   :width: 800px
   :alt: Viewer
 

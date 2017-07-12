@@ -1,5 +1,5 @@
-from qtpy.QtWidgets import *
-from qtpy.QtGui import *
+from qtpy.QtWidgets import (QToolBar, QMenu, QToolButton)
+from qtpy.QtGui import QIcon, QPixmap
 
 
 class PlotToolBar(QToolBar):

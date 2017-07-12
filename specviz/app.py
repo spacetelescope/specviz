@@ -31,6 +31,7 @@ from docopt import docopt
 from .widgets.utils import ICON_PATH
 from .core.comms import dispatch
 from .widgets.windows import MainWindow
+from .version import version
 
 
 class App(object):
@@ -53,13 +54,14 @@ class App(object):
         self._setup_connections()
 
         # Parse arguments
-        args = docopt(__doc__, version="0.1.0")
+        args = docopt(__doc__, version=version)
         self._parse_args(args)
 
     def _parse_args(self, args):
-        if not args.get("load", False):
+        print(args)
+        if args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
-            dispatch.on_file_read.emit(args.get("<path"),
+            dispatch.on_file_read.emit(args.get("<path>"),
                                        file_filter=file_filter)
 
     def load_plugins(self, hidden=False):
@@ -199,18 +201,19 @@ def sigint_handler(*args):
 
 
 def glue_setup():
-
     try:
         import glue  # noqa
     except ImportError:
-        logging.warning("Failed to import SpecVizViewer; Glue installation not found.")
+        logging.warning("Failed to import SpecVizViewer; Glue installation "
+                        "not found.")
         return
 
     # Check that the version of glue is recent enough
     from distutils.version import LooseVersion
     from glue import __version__
     if LooseVersion(__version__) < LooseVersion('0.10.2'):
-        raise Exception("glue 0.10.2 or later is required for the specviz plugin")
+        raise Exception("glue 0.10.2 or later is required for the specviz "
+                        "plugin")
 
     from .external.glue.data_viewer import SpecVizViewer
     from glue.config import qt_client

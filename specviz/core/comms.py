@@ -149,8 +149,6 @@ class DispatchHandle(object):
     Interface for allowing classes to use decorators to define event
     listeners. Otherwise, classes would have to define all listeners in the
     `init` function using
-
-    >>> dispatch.register_listener("<event_name>", <class_method>)
     """
     @staticmethod
     def setup(inst):
