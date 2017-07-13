@@ -24,7 +24,7 @@ def parse_fits(filename):
 
     with fits.open(filename) as hdulist:
 
-        for hdu in hdulist:
+        for ihdu, hdu in enumerate(hdulist):
 
             parsed_hdu = {}
 
@@ -74,7 +74,8 @@ def parse_fits(filename):
                                                'unit': unit}
 
             if len(parsed_hdu) > 0:
-                parsed_hdus[hdu.name] = parsed_hdu
+                hdu_name = hdu.name or 'HDU {0}'.format(ihdu)
+                parsed_hdus[hdu_name] = parsed_hdu
 
     return parsed_hdus
 
