@@ -15,3 +15,5 @@ if not _ASTROPY_SETUP_:
 
     pass
 
+
+from .plugins import *

@@ -39,8 +39,8 @@ class Registry(object):
     def members(self):
         return self._members
 
-    def add(self):
-        raise NotImplementedError()
+    def add(self, member):
+        self._members.append(member)
 
     def get(self):
         raise NotImplementedError()
@@ -75,7 +75,7 @@ class PluginRegistry(Registry):
                                                          member.__bases__])
 
                 for cls_name, cls_plugin in cls_members:
-                    self._members.append(cls_plugin())
+                    self._members.append(cls_plugin)
 
                 sys.path.pop(0)
 

@@ -33,8 +33,6 @@ class LayerListPlugin(Plugin):
         self._copied_model = None
 
     def setup_ui(self):
-        return
-        # UiLayerListPlugin(self)
         loadUi(os.path.join(UI_PATH, "layer_list_plugin.ui"), self.contents)
 
         # Attached dialog
@@ -52,7 +50,6 @@ class LayerListPlugin(Plugin):
                 from_roi=True))
 
     def setup_connections(self):
-        return
         # -- Communications setup
         # Listen for layer selection events, enable/disable buttons
         self.contents.tree_widget_layer_list.itemSelectionChanged.connect(

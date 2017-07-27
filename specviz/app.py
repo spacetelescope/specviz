@@ -72,7 +72,7 @@ class App(object):
     def load_plugins(self, hidden=False):
         from .interfaces.registries import plugin_registry
 
-        instance_plugins = plugin_registry.members
+        instance_plugins = [x() for x in plugin_registry.members]
 
         for instance_plugin in sorted(instance_plugins,
                                       key=lambda x: x.priority):
