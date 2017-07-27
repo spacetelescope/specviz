@@ -122,7 +122,8 @@ class DataListPlugin(Plugin):
         if file_name is None:
             file_name, selected_filter = self.open_file_dialog()
 
-            self.read_file(file_name, file_filter=selected_filter)
+            if file_name is not None:
+                self.read_file(file_name, file_filter=selected_filter)
 
     def open_file_dialog(self):
         """
