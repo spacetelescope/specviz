@@ -31,7 +31,12 @@ from docopt import docopt
 from .widgets.utils import ICON_PATH
 from .core.comms import dispatch
 from .widgets.windows import MainWindow
-from .version import version
+
+try:
+    from .version import version
+except ModuleNotFoundError:
+    version = None
+    logging.error("Version cannot be imported until package is installed.")
 
 
 class App(object):
