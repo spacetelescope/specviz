@@ -31,7 +31,7 @@ import pyqtgraph as pg
 
 from ..core.comms import dispatch
 from ..core.data import Spectrum1DRef
-from ..interfaces.registries import load_yaml_reader
+from ..interfaces.loaders import load_yaml_reader
 from ..widgets.utils import UI_PATH
 
 from ..utils.parse_fits import simplify_arrays, parse_fits

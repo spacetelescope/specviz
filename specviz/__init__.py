@@ -16,4 +16,10 @@ if not _ASTROPY_SETUP_:
     pass
 
 
+from .interfaces.loaders import _load_yaml, _load_py
+
+_load_yaml()
+_load_py()
+
+
 from .plugins import *
