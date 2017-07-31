@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
-from sip import wrappertype
 
 from qtpy.QtCore import Qt, QRect
 from qtpy.QtWidgets import (QDockWidget, QScrollArea, QFrame, QWidget, QMenu,
@@ -13,7 +12,7 @@ from ..interfaces.registries import plugin_registry
 
 class PluginMeta(type):
     def __new__(cls, *args, **kwargs):
-        cls = super(PluginMeta, cls).__new__(cls,  *args, **kwargs)
+        cls = super(PluginMeta, cls).__new__(cls, *args, **kwargs)
 
         if cls.__name__ != "Plugin":
             plugin_registry.add(cls)
@@ -21,7 +20,7 @@ class PluginMeta(type):
         return cls
 
 
-class PluginMetaProxy(PluginMeta, wrappertype, ABCMeta): pass
+class PluginMetaProxy(type(QDockWidget), PluginMeta): pass
 
 
 @six.add_metaclass(PluginMetaProxy)
