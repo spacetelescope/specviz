@@ -16,7 +16,6 @@ import astropy.io.registry as io_registry
 from ..core.data import Spectrum1DRef
 from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
 from ..io.loaders import *
-from ..plugins import *
 
 __all__ = ['Registry',
            'PluginRegistry',

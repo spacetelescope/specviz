@@ -63,7 +63,6 @@ class App(object):
         self._parse_args(args)
 
     def _parse_args(self, args):
-        print(args)
         if args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
             dispatch.on_file_read.emit(args.get("<path>"),
