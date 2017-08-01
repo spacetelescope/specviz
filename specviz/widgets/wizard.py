@@ -304,11 +304,6 @@ class BaseImportWizard(QDialog):
                                            self.ui.combo_mask_component,
                                            allow_wcs=False)
 
-        self.bit_mask_description_file = None
-
-        self.ui.label_filename.setText('')
-        self.ui.button_select_mask_file.clicked.connect(self._load_mask_description)
-
         self.yaml_preview = YAMLPreviewWidget(self)
         self.yaml_preview.hide()
         self.ui.button_yaml.clicked.connect(self._toggle_yaml_preview)
@@ -333,6 +328,10 @@ class BaseImportWizard(QDialog):
         self.ui.bool_mask.setChecked(False)
         self.set_mask_enabled(False)
         self.ui.bool_mask.toggled.connect(self.set_mask_enabled)
+
+        self.ui.combo_bit_mask_definition.addItem('Custom', userData='custom')
+        self.ui.combo_bit_mask_definition.addItem('SDSS', userData='sdss')
+        self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
 
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
 
@@ -376,49 +375,19 @@ class BaseImportWizard(QDialog):
 
         self.combo_mask_dataset.blockSignals(not enabled)
         self.combo_mask_component.blockSignals(not enabled)
+        self.combo_bit_mask_definition.blockSignals(not enabled)
 
         self.combo_mask_dataset.setEnabled(enabled)
         self.combo_mask_component.setEnabled(enabled)
-        self.button_select_mask_file.setEnabled(enabled)
-        self.combo_bit_id.setEnabled(enabled)
-        self.combo_bit_name.setEnabled(enabled)
-        self.combo_bit_description.setEnabled(enabled)
+        self.combo_bit_mask_definition.setEnabled(enabled)
 
         if enabled:
             self.combo_mask_dataset.setCurrentIndex(0)
+            self.combo_bit_mask_definition.setCurrentIndex(0)
         else:
             self.combo_mask_dataset.setCurrentIndex(-1)
             self.combo_mask_component.setCurrentIndex(-1)
-
-    def _load_mask_description(self):
-
-        filters = ["Any table readable by Astropy (*)"]
-        filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
-
-        if filename == '':
-            return
-
-        try:
-            _bit_mask_table = ascii_read(filename)
-        except Exception as exc:
-            traceback.print_exc()
-            self.label_filename.setText('See terminal')
-            self.label_filename.setStyleSheet('color: red')
-            return
-
-        self.bit_mask_description_file = filename
-
-        self.label_filename.setText(os.path.basename(filename))
-        self.label_filename.setStyleSheet('color: green')
-
-        combos = [self.ui.combo_bit_id,
-                  self.ui.combo_bit_name,
-                  self.ui.combo_bit_description]
-
-        for combo in combos:
-            combo.clear()
-            for column in _bit_mask_table.colnames:
-                combo.addItem(column)
+            self.combo_bit_mask_definition.setCurrentIndex(-1)
 
     @property
     def uncertainties_enabled(self):
@@ -540,15 +509,11 @@ class FITSImportWizard(BaseImportWizard):
             }
         if self.ui.bool_mask.isChecked():
             yaml_dict['mask'] = OrderedDict()
-            yaml_dict['mask']['hdu'] = self.helper_unce.dataset_name
-            yaml_dict['mask']['col'] = self.helper_unce.component_name
-
-        if self.bit_mask_description_file is not None:
-            yaml_dict['mask_def'] = OrderedDict()
-            yaml_dict['mask_def']['file'] = self.bit_mask_description_file
-            yaml_dict['mask_def']['bit'] = self.ui.combo_bit_id.currentText()
-            yaml_dict['mask_def']['name'] = self.ui.combo_bit_name.currentText()
-            yaml_dict['mask_def']['description'] = self.ui.combo_bit_description.currentText()
+            yaml_dict['mask']['hdu'] = self.helper_mask.dataset_name
+            yaml_dict['mask']['col'] = self.helper_mask.component_name
+            definition = self.ui.combo_bit_mask_definition.currentData()
+            if definition != 'custom':
+                yaml_dict['mask']['definition'] = definition
 
         yaml_dict['meta'] = {'author': 'Wizard'}
 
