@@ -23,12 +23,6 @@ from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
 
-from astropy.wcs import WCS
-from astropy import units as u
-import astropy.io.registry as io_registry
-
-import pyqtgraph as pg
-
 from ..core.comms import dispatch
 from ..core.data import Spectrum1DRef
 from ..interfaces.loaders import load_yaml_reader
@@ -85,8 +79,8 @@ class ComponentHelper(object):
     then use it three times.
     """
 
-    def __init__(self, datasets, combo_dataset, combo_component, combo_units,
-                 valid_units, custom_units, label_status, allow_wcs=True):
+    def __init__(self, datasets, combo_dataset, combo_component, combo_units=None,
+                 valid_units=None, custom_units=None, label_status=None, allow_wcs=True):
 
         self.datasets = datasets
 
@@ -108,17 +102,21 @@ class ComponentHelper(object):
 
         # Similarly, we set up the combo of pre-defined units
 
-        self.combo_units.clear()
-
-        for unit in valid_units:
-            self.combo_units.addItem(str(unit), userData=unit)
-        self.combo_units.addItem('Custom', userData='Custom')
+        if self.combo_units is not None:
+            self.combo_units.clear()
+            for unit in valid_units:
+                self.combo_units.addItem(str(unit), userData=unit)
+            self.combo_units.addItem('Custom', userData='Custom')
 
         # Set up callbacks for various events
+
         self.combo_dataset.currentIndexChanged.connect(self._dataset_changed)
         self.combo_component.currentIndexChanged.connect(self._component_changed)
-        self.combo_units.currentIndexChanged.connect(self._unit_changed)
-        self.custom_units.textChanged.connect(self._custom_unit_changed)
+
+        if self.combo_units is not None:
+            self.combo_units.currentIndexChanged.connect(self._unit_changed)
+        if self.custom_units is not None:
+            self.custom_units.textChanged.connect(self._custom_unit_changed)
 
         # We now force combos to update
         self._dataset_changed()
@@ -195,6 +193,9 @@ class ComponentHelper(object):
 
     def _component_changed(self):
 
+        if self.combo_units is None:
+            return
+
         if self.dataset is None:
             self.combo_units.setCurrentIndex(-1)
             return
@@ -224,6 +225,10 @@ class ComponentHelper(object):
         self.combo_units.setCurrentIndex(index)
 
     def _unit_changed(self):
+
+        if self.combo_units is None:
+            return
+
         if self.combo_units.itemText(self.combo_units.currentIndex()) == 'Custom':
             self.custom_units.setEnabled(True)
             self.custom_units.show()
@@ -233,6 +238,10 @@ class ComponentHelper(object):
             self.label_status.setText('')
 
     def _custom_unit_changed(self):
+
+        if self.custom_units is None:
+            return
+
         unit = self.custom_units.text()
         if unit == '':
             self.label_status.setText('')
@@ -264,7 +273,8 @@ class BaseImportWizard(QDialog):
 
         for label in [self.ui.label_dispersion_dataset,
                       self.ui.label_data_dataset,
-                      self.ui.label_uncertainty_dataset]:
+                      self.ui.label_uncertainty_dataset,
+                      self.ui.label_mask_dataset]:
             label.setText(label.text().replace('{{dataset}}', self.dataset_label))
 
         self.helper_disp = ComponentHelper(self.datasets,
@@ -287,10 +297,11 @@ class BaseImportWizard(QDialog):
         self.helper_unce = ComponentHelper(self.datasets,
                                            self.ui.combo_uncertainty_dataset,
                                            self.ui.combo_uncertainty_component,
-                                           self.ui.combo_uncertainty_units,
-                                           DATA_UNITS,
-                                           self.ui.value_uncertainty_units,
-                                           self.ui.label_uncertainty_status,
+                                           allow_wcs=False)
+
+        self.helper_mask = ComponentHelper(self.datasets,
+                                           self.ui.combo_mask_dataset,
+                                           self.ui.combo_mask_component,
                                            allow_wcs=False)
 
         self.yaml_preview = YAMLPreviewWidget(self)
@@ -314,6 +325,14 @@ class BaseImportWizard(QDialog):
         self.set_uncertainties_enabled(False)
         self.ui.bool_uncertainties.toggled.connect(self.set_uncertainties_enabled)
 
+        self.ui.bool_mask.setChecked(False)
+        self.set_mask_enabled(False)
+        self.ui.bool_mask.toggled.connect(self.set_mask_enabled)
+
+        self.ui.combo_bit_mask_definition.addItem('Custom', userData='custom')
+        self.ui.combo_bit_mask_definition.addItem('SDSS', userData='sdss')
+        self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
+
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
 
         self.ui.combo_dispersion_component.currentIndexChanged.connect(self._update_preview)
@@ -325,7 +344,6 @@ class BaseImportWizard(QDialog):
         # method to update just the axis labels, but for now this works.
         self.ui.combo_dispersion_units.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_data_units.currentIndexChanged.connect(self._update_preview)
-        self.ui.combo_uncertainty_units.currentIndexChanged.connect(self._update_preview)
 
         self.ui.button_save_yaml.clicked.connect(self.save_yaml)
 
@@ -337,12 +355,10 @@ class BaseImportWizard(QDialog):
 
         self.combo_uncertainty_dataset.blockSignals(not enabled)
         self.combo_uncertainty_component.blockSignals(not enabled)
-        self.combo_uncertainty_units.blockSignals(not enabled)
         self.combo_uncertainty_type.blockSignals(not enabled)
 
         self.combo_uncertainty_dataset.setEnabled(enabled)
         self.combo_uncertainty_component.setEnabled(enabled)
-        self.combo_uncertainty_units.setEnabled(enabled)
         self.combo_uncertainty_type.setEnabled(enabled)
 
         if enabled:
@@ -351,11 +367,27 @@ class BaseImportWizard(QDialog):
         else:
             self.combo_uncertainty_dataset.setCurrentIndex(-1)
             self.combo_uncertainty_component.setCurrentIndex(-1)
-            self.combo_uncertainty_units.setCurrentIndex(-1)
             self.combo_uncertainty_type.setCurrentIndex(-1)
-            self.value_uncertainty_units.hide()
 
         self._update_preview()
+
+    def set_mask_enabled(self, enabled):
+
+        self.combo_mask_dataset.blockSignals(not enabled)
+        self.combo_mask_component.blockSignals(not enabled)
+        self.combo_bit_mask_definition.blockSignals(not enabled)
+
+        self.combo_mask_dataset.setEnabled(enabled)
+        self.combo_mask_component.setEnabled(enabled)
+        self.combo_bit_mask_definition.setEnabled(enabled)
+
+        if enabled:
+            self.combo_mask_dataset.setCurrentIndex(0)
+            self.combo_bit_mask_definition.setCurrentIndex(0)
+        else:
+            self.combo_mask_dataset.setCurrentIndex(-1)
+            self.combo_mask_component.setCurrentIndex(-1)
+            self.combo_bit_mask_definition.setCurrentIndex(-1)
 
     @property
     def uncertainties_enabled(self):
@@ -475,6 +507,14 @@ class FITSImportWizard(BaseImportWizard):
                 'col': self.helper_unce.component_name,
                 'type': self.ui.combo_uncertainty_type.currentData()
             }
+        if self.ui.bool_mask.isChecked():
+            yaml_dict['mask'] = OrderedDict()
+            yaml_dict['mask']['hdu'] = self.helper_mask.dataset_name
+            yaml_dict['mask']['col'] = self.helper_mask.component_name
+            definition = self.ui.combo_bit_mask_definition.currentData()
+            if definition != 'custom':
+                yaml_dict['mask']['definition'] = definition
+
         yaml_dict['meta'] = {'author': 'Wizard'}
 
         return yaml_dict
