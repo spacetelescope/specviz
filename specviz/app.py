@@ -31,7 +31,12 @@ from docopt import docopt
 from .widgets.utils import ICON_PATH
 from .core.comms import dispatch
 from .widgets.windows import MainWindow
-from .version import version
+
+try:
+    from .version import version
+except ModuleNotFoundError:
+    version = None
+    logging.error("Version cannot be imported until package is installed.")
 
 
 class App(object):
@@ -58,7 +63,6 @@ class App(object):
         self._parse_args(args)
 
     def _parse_args(self, args):
-        print(args)
         if args.get("load", False):
             file_filter = args.get("--loader", "Auto (*)")
             dispatch.on_file_read.emit(args.get("<path>"),
@@ -67,7 +71,7 @@ class App(object):
     def load_plugins(self, hidden=False):
         from .interfaces.registries import plugin_registry
 
-        instance_plugins = plugin_registry.members
+        instance_plugins = [x() for x in plugin_registry.members]
 
         for instance_plugin in sorted(instance_plugins,
                                       key=lambda x: x.priority):

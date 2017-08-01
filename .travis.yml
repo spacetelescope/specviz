@@ -41,7 +41,7 @@ env:
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='sphinx<1.6 specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
+        - PIP_DEPENDENCIES='specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions

@@ -1,23 +1,33 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+import six
 
 from qtpy.QtCore import Qt, QRect
 from qtpy.QtWidgets import (QDockWidget, QScrollArea, QFrame, QWidget, QMenu,
-                            QAction, QWidgetAction, QToolButton, QSizePolicy, QVBoxLayout)
+                            QAction, QWidgetAction, QToolButton)
 from qtpy.QtGui import QIcon
 
 from ..core.comms import DispatchHandle
+from ..interfaces.registries import plugin_registry
 
 
 class PluginMeta(type):
-    pass
+    def __new__(cls, *args, **kwargs):
+        cls = super(PluginMeta, cls).__new__(cls, *args, **kwargs)
+
+        if cls.__name__ != "Plugin":
+            plugin_registry.add(cls)
+
+        return cls
 
 
+class PluginMetaProxy(type(QDockWidget), PluginMeta): pass
+
+
+@six.add_metaclass(PluginMetaProxy)
 class Plugin(QDockWidget):
     """
     Base object for plugin infrastructure.
     """
-    __meta__ = ABCMeta
-
     location = 'hidden'
     priority = 1
 
