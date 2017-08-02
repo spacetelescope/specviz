@@ -55,8 +55,8 @@ handled automatically by the setup functions, with the exception of PyQt/PySide.
 * qtpy
 
 
-Installing
-^^^^^^^^^^
+By using ``pip``
+^^^^^^^^^^^^^^^^
 
 Clone the SpecViz repository somewhere on your system, and install locally using
 ``pip``. If you are using an Anaconda virtual environment, please be sure to
@@ -64,10 +64,7 @@ activate it first before installing: ``$ source activate <environment_name>``.
 
 ::
 
-    $ git clone https://github.com/spacetelescope/specviz.git
-    $ cd specviz
-    $ git checkout tags/v0.3.0
-    $ pip install -r requirements.txt
+    $ pip install git+http://github.com/spacetelescope/specviz.git@v0.4.0
 
 This uses the ``pip`` installation system, so please note that
 
@@ -78,6 +75,19 @@ This uses the ``pip`` installation system, so please note that
 Likewise, the ``pip`` command will use your default Python to install.
 You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
 environment.
+
+
+By cloning
+^^^^^^^^^^
+
+You may also install by cloning the repository directly
+
+::
+
+    $ git clone https://github.com/spacetelescope/specviz.git
+    $ cd specviz
+    $ git checkout tags/v0.3.0
+    $ python setup.py install
 
 
 PyQt/PySide bindings
