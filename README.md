@@ -51,9 +51,31 @@ You may also install by cloning the repository directly
 ```
 $ git clone https://github.com/spacetelescope/specviz.git
 $ cd specviz
-$ git checkout tags/v0.3.0
+$ git checkout tags/v0.4.0
 $ python setup.py install
 ```
+
+### PyQt/PySide bindings
+
+SpecViz requires PyQt. Currently, only python environments with 3.5 or higher
+installed can use ``pip`` to install PyQt5, in which case simply type
+
+```
+$ pip install pyqt5
+```
+
+to install it on your system.
+
+In any other case, PyQt can be installed via anaconda
+
+```
+$ conda install pyqt
+```
+
+Alternatively, PyQt can be installed using many of the Mac package managers, or from source.
+
+SpecViz works with with PyQt4 and PySide, but it is recommended that users use
+PyQt5 if available.
 
 ## Contributing
 
