@@ -37,11 +37,11 @@ env:
         
         # List other runtime dependencies for the package that are available as
         # conda packages here.
-        - CONDA_DEPENDENCIES='pyqt scipy'
+        - CONDA_DEPENDENCIES='pyqt'
         
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
+        - PIP_DEPENDENCIES='scipy specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions

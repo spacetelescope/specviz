@@ -5,12 +5,4 @@ channels:
 
 dependencies:
     - astropy
-    - Cython
-    - jupyter
-    - matplotlib
-    - numpy
-    - scipy
-    - docutils
-    - Sphinx
-    - sphinx_rtd_theme
-    - sphinx_automodapi
+    - pyqt
