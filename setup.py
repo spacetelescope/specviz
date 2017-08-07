@@ -137,6 +137,11 @@ setup(name=PACKAGENAME,
       description=DESCRIPTION,
       scripts=scripts,
       install_requires=metadata.get('install_requires', 'astropy').strip().split(),
+      extras_require={
+          'docs': [
+              'sphinx_automodapi'
+          ]
+      },
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
