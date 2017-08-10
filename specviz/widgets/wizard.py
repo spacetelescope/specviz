@@ -161,6 +161,13 @@ class ComponentHelper(object):
         else:
             return self.dataset[self.component]['data']
 
+    @property
+    def hdu_index(self):
+        if self.dataset is None or self.component is None:
+            return None
+        else:
+            return self.dataset[self.component]['index']
+
     def _dataset_changed(self, event=None):
 
         if self.dataset is None:
@@ -461,10 +468,12 @@ class BaseImportWizard(QDialog):
 
         filename = compat.getsavefilename(parent=self,
                                           caption='Export loader to .yaml file',
-                                          basedir=os.path.expanduser('~/.specviz'))[0]
+                                          basedir=specviz_dir)[0]
 
         if filename == '':
             return
+
+        filename = "{}.yaml".format(filename) if not filename.endswith(".yaml") else filename
 
         string = self.as_yaml()
         with open(filename, 'w') as f:
@@ -485,31 +494,31 @@ class FITSImportWizard(BaseImportWizard):
         yaml_dict['extension'] = ['fits']
         if self.helper_disp.component_name.startswith('WCS::'):
             yaml_dict['wcs'] = {
-                'hdu': self.helper_disp.dataset_name,
+                'hdu': self.helper_disp.hdu_index,
             }
         else:
             yaml_dict['dispersion'] = {
-                'hdu': self.helper_disp.dataset_name,
+                'hdu': self.helper_disp.hdu_index,
                 'col': self.helper_disp.component_name,
                 'unit': self.helper_disp.unit
             }
             yaml_dict['wcs'] = {
-                'hdu': self.helper_disp.dataset_name
+                'hdu': self.helper_disp.hdu_index
             }
         yaml_dict['data'] = {
-            'hdu': self.helper_data.dataset_name,
+            'hdu': self.helper_data.hdu_index,
             'col': self.helper_data.component_name,
             'unit': self.helper_data.unit
         }
         if self.ui.bool_uncertainties.isChecked():
             yaml_dict['uncertainty'] = {
-                'hdu': self.helper_unce.dataset_name,
+                'hdu': self.helper_unce.hdu_index,
                 'col': self.helper_unce.component_name,
                 'type': self.ui.combo_uncertainty_type.currentData()
             }
         if self.ui.bool_mask.isChecked():
             yaml_dict['mask'] = OrderedDict()
-            yaml_dict['mask']['hdu'] = self.helper_mask.dataset_name
+            yaml_dict['mask']['hdu'] = self.helper_mask.hdu_index
             yaml_dict['mask']['col'] = self.helper_mask.component_name
             definition = self.ui.combo_bit_mask_definition.currentData()
             if definition != 'custom':
