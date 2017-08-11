@@ -55,7 +55,8 @@ def parse_fits(filename):
                     parsed_hdu[hdu.name] = {'data': hdu.data,
                                             'ndim': hdu.data.ndim,
                                             'shape': hdu.data.shape,
-                                            'unit': unit}
+                                            'unit': unit,
+                                            'index': ihdu}
 
             elif isinstance(hdu, (fits.TableHDU, fits.BinTableHDU)):
 
@@ -71,7 +72,8 @@ def parse_fits(filename):
                     parsed_hdu[column.name] = {'data': data,
                                                'ndim': data.ndim,
                                                'shape': data.shape,
-                                               'unit': unit}
+                                               'unit': unit,
+                                               'index': ihdu}
 
             if len(parsed_hdu) > 0:
                 hdu_name = hdu.name or 'HDU {0}'.format(ihdu)
