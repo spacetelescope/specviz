@@ -8,7 +8,7 @@ import numpy as np
 from astropy.units import spectral_density, spectral
 from qtpy import compat
 from qtpy.uic import loadUi
-from qtpy.QtWidgets import QTreeWidgetItem
+from qtpy.QtWidgets import QTreeWidgetItem, QColorDialog
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QPixmap, QIcon
 
