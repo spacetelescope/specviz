@@ -145,6 +145,7 @@ class ModelFittingPlugin(Plugin):
             # add the model to the compound model and update plot
             if layer.model is not None:
                 layer.model = layer.model + model
+                model = layer.model._submodels[-1]
             else:
                 layer.model = model
         else:
@@ -158,7 +159,7 @@ class ModelFittingPlugin(Plugin):
             layer = self.add_model_layer(model=model)
 
         dispatch.on_update_model.emit(layer=layer)
-        dispatch.on_add_model.emit(layer=layer)
+        dispatch.on_add_model.emit(model=model)
 
     def add_model_layer(self, model):
         """
@@ -188,17 +189,24 @@ class ModelFittingPlugin(Plugin):
         return new_model_layer
 
     @DispatchHandle.register_listener("on_add_model")
-    def add_model_item(self, layer, unique=True):
+    def add_model_item(self, layer=None, model=None, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
         Parameters
         ----------
         """
-        if hasattr(layer.model, '_submodels'):
-            models = layer.model._submodels
+        if layer is not None:
+            self.contents.tree_widget_current_models.clear()
+
+            if hasattr(layer.model, '_submodels'):
+                models = layer.model._submodels
+            else:
+                models = [layer.model]
+        elif model is not None:
+            models = [model]
         else:
-            models = [layer.model]
+            return
 
         for model in models:
             if model is None:
@@ -283,7 +291,8 @@ class ModelFittingPlugin(Plugin):
         layer = self.current_layer
 
         if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
-            layer.model._submodels.remove(model)
+            [layer.model._submodels.remove(x) for x in layer.model._submodels
+             if x.name == model.name]
         else:
             layer.model = None
 
