@@ -145,7 +145,6 @@ class ModelFittingPlugin(Plugin):
             # add the model to the compound model and update plot
             if layer.model is not None:
                 layer.model = layer.model + model
-                model = layer.model._submodels[-1]
             else:
                 layer.model = model
         else:
@@ -159,7 +158,7 @@ class ModelFittingPlugin(Plugin):
             layer = self.add_model_layer(model=model)
 
         dispatch.on_update_model.emit(layer=layer)
-        dispatch.on_add_model.emit(model=model)
+        dispatch.on_add_model.emit(layer=layer)
 
     def add_model_layer(self, model):
         """
@@ -208,6 +207,8 @@ class ModelFittingPlugin(Plugin):
         else:
             return
 
+        self.contents.tree_widget_current_models.clear()
+
         for model in models:
             if model is None:
                 continue
@@ -242,7 +243,7 @@ class ModelFittingPlugin(Plugin):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
-                new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
+                new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
                                        Qt.ItemIsEditable |
                                        Qt.ItemIsUserCheckable)
@@ -273,7 +274,7 @@ class ModelFittingPlugin(Plugin):
                     param_item = model_item.child(i)
 
                     if param_item.text(0) == para:
-                        param_item.setText(1, "{:4.4g}".format(
+                        param_item.setText(1, "{:g}".format(
                             model.parameters[i]))
 
         # turn signals back on after fitting a model and
@@ -468,7 +469,7 @@ class ModelFittingPlugin(Plugin):
             return
 
         try:
-            txt = "{:4.4g}".format(float(model_item.text(col)))
+            txt = "{:g}".format(float(model_item.text(col)))
             model_item.setText(col, txt)
             model_item.setData(col, Qt.UserRole, float(model_item.text(col)))
         except ValueError:
@@ -596,8 +597,7 @@ class ModelFittingPlugin(Plugin):
             return
         fname = fname[0][0]
 
-        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(
-            fname)
+        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(fname)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.current_layer
@@ -621,7 +621,7 @@ class ModelFittingPlugin(Plugin):
 
             dispatch.on_update_model.emit(layer=layer)
             dispatch.on_add_model.emit(layer=layer)
-            dispatch.on_remove_model.emit(layer=layer)
+            # dispatch.on_remove_model.emit(layer=layer)
 
         for bound in roi_bounds:
             current_window.add_roi(bounds=bound)
