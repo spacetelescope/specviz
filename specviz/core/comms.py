@@ -240,7 +240,7 @@ dispatch.register_event("on_copy_model")
 dispatch.register_event("on_paste_model", args=["data", "layer"])
 
 dispatch.register_event("on_add_data", args=["data"])
-dispatch.register_event("on_add_model", args=["layer"])
+dispatch.register_event("on_add_model", args=["layer", "model"])
 dispatch.register_event("on_add_window", args=["data", "window", "layer"])
 dispatch.register_event("on_add_layer", args=["window", "layer", "from_roi"])
 dispatch.register_event("on_add_roi", args=[])

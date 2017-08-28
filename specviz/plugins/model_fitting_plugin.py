@@ -188,17 +188,26 @@ class ModelFittingPlugin(Plugin):
         return new_model_layer
 
     @DispatchHandle.register_listener("on_add_model")
-    def add_model_item(self, layer, unique=True):
+    def add_model_item(self, layer=None, model=None, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
 
         Parameters
         ----------
         """
-        if hasattr(layer.model, '_submodels'):
-            models = layer.model._submodels
+        if layer is not None:
+            self.contents.tree_widget_current_models.clear()
+
+            if hasattr(layer.model, '_submodels'):
+                models = layer.model._submodels
+            else:
+                models = [layer.model]
+        elif model is not None:
+            models = [model]
         else:
-            models = [layer.model]
+            return
+
+        self.contents.tree_widget_current_models.clear()
 
         for model in models:
             if model is None:
@@ -234,7 +243,7 @@ class ModelFittingPlugin(Plugin):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
-                new_para_item.setText(1, "{:4.4g}".format(model.parameters[i]))
+                new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
                                        Qt.ItemIsEditable |
                                        Qt.ItemIsUserCheckable)
@@ -265,7 +274,7 @@ class ModelFittingPlugin(Plugin):
                     param_item = model_item.child(i)
 
                     if param_item.text(0) == para:
-                        param_item.setText(1, "{:4.4g}".format(
+                        param_item.setText(1, "{:g}".format(
                             model.parameters[i]))
 
         # turn signals back on after fitting a model and
@@ -283,7 +292,8 @@ class ModelFittingPlugin(Plugin):
         layer = self.current_layer
 
         if hasattr(layer, '_model') and hasattr(layer.model, '_submodels'):
-            layer.model._submodels.remove(model)
+            [layer.model._submodels.remove(x) for x in layer.model._submodels
+             if x.name == model.name]
         else:
             layer.model = None
 
@@ -459,7 +469,7 @@ class ModelFittingPlugin(Plugin):
             return
 
         try:
-            txt = "{:4.4g}".format(float(model_item.text(col)))
+            txt = "{:g}".format(float(model_item.text(col)))
             model_item.setText(col, txt)
             model_item.setData(col, Qt.UserRole, float(model_item.text(col)))
         except ValueError:
@@ -587,8 +597,7 @@ class ModelFittingPlugin(Plugin):
             return
         fname = fname[0][0]
 
-        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(
-            fname)
+        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(fname)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.current_layer
@@ -612,7 +621,7 @@ class ModelFittingPlugin(Plugin):
 
             dispatch.on_update_model.emit(layer=layer)
             dispatch.on_add_model.emit(layer=layer)
-            dispatch.on_remove_model.emit(layer=layer)
+            # dispatch.on_remove_model.emit(layer=layer)
 
         for bound in roi_bounds:
             current_window.add_roi(bounds=bound)

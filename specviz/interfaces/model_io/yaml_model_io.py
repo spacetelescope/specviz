@@ -101,7 +101,7 @@ def _build_single_model(in_map, model_name=None):
 
     # model names in ModelFactory do not terminate
     # with a redundant '1D' suffix; remove it.
-    model_cls = ModelFactory.all_models[model_name[:-2]]
+    model_cls = ModelFactory.all_models[model_name.replace("1D", "")]
 
     param_dict = in_map[entry_name]
     name = param_dict['name']
