@@ -69,7 +69,11 @@ def parse_fits(filename):
 
                     data = hdu.data[column.name]
 
-                    parsed_hdu[column.name] = {'data': data,
+                    # If the parsed data is of type string, ignore this column
+                    if isinstance(data, np.chararray):
+                        continue
+
+                    parsed_hdu[column.name] = {'data': data.flatten(),
                                                'ndim': data.ndim,
                                                'shape': data.shape,
                                                'unit': unit,
