@@ -479,7 +479,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         -------
 
         """
-        if self.mask is None or self._parent.layer_mask is None:
+        if self.mask is None or self._parent is None or self._parent.layer_mask is None:
             return np.zeros(self._data.shape)
 
         return self.mask.astype(bool) | ~self._parent.layer_mask.astype(bool)
