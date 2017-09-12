@@ -59,8 +59,12 @@ class App(object):
         self._setup_connections()
 
         # Parse arguments
-        args = docopt(__doc__, version=version)
-        self._parse_args(args)
+        try:
+            args = docopt(__doc__, version=version)
+        except SystemExit:
+            logging.error("Received unknown command line arguments.")
+        else:
+            self._parse_args(args)
 
     def _parse_args(self, args):
         if args.get("load", False):
@@ -68,7 +72,9 @@ class App(object):
             dispatch.on_file_read.emit(args.get("<path>"),
                                        file_filter=file_filter)
 
-    def load_plugins(self, hidden=False):
+    def load_plugins(self, hidden=None):
+        hidden = hidden or {}
+
         from .interfaces.registries import plugin_registry
 
         instance_plugins = [x() for x in plugin_registry.members]
@@ -85,7 +91,7 @@ class App(object):
 
                 self.main_window.addDockWidget(location, instance_plugin)
 
-                if hidden:
+                if hidden.get(instance_plugin.name):
                     instance_plugin.hide()
 
                 # Add this dock's visibility action to the menu bar
@@ -219,7 +225,7 @@ def glue_setup():
         raise Exception("glue 0.10.2 or later is required for the specviz "
                         "plugin")
 
-    from .external.glue.data_viewer import SpecVizViewer
+    from .third_party.glue.data_viewer import SpecVizViewer
     from glue.config import qt_client
     qt_client.add(SpecVizViewer)
 
