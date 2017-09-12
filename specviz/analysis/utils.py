@@ -35,7 +35,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
           dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')])
 
-    The input grid can also be external to the structured array of spectral
+    The input grid can also be third_party to the structured array of spectral
     data, for example:
 
     >>> data = np.ones((5,), [('flux', float), ('ivar', float)])
