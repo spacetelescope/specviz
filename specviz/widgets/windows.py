@@ -2,66 +2,22 @@ from qtpy.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QFrame, QMenu,
                             QStatusBar, QMenuBar, QMdiArea)
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QBrush, QColor
+from qtpy.uic import loadUi
+import os
 
 from ..core.comms import dispatch, DispatchHandle
 from ..core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
+from ..widgets.utils import UI_PATH
 
 
-class UiMainWindow(QMainWindow):
-    """
-    Main application window
-    """
-    def __init__(self, parent=None):
-        super(UiMainWindow, self).__init__(parent)
-        DispatchHandle.setup(self)
-
-        self.showMaximized()
-        self.setMinimumSize(QSize(640, 480))
-        self.setDockOptions(QMainWindow.AnimatedDocks)
-        self.setWindowTitle("SpecViz")
-
-        self.widget_central = QWidget(self)
-        self.setCentralWidget(self.widget_central)
-
-        # Toolbar
-        self.layout_vertical = QVBoxLayout(self.widget_central)
-
-        # MDI area setup
-        self.mdi_area = MdiArea(self.widget_central)
-        self.mdi_area.setFrameShape(QFrame.StyledPanel)
-        self.mdi_area.setFrameShadow(QFrame.Plain)
-        self.mdi_area.setLineWidth(2)
-        brush = QBrush(QColor(200, 200, 200))
-        brush.setStyle(Qt.SolidPattern)
-        self.mdi_area.setBackground(brush)
-        self.mdi_area.setAcceptDrops(True)
-
-        self.layout_vertical.addWidget(self.mdi_area)
-
-        # Menu bar setup
-        self.menu_bar = QMenuBar(self)
-
-        self.menu_file = QMenu(self.menu_bar)
-        self.menu_file.setTitle("File")
-        self.menu_edit = QMenu(self.menu_bar)
-        self.menu_edit.setTitle("Edit")
-        self.menu_view = QMenu(self.menu_bar)
-        self.menu_edit.setTitle("View")
-
-        self.menu_docks = QMenu(self.menu_bar)
-
-        self.setMenuBar(self.menu_bar)
-
-        # Status bar setup
-        self.status_bar = QStatusBar(self)
-
-        self.setStatusBar(self.status_bar)
-
-
-class MainWindow(UiMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
+
+        DispatchHandle.setup(self)
+
+        loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
 
         self.mdi_area.subWindowActivated.connect(self._set_activated_window)
 
