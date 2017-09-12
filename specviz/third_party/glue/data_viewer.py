@@ -131,7 +131,7 @@ class SpecVizViewer(BaseVizViewer):
 
         # We set up the specviz viewer and controller as done for the standalone
         # specviz application
-        self.viewer = Viewer(hide_plugins=False)
+        self.viewer = Viewer(hide_plugins={'Data List': True})
         self.setCentralWidget(self.viewer.main_window)
 
     def initialize_toolbar(self):
