@@ -1,13 +1,16 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
+import os
 
 from qtpy.QtCore import Qt, QRect
 from qtpy.QtWidgets import (QDockWidget, QScrollArea, QFrame, QWidget, QMenu,
                             QAction, QWidgetAction, QToolButton)
 from qtpy.QtGui import QIcon
+from qtpy.uic import loadUi
 
 from ..core.comms import DispatchHandle
 from ..interfaces.registries import plugin_registry
+from ..widgets.utils import UI_PATH
 
 
 class PluginMeta(type):
@@ -45,27 +48,14 @@ class Plugin(QDockWidget):
         # GUI Setup
         self.setAllowedAreas(Qt.AllDockWidgetAreas)
 
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setFrameShadow(QFrame.Plain)
-        self.scroll_area.setLineWidth(0)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setGeometry(QRect(0, 0, 100, 100))
-        # self.scroll_area.setSizePolicy(
-        #     QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        # self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        loadUi(os.path.join(UI_PATH, "plugin.ui"), self)
 
-        # The main widget inside the scroll area
-        self.contents = QWidget()
-
-        self.scroll_area.setWidget(self.contents)
-
-        self.setWidget(self.scroll_area)
         self.setWindowTitle(self.name)
 
         self.setup_ui()
         self.setup_connections()
+
+        self.contents.resize(self.contents.sizeHint())
 
     def _set_name(self, value):
         if isinstance(value, str):
