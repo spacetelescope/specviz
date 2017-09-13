@@ -7,7 +7,7 @@ from glue.core import message as msg
 from glue.utils import nonpartial
 from glue.viewers.common.qt.toolbar import BasicToolbar
 
-from ...app import App as Viewer
+from ...app import App
 from ...core import dispatch
 from ...core import DispatchHandle
 
@@ -131,7 +131,18 @@ class SpecVizViewer(BaseVizViewer):
 
         # We set up the specviz viewer and controller as done for the standalone
         # specviz application
-        self.viewer = Viewer(hide_plugins={'Data List': True})
+        self.viewer = App(disabled={'Data List': True},
+                          hidden={'Layer List': True,
+                                  'Statistics': True,
+                                  'Model Fitting': True,
+                                  'Mask Editor': True})
+
+        layer_list = self.viewer._instanced_plugins.get('Layer List')
+        self._layer_list = layer_list.widget() if layer_list is not None else None
+
+        model_fitting = self.viewer._instanced_plugins.get('Model Fitting')
+        self._model_fitting = model_fitting.widget() if model_fitting is not None else None
+
         self.setCentralWidget(self.viewer.main_window)
 
     def initialize_toolbar(self):
@@ -180,6 +191,12 @@ class SpecVizViewer(BaseVizViewer):
                 file_path = os.path.join(path, file_name)
                 dispatch.on_file_read.emit(file_name=file_path,
                                            file_filter='MOS')
+
+    def layer_view(self):
+        return self._layer_list
+
+    def options_widget(self):
+        return self._model_fitting
 
     @DispatchHandle.register_listener('on_added_data')
     def _added_data(self, data):
