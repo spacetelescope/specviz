@@ -40,7 +40,12 @@ except ModuleNotFoundError:
 
 
 class App(object):
-    def __init__(self, hide_plugins=False):
+    def __init__(self, hidden=None, disabled=None):
+        hidden = hidden or {}
+        disabled = disabled or {}
+
+        self._instanced_plugins = {}
+
         # Instantiate main window object
         self._all_tool_bars = {}
 
@@ -53,7 +58,7 @@ class App(object):
         # self.main_window.setDockNestingEnabled(True)
 
         # Load system and user plugins
-        self.load_plugins(hidden=hide_plugins)
+        self.load_plugins(hidden=hidden, disabled=disabled)
 
         # Setup up top-level connections
         self._setup_connections()
@@ -72,39 +77,35 @@ class App(object):
             dispatch.on_file_read.emit(args.get("<path>"),
                                        file_filter=file_filter)
 
-    def load_plugins(self, hidden=None):
-        hidden = hidden or {}
-
+    def load_plugins(self, hidden=None, disabled=None):
         from .interfaces.registries import plugin_registry
 
-        instance_plugins = [x() for x in plugin_registry.members]
+        self._instanced_plugins = {
+            x.name:x() for x in plugin_registry.members
+            if not disabled.get(x.name, False)}
 
-        for instance_plugin in sorted(instance_plugins,
+        for inst_plgn in sorted(self._instanced_plugins.values(),
                                       key=lambda x: x.priority):
-            if instance_plugin.location != 'hidden':
-                if instance_plugin.location == 'right':
+            if inst_plgn.location != 'hidden':
+                if inst_plgn.location == 'right':
                     location = Qt.RightDockWidgetArea
-                elif instance_plugin.location == 'top':
+                elif inst_plgn.location == 'top':
                     location = Qt.TopDockWidgetArea
                 else:
                     location = Qt.LeftDockWidgetArea
 
-                self.main_window.addDockWidget(location, instance_plugin)
+                self.main_window.addDockWidget(location, inst_plgn)
 
-                if hidden.get(instance_plugin.name):
-                    instance_plugin.hide()
+                if hidden.get(inst_plgn.name):
+                    inst_plgn.hide()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
-                    instance_plugin.toggleViewAction())
-
-        # Resize the widgets now that they are all present
-        for ip in instance_plugins[::-1]:
-            ip.setMinimumSize(ip.sizeHint())
-        #     QApplication.processEvents()
+                    inst_plgn.toggleViewAction())
 
         # Sort actions based on priority
-        all_actions = [y for x in instance_plugins for y in x._actions]
+        all_actions = [y for x in self._instanced_plugins.values()
+                       for y in x._actions]
         all_categories = {}
 
         for act in all_actions:

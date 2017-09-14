@@ -4,11 +4,9 @@ Data Objects
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-# STDLIB
 import logging
 import re
 
-# THIRD-PARTY
 import numpy as np
 from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
 from py_expression_eval import Parser
@@ -21,6 +19,7 @@ from astropy import utils
 utils.OrderedDict = OrderedDict
 
 from specutils.core.generic import Spectrum1DRef
+from astropy.nddata import StdDevUncertainty
 
 logging.basicConfig(level=logging.INFO)
 
@@ -72,9 +71,11 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         Arguments passed to the
         `~spectutils.core.generic.Spectrum1DRef` object.
     """
-    def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
-                 **kwargs):
-        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, *args,
+    def __init__(self, data, wcs=None, parent=None, layer_mask=None,
+                 uncertainty=None, *args,**kwargs):
+        uncertainty = StdDevUncertainty(np.zeros(data.shape)) if uncertainty is None else uncertainty
+
+        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, uncertainty=uncertainty, *args,
                                                  **kwargs)
         self._parent = parent
         self._layer_mask = layer_mask

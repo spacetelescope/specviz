@@ -52,6 +52,9 @@ class MainWindow(QMainWindow):
             window.show()
             self._set_activated_window(mdi_sub_window)
 
+            if self.mdi_area.viewMode() == self.mdi_area.TabbedView:
+                window.showMaximized()
+
     @DispatchHandle.register_listener("on_add_roi")
     def add_roi(self, bounds=None, *args, **kwargs):
         mdi_sub_window = self.mdi_area.activeSubWindow()
