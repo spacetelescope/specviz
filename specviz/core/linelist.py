@@ -56,8 +56,9 @@ def ingest(range):
         # this should get improved as when we decide how to
         # implement support for user-supplied line lists,
         # as well as support for other formats besides ascii.
-        linelist_path = yaml_path.replace('.yaml', '.txt')
-        filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
+        linelist_path = yaml_path.replace('.yaml', '.list')
+
+        filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.list)'
 
         linelist = LineList.read(linelist_path, format="ascii.tab")
         linelist = linelist.extract_range(range)
