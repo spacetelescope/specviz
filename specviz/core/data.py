@@ -8,7 +8,7 @@ import logging
 import re
 
 import numpy as np
-from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
+from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral, Unit
 from py_expression_eval import Parser
 
 # FIXME: the latest developer version of Astropy removes OrderedDict which is needed by
@@ -72,16 +72,18 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         `~spectutils.core.generic.Spectrum1DRef` object.
     """
     def __init__(self, data, wcs=None, parent=None, layer_mask=None,
-                 uncertainty=None, *args,**kwargs):
+                 uncertainty=None, unit=None, *args,**kwargs):
         uncertainty = StdDevUncertainty(np.zeros(data.shape)) if uncertainty is None else uncertainty
+        unit = unit or Unit('')
 
-        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, uncertainty=uncertainty, *args,
-                                                 **kwargs)
+        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, unit=unit,
+                                                 uncertainty=uncertainty,
+                                                 *args,**kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
 
     @classmethod
-    def from_parent(cls, parent, layer_mask=None, name=None):
+    def from_parent(cls, parent, layer_mask=None, name=None, copy=True):
         """
         Create a duplicate child layer from a parent layer
 
@@ -108,7 +110,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
                    dispersion=parent.dispersion,
                    dispersion_unit=parent.dispersion_unit,
                    layer_mask=layer_mask, parent=parent, meta=parent.meta,
-                   copy=False)
+                   copy=copy)
 
     def from_self(self, name="", layer_mask=None):
         """
@@ -127,10 +129,8 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         new_layer:
             The new, parentless, layer.
         """
-        gen_spec = Spectrum1DRef.copy(self, name=name)
-
         return self.from_parent(
-            parent=gen_spec, layer_mask=layer_mask, name=name
+            parent=self._parent, layer_mask=layer_mask, name=name, copy=True
         )
 
     @classmethod
