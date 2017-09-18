@@ -72,12 +72,14 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         `~spectutils.core.generic.Spectrum1DRef` object.
     """
     def __init__(self, data, wcs=None, parent=None, layer_mask=None,
-                 uncertainty=None, unit=None, *args,**kwargs):
+                 uncertainty=None, unit=None, mask=None, *args,**kwargs):
         uncertainty = StdDevUncertainty(np.zeros(data.shape)) if uncertainty is None else uncertainty
         unit = unit or Unit('')
+        mask = mask if mask is not None else np.zeros(data.shape).astype(bool)
 
         super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, unit=unit,
                                                  uncertainty=uncertainty,
+                                                 mask=mask,
                                                  *args,**kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
