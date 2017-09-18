@@ -1,6 +1,7 @@
 --- !CustomLoader
-name: Common_stellar
-extension: [txt, dat]
+name: Common Stellar
+extension: [list]
+filename: 'Common_stellar.list'
 type: 'line_list'
 format: 'fixed_width_no_header'
 columns:

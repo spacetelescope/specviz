@@ -1,6 +1,7 @@
 --- !CustomLoader
-name: Common_nebular
-extension: [txt, dat]
+name: Common Nebular
+extension: [list]
+filename: 'Common_nebular.list'
 type: 'line_list'
 format: 'fixed_width_no_header'
 columns:
