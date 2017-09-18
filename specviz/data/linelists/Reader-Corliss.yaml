@@ -1,5 +1,5 @@
 --- !CustomLoader
-list_name: Reader-Corliss
+name: Reader-Corliss
 extension: [list]
 filename: 'Reader-Corliss.list'
 type: 'line_list'

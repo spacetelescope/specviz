@@ -1,5 +1,5 @@
 --- !CustomLoader
-list_name: Common Nebular
+name: Common Nebular
 extension: [list]
 filename: 'Common_nebular.list'
 type: 'line_list'

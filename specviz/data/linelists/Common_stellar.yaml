@@ -1,5 +1,5 @@
 --- !CustomLoader
-list_name: Common Stellar
+name: Common Stellar
 extension: [list]
 filename: 'Common_stellar.list'
 type: 'line_list'
