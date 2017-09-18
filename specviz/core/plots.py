@@ -6,7 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 
 from qtpy.QtGui import *
 
-from astropy.units import spectral_density, spectral
+from astropy.units import spectral_density, spectral, Unit
+
 import pyqtgraph as pg
 import logging
 import numpy as np
@@ -147,16 +148,20 @@ class LinePlot(object):
         """
         is_convert_success = [True, True, True]
 
-        if x is None or not self._layer.dispersion_unit.is_equivalent(
+        x = x or Unit('')
+        y = y or Unit('')
+
+        if not self._layer.dispersion_unit.is_equivalent(
                 x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units. {} to"
-                          " {}".format(self._layer.dispersion_unit, x))
+            logging.error("Failed to convert x-axis plot units from [{}] to"
+                          " [{}].".format(self._layer.dispersion_unit, x))
             x = None
             is_convert_success[0] = False
 
-        if y is None or not self._layer.unit.is_equivalent(
+        if not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.layer.dispersion)):
-            logging.error("Failed to convert y-axis plot units.")
+            logging.error("Failed to convert y-axis plot units from [{}] to "
+                          "[{}].".format(self._layer.unit, y))
             y = self._layer.unit
             is_convert_success[1] = False
 
@@ -321,6 +326,17 @@ class LinePlot(object):
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
 
         else:
+            print(self.layer.name)
+            print(self.layer.dispersion.shape)
+            print(self.layer.dispersion.compressed().value.shape)
+            print((self.layer.full_mask==True).shape)
+            print((self.layer.full_mask==False).shape)
+            print((self.layer.layer_mask==True).shape)
+            print((self.layer.layer_mask==False).shape)
+            # print((self.layer.mask==True).shape)
+            # print((self.layer.mask==False).shape)
+            print('--')
+
             disp = self.layer.dispersion.compressed().value
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
