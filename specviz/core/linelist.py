@@ -5,10 +5,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
 import glob
+import yaml
 
 import numpy as np
 
 from astropy.table import Table, vstack
+
 
 __all__ = [
     'LineList',
@@ -48,19 +50,20 @@ def ingest(range):
     ascii line lists whose file names end in .txt
     """
     linelist_path = os.path.dirname(os.path.abspath(__file__))
-    dir_path = linelist_path + '/../data/linelists/'
-    yaml_paths = glob.glob(dir_path + '*.yaml')
+    linelist_path +=  '/../data/linelists/'
+    yaml_paths = glob.glob(linelist_path + '*.yaml')
     linelists = []
 
-    for yaml_path in yaml_paths:
-        # this should get improved as when we decide how to
-        # implement support for user-supplied line lists,
-        # as well as support for other formats besides ascii.
-        linelist_path = yaml_path.replace('.yaml', '.list')
+    for yaml_filename in yaml_paths:
 
-        filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.list)'
+        metadata = yaml.load(open(yaml_filename, 'r'))
+        # metadata.set_filter()
 
-        linelist = LineList.read(linelist_path, format="ascii.tab")
+        # linelist_path = yaml_filename.replace('.yaml', '.list')
+        linelist_fullname = linelist_path + metadata['filename']
+
+
+        linelist = LineList.read(linelist_fullname, format="ascii.tab")
         linelist = linelist.extract_range(range)
 
         linelists.append(linelist)

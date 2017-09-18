@@ -457,6 +457,7 @@ class PlotSubWindow(UiPlotSubWindow):
     def _request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
 
+        # TODO start ingestion thread here
         self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
