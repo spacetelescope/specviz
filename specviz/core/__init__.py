@@ -1,1 +1,1 @@
-from .comms import dispatch, DispatchHandle
+from .comms import dispatch

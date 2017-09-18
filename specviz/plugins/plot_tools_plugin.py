@@ -8,7 +8,7 @@ from collections import OrderedDict
 from astropy.units import Unit
 
 from ..widgets.utils import ICON_PATH
-from ..core.comms import dispatch, DispatchHandle
+from ..core.comms import dispatch, dispatch
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.plugin import Plugin
 
@@ -139,7 +139,7 @@ class PlotToolsPlugin(Plugin):
             current_window.disable_errors = not state
             current_window.set_active_plot(layer)
 
-    @DispatchHandle.register_listener("on_activated_window")
+    @dispatch.register_listener("on_activated_window")
     def toggle_enabled(self, window):
         if window:
             self.button_axis_change.setEnabled(True)

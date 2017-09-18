@@ -326,26 +326,15 @@ class LinePlot(object):
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
 
         else:
-            print(self.layer.name)
-            print(self.layer.dispersion.shape)
-            print(self.layer.dispersion.compressed().value.shape)
-            print((self.layer.full_mask==True).shape)
-            print((self.layer.full_mask==False).shape)
-            print((self.layer.layer_mask==True).shape)
-            print((self.layer.layer_mask==False).shape)
-            # print((self.layer.mask==True).shape)
-            # print((self.layer.mask==False).shape)
-            print('--')
-
             disp = self.layer.dispersion.compressed().value
             data = self.layer.data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
-        #-- Changes specific for scatter plot rendering
+        # Change specific marker for scatter plot rendering
         symbol = 'o' if self.mode == 'scatter' else None
         pen = None if self.mode == 'scatter' else self.pen
 
-        #-- changes specific for histrogram rendering
+        # Change specific style for histogram rendering
         stepMode = True if self.mode == 'histogram' else False
         disp = np.append(disp, disp[-1]) if self.mode == 'histogram' else disp
 

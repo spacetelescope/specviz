@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QTreeWidgetItem
 from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.comms import dispatch, dispatch
 from ..core.data import Spectrum1DRefModelLayer
 from ..core.threads import FitModelThread
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -187,7 +187,7 @@ class ModelFittingPlugin(Plugin):
 
         return new_model_layer
 
-    @DispatchHandle.register_listener("on_add_model")
+    @dispatch.register_listener("on_add_model")
     def add_model_item(self, layer=None, model=None, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
@@ -256,7 +256,7 @@ class ModelFittingPlugin(Plugin):
 
         self._update_arithmetic_text(layer)
 
-    @DispatchHandle.register_listener("on_update_model")
+    @dispatch.register_listener("on_update_model")
     def update_model_item(self, layer):
         if hasattr(layer.model, '_submodels'):
             models = layer.model._submodels
@@ -283,7 +283,7 @@ class ModelFittingPlugin(Plugin):
             self.current_layer.model = layer.model
             self.contents.tree_widget_current_models.blockSignals(False)
 
-    @DispatchHandle.register_listener("on_remove_model")
+    @dispatch.register_listener("on_remove_model")
     def remove_model_item(self, model=None):
         if model is None:
             model = self.current_model
@@ -387,7 +387,7 @@ class ModelFittingPlugin(Plugin):
 
         return np.sum(models) if len(models) > 1 else models[0]
 
-    @DispatchHandle.register_listener("on_update_model")
+    @dispatch.register_listener("on_update_model")
     def _update_arithmetic_text(self, layer):
         if hasattr(layer, '_model'):
             # If the model is a compound
@@ -407,7 +407,7 @@ class ModelFittingPlugin(Plugin):
 
             return expr
 
-    @DispatchHandle.register_listener("on_selected_model", "on_changed_model")
+    @dispatch.register_listener("on_selected_model", "on_changed_model")
     def _update_model_name(self, model_item, col=0):
         if model_item is None:
             return
@@ -433,7 +433,7 @@ class ModelFittingPlugin(Plugin):
 
         self._update_arithmetic_text(self.current_layer)
 
-    @DispatchHandle.register_listener("on_changed_model")
+    @dispatch.register_listener("on_changed_model")
     def _update_model_parameters(self, *args, **kwargs):
         model_layer = self.current_layer
         model_dict = self.get_model_inputs()
@@ -449,7 +449,7 @@ class ModelFittingPlugin(Plugin):
             logging.error("Cannot set `ModelLayer` model to new compound "
                           "model.")
 
-    @DispatchHandle.register_listener("on_selected_layer")
+    @dispatch.register_listener("on_selected_layer")
     def update_model_list(self, layer_item=None, layer=None):
         self.contents.tree_widget_current_models.clear()
         self.contents.line_edit_model_arithmetic.clear()
@@ -532,7 +532,7 @@ class ModelFittingPlugin(Plugin):
 
     # this is also called in response to the "on_remove_model" signal,
     # however indirectly via the remove_model_item method.
-    @DispatchHandle.register_listener("on_add_model")
+    @dispatch.register_listener("on_add_model")
     def toggle_fitting(self, *args, **kwargs):
         root = self.contents.tree_widget_current_models.invisibleRootItem()
 
@@ -543,7 +543,7 @@ class ModelFittingPlugin(Plugin):
             self.contents.group_box_fitting.setEnabled(False)
             self.contents.button_save_model.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_selected_layer")
+    @dispatch.register_listener("on_selected_layer")
     def toggle_io(self, layer_item, *args, **kwargs):
         if layer_item:
             self.contents.button_load_model.setEnabled(True)

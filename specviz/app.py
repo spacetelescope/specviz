@@ -141,16 +141,6 @@ class App(object):
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             tool_bar.setMovable(False)
 
-            tool_bar.setStyleSheet("""
-                QToolBar {
-                    icon-size: 32px;
-                }
-
-                QToolBar QToolButton {
-                    height: 48px;
-                }
-            """)
-
             self._all_tool_bars[name] = dict(widget=tool_bar,
                                              priority=int(priority),
                                              name=name)

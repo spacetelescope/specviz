@@ -5,7 +5,7 @@ import os
 
 from ..widgets.utils import ICON_PATH
 from ..analysis.filters import smooth
-from ..core.comms import dispatch, DispatchHandle
+from ..core.comms import dispatch, dispatch
 from ..widgets.dialogs import SmoothingDialog
 from ..widgets.plugin import Plugin
 
@@ -93,7 +93,7 @@ class ToolTrayPlugin(Plugin):
 
         dispatch.on_add_layer.emit(layer=new_data)
 
-    @DispatchHandle.register_listener("on_activated_window")
+    @dispatch.register_listener("on_activated_window")
     def toggle_enabled(self, window):
         if window:
             self.button_smooth.setEnabled(True)
