@@ -5,7 +5,7 @@ from qtpy.QtGui import QBrush, QColor
 from qtpy.uic import loadUi
 import os
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.comms import dispatch, dispatch
 from ..core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
 from ..widgets.utils import UI_PATH
@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
 
-        DispatchHandle.setup(self)
+        dispatch.setup(self)
 
         loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
 
@@ -33,19 +33,14 @@ class MainWindow(QMainWindow):
         dispatch.on_activated_window.emit(
             window=window.widget() if window is not None else None)
 
-    @DispatchHandle.register_listener("on_add_window", "on_add_to_window")
-    def add_sub_window(self, data=None, layer=None, window=None, *args,
-                       **kwargs):
+    @dispatch.register_listener("on_add_window")
+    def add_sub_window(self, data=None, layer=None, window=None):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
         is_new_window = window is None
         window = window or PlotSubWindow()
 
-        if not isinstance(layer, list):
-            layer = [layer]
-
-        for l in layer:
-            dispatch.on_add_layer.emit(layer=l, window=window)
-            window.setWindowTitle(l.name)
+        dispatch.on_add_layer.emit(layer=layer, window=window)
+        window.setWindowTitle(layer.name)
 
         if window is not None and is_new_window:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
@@ -55,9 +50,18 @@ class MainWindow(QMainWindow):
             if self.mdi_area.viewMode() == self.mdi_area.TabbedView:
                 window.showMaximized()
 
-    @DispatchHandle.register_listener("on_add_roi")
+    @dispatch.register_listener("on_add_to_window")
+    def add_to_window(self, data=None, window=None):
+        # Find any sub windows currently active
+        window = window or next((x for x in self.mdi_area.subWindowList(
+            order=self.mdi_area.ActivationHistoryOrder)), None)
+
+        self.add_sub_window(data=data, window=window)
+
+    @dispatch.register_listener("on_add_roi")
     def add_roi(self, bounds=None, *args, **kwargs):
-        mdi_sub_window = self.mdi_area.activeSubWindow()
+        mdi_sub_window = self.mdi_area.activeSubWindow() or next((x for x in self.mdi_area.subWindowList(
+            order=self.mdi_area.ActivationHistoryOrder)), None)
 
         if mdi_sub_window is not None:
             window = mdi_sub_window.widget()
@@ -68,7 +72,7 @@ class MainWindow(QMainWindow):
 
         return sw.get_roi_bounds()
 
-    @DispatchHandle.register_listener("on_status_message")
+    @dispatch.register_listener("on_status_message")
     def update_message(self, message, timeout=0):
         self.status_bar.showMessage(message, timeout)
 
