@@ -1,22 +1,21 @@
 import os
 from collections import OrderedDict
 
+import numpy as np
+
 from glue.core import Subset
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.core import message as msg
 from glue.utils import nonpartial
 from glue.viewers.common.qt.toolbar import BasicToolbar
 
-import astropy.units as u
-from astropy.wcs.wcs import WCSSUB_SPECTRAL
-
 from spectral_cube import SpectralCube
 
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QTabWidget
+from qtpy.QtCore import Qt, QSize
 
 from ...app import App
-from ...core import dispatch
-from ...core import DispatchHandle
+from ...core import comms
 from ...core.data import Spectrum1DRef
 
 from .viewer_options import OptionsWidget
@@ -33,7 +32,7 @@ class SpecVizViewer(DataViewer):
         super(SpecVizViewer, self).__init__(session, parent=parent)
 
         # Connect the dataview to the specviz messaging system
-        DispatchHandle.setup(self)
+        comms.dispatch.setup(self)
 
         # We now set up the options widget. This controls for example which
         # attribute should be used to indicate the filenames of the spectra.
@@ -61,7 +60,7 @@ class SpecVizViewer(DataViewer):
 
         # We set up the specviz viewer and controller as done for the standalone
         # specviz application
-        self.viewer = App(disabled={'Data List': False},
+        self.viewer = App(disabled={'Data List': True},
                           hidden={'Layer List': True,
                                   'Statistics': True,
                                   'Model Fitting': True,
@@ -70,6 +69,14 @@ class SpecVizViewer(DataViewer):
 
         # Remove the menubar so that it does not interfere with Glue's
         self.viewer.main_window.menu_bar = None
+
+        # Remove Glue's viewer status bar
+        self.statusBar().hide()
+
+        # Make the main toolbar smaller to fit better inside Glue
+        for tb in self.viewer._all_tool_bars.values():
+            # tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
+            tb['widget'].setIconSize(QSize(24, 24))
 
         # Set the view mode of mdi area to tabbed so that user aren't confused
         mdi_area = self.viewer.main_window.mdi_area
@@ -113,11 +120,23 @@ class SpecVizViewer(DataViewer):
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
 
-    # The following two methods are required by glue - they are what gets called
-    # when a dataset or subset gets dragged and dropped onto the viewer.
+    def _spectrum_from_component(self, component, wcs, mask=None):
+        data = SpectralCube(component.data, wcs)
 
-    def add_data(self, data):
-        print("Adding data")
+        # if mask is not None:
+        #     data = data.with_mask(~mask)
+
+        spec_data = data.sum((1,2))
+
+        spec_data = Spectrum1DRef(spec_data.data,
+                                  unit=spec_data.unit,
+                                  dispersion=data.spectral_axis.data,
+                                  dispersion_unit=data.spectral_axis.unit,
+                                  wcs=data.wcs)
+
+        comms.dispatch.on_add_to_window.emit(spec_data)
+
+    def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
             self._layer_widget.add_layer(data)
 
@@ -125,46 +144,38 @@ class SpecVizViewer(DataViewer):
         self._options_widget.set_data(self._layer_widget.layer)
 
         if self._options_widget.file_att is None:
-            return
+            return False
 
         if self._layer_widget.layer is None:
+            return False
+
+        return True
+
+    # The following two methods are required by glue - they are what gets called
+    # when a dataset or subset gets dragged and dropped onto the viewer.
+
+    def add_data(self, data):
+        if not self._update_combo_boxes(data):
             return
 
         cid = self._layer_widget.layer.id[self._options_widget.file_att]
         mask = None
         component = self._layer_widget.layer.get_component(cid)
 
-        print("Creating cube")
-        data = SpectralCube(component.data, data.coords.wcs)
-
-        print("Creating spectrum")
-        spec_data = Spectrum1DRef(data.sum((1,2)), dispersion=data.spectral_axis.data,
-                                  dispersion_unit=data.spectral_axis.unit,
-                                  wcs=data.wcs)
-
-        print("Send to SpecViz")
-        dispatch.on_add_data.emit(spec_data)
+        self._spectrum_from_component(component, data.coords.wcs)
 
         return True
 
     def add_subset(self, subset):
-        print("Adding subset")
-        if subset not in self._layer_widget:
-            self._layer_widget.add_layer(subset)
-        self._layer_widget.layer = subset
-        self._options_widget.set_data(self._layer_widget.layer)
-
-        if self._options_widget.file_att is None:
-            return
-
-        if self._layer_widget.layer is None:
+        if not self._update_combo_boxes(subset):
             return
 
         subset = self._layer_widget.layer
         cid = subset.data.id[self._options_widget.file_att]
         mask = subset.to_mask(None)
         component = subset.data.get_component(cid)
-        print(component)
+
+        self._spectrum_from_component(component, subset.data.coords.wcs, mask=mask)
 
         return True
 
