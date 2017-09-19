@@ -134,7 +134,7 @@ class LineList(Table):
         # is taken from the 'name' element in the
         # YAML file descriptor.
 
-        return LineList(tab)
+        return LineList(tab, yaml_loader.name)
 
     @classmethod
     def merge(cls, lists):
