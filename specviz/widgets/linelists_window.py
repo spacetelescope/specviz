@@ -5,8 +5,8 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
                             QAction, QTableView, QMainWindow,
-                            QAbstractItemView, QLayout, QTextBrowser)
-from qtpy.QtGui import QPixmap, QIcon
+                            QAbstractItemView, QLayout, QTextBrowser, QComboBox)
+from qtpy.QtGui import QPixmap, QIcon, QColor
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
@@ -69,9 +69,6 @@ class UiLinelistsWindow(object):
         self.horizontalLayout_7.setContentsMargins(11, 11, 11, 11)
         self.horizontalLayout_7.setSpacing(6)
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.add_set_button = QPushButton(self.centralWidget)
-        self.add_set_button.setObjectName("add_set_button")
-        self.horizontalLayout_7.addWidget(self.add_set_button)
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem)
         self.gridLayout.addLayout(self.horizontalLayout_7, 2, 0, 2, 1)
@@ -118,7 +115,6 @@ class UiLinelistsWindow(object):
         self.draw_button.setText(_translate("MainWindow", "Draw"))
         self.erase_button.setText(_translate("MainWindow", "Erase"))
         self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
-        self.add_set_button.setText(_translate("MainWindow", "Add set"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
@@ -205,6 +201,8 @@ class LineListsWindow(UiLinelistsWindow):
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetMaximumSize)
+        pane.setLayout(layout)
+
         info = QTextBrowser()
         info.setMaximumHeight(100)
         info.setAutoFillBackground(True)
@@ -213,9 +211,26 @@ class LineListsWindow(UiLinelistsWindow):
         for comment in comments:
             info.append(comment)
 
+        button_pane = QWidget()
+        hlayout = QHBoxLayout()
+        button_pane.setLayout(hlayout)
+
+        self.add_set_button = QPushButton(pane)
+        self.add_set_button.setObjectName("add_set_button")
+        self.horizontalLayout_7.addWidget(self.add_set_button)
+        _translate = QCoreApplication.translate
+        self.add_set_button.setText(_translate("MainWindow", "Add set"))
+        hlayout.addWidget(self.add_set_button)
+
+        self.combo_box_color = QComboBox(pane)
+        self.combo_box_color.setObjectName("color_selector")
+        self.combo_box_color.addItems(QColor.colorNames())
+        hlayout.addWidget(self.combo_box_color)
+
         layout.addWidget(info)
         layout.addWidget(table)
-        pane.setLayout(layout)
+        layout.addWidget(button_pane)
+
 
         return pane
 
