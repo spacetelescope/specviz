@@ -9,6 +9,7 @@ import yaml
 
 import numpy as np
 
+from astropy.io import ascii
 from astropy.table import Table, vstack
 
 
@@ -56,14 +57,11 @@ def ingest(range):
 
     for yaml_filename in yaml_paths:
 
-        metadata = yaml.load(open(yaml_filename, 'r'))
-        # metadata.set_filter()
+        loader = yaml.load(open(yaml_filename, 'r'))
 
-        # linelist_path = yaml_filename.replace('.yaml', '.list')
-        linelist_fullname = linelist_path + metadata['filename']
+        linelist_fullname = linelist_path + loader.filename
 
-
-        linelist = LineList.read(linelist_fullname, format="ascii.tab")
+        linelist = LineList.read_list(linelist_fullname, loader)
         linelist = linelist.extract_range(range)
 
         linelists.append(linelist)
@@ -102,6 +100,41 @@ class LineList(Table):
         # should be anyways.
 
         self._table = table
+
+    @classmethod
+    def read_list(self, filename, yaml_loader):
+        names_list = []
+        start_list = []
+        end_list = []
+        units_list = []
+        for k in range(len((yaml_loader.columns))):
+            name = yaml_loader.columns[k][COLUMN_NAME]
+            names_list.append(name)
+
+            start = yaml_loader.columns[k][COLUMN_START]
+            end = yaml_loader.columns[k][COLUMN_END]
+            start_list.append(start)
+            end_list.append(end)
+
+            if UNITS_COLUMN in yaml_loader.columns[k]:
+                units = yaml_loader.columns[k][UNITS_COLUMN]
+            else:
+                units = ''
+            units_list.append(units)
+
+        tab = ascii.read(filename, format = yaml_loader.format,
+                         names = names_list,
+                         col_starts = start_list,
+                         col_ends = end_list)
+
+        for k, colname in enumerate(tab.columns):
+            tab[colname].unit = units_list[k]
+
+        # The table name (for e.g. display purposes)
+        # is taken from the 'name' element in the
+        # YAML file descriptor.
+
+        return LineList(tab)
 
     @classmethod
     def merge(cls, lists):

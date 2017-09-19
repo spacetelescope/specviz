@@ -420,7 +420,7 @@ class AsciiYamlRegister(YamlRegister):
 
 class LineListYamlRegister(YamlRegister):
     """
-    Defines the generation of `Spectrum1DRef` objects by parsing LineList
+    Defines the generation of `LineList` objects by parsing line list
     files with information from YAML files.
     """
     def reader(self, filename, **kwargs):
