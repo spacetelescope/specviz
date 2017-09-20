@@ -461,7 +461,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, **kwargs):
+    def _plot_linelists(self, table_views, units, **kwargs):
 
         if not self._is_selected:
             return
@@ -497,7 +497,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Merge all line lists into a single one. This might
         # change in the future to enable customized plotting
         # for each line list.
-        merged_linelist = LineList.merge(linelists_with_selections)
+        merged_linelist = LineList.merge(linelists_with_selections, units)
 
         # Code below is plotting all markers at a fixed height in
         # the screen coordinate system. Still TBD how to do this in

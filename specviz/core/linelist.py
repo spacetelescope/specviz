@@ -62,7 +62,7 @@ def ingest(range):
         linelist_fullname = linelist_path + loader.filename
 
         linelist = LineList.read_list(linelist_fullname, loader)
-        linelist = linelist.extract_range(range)
+        # linelist = linelist.extract_range(range)
 
         linelists.append(linelist)
 
@@ -137,7 +137,7 @@ class LineList(Table):
         return LineList(tab, yaml_loader.name)
 
     @classmethod
-    def merge(cls, lists):
+    def merge(cls, lists, target_units):
         """
         Executes a 'vstack' of all input lists, and
         then sorts the result by the wavelength column.
@@ -146,6 +146,9 @@ class LineList(Table):
         ----------
         lists: [LineList, ...]
             list of LineList instances
+        target_units: Units
+            units to which all lines from all tables
+            should be converted to.
 
         Returns
         -------
@@ -157,6 +160,15 @@ class LineList(Table):
         # raw Table instances.
         tables = []
         for linelist in lists:
+
+
+
+#todo units conversion should take place here
+
+
+
+
+
             tables.append(linelist._table)
 
         merged_table = vstack(tables)
