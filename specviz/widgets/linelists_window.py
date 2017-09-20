@@ -29,7 +29,7 @@ class UiLinelistsWindow(object):
     def setupUi(self, MainWindow, title):
         MainWindow.setWindowTitle(title)
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(500, 500)
+        MainWindow.resize(500, 800)
         MainWindow.setMinimumSize(QSize(300, 350))
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -231,7 +231,6 @@ class LineListsWindow(UiLinelistsWindow):
         layout.addWidget(table)
         layout.addWidget(button_pane)
 
-
         return pane
 
 
@@ -274,6 +273,7 @@ class SortModel(QSortFilterProxyModel):
 
     def lessThan(self, left, right):
         try:
+            # first, we try comparing floats.
             left_data = left.data()
             left_float = float(left_data)
             right_data = right.data()
@@ -282,7 +282,11 @@ class SortModel(QSortFilterProxyModel):
             return left_float < right_float
 
         except:
-            return left < right
+            # in case float conversion bombs out, we must force a
+            # lexicographic string comparison. The parameters passed
+            # to this method from a sortable table model are stored
+            # in QtCore.QModelIndex instances.
+            return str(left.data()) < str(right.data())
 
     def getName(self):
         return self._name
