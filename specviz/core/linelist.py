@@ -148,28 +148,23 @@ class LineList(Table):
             list of LineList instances
         target_units: Units
             units to which all lines from all tables
-            should be converted to.
+            must be converted to.
 
         Returns
         -------
         LineList
             merged line list
         """
-        # Note that vstack operates on Table instances but
-        # not on LineList instances. So we first extract the
-        # raw Table instances.
         tables = []
         for linelist in lists:
 
+            # Note that vstack operates on Table instances but
+            # not on LineList instances. So we refer directly
+            # to the raw Table instances.
 
-
-#todo units conversion should take place here
-
-
-
-
-
-            tables.append(linelist._table)
+            internal_table = linelist._table
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
+            tables.append(internal_table)
 
         merged_table = vstack(tables)
 
