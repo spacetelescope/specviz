@@ -29,7 +29,7 @@ class UiLinelistsWindow(object):
     def setupUi(self, MainWindow, title):
         MainWindow.setWindowTitle(title)
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(500, 800)
+        MainWindow.resize(650, 850)
         MainWindow.setMinimumSize(QSize(300, 350))
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
