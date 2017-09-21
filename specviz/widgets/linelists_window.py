@@ -29,7 +29,7 @@ class UiLinelistsWindow(object):
     def setupUi(self, MainWindow, title):
         MainWindow.setWindowTitle(title)
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(650, 850)
+        MainWindow.resize(600, 850)
         MainWindow.setMinimumSize(QSize(300, 350))
         self.centralWidget = QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
@@ -47,6 +47,8 @@ class UiLinelistsWindow(object):
         self.label = QLabel(self.centralWidget)
         self.label.setObjectName("label")
         self.horizontalLayout_5.addWidget(self.label)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout_5.addItem(spacerItem)
         self.draw_button = QPushButton(self.centralWidget)
         self.draw_button.setObjectName("draw_button")
         self.horizontalLayout_5.addWidget(self.draw_button)
@@ -68,9 +70,9 @@ class UiLinelistsWindow(object):
         self.horizontalLayout_7 = QHBoxLayout()
         self.horizontalLayout_7.setContentsMargins(11, 11, 11, 11)
         self.horizontalLayout_7.setSpacing(6)
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem)
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.gridLayout.addLayout(self.horizontalLayout_7, 2, 0, 2, 1)
         MainWindow.setCentralWidget(self.centralWidget)
         self.menuBar = QMenuBar(MainWindow)
@@ -215,19 +217,23 @@ class LineListsWindow(UiLinelistsWindow):
 
         button_pane = QWidget()
         hlayout = QHBoxLayout()
-        button_pane.setLayout(hlayout)
 
         self.add_set_button = QPushButton(pane)
         self.add_set_button.setObjectName("add_set_button")
-        self.horizontalLayout_7.addWidget(self.add_set_button)
         _translate = QCoreApplication.translate
         self.add_set_button.setText(_translate("MainWindow", "Add set"))
+        self.add_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(self.add_set_button)
 
         self.combo_box_color = QComboBox(pane)
         self.combo_box_color.setObjectName("color_selector")
         self.combo_box_color.addItems(QColor.colorNames())
         hlayout.addWidget(self.combo_box_color)
+
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        hlayout.addItem(spacerItem)
+
+        button_pane.setLayout(hlayout)
 
         layout.addWidget(info)
         layout.addWidget(table)
