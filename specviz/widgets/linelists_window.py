@@ -6,12 +6,28 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QPixmap, QIcon, QColor
+from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
 from ..core.comms import dispatch
 
+
+# We need our own mapping because the names list returned by
+# QColor.colorNames() is inconsistent with the color names in
+# Qt.GlobalColor.
+
+ID_COLORS = {
+    'black':      Qt.black,
+    'red':        Qt.red,
+    'green':      Qt.green,
+    'blue':       Qt.blue,
+    'cyan':       Qt.cyan,
+    'magenta':    Qt.magenta,
+    'dark red':   Qt.darkRed,
+    'dark green': Qt.darkGreen,
+    'dark blue':  Qt.darkBlue
+}
 
 #TODO work in progress
 
@@ -200,6 +216,7 @@ class LineListsWindow(UiLinelistsWindow):
     def hide(self):
         self._main_window.hide()
 
+    # this builds a single pane dedicated to a single list.
     def _buildLinelistPane(self, table, comments):
         pane = QWidget()
 
@@ -207,6 +224,7 @@ class LineListsWindow(UiLinelistsWindow):
         layout.setSizeConstraint(QLayout.SetMaximumSize)
         pane.setLayout(layout)
 
+        # header with line list metadata.
         info = QTextBrowser()
         info.setMaximumHeight(100)
         info.setAutoFillBackground(True)
@@ -215,9 +233,12 @@ class LineListsWindow(UiLinelistsWindow):
         for comment in comments:
             info.append(comment)
 
+        # buttons and selectors dedicated to the specific list
+        # displayed in this pane.
         button_pane = QWidget()
         hlayout = QHBoxLayout()
 
+        # 'add set' button
         self.add_set_button = QPushButton(pane)
         self.add_set_button.setObjectName("add_set_button")
         _translate = QCoreApplication.translate
@@ -225,14 +246,20 @@ class LineListsWindow(UiLinelistsWindow):
         self.add_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(self.add_set_button)
 
+        # color picker
         self.combo_box_color = QComboBox(pane)
         self.combo_box_color.setObjectName("color_selector")
-        self.combo_box_color.addItems(QColor.colorNames())
+        model = self.combo_box_color.model()
+        for cname in ID_COLORS:
+            item = QStandardItem(cname)
+            item.setForeground(ID_COLORS[cname])
+            model.appendRow(item)
+
         hlayout.addWidget(self.combo_box_color)
 
+        # put it all together.
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         hlayout.addItem(spacerItem)
-
         button_pane.setLayout(hlayout)
 
         layout.addWidget(info)
