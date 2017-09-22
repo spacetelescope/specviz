@@ -109,7 +109,7 @@ class Dispatch(object):
             if hasattr(func, 'wrapped'):
                 if func.wrapped:
                     for name in func.event_names:
-                        self._unregister_listener(name, func)
+                        self.unregister_listener(name, func)
 
     def register_event(self, name, args=None):
         """
@@ -171,7 +171,7 @@ class Dispatch(object):
             return wrapper
         return decorator
 
-    def _unregister_listener(self, name, func):
+    def unregister_listener(self, name, func):
         """
         Remove a listener from an event
 
@@ -188,123 +188,3 @@ class Dispatch(object):
             call_func -= func
         else:
             logging.warning("No such event: {}.".format(name))
-
-
-class DispatchHandle(object):
-    """
-    Interface for allowing classes to use decorators to define event
-    listeners. Otherwise, classes would have to define all listeners in the
-    `init` function using
-    """
-    @staticmethod
-    def setup(inst):
-        """
-        Register all methods decorated by `register_listener`
-        """
-        logging.info("Dispatch is now watching: {}".format(inst))
-        members = inspect.getmembers(inst, predicate=inspect.ismethod)
-
-        for func_name, func in members:
-            if hasattr(func, 'wrapped'):
-                if func.wrapped:
-                    for name in func.event_names:
-                        dispatch.register_listener(name, func)
-
-    @staticmethod
-    def tear_down(inst):
-        """
-        Remove all registered methods from their events
-        """
-        logging.info("Dispatch has stopped watching: {}".format(inst))
-        members = inspect.getmembers(inst, predicate=inspect.ismethod)
-
-        for func_name, func in members:
-            if hasattr(func, 'wrapped'):
-                if func.wrapped:
-                    for name in func.event_names:
-                        dispatch.unregister_listener(name, func)
-
-    @staticmethod
-    def register_listener(*args):
-        """
-        Decorate event listeners
-        """
-        def decorator(func):
-            func.wrapped = True
-            func.event_names = args
-
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                try:
-                    return func(*args, **kwargs)
-                except:
-                    logging.error(
-                        "Exception in '{}':\n{}".format(func.__name__,
-                                                        traceback.format_exc())
-                    )
-            return wrapper
-        return decorator
-
-
-class SpecVizDispatch(Dispatch):
-    def __init__(self, *args, **kwargs):
-        super(SpecVizDispatch, self).__init__(*args, **kwargs)
-
-        self.register_event("on_activated_window", args=["window"])
-
-        self.register_event("on_added_data", args=["data"])
-        self.register_event("on_added_window", args=["layer", "window"])
-        self.register_event("on_added_plot", args=["plot", "window"])
-        self.register_event("on_added_layer", args=["layer"])
-        self.register_event("on_added_to_window", args=["layer", "window"])
-
-        self.register_event("on_show_linelists_window")
-        self.register_event("on_dismiss_linelists_window")
-        self.register_event("on_request_linelists")
-        self.register_event("on_plot_linelists", args=["table_views"])
-        self.register_event("on_erase_linelabels")
-
-        self.register_event("on_removed_data", args=["data"])
-        self.register_event("on_removed_plot", args=["layer", "window"])
-        self.register_event("on_removed_layer", args=["layer", "window"])
-        self.register_event("on_removed_model", args=["model", "layer"])
-        self.register_event("on_removed_from_window", args=["layer", "window"])
-
-        self.register_event("on_updated_layer", args=["layer"])
-        self.register_event("on_updated_model", args=["model"])
-        self.register_event("on_updated_plot", args=["plot", "layer"])
-        self.register_event("on_updated_rois", args=["rois"])
-        self.register_event("on_updated_stats", args=["stats", "layer"])
-
-        self.register_event("on_selected_plot", args=["layer", "checked_state"])
-        self.register_event("on_selected_window", args=["window"])
-        self.register_event("on_selected_layer", args=["layer_item"])
-        self.register_event("on_selected_model", args=["model_item"])
-
-        self.register_event("on_clicked_layer", args=["layer_item"])
-        self.register_event("on_changed_layer", args=["layer_item"])
-        self.register_event("on_changed_model", args=["model_item"])
-        self.register_event("on_copy_model")
-        self.register_event("on_paste_model", args=["data", "layer"])
-
-        self.register_event("on_add_data", args=["data"])
-        self.register_event("on_add_model", args=["layer", "model"])
-        self.register_event("on_add_window", args=["data", "window", "layer"])
-        self.register_event("on_add_layer", args=["window", "layer", "from_roi"])
-        self.register_event("on_add_roi", args=[])
-        self.register_event("on_add_to_window", args=["data", "window"])
-
-        self.register_event("on_update_model", args=["layer"])
-
-        self.register_event("on_remove_data", args=["data"])
-        self.register_event("on_remove_layer", args=["layer"])
-        self.register_event("on_remove_model", args=["model"])
-        self.register_event("on_remove_all_data")
-
-        self.register_event("on_file_open", args=["file_name"])
-        self.register_event("on_file_read", args=["file_name", "file_filter", "auto_open"])
-
-        self.register_event("on_status_message", args=["message", "timeout"])
-
-
-dispatch = SpecVizDispatch()
