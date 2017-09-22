@@ -164,6 +164,7 @@ class LineListsWindow(UiLinelistsWindow):
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
             table_views=self._table_views,
+            tabbed_panes=self._tabbed_panes,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
@@ -175,6 +176,7 @@ class LineListsWindow(UiLinelistsWindow):
         # The plotting code must know which lines (table rows) are selected
         # in each line list.
         self._table_views = []
+        self._tabbed_panes = []
 
         for linelist in plot_window.linelists:
 
@@ -204,11 +206,12 @@ class LineListsWindow(UiLinelistsWindow):
                 # by much tough.
                 proxy.sort(-1, Qt.AscendingOrder)
 
-                pane = self._buildLinelistPane(table_view, comments)
+                pane = LineListPane(table_view, comments)
 
                 self.tabWidget.addTab(pane, table_model.getName())
 
                 self._table_views.append(table_view)
+                self._tabbed_panes.append(pane)
 
     def show(self):
         self._main_window.show()
@@ -216,13 +219,17 @@ class LineListsWindow(UiLinelistsWindow):
     def hide(self):
         self._main_window.hide()
 
+
+class LineListPane(QWidget):
+
     # this builds a single pane dedicated to a single list.
-    def _buildLinelistPane(self, table, comments):
-        pane = QWidget()
+
+    def __init__(self, table, comments, *args, **kwargs):
+        super().__init__(None, *args, **kwargs)
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetMaximumSize)
-        pane.setLayout(layout)
+        self.setLayout(layout)
 
         # header with line list metadata.
         info = QTextBrowser()
@@ -239,20 +246,22 @@ class LineListsWindow(UiLinelistsWindow):
         hlayout = QHBoxLayout()
 
         # 'add set' button
-        self.add_set_button = QPushButton(pane)
+        self.add_set_button = QPushButton(self)
         self.add_set_button.setObjectName("add_set_button")
         _translate = QCoreApplication.translate
         self.add_set_button.setText(_translate("MainWindow", "Add set"))
         self.add_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(self.add_set_button)
+        self.add_set_button.setEnabled(False)
 
         # color picker
-        self.combo_box_color = QComboBox(pane)
+        self.combo_box_color = QComboBox(self)
         self.combo_box_color.setObjectName("color_selector")
         model = self.combo_box_color.model()
         for cname in ID_COLORS:
             item = QStandardItem(cname)
             item.setForeground(ID_COLORS[cname])
+            item.setData(QColor(ID_COLORS[cname]), role=Qt.UserRole)
             model.appendRow(item)
 
         hlayout.addWidget(self.combo_box_color)
@@ -265,8 +274,6 @@ class LineListsWindow(UiLinelistsWindow):
         layout.addWidget(info)
         layout.addWidget(table)
         layout.addWidget(button_pane)
-
-        return pane
 
 
 class LineListTableModel(QAbstractTableModel):

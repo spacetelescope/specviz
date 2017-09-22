@@ -461,7 +461,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, units, **kwargs):
+    def _plot_linelists(self, table_views, tabbed_panes, units, **kwargs):
 
         if not self._is_selected:
             return
@@ -471,7 +471,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         linelists_with_selections = []
 
-        for table_view in table_views:
+        for table_view, tabbed_pane in zip(table_views, tabbed_panes):
             # Find matching line list by its name. This could be made
             # simpler by the use of a dict. That breaks code elsewhere
             # though: it is assumed by that code that self.linelists
@@ -491,6 +491,12 @@ class PlotSubWindow(UiPlotSubWindow):
                         model_selected_rows.append(model_row)
 
                     new_list = line_list.extract_rows(model_selected_rows)
+
+                    # color for plotting the specific lines defined in
+                    # this list, is defined by the itemData property.
+                    index = tabbed_pane.combo_box_color.currentIndex()
+                    color = tabbed_pane.combo_box_color.itemData(index, role=Qt.UserRole)
+                    new_list.setColor(color)
 
                     linelists_with_selections.append(new_list)
 
@@ -526,7 +532,7 @@ class PlotSubWindow(UiPlotSubWindow):
         id_column = merged_linelist.columns[ID_COLUMN]
 
         for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+            marker = LineIDMarker(id_column[i], plot_item, color=(0,0,0), orientation='vertical')
 
             marker.setPos(wave_column[i], height)
 

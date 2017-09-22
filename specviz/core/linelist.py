@@ -101,6 +101,9 @@ class LineList(Table):
 
         self._table = table
 
+        # each list has a color property associated to it
+        self.color = None
+
     @classmethod
     def read_list(self, filename, yaml_loader):
         names_list = []
@@ -170,6 +173,12 @@ class LineList(Table):
 
             internal_table = linelist._table
             internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
+
+
+#TODO here we add a new column for the color, so each row will have an associated color attribute.
+
+
+
             tables.append(internal_table)
 
         merged_table = vstack(tables)
@@ -261,3 +270,6 @@ class LineList(Table):
         result = LineList(table, self.name)
 
         return result
+
+    def setColor(self, color):
+        self.color = color
