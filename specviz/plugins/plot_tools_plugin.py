@@ -8,7 +8,7 @@ from collections import OrderedDict
 from astropy.units import Unit
 
 from ..widgets.utils import ICON_PATH
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..widgets.dialogs import TopAxisDialog, UnitChangeDialog
 from ..widgets.plugin import Plugin
 

@@ -11,7 +11,7 @@ from qtpy.uic import loadUi
 
 from ..widgets.plugin import Plugin
 from ..analysis import statistics
-from ..core.comms import dispatch
+from ..core.events import dispatch
 from ..widgets.utils import UI_PATH
 
 

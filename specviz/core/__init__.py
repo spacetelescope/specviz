@@ -1,1 +1,1 @@
-from .comms import dispatch
+from .events import dispatch

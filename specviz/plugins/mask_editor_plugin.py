@@ -5,7 +5,7 @@ from ..widgets.plugin import Plugin
 from qtpy.QtWidgets import (QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout,
                             QCheckBox, QTreeWidget, QTreeWidgetItem)
 from qtpy.QtCore import *
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from qtpy.QtGui import *
 
 import numpy as np

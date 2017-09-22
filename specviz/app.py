@@ -29,7 +29,7 @@ from qtpy.QtWidgets import QApplication, QMenu, QToolBar
 from docopt import docopt
 
 from .widgets.utils import ICON_PATH
-from .core.comms import dispatch
+from .core.events import dispatch
 from .widgets.windows import MainWindow
 
 try:

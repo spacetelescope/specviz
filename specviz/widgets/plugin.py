@@ -8,7 +8,7 @@ from qtpy.QtWidgets import (QDockWidget, QScrollArea, QFrame, QWidget, QMenu,
 from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch
+from ..core.events import dispatch
 from ..interfaces.registries import plugin_registry
 from ..widgets.utils import UI_PATH
 

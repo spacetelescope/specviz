@@ -11,7 +11,7 @@ from qtpy import compat
 from ..widgets.wizard import open_wizard
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread

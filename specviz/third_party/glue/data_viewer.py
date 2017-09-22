@@ -2,25 +2,20 @@ import os
 from collections import OrderedDict
 
 import numpy as np
-
-from glue.core import Subset
-from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.core import message as msg
+from glue.core import Subset
 from glue.utils import nonpartial
+from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
-
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 from spectral_cube import SpectralCube
 
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QTabWidget
-from qtpy.QtCore import Qt, QSize
-
 from ...app import App
-from ...core import comms
+from ...core import dispatch
 from ...core.data import Spectrum1DRef
-
-from .viewer_options import OptionsWidget
 from .layer_widget import LayerWidget
-
+from .viewer_options import OptionsWidget
 
 __all__ = ['SpecVizViewer']
 
@@ -32,7 +27,7 @@ class SpecVizViewer(DataViewer):
         super(SpecVizViewer, self).__init__(session, parent=parent)
 
         # Connect the dataview to the specviz messaging system
-        comms.dispatch.setup(self)
+        dispatch.dispatch.setup(self)
 
         # We now set up the options widget. This controls for example which
         # attribute should be used to indicate the filenames of the spectra.
@@ -126,7 +121,8 @@ class SpecVizViewer(DataViewer):
         # if mask is not None:
         #     data = data.with_mask(~mask)
 
-        spec_data = data.sum((1,2))
+        spec_data = data.sum((1, 2))
+        print(spec_data)
 
         spec_data = Spectrum1DRef(spec_data.data,
                                   unit=spec_data.unit,
@@ -134,7 +130,7 @@ class SpecVizViewer(DataViewer):
                                   dispersion_unit=data.spectral_axis.unit,
                                   wcs=data.wcs)
 
-        comms.dispatch.on_add_to_window.emit(spec_data)
+        dispatch.dispatch.on_add_to_window.emit(spec_data)
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
@@ -172,7 +168,7 @@ class SpecVizViewer(DataViewer):
 
         subset = self._layer_widget.layer
         cid = subset.data.id[self._options_widget.file_att]
-        mask = subset.to_mask(None)
+        mask = subset.to_mask()
         component = subset.data.get_component(cid)
 
         self._spectrum_from_component(component, subset.data.coords.wcs, mask=mask)

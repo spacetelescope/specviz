@@ -5,7 +5,7 @@ import os
 
 from ..widgets.utils import ICON_PATH
 from ..analysis.filters import smooth
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..widgets.dialogs import SmoothingDialog
 from ..widgets.plugin import Plugin
 

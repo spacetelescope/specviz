@@ -5,7 +5,7 @@ from qtpy.QtGui import QBrush, QColor
 from qtpy.uic import loadUi
 import os
 
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
 from ..widgets.utils import UI_PATH

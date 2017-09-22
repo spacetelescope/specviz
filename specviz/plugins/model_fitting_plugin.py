@@ -12,7 +12,7 @@ from qtpy.QtWidgets import QTreeWidgetItem
 from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..core.data import Spectrum1DRefModelLayer
 from ..core.threads import FitModelThread
 from ..interfaces.factories import ModelFactory, FitterFactory

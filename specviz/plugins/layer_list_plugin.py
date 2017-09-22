@@ -13,7 +13,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QPixmap, QIcon
 
 from ..widgets.utils import ICON_PATH
-from ..core.comms import dispatch, dispatch
+from ..core.events import dispatch, dispatch
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
 from ..widgets.dialogs import LayerArithmeticDialog
 from ..widgets.plugin import Plugin
