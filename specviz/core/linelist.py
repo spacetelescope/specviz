@@ -25,6 +25,8 @@ COLUMN_END = 'end'
 WAVELENGTH_COLUMN = 'Wavelength'
 ID_COLUMN = 'Line ID'
 UNITS_COLUMN = 'units'
+COLOR_COLUMN = 'Color'
+
 
 def ingest(range):
     """
@@ -174,10 +176,9 @@ class LineList(Table):
             internal_table = linelist._table
             internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
 
-
-#TODO here we add a new column for the color, so each row will have an associated color attribute.
-
-
+            # add a column to hold the color property
+            color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
+            internal_table[COLOR_COLUMN] = color_array
 
             tables.append(internal_table)
 

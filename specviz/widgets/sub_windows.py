@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
 from qtpy.QtCore import QEvent, Qt
 
 from ..core.comms import dispatch, DispatchHandle
-from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
@@ -527,12 +527,16 @@ class PlotSubWindow(UiPlotSubWindow):
         ymax = data_range[1][1]
         height = (ymax - ymin) * 0.75 + ymin
 
-        # column names are defined in the YAML files.
+        # column names are defined in the YAML files
+        # or by constants elsewhere.
         wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
         id_column = merged_linelist.columns[ID_COLUMN]
+        color_column = merged_linelist[COLOR_COLUMN]
 
         for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item, color=(0,0,0), orientation='vertical')
+            marker = LineIDMarker(id_column[i], plot_item,
+                                  color=color_column[i],
+                                  orientation='vertical')
 
             marker.setPos(wave_column[i], height)
 
