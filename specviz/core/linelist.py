@@ -130,6 +130,12 @@ class LineList(Table):
         for k, colname in enumerate(tab.columns):
             tab[colname].unit = units_list[k]
 
+            # some line lists have a 'Reference' column that is
+            # wrongly read as type int. Must be str instead,
+            # otherwise an error is raised when merging.
+            if colname in ['Reference']:
+                tab[colname] = tab[colname].astype(str)
+
         # The table name (for e.g. display purposes)
         # is taken from the 'name' element in the
         # YAML file descriptor.
