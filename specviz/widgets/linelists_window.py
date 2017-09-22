@@ -224,7 +224,7 @@ class LineListPane(QWidget):
 
     # this builds a single pane dedicated to a single list.
 
-    def __init__(self, table, comments, *args, **kwargs):
+    def __init__(self, table_view, comments, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
 
         layout = QVBoxLayout()
@@ -254,6 +254,15 @@ class LineListPane(QWidget):
         hlayout.addWidget(self.add_set_button)
         self.add_set_button.setEnabled(False)
 
+        # 'deselect all' button
+        deselect_button = QPushButton(self)
+        deselect_button.setObjectName("deselect_button")
+        _translate = QCoreApplication.translate
+        deselect_button.setText(_translate("MainWindow", "Deselect"))
+        deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        hlayout.addWidget(deselect_button)
+        deselect_button.clicked.connect(lambda: table_view.clearSelection())
+
         # color picker
         self.combo_box_color = QComboBox(self)
         self.combo_box_color.setObjectName("color_selector")
@@ -272,7 +281,7 @@ class LineListPane(QWidget):
         button_pane.setLayout(hlayout)
 
         layout.addWidget(info)
-        layout.addWidget(table)
+        layout.addWidget(table_view)
         layout.addWidget(button_pane)
 
 
