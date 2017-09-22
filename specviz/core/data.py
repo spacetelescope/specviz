@@ -49,6 +49,7 @@ def _make_quantity(data, unit):
     else:
         return Quantity(data, unit=unit)
 
+
 class Spectrum1DRefLayer(Spectrum1DRef):
     """
     Class to handle layers in SpecViz.
@@ -305,6 +306,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             formula = formula.replace(layer.name,
                                       layer.name.replace(" ", "_"))
 
+        layer_vars = {layer.name.replace(" ", "_"):layer
+                      for layer in layers}
+
         try:
             expr = parser.parse(formula)
         except Exception as e:
@@ -312,33 +316,22 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             return
 
         # Extract variables
-        vars = expr.variables()
+        expr_vars = expr.variables()
 
-        # List the models in the same order as the variables
-        # sorted_layers = [next(l for v in vars for l in layers
-        #                       if l.name.replace(" ", "_") == v)]
-        # sorted_layers = [l for v in vars for l in layers
-        #                  if l.name.replace(" ", "_") == v]
-        sorted_layers = []
+        # Get the union of the sets of variables listed in the expression and
+        # layer names of the current layer list
+        union_set = set(layer_vars.keys()).union(set(expr_vars))
 
-        for v in vars:
-            for l in layers:
-                if l.name.replace(" ", "_") == v:
-                    sorted_layers.append(l)
-                    break
-
-        if len(sorted_layers) != len(vars):
-            logging.error("Incorrect layer arithmetic formula: the number "
-                          "of layers does not match the number of variables.")
+        if len(union_set) != 0:
+            logging.error("Mis-match between current layer list and expression:"
+                          "%s", union_set)
 
         try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in
-                                          zip(vars, sorted_layers)))
-            result._dispersion = sorted_layers[0]._dispersion
-            result.dispersion_unit = sorted_layers[0].dispersion_unit
+            result = parser.evaluate(expr.simplify({}).toString(), layer_vars)
+            result = result.__class__.copy({'dispersion': layers[0].dispersion,
+                                            'dispersion_unit': layers[0].dispersion_unit})
         except Exception as e:
-            logging.error("While evaluating formula: {}".format(e))
+            logging.error("While evaluating formula: %s", e)
             return
 
         return result
