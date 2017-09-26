@@ -461,7 +461,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self.linelists = ingest(self.waverange)
 
     @DispatchHandle.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, tabbed_panes, units, **kwargs):
+    def _plot_linelists(self, table_views, tabbed_panes, plotted_lines_pane, units, **kwargs):
 
         if not self._is_selected:
             return
@@ -544,6 +544,8 @@ class PlotSubWindow(UiPlotSubWindow):
             self._line_labels.append(marker)
 
         plot_item.update()
+
+#TODO here we put (replace) the merged line list in the plotted lines pane.
 
     @DispatchHandle.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):

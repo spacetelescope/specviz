@@ -12,6 +12,8 @@ from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
 
 from ..core.comms import dispatch
 
+from ..core.linelist import WAVELENGTH_COLUMN
+
 
 # We need our own mapping because the names list returned by
 # QColor.colorNames() is inconsistent with the color names in
@@ -165,6 +167,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
             table_views=self._table_views,
             tabbed_panes=self._tabbed_panes,
+            plotted_lines_pane=self._plotted_lines_pane,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
@@ -177,6 +180,7 @@ class LineListsWindow(UiLinelistsWindow):
         # in each line list.
         self._table_views = []
         self._tabbed_panes = []
+        self._plotted_lines_pane = PlottedLinesPane()
 
         for linelist in plot_window.linelists:
 
@@ -187,6 +191,11 @@ class LineListsWindow(UiLinelistsWindow):
             if table_model.rowCount() > 0:
                 table_view = QTableView()
                 table_view.setModel(proxy)
+
+                unit = table_model.columns[WAVELENGTH_COLUMN].unit
+
+                print("@@@@@@  file linelists_window.py; line 197 - ",  unit)
+
 
                 # setting this to False will significantly speed up
                 # the loading of very large line lists. However, these
@@ -283,6 +292,13 @@ class LineListPane(QWidget):
         layout.addWidget(info)
         layout.addWidget(table_view)
         layout.addWidget(button_pane)
+
+
+class PlottedLinesPane(QWidget):
+
+    # this holds the list will the currently plotted lines.
+
+    pass
 
 
 class LineListTableModel(QAbstractTableModel):
