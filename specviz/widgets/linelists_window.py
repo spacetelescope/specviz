@@ -318,7 +318,12 @@ class PlottedLinesPane(QWidget):
         if table_model.rowCount() > 0:
             table_view = QTableView()
             table_view.setModel(proxy)
+
+            table_view.setSortingEnabled(True)
+            table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+            table_view.horizontalHeader().setStretchLastSection(True)
             table_view.resizeColumnsToContents()
+
             layout.addWidget(table_view)
 
 
