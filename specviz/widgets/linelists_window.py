@@ -192,11 +192,6 @@ class LineListsWindow(UiLinelistsWindow):
                 table_view = QTableView()
                 table_view.setModel(proxy)
 
-                unit = table_model.columns[WAVELENGTH_COLUMN].unit
-
-                print("@@@@@@  file linelists_window.py; line 197 - ",  unit)
-
-
                 # setting this to False will significantly speed up
                 # the loading of very large line lists. However, these
                 # lists are often jumbled in wavelength, and consequently
@@ -325,6 +320,13 @@ class LineListTableModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._table.colnames[section]
+
+        # This generates the tool tip with units for the wavelength column.
+        elif role == Qt.ToolTipRole and orientation == Qt.Horizontal:
+            if self._table.colnames[section] in [WAVELENGTH_COLUMN]:
+                unit = self._table.columns[WAVELENGTH_COLUMN].unit
+                return str(unit)
+
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def getName(self):
