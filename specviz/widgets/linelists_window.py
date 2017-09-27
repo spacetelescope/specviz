@@ -320,7 +320,7 @@ class PlottedLinesPane(QWidget):
             table_view.setModel(proxy)
 
             table_view.setSortingEnabled(True)
-            table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+            table_view.setSelectionMode(QAbstractItemView.NoSelection)
             table_view.horizontalHeader().setStretchLastSection(True)
             table_view.resizeColumnsToContents()
 
