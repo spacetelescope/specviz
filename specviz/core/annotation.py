@@ -22,7 +22,7 @@ class LineIDMarker(TextItem):
         due to a bug in pyqtgraph's function 'functions.mkColor', which
         bombs when presented with an argument of type Qt.GlobalColor.
     '''
-    def __init__(self, text, plot_item, color=(0,0,0), orientation='horizontal'):
+    def __init__(self, text, plot_item, tip="", color=(0,0,0), orientation='horizontal'):
 
         self._plot_item = plot_item
         self._orientation = orientation
@@ -32,6 +32,9 @@ class LineIDMarker(TextItem):
         angle = orientations[orientation]['angle']
 
         super(LineIDMarker, self).__init__(text=text, color=color, anchor=anchor, angle=angle)
+
+        self.setToolTip(tip)
+
 
     def paint(self, p, *args):
         ''' Overrides the default implementation so as

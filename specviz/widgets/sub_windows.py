@@ -522,6 +522,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # curve = plot_item.curves[0]
 
+        # all markers display at the same height
         data_range = plot_item.vb.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
@@ -533,12 +534,22 @@ class PlotSubWindow(UiPlotSubWindow):
         id_column = merged_linelist.columns[ID_COLUMN]
         color_column = merged_linelist[COLOR_COLUMN]
 
-        for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item,
-                                  color=color_column[i],
+        for row_ndex in range(len(wave_column)):
+
+            # tool tip contains all info in table.
+            tool_tip = ""
+            for col_index in range(len(merged_linelist.columns)):
+                col_name = merged_linelist.colnames[col_index]
+                if not col_name in [COLOR_COLUMN]:
+                    value = merged_linelist.columns[col_index][row_ndex]
+                    tool_tip += col_name + '=' + str(value) + ', '
+
+            marker = LineIDMarker(id_column[row_ndex], plot_item,
+                                  tip=tool_tip,
+                                  color=color_column[row_ndex],
                                   orientation='vertical')
 
-            marker.setPos(wave_column[i], height)
+            marker.setPos(wave_column[row_ndex], height)
 
             plot_item.addItem(marker)
             self._line_labels.append(marker)
