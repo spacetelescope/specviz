@@ -155,7 +155,7 @@ class LineListsWindow(UiLinelistsWindow):
         # Request that line lists be read from wherever are they sources.
         dispatch.on_request_linelists.emit()
 
-        self.buildViews(plot_window)
+        self._buildViews(plot_window)
 
         # Connect buttons to appropriate signals.
         #
@@ -167,12 +167,11 @@ class LineListsWindow(UiLinelistsWindow):
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
             table_views=self._table_views,
             tabbed_panes=self._tabbed_panes,
-            plotted_lines_pane=self._plotted_lines_pane,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
 
-    def buildViews(self, plot_window):
+    def _buildViews(self, plot_window):
 
         # Table views must be preserved in the instance so they can be
         # passed to whoever is going to do the actual line list plotting.
@@ -216,6 +215,17 @@ class LineListsWindow(UiLinelistsWindow):
 
                 self._table_views.append(table_view)
                 self._tabbed_panes.append(pane)
+
+        self.tabWidget.addTab(self._plotted_lines_pane, "Plotted")
+
+    def displayPlottedLines(self, linelist):
+        # todo this should add the new list to whatever is beign displayed
+        # in the tab already. The Erase button should clear the tab. Thus,
+        # we should keep a table model and add the new lines to it, then
+        # sort it, then display it. We cannot respond to an on_erase signal
+        # because we may have several instances of this line list window
+        # active at once.
+        print ('@@@@@@     line: 222  - ', len(linelist.columns[WAVELENGTH_COLUMN]))
 
     def show(self):
         self._main_window.show()
