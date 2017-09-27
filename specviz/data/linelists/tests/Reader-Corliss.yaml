@@ -10,7 +10,7 @@ columns:
     start: 17
     end: 26
     units: 'Angstrom'
-  - name: 'Line ID'
+  - name: 'Species'
     index: 1
     start: 30
     end: 35

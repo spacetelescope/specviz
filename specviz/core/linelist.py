@@ -23,9 +23,10 @@ COLUMN_NAME = 'name'
 COLUMN_START = 'start'
 COLUMN_END = 'end'
 WAVELENGTH_COLUMN = 'Wavelength'
-ID_COLUMN = 'Line ID'
+ERROR_COLUMN = 'Error'
+ID_COLUMN = 'Species'
 UNITS_COLUMN = 'units'
-COLOR_COLUMN = 'Color'
+COLOR_COLUMN = 'color'
 
 
 def ingest(range):

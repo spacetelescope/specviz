@@ -534,22 +534,22 @@ class PlotSubWindow(UiPlotSubWindow):
         id_column = merged_linelist.columns[ID_COLUMN]
         color_column = merged_linelist[COLOR_COLUMN]
 
-        for row_ndex in range(len(wave_column)):
+        for row_index in range(len(wave_column)):
 
             # tool tip contains all info in table.
             tool_tip = ""
             for col_index in range(len(merged_linelist.columns)):
                 col_name = merged_linelist.colnames[col_index]
                 if not col_name in [COLOR_COLUMN]:
-                    value = merged_linelist.columns[col_index][row_ndex]
+                    value = merged_linelist.columns[col_index][row_index]
                     tool_tip += col_name + '=' + str(value) + ', '
 
-            marker = LineIDMarker(id_column[row_ndex], plot_item,
+            marker = LineIDMarker(id_column[row_index], plot_item,
                                   tip=tool_tip,
-                                  color=color_column[row_ndex],
+                                  color=color_column[row_index],
                                   orientation='vertical')
 
-            marker.setPos(wave_column[row_ndex], height)
+            marker.setPos(wave_column[row_index], height)
 
             plot_item.addItem(marker)
             self._line_labels.append(marker)
@@ -564,6 +564,7 @@ class PlotSubWindow(UiPlotSubWindow):
             for marker in self._line_labels:
                 self._plot_item.removeItem(marker)
             self._plot_item.update()
+            self._linelist_window.erasePlottedLines()
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the

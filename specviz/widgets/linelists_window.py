@@ -12,13 +12,11 @@ from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
 
 from ..core.comms import dispatch
 
-from ..core.linelist import WAVELENGTH_COLUMN
+from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN
 
 
-# We need our own mapping because the names list returned by
-# QColor.colorNames() is inconsistent with the color names in
-# Qt.GlobalColor.
-
+# We need our own mapping because the list with name returned by QColor.colorNames()
+# is inconsistent with the color names in Qt.GlobalColor.
 ID_COLORS = {
     'black':      Qt.black,
     'red':        Qt.red,
@@ -30,6 +28,9 @@ ID_COLORS = {
     'dark green': Qt.darkGreen,
     'dark blue':  Qt.darkBlue
 }
+
+PLOTTED = "Plotted"
+
 
 #TODO work in progress
 
@@ -179,7 +180,7 @@ class LineListsWindow(UiLinelistsWindow):
         # in each line list.
         self._table_views = []
         self._tabbed_panes = []
-        self._plotted_lines_pane = PlottedLinesPane()
+        self._plotted_lines_pane = QWidget()
 
         for linelist in plot_window.linelists:
 
@@ -216,16 +217,16 @@ class LineListsWindow(UiLinelistsWindow):
                 self._table_views.append(table_view)
                 self._tabbed_panes.append(pane)
 
-        self.tabWidget.addTab(self._plotted_lines_pane, "Plotted")
+        self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
 
     def displayPlottedLines(self, linelist):
-        # todo this should add the new list to whatever is beign displayed
-        # in the tab already. The Erase button should clear the tab. Thus,
-        # we should keep a table model and add the new lines to it, then
-        # sort it, then display it. We cannot respond to an on_erase signal
-        # because we may have several instances of this line list window
-        # active at once.
-        print ('@@@@@@     line: 222  - ', len(linelist.columns[WAVELENGTH_COLUMN]))
+        self._plotted_lines_pane = PlottedLinesPane(linelist)
+        self.tabWidget.removeTab(self._index_plotted)
+        self._index_plotted = self.tabWidget.insertTab(self._index_plotted, self._plotted_lines_pane, PLOTTED)
+
+    def erasePlottedLines(self):
+        self.tabWidget.removeTab(self._index_plotted)
+        self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
 
     def show(self):
         self._main_window.show()
@@ -301,9 +302,24 @@ class LineListPane(QWidget):
 
 class PlottedLinesPane(QWidget):
 
-    # this holds the list will the currently plotted lines.
+    # this holds the list with the currently plotted lines.
 
-    pass
+    def __init__(self, plotted_lines, *args, **kwargs):
+        super().__init__(None, *args, **kwargs)
+
+        layout = QVBoxLayout()
+        layout.setSizeConstraint(QLayout.SetMaximumSize)
+        self.setLayout(layout)
+
+        table_model = LineListTableModel(plotted_lines)
+        proxy = SortModel(table_model.getName())
+        proxy.setSourceModel(table_model)
+
+        if table_model.rowCount() > 0:
+            table_view = QTableView()
+            table_view.setModel(proxy)
+            table_view.resizeColumnsToContents()
+            layout.addWidget(table_view)
 
 
 class LineListTableModel(QAbstractTableModel):
@@ -325,16 +341,39 @@ class LineListTableModel(QAbstractTableModel):
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
+
+        object = self._table.columns[index.column()][index.row()]
+        if isinstance(object, QColor):
+
+            # handling of a color object can be tricky....
+
+            r = object.red()
+            g = object.green()
+            b = object.blue()
+            lowest = 100000
+            result = object
+            for color_name, orig_color in ID_COLORS.items():
+                orig_rgb = QColor(orig_color)
+                diff = abs(orig_rgb.red() - r) + abs(orig_rgb.green() - g) + abs(orig_rgb.blue() - b)
+                if diff < lowest:
+                    lowest = diff
+                    result = orig_color
+
+            key = [k for k,value in ID_COLORS.items() if value == result][0]
+
+            return QVariant(key)
+
         return QVariant(str(self._table.columns[index.column()][index.row()]))
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._table.colnames[section]
 
-        # This generates the tool tip with units for the wavelength column.
+        # This generates the tool tip with units for the wavelength and
+        # error columns.
         elif role == Qt.ToolTipRole and orientation == Qt.Horizontal:
-            if self._table.colnames[section] in [WAVELENGTH_COLUMN]:
-                unit = self._table.columns[WAVELENGTH_COLUMN].unit
+            if self._table.colnames[section] in [WAVELENGTH_COLUMN, ERROR_COLUMN]:
+                unit = self._table.columns[section].unit
                 return str(unit)
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
