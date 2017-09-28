@@ -65,7 +65,7 @@ def ingest(range):
         linelist_fullname = linelist_path + loader.filename
 
         linelist = LineList.read_list(linelist_fullname, loader)
-        # linelist = linelist.extract_range(range)
+        linelist = linelist.extract_range(range)
 
         linelists.append(linelist)
 
@@ -193,12 +193,18 @@ class LineList(Table):
         """
         Builds a LineList instance out of self, with
         the subset of lines that fall within the
-        wavelength range defined by 'wmin' and 'wmax'
+        wavelength range defined by 'wmin' and 'wmax'.
+
+        The actual range is somewhat wider, to allow
+        for radial velocity and redshift effects. The
+        actual handling of this must wait until we get
+        more detailed specs for the redshift functionality.
 
         Parameters
         ----------
         wrange: (float, float)
-            minimum and maximum wavelength of the wavelength range
+            minimum and maximum wavelength of the data
+            (spectrum) wavelength range
 
         Returns
         -------
@@ -214,10 +220,18 @@ class LineList(Table):
         # units the wavelength range is expressed in.
         new_wavelengths = wavelengths.to(wmin.unit)
 
+        # add some leeway at the short and long end points.
+        # For now, we extend both ends by 10%. This might
+        # be enough at the short end, but it remains to be
+        # seen how this plays out when we add redshift
+        # functionality to the app.
+        wmin = wmin.value - wmin.value * 0.1
+        wmax = wmax.value + wmax.value * 0.1
+
         # 'indices' points to rows with wavelength values
         # that lie outside the wavelength range.
-        indices_to_remove = np.where((new_wavelengths.value < wmin.value) |
-                                     (new_wavelengths.value > wmax.value))
+        indices_to_remove = np.where((new_wavelengths.value < wmin) |
+                                     (new_wavelengths.value > wmax))
 
         return self._remove_lines(indices_to_remove)
 

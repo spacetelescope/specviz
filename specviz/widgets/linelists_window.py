@@ -15,8 +15,8 @@ from ..core.comms import dispatch
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN
 
 
-# We need our own mapping because the list with name returned by QColor.colorNames()
-# is inconsistent with the color names in Qt.GlobalColor.
+# We need our own mapping because the list with color names returned by
+# QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
 ID_COLORS = {
     'black':      Qt.black,
     'red':        Qt.red,
@@ -199,6 +199,7 @@ class LineListsWindow(UiLinelistsWindow):
                 # would be the approach users will favor.
                 table_view.setSortingEnabled(True)
 
+                table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
                 table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
                 table_view.horizontalHeader().setStretchLastSection(True)
                 table_view.resizeColumnsToContents()
@@ -209,6 +210,10 @@ class LineListsWindow(UiLinelistsWindow):
                 # on load. Doesn't seem to affect performance
                 # by much tough.
                 proxy.sort(-1, Qt.AscendingOrder)
+
+                # table selections will change the total count of lines selected.
+                selectionModel = table_view.selectionModel()
+                selectionModel.selectionChanged.connect(self._countSelections)
 
                 pane = LineListPane(table_view, comments)
 
@@ -227,6 +232,15 @@ class LineListsWindow(UiLinelistsWindow):
     def erasePlottedLines(self):
         self.tabWidget.removeTab(self._index_plotted)
         self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
+
+    def _countSelections(self):
+        count = 0
+        for table_view in self._table_views:
+            count += len(table_view.selectionModel().selectedRows())
+        self.lines_selected_label.setText(str(count))
+
+        color = 'black' if count < 500 else 'red'
+        self.lines_selected_label.setStyleSheet('color:'+color)
 
     def show(self):
         self._main_window.show()
@@ -350,18 +364,21 @@ class LineListTableModel(QAbstractTableModel):
         object = self._table.columns[index.column()][index.row()]
         if isinstance(object, QColor):
 
-            # handling of a color object can be tricky....
-
+            # handling of a color object can be tricky. Color names
+            # returned by QColor.colorNames() are inconsistent with
+            # color names in Qt.GlobalColor. We just go to the basics
+            # and compare color equality (or closeness) using a distance
+            # criterion in r,g,b coordinates.
             r = object.red()
             g = object.green()
             b = object.blue()
-            lowest = 100000
+            min_dist = 100000
             result = object
             for color_name, orig_color in ID_COLORS.items():
                 orig_rgb = QColor(orig_color)
-                diff = abs(orig_rgb.red() - r) + abs(orig_rgb.green() - g) + abs(orig_rgb.blue() - b)
-                if diff < lowest:
-                    lowest = diff
+                dist = abs(orig_rgb.red() - r) + abs(orig_rgb.green() - g) + abs(orig_rgb.blue() - b)
+                if dist < min_dist:
+                    min_dist = dist
                     result = orig_color
 
             key = [k for k,value in ID_COLORS.items() if value == result][0]
