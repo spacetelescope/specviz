@@ -1,5 +1,7 @@
 """
-Emission/Absorption Line list utilities
+
+Line list utilities
+
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -29,6 +31,20 @@ UNITS_COLUMN = 'units'
 COLOR_COLUMN = 'color'
 
 
+_linelists_cache = []
+
+def _populate_linelists_cache():
+    linelist_path = os.path.dirname(os.path.abspath(__file__))
+    linelist_path +=  '/../data/linelists/'
+    yaml_paths = glob.glob(linelist_path + '*.yaml')
+
+    for yaml_filename in yaml_paths:
+        loader = yaml.load(open(yaml_filename, 'r'))
+        linelist_fullname = linelist_path + loader.filename
+        linelist = LineList.read_list(linelist_fullname, loader)
+        _linelists_cache.append(linelist)
+
+
 def ingest(range):
     """
     Returns a list with LineList instances.
@@ -45,31 +61,17 @@ def ingest(range):
     -------
     [LineList, ...]
         The list of linelists found.
-
-    Notes
-    -----
-    Lets skip the file dialog business. For now, we look
-    for line lists and their accompanying YAML files in
-    one single place. We also restrict our search for
-    ascii line lists whose file names end in .txt
     """
-    linelist_path = os.path.dirname(os.path.abspath(__file__))
-    linelist_path +=  '/../data/linelists/'
-    yaml_paths = glob.glob(linelist_path + '*.yaml')
-    linelists = []
+    if len(_linelists_cache) == 0:
+        _populate_linelists_cache()
 
-    for yaml_filename in yaml_paths:
+    result = []
+    for linelist in _linelists_cache:
+        # linelist = linelist.extract_range(range)
 
-        loader = yaml.load(open(yaml_filename, 'r'))
+        result.append(linelist)
 
-        linelist_fullname = linelist_path + loader.filename
-
-        linelist = LineList.read_list(linelist_fullname, loader)
-        linelist = linelist.extract_range(range)
-
-        linelists.append(linelist)
-
-    return linelists
+    return result
 
 
 # Inheriting from QTable somehow makes this class incompatible
