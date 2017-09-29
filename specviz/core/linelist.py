@@ -29,6 +29,7 @@ ERROR_COLUMN = 'Error'
 ID_COLUMN = 'Species'
 UNITS_COLUMN = 'units'
 COLOR_COLUMN = 'color'
+TOOLTIP_COLUMN = 'tooltip'
 
 
 _linelists_cache = []
@@ -93,7 +94,7 @@ class LineList(Table):
         If true, a masked table is used.
     """
 
-    def __init__(self, table=None, name=None, masked=None):
+    def __init__(self, table=None, tooltips=None, name=None, masked=None):
         Table.__init__(self, data=table, masked=masked)
 
         self.name = name
@@ -109,12 +110,17 @@ class LineList(Table):
         # each list has a color property associated to it
         self.color = None
 
+        # A line list (but not the underlying table) can have
+        # tool tips associated to each column.
+        self.tooltips = tooltips
+
     @classmethod
     def read_list(self, filename, yaml_loader):
         names_list = []
         start_list = []
         end_list = []
         units_list = []
+        tooltips_list = []
         for k in range(len((yaml_loader.columns))):
             name = yaml_loader.columns[k][COLUMN_NAME]
             names_list.append(name)
@@ -124,11 +130,15 @@ class LineList(Table):
             start_list.append(start)
             end_list.append(end)
 
+            units = ''
             if UNITS_COLUMN in yaml_loader.columns[k]:
                 units = yaml_loader.columns[k][UNITS_COLUMN]
-            else:
-                units = ''
             units_list.append(units)
+
+            tooltip = ''
+            if TOOLTIP_COLUMN in yaml_loader.columns[k]:
+                tooltip = yaml_loader.columns[k][TOOLTIP_COLUMN]
+            tooltips_list.append(tooltip)
 
         tab = ascii.read(filename, format = yaml_loader.format,
                          names = names_list,
@@ -148,7 +158,7 @@ class LineList(Table):
         # is taken from the 'name' element in the
         # YAML file descriptor.
 
-        return LineList(tab, yaml_loader.name)
+        return LineList(tab, tooltips=tooltips_list, name=yaml_loader.name)
 
     @classmethod
     def merge(cls, lists, target_units):

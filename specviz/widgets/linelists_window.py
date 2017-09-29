@@ -350,17 +350,17 @@ class PlottedLinesPane(QWidget):
 
 class LineListTableModel(QAbstractTableModel):
 
-    def __init__(self, table, parent=None, *args):
+    def __init__(self, linelist, parent=None, *args):
 
         QAbstractTableModel.__init__(self, parent, *args)
 
-        self._table = table
+        self._linelist = linelist
 
     def rowCount(self, index_parent=None, *args, **kwargs):
-        return len(self._table.columns[0])
+        return len(self._linelist.columns[0])
 
     def columnCount(self, index_parent=None, *args, **kwargs):
-        return len(self._table.columns)
+        return len(self._linelist.columns)
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -368,7 +368,7 @@ class LineListTableModel(QAbstractTableModel):
         elif role != Qt.DisplayRole:
             return QVariant()
 
-        object = self._table.columns[index.column()][index.row()]
+        object = self._linelist.columns[index.column()][index.row()]
         if isinstance(object, QColor):
 
             # handling of a color object can be tricky. Color names
@@ -392,23 +392,24 @@ class LineListTableModel(QAbstractTableModel):
 
             return QVariant(key)
 
-        return QVariant(str(self._table.columns[index.column()][index.row()]))
+        return QVariant(str(self._linelist.columns[index.column()][index.row()]))
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self._table.colnames[section]
+            return self._linelist.colnames[section]
 
-        # This generates the tool tip with units for the wavelength and
-        # error columns.
-        elif role == Qt.ToolTipRole and orientation == Qt.Horizontal:
-            if self._table.colnames[section] in [WAVELENGTH_COLUMN, ERROR_COLUMN]:
-                unit = self._table.columns[section].unit
-                return str(unit)
+        # This generates tooltips for header cells
+        if role == Qt.ToolTipRole and orientation == Qt.Horizontal:
+            if self._linelist.colnames[section] in [WAVELENGTH_COLUMN, ERROR_COLUMN]:
+                result = self._linelist.columns[section].unit
+            else:
+                result = self._linelist.tooltips[section]
+            return str(result)
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def getName(self):
-        return self._table.name
+        return self._linelist.name
 
 
 class SortModel(QSortFilterProxyModel):
