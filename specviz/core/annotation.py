@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 from pyqtgraph import functions, TextItem
 
 from qtpy.QtCore import QPointF
-from qtpy.QtGui import QPolygonF, QPen, QColor
+from qtpy.QtGui import QTransform, QPolygonF, QPen, QColor
 
 
 orientations = {
@@ -33,8 +33,65 @@ class LineIDMarker(TextItem):
 
         super(LineIDMarker, self).__init__(text=text, color=color, anchor=anchor, angle=angle)
 
+        # self.setFlag(self.ItemIgnoresTransformations)
+        self.setFlag(self.ItemIsMovable)
+        self.setFlag(self.ItemSendsGeometryChanges)
+        # self.setFlag(self.ItemIsMovable)
         self.setToolTip(tip)
 
+    # TODO these are attempts to reposition the line labels on the fly, as
+    # the data is zoomed in and out. Nothing works. The behavior that is
+    # described in the PyQt documentation is not observed. It appears that
+    # the setFlags(ItemSendsGeometryChanges) does not work. I am using pyqt
+    # version 4.8, so support for this flag should be there.
+    # The ItemIgnoresTransformations flag doesn't work either. When set, it
+    # messes the entire plot. This could be dues to interference with pyqtgraph.
+    # No way to know.
+
+    # def itemChange(self, change, value):
+    #     ret = super(LineIDMarker, self).itemChange(change, value)
+    #
+    #     print("@@@@@@  file annotation.py; line 43 - ",  change, value)
+    #
+    #     print("@@@@@@  file annotation.py; line 45 - ",  self.x(), self.y())
+    #
+    #     # if change == self.ItemPositionChange:
+    #
+    #         # print("@@@@@@  file annotation.py; line 49 -   AAAAAAA")
+    #
+    #         # newPos = self.scenePos()
+    #
+    #         # print("@@@@@@  file annotation.py; line 45 - ",  newPos)
+    #
+    #         # rect = self.sceneBoundingRect()
+    #
+    #         # newPos.setY(y)
+    #
+    #         # print("@@@@@@  file annotation.py; line 54 - ",  self.scenePos())
+    #         # return newPos
+    #         # # return ret
+    #
+    #         # newPos.setY(self.y() * 0.7)
+    #
+    #         # return newPos
+    #
+    #         # t = self.transform()
+    #         # newT = QTransform(t)
+    #         # t2 = newT.translate(0.,10.)
+    #         #
+    #         # print("@@@@@@  file annotation.py; line 72 - ",  newT.m22(), newT.m32())
+    #         # print("@@@@@@  file annotation.py; line 73 - ",  t2.m22(), t2.m32())
+    #         #
+    #         # return t2
+    #
+    #     if hasattr(value, 'y'):
+    #         return QPointF(self.pos().x(), value.y())
+    #
+    #
+    #
+    #         # return ret
+    #
+    #     return ret
 
     def paint(self, p, *args):
         ''' Overrides the default implementation so as
