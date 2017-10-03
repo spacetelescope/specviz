@@ -533,6 +533,8 @@ class PlotSubWindow(UiPlotSubWindow):
         id_column = merged_linelist.columns[ID_COLUMN]
         color_column = merged_linelist[COLOR_COLUMN]
 
+        plot_item.enableAutoRange(enable=False)
+
         for row_index in range(len(wave_column)):
 
             # tool tip contains all info in table.
@@ -553,6 +555,8 @@ class PlotSubWindow(UiPlotSubWindow):
             plot_item.addItem(marker)
             self._line_labels.append(marker)
 
+        plot_item.enableAutoRange(enable=True)
+
         plot_item.update()
 
         self._linelist_window.displayPlottedLines(merged_linelist)
@@ -560,8 +564,10 @@ class PlotSubWindow(UiPlotSubWindow):
     @DispatchHandle.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
         if self._is_selected:
+            self._plot_item.enableAutoRange(enable=False)
             for marker in self._line_labels:
                 self._plot_item.removeItem(marker)
+            self._plot_item.enableAutoRange(enable=True)
             self._plot_item.update()
             self._linelist_window.erasePlottedLines()
 

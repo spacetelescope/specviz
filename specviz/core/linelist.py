@@ -68,7 +68,7 @@ def ingest(range):
 
     result = []
     for linelist in _linelists_cache:
-        # linelist = linelist.extract_range(range)
+        linelist = linelist.extract_range(range)
 
         result.append(linelist)
 

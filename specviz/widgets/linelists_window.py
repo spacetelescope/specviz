@@ -199,11 +199,11 @@ class LineListsWindow(UiLinelistsWindow):
                 table_view = QTableView()
                 table_view.setModel(proxy)
 
-                # setting this to False will significantly speed up
-                # the loading of very large line lists. However, these
-                # lists are often jumbled in wavelength, and consequently
-                # difficult to read and use. It remains to be seen what
-                # would be the approach users will favor.
+                # setting this to False will significantly speed up the
+                # loading of large line lists. However, these lists are
+                # often jumbled in wavelength, and consequently difficult
+                # to read and use. It remains to be seen what would be the
+                # approach users will favor.
                 table_view.setSortingEnabled(True)
 
                 table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -323,7 +323,25 @@ class LineListPane(QWidget):
 
 class PlottedLinesPane(QWidget):
 
-    # this holds the list with the currently plotted lines.
+    # This holds the list with the currently plotted lines.
+    #
+    # This view is re-built every time a new set of markers
+    # is plotted. The list view build here ends up being the
+    # main bottleneck in terms of execution time perceived by
+    # the user. The time to build the list is about the same
+    # as the time spent in the paint() methods of all components
+    # in the plot, for a set of a couple hundred markers. Most
+    # of that time in turn is spent in the column resizing method
+    # in the table view. If sorting is enabled for this view,
+    # times will increase dramatically.
+    #
+    # This plotted lines pane represents one of the possible
+    # implementations of the last requirement in Tony Marston's
+    # line list document (option to show line information for
+    # lines shown in the plot). Given the slowness of it, it
+    # would be good to have feedback on this in order to try
+    # alternate implementation approaches (a simple ASCII table
+    # might suffice, perhaps).
 
     def __init__(self, plotted_lines, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
@@ -340,7 +358,13 @@ class PlottedLinesPane(QWidget):
             table_view = QTableView()
             table_view.setModel(proxy)
 
+            # setting this to False will significantly speed up the
+            # plot. This is because the table view must be re-built
+            # every time a new set of markers is drawn on the plot
+            # surface. It remains to be seen what would be the
+            # approach users will favor.
             table_view.setSortingEnabled(True)
+
             table_view.setSelectionMode(QAbstractItemView.NoSelection)
             table_view.horizontalHeader().setStretchLastSection(True)
             table_view.resizeColumnsToContents()
