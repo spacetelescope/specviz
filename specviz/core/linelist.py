@@ -34,7 +34,13 @@ TOOLTIP_COLUMN = 'tooltip'
 
 _linelists_cache = []
 
-def _populate_linelists_cache():
+# This should be called at the appropriate time when starting the
+# app, so the lists are cached for speedier access later on.
+
+def populate_linelists_cache():
+    # we could benefit from a threaded approach here. But I couldn't
+    # see the benefits, since the reading of even the largest line
+    # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
     linelist_path +=  '/../data/linelists/'
     yaml_paths = glob.glob(linelist_path + '*.yaml')
@@ -63,9 +69,6 @@ def ingest(range):
     [LineList, ...]
         The list of linelists found.
     """
-    if len(_linelists_cache) == 0:
-        _populate_linelists_cache()
-
     result = []
     for linelist in _linelists_cache:
         ll = linelist.extract_range(range)
@@ -300,7 +303,7 @@ class LineList(Table):
 
         table.remove_rows(indices_to_remove)
 
-        result = LineList(table, self.name)
+        result = LineList(table, tooltips=self.tooltips, name=self.name)
 
         return result
 

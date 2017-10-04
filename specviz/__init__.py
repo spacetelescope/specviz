@@ -21,5 +21,8 @@ from .interfaces.loaders import _load_yaml, _load_py
 _load_yaml()
 _load_py()
 
+# cache the line lists for speedier access
+from .core import linelist
+linelist.populate_linelists_cache()
 
 from .plugins import *
