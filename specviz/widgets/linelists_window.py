@@ -199,16 +199,18 @@ class LineListsWindow(UiLinelistsWindow):
                 table_view = QTableView()
                 table_view.setModel(proxy)
 
-                # setting this to False will significantly speed up the
-                # loading of large line lists. However, these lists are
+                # setting these two to False will significantly speed up the
+                # rendering, in particular of large line lists. These lists are
                 # often jumbled in wavelength, and consequently difficult
-                # to read and use. It remains to be seen what would be the
-                # approach users will favor.
+                # to read and use, so having a sorting option is useful indeed.
+                # It remains to be seen what would be the approach users will
+                # favor. We might add a toggle that users can set/reset depending
+                # on their preferences.
                 table_view.setSortingEnabled(True)
+                table_view.horizontalHeader().setStretchLastSection(True)
 
                 table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
                 table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-                table_view.horizontalHeader().setStretchLastSection(True)
                 table_view.resizeColumnsToContents()
                 comments = linelist.meta['comments']
 
@@ -328,12 +330,13 @@ class PlottedLinesPane(QWidget):
     # This view is re-built every time a new set of markers
     # is plotted. The list view build here ends up being the
     # main bottleneck in terms of execution time perceived by
-    # the user. The time to build the list is about the same
-    # as the time spent in the paint() methods of all components
-    # in the plot, for a set of a couple hundred markers. Most
-    # of that time in turn is spent in the column resizing method
-    # in the table view. If sorting is enabled for this view,
-    # times will increase dramatically.
+    # the user (found this using cProfile). The time to build
+    # the list is about the same as the time spent in the
+    # paint() methods of all components in the plot, for a set
+    # of a couple hundred markers. Most of that time in turn is
+    # spent in the column resizing method in the table view. If
+    # sorting is enabled for this view, times will increase
+    # dramatically.
     #
     # This plotted lines pane represents one of the possible
     # implementations of the last requirement in Tony Marston's
@@ -361,8 +364,9 @@ class PlottedLinesPane(QWidget):
             # setting this to False will significantly speed up the
             # plot. This is because the table view must be re-built
             # every time a new set of markers is drawn on the plot
-            # surface. It remains to be seen what would be the
-            # approach users will favor.
+            # surface. Alternate approaches are worth examining. It
+            # remains to be seen what would be the approach users
+            # will favor.
             table_view.setSortingEnabled(True)
 
             table_view.setSelectionMode(QAbstractItemView.NoSelection)

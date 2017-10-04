@@ -68,9 +68,9 @@ def ingest(range):
 
     result = []
     for linelist in _linelists_cache:
-        linelist = linelist.extract_range(range)
+        ll = linelist.extract_range(range)
 
-        result.append(linelist)
+        result.append(ll)
 
     return result
 
@@ -245,7 +245,12 @@ class LineList(Table):
         indices_to_remove = np.where((new_wavelengths.value < wmin) |
                                      (new_wavelengths.value > wmax))
 
-        return self._remove_lines(indices_to_remove)
+        result = self._remove_lines(indices_to_remove)
+
+        # new instance inherits the name from parent.
+        result.name = self.name
+
+        return result
 
     def extract_rows(self, indices):
         """
