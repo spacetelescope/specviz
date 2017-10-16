@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
     @dispatch.register_listener("on_add_to_window")
     def add_to_window(self, data=None, window=None):
         # Find any sub windows currently active
-        window = window or next((x for x in self.mdi_area.subWindowList(
+        window = window or next((x.widget() for x in self.mdi_area.subWindowList(
             order=self.mdi_area.ActivationHistoryOrder)), None)
 
         self.add_sub_window(data=data, window=window)
