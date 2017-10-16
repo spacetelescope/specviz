@@ -3,6 +3,7 @@ Plugin enabling model definition and fitting
 """
 import logging
 import os
+import re
 
 import numpy as np
 from qtpy import compat
@@ -12,7 +13,7 @@ from qtpy.QtWidgets import QTreeWidgetItem
 from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
-from ..core.events import dispatch, dispatch
+from ..core.events import dispatch
 from ..core.data import Spectrum1DRefModelLayer
 from ..core.threads import FitModelThread
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -220,15 +221,20 @@ class ModelFittingPlugin(Plugin):
             name = model.name
 
             if not name:
-                count = 1
+                count = 0
 
                 root = self.contents.tree_widget_current_models.invisibleRootItem()
 
                 for i in range(root.childCount()):
                     child = root.child(i)
+                    pre_mod = child.data(0, Qt.UserRole)
+                    pre_name = child.text(0)
 
-                    if isinstance(model, child.data(0, Qt.UserRole).__class__):
-                        count += 1
+                    if isinstance(model, pre_mod.__class__):
+                        cur_num = next(iter([int(x) for x in re.findall(r'\d+', pre_name)]), 0) + 1
+
+                        if cur_num > count:
+                            count = cur_num
 
                 name = model.__class__.__name__.replace('1D', '') + str(count)
                 model._name = name
