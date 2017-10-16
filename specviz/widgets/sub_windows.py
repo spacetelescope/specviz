@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
 from qtpy.QtCore import QEvent, Qt
 
-from ..core.events import dispatch, dispatch
+from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker

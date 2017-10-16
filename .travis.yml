@@ -32,13 +32,15 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
+        - PIP_DEPENDENCIES=''
         - EVENT_TYPE='pull_request push'
 
-        
-        # List other runtime dependencies for the package that are available as
-        # conda packages here.
+
+        # For this package-template, we include examples of Cython modules,
+        # so Cython is required for testing. If your package does not include
+        # Cython code, you can set CONDA_DEPENDENCIES=''
         - CONDA_DEPENDENCIES='pyqt'
-        
+
         # List other runtime dependencies for the package that are available as
         # pip packages here.
         - PIP_DEPENDENCIES='scipy specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
@@ -80,17 +82,14 @@ matrix:
         - os: linux
           env: SETUP_CMD='build_docs -w'
 
-        # Now try Astropy dev and LTS vesions with the latest 3.x and 2.7.
-        - os: linux
-          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=development
-               EVENT_TYPE='pull_request push cron'
+        # Now try Astropy dev with the latest Python and LTS with Python 2.7 and 3.x.
         - os: linux
           env: ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
         - os: linux
-          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts NUMPY_VERSION=1.12
+          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts
         - os: linux
-          env: ASTROPY_VERSION=lts NUMPY_VERSION=1.12
+          env: ASTROPY_VERSION=lts
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
@@ -103,21 +102,23 @@ matrix:
           env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.10
         - os: linux
           env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
+        - os: linux
+          env: NUMPY_VERSION=1.12
 
         # Try numpy pre-release
         - os: linux
           env: NUMPY_VERSION=prerelease
                EVENT_TYPE='pull_request push cron'
 
-#        # Do a PEP8 test with pycodestyle
-#        - os: linux
-#          env: MAIN_CMD='pycodestyle specviz --count' SETUP_CMD=''
+        # Do a PEP8 test with pycodestyle
+        - os: linux
+          env: MAIN_CMD='pycodestyle packagename --count' SETUP_CMD=''
 
     allow_failures:
         # Do a PEP8 test with pycodestyle
         # (allow to fail unless your code completely compliant)
         - os: linux
-          env: MAIN_CMD='pycodestyle specviz --count' SETUP_CMD=''
+          env: MAIN_CMD='pycodestyle packagename --count' SETUP_CMD=''
 
 install:
 
@@ -132,7 +133,7 @@ install:
     # in how to install a package, in which case you can have additional
     # commands in the install: section below.
 
-    - git clone git://github.com/astropy/ci-helpers.git
+    - git clone --depth 1 git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
 
     # As described above, using ci-helpers, you should be able to set up an
@@ -150,4 +151,4 @@ script:
 after_success:
     # If coveralls.io is set up for this package, uncomment the line below.
     # The coveragerc file may be customized as needed for your package.
-    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='specviz/tests/coveragerc'; fi
+    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='packagename/tests/coveragerc'; fi

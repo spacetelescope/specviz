@@ -27,7 +27,7 @@ class SpecVizViewer(DataViewer):
         super(SpecVizViewer, self).__init__(session, parent=parent)
 
         # Connect the dataview to the specviz messaging system
-        dispatch.dispatch.setup(self)
+        dispatch.setup(self)
 
         # We now set up the options widget. This controls for example which
         # attribute should be used to indicate the filenames of the spectra.
@@ -122,7 +122,6 @@ class SpecVizViewer(DataViewer):
         #     data = data.with_mask(~mask)
 
         spec_data = data.sum((1, 2))
-        print(spec_data)
 
         spec_data = Spectrum1DRef(spec_data.data,
                                   unit=spec_data.unit,
@@ -130,7 +129,7 @@ class SpecVizViewer(DataViewer):
                                   dispersion_unit=data.spectral_axis.unit,
                                   wcs=data.wcs)
 
-        dispatch.dispatch.on_add_to_window.emit(spec_data)
+        dispatch.on_add_to_window.emit(spec_data)
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
