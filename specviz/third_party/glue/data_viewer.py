@@ -115,11 +115,11 @@ class SpecVizViewer(DataViewer):
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
 
-    def _spectrum_from_component(self, component, wcs, mask=None):
+    def _spectrum_from_component(self, layer, component, wcs, mask=None):
         data = SpectralCube(component.data, wcs)
 
-        # if mask is not None:
-        #     data = data.with_mask(~mask)
+        if mask is not None:
+            data = data.with_mask(mask)
 
         spec_data = data.sum((1, 2))
 
@@ -128,6 +128,15 @@ class SpecVizViewer(DataViewer):
                                   dispersion=data.spectral_axis.data,
                                   dispersion_unit=data.spectral_axis.unit,
                                   wcs=data.wcs)
+
+        # Store the relation between the component and the specviz data. If
+        # the data exists, first remove the component from specviz and then
+        # re-add it.
+        if layer in self._specviz_data_cache:
+            old_spec_data = self._specviz_data_cache[layer]
+            dispatch.on_remove_data.emit(old_spec_data)
+
+        self._specviz_data_cache[layer] = spec_data
 
         dispatch.on_add_to_window.emit(spec_data)
 
@@ -153,25 +162,18 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(data):
             return
 
-        cid = self._layer_widget.layer.id[self._options_widget.file_att]
-        mask = None
-        component = self._layer_widget.layer.get_component(cid)
+        layer = self._layer_widget.layer
+        cid = layer.id[self._options_widget.file_att]
+        component = layer.get_component(cid)
 
-        self._spectrum_from_component(component, data.coords.wcs)
+        self._spectrum_from_component(layer, component, data.coords.wcs)
 
         return True
 
     def add_subset(self, subset):
-        if not self._update_combo_boxes(subset):
-            return
-
-        subset = self._layer_widget.layer
-        cid = subset.data.id[self._options_widget.file_att]
-        mask = subset.to_mask()
-        component = subset.data.get_component(cid)
-
-        self._spectrum_from_component(component, subset.data.coords.wcs, mask=mask)
-
+        # We avoid doing any real work here, as adding a subset does not
+        # simultaneously add the subset mask. We therefore move the
+        # functionality to the update subset method.
         return True
 
     # The following four methods are used to receive various messages related
@@ -184,12 +186,27 @@ class SpecVizViewer(DataViewer):
         self.add_subset(message.subset)
 
     def _update_subset(self, message):
-        print("Updating subset")
+        if not self._update_combo_boxes(message.subset):
+            return
+
+        subset = self._layer_widget.layer
+        cid = subset.data.id[self._options_widget.file_att]
+        mask = subset.to_mask()
+        component = subset.data.get_component(cid)
+
+        self._spectrum_from_component(subset, component,
+                                      subset.data.coords.wcs, mask=mask)
 
     def _remove_subset(self, message):
         if message.subset in self._layer_widget:
             self._layer_widget.remove_layer(message.subset)
-        print("Removing subset")
+
+        subset = self._layer_widget.layer
+        cid = subset.data.id[self._options_widget.file_att]
+        component = subset.data.get_component(cid)
+
+        spec_data = self._specviz_data_cache.pop(component)
+        dispatch.on_remove_data.emit(spec_data)
 
     # When the selected layer is changed, we need to update the combo box with
     # the attributes from which the filename attribute can be selected. The

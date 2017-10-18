@@ -226,6 +226,15 @@ class LayerListPlugin(Plugin):
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
 
+    @dispatch.register_listener("on_remove_data")
+    def remove_layer_items_with_data(self, data=None):
+        # Find all layers whose parent is the data object
+        layers = [x for x in self.all_layers if x._parent == data]
+
+        # Remove each layer
+        for layer in layers:
+            dispatch.on_remove_layer.emit(layer=layer)
+
     @dispatch.register_listener("on_remove_layer")
     def remove_layer_item(self, layer=None):
         if layer is None:
