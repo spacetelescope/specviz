@@ -205,7 +205,7 @@ class SpecVizViewer(DataViewer):
         cid = subset.data.id[self._options_widget.file_att]
         component = subset.data.get_component(cid)
 
-        spec_data = self._specviz_data_cache.pop(component)
+        spec_data = self._specviz_data_cache.pop(subset)
         dispatch.on_remove_data.emit(spec_data)
 
     # When the selected layer is changed, we need to update the combo box with
