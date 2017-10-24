@@ -11,7 +11,7 @@ The following are some brief notes I took during our meeting.
 
 - Groups of lines should not all be at the same height within the plot (e.g. 25% below the top).
   Provide user with means to select line groups to be at different y positions within the plot – add as
-  option on view.
+  option on view.  DONE
 
 - Allow line list groups to be viewed, also selected and edited to form new (smaller) line lists from
   a subset of lines in a list.
@@ -20,7 +20,8 @@ The following are some brief notes I took during our meeting.
   of information available)
 
 - A nice to have: Automatic title metadata at the top of the plot, e.g. observation/object name, RA, Dec,
-  instrument (grating/filter), length of exposure, exposure date/time.
+  instrument (grating/filter), length of exposure, exposure date/time.  OUT OF SCOPE: handled somewhere else
+  in the app.
 
 - Redshift should be a user input (part of the plotting options) – it should be applied to the lines before
   plotting the lines. Don’t shift the spectrum. Redshift tool is not a good idea.
