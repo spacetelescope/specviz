@@ -16,7 +16,7 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
 from qtpy.QtCore import QEvent, Qt
 
 from ..core.comms import dispatch, DispatchHandle
-from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN
+from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
@@ -497,6 +497,12 @@ class PlotSubWindow(UiPlotSubWindow):
                     color = tabbed_pane.combo_box_color.itemData(index, role=Qt.UserRole)
                     new_list.setColor(color)
 
+                    # height for plotting the specific lines defined in
+                    # this list. Defined by the line edit text.
+                    if tabbed_pane.height_textbox.hasAcceptableInput():
+                        height = float(tabbed_pane.height_textbox.text())
+                        new_list.setHeight(height)
+
                     linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one. This might
@@ -521,11 +527,11 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # curve = plot_item.curves[0]
 
-        # all markers display at the same height
+        # compute height to display each marker
         data_range = plot_item.vb.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
-        height = (ymax - ymin) * 0.75 + ymin
+        height = (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
 
         # column names are defined in the YAML files
         # or by constants elsewhere.
@@ -550,7 +556,7 @@ class PlotSubWindow(UiPlotSubWindow):
                                   color=color_column[row_index],
                                   orientation='vertical')
 
-            marker.setPos(wave_column[row_index], height)
+            marker.setPos(wave_column[row_index], height[row_index])
 
             plot_item.addItem(marker)
             self._line_labels.append(marker)

@@ -6,13 +6,13 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem
+from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDoubleValidator
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
 from ..core.comms import dispatch
 
-from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN
+from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 
 
 # We need our own mapping because the list with color names returned by
@@ -132,10 +132,15 @@ class UiLinelistsWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
         self.lines_selected_label.setText(_translate("MainWindow", "0"))
+        self.lines_selected_label.setToolTip("Total number of lines selected in all sets.")
         self.label.setText(_translate("MainWindow", "lines selected"))
+        self.label.setToolTip("Total number of lines selected in all sets.")
         self.draw_button.setText(_translate("MainWindow", "Draw"))
+        self.draw_button.setToolTip("Plot markers for all selected lines in all sets.")
         self.erase_button.setText(_translate("MainWindow", "Erase"))
+        self.erase_button.setToolTip("Erase all markers")
         self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
+        self.dismiss_button.setToolTip("Dismiss this window")
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
@@ -284,19 +289,21 @@ class LineListPane(QWidget):
         hlayout = QHBoxLayout()
 
         # 'add set' button
-        self.add_set_button = QPushButton(self)
-        self.add_set_button.setObjectName("add_set_button")
+        self.create_set_button = QPushButton(self)
+        self.create_set_button.setObjectName("add_set_button")
         _translate = QCoreApplication.translate
-        self.add_set_button.setText(_translate("MainWindow", "Add set"))
-        self.add_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(self.add_set_button)
-        self.add_set_button.setEnabled(False)
+        self.create_set_button.setText(_translate("MainWindow", "Create set"))
+        self.create_set_button.setToolTip("Create new line set from selected lines.")
+        self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        hlayout.addWidget(self.create_set_button)
+        self.create_set_button.setEnabled(False)
 
         # 'deselect all' button
         deselect_button = QPushButton(self)
         deselect_button.setObjectName("deselect_button")
         _translate = QCoreApplication.translate
         deselect_button.setText(_translate("MainWindow", "Deselect"))
+        deselect_button.setToolTip("Un-select everything on this set.")
         deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(deselect_button)
         deselect_button.clicked.connect(lambda: table_view.clearSelection())
@@ -305,13 +312,23 @@ class LineListPane(QWidget):
         self.combo_box_color = QComboBox(self)
         self.combo_box_color.setObjectName("color_selector")
         model = self.combo_box_color.model()
+        self.combo_box_color.setToolTip("Color for selected lines in this set.")
         for cname in ID_COLORS:
             item = QStandardItem(cname)
             item.setForeground(ID_COLORS[cname])
             item.setData(QColor(ID_COLORS[cname]), role=Qt.UserRole)
             model.appendRow(item)
-
         hlayout.addWidget(self.combo_box_color)
+
+        # plotting height
+        self.height_textbox = QLineEdit(str(DEFAULT_HEIGHT))
+        validator = QDoubleValidator()
+        validator.setRange(0.05, 0.95, decimals=2)
+        self.height_textbox.setValidator(validator)
+        self.height_textbox.setFixedWidth(50)
+        self.height_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.height_textbox.setToolTip("Relative height to plot.")
+        hlayout.addWidget(self.height_textbox)
 
         # put it all together.
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)

@@ -20,6 +20,7 @@ __all__ = [
     'ingest',
 ]
 
+# yaml specs
 FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
@@ -28,8 +29,12 @@ WAVELENGTH_COLUMN = 'Wavelength'
 ERROR_COLUMN = 'Error'
 ID_COLUMN = 'Species'
 UNITS_COLUMN = 'units'
-COLOR_COLUMN = 'color'
 TOOLTIP_COLUMN = 'tooltip'
+
+# plotting helpers
+COLOR_COLUMN = 'color'
+HEIGHT_COLUMN = 'height'
+DEFAULT_HEIGHT = 0.75
 
 
 _linelists_cache = []
@@ -110,8 +115,9 @@ class LineList(Table):
 
         self._table = table
 
-        # each list has a color property associated to it
+        # each list has associated color and height attributes
         self.color = None
+        self.height = DEFAULT_HEIGHT
 
         # A line list (but not the underlying table) can have
         # tool tips associated to each column.
@@ -192,9 +198,11 @@ class LineList(Table):
             internal_table = linelist._table
             internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
 
-            # add a column to hold the color property
+            # add columns to hold the color and height attributes
             color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
             internal_table[COLOR_COLUMN] = color_array
+            height_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.height)
+            internal_table[HEIGHT_COLUMN] = height_array
 
             tables.append(internal_table)
 
@@ -309,3 +317,6 @@ class LineList(Table):
 
     def setColor(self, color):
         self.color = color
+
+    def setHeight(self, height):
+        self.height = height
