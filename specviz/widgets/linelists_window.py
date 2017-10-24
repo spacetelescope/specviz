@@ -6,7 +6,7 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDoubleValidator
+from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDoubleValidator, QHeaderView
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
@@ -197,22 +197,30 @@ class LineListsWindow(UiLinelistsWindow):
         for linelist in plot_window.linelists:
 
             table_model = LineListTableModel(linelist)
-            proxy = SortModel(table_model.getName())
-            proxy.setSourceModel(table_model)
 
             if table_model.rowCount() > 0:
                 table_view = QTableView()
-                table_view.setModel(proxy)
 
-                # setting these two to False will significantly speed up the
+                # disabling sorting will significantly speed up the
                 # rendering, in particular of large line lists. These lists are
                 # often jumbled in wavelength, and consequently difficult
                 # to read and use, so having a sorting option is useful indeed.
                 # It remains to be seen what would be the approach users will
                 # favor. We might add a toggle that users can set/reset depending
                 # on their preferences.
+                table_view.setSortingEnabled(False)
+                proxy = SortModel(table_model.getName())
+                proxy.setSourceModel(table_model)
+                table_view.setModel(proxy)
                 table_view.setSortingEnabled(True)
                 table_view.horizontalHeader().setStretchLastSection(True)
+
+                # playing with these doesn't speed up the sorting,
+                # regardless of whatever you may read on the net.
+                # table_view.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+                # table_view.verticalHeader().setResizeMode(QHeaderView.Fixed)
+                # table_view.horizontalHeader().setStretchLastSection(False)
+                # table_view.verticalHeader().setStretchLastSection(False)
 
                 table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
                 table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -371,19 +379,20 @@ class PlottedLinesPane(QWidget):
         self.setLayout(layout)
 
         table_model = LineListTableModel(plotted_lines)
-        proxy = SortModel(table_model.getName())
-        proxy.setSourceModel(table_model)
-
         if table_model.rowCount() > 0:
             table_view = QTableView()
-            table_view.setModel(proxy)
 
-            # setting this to False will significantly speed up the
+            # disabling sorting will significantly speed up the
             # plot. This is because the table view must be re-built
             # every time a new set of markers is drawn on the plot
             # surface. Alternate approaches are worth examining. It
             # remains to be seen what would be the approach users
             # will favor.
+
+            table_view.setSortingEnabled(False)
+            proxy = SortModel(table_model.getName())
+            proxy.setSourceModel(table_model)
+            table_view.setModel(proxy)
             table_view.setSortingEnabled(True)
 
             table_view.setSelectionMode(QAbstractItemView.NoSelection)
@@ -401,10 +410,20 @@ class LineListTableModel(QAbstractTableModel):
 
         self._linelist = linelist
 
-    def rowCount(self, index_parent=None, *args, **kwargs):
+        #TODO move entire table contents to an array of QVector
+        # instances that will store the columns. This should
+        # speed up the sorting (as far as some indications in
+        # the net suggest:
+        # http://www.qtforum.org/article/30638/qsortfilterproxymodel-qtreeview-sort-performance.html).
+
+    def rowCount(self, parent=None, *args, **kwargs):
+        if parent and parent.isValid():
+            return 0
         return len(self._linelist.columns[0])
 
-    def columnCount(self, index_parent=None, *args, **kwargs):
+    def columnCount(self, parent=None, *args, **kwargs):
+        if parent and parent.isValid():
+            return 0
         return len(self._linelist.columns)
 
     def data(self, index, role=None):
@@ -465,18 +484,15 @@ class SortModel(QSortFilterProxyModel):
         self._name = name
 
     def lessThan(self, left, right):
-        try:
-            # first, we try comparing floats.
+        if type(left) == type(0.) and type(right) == type(0.):
+            # numerical comparison
             left_data = left.data()
             left_float = float(left_data)
             right_data = right.data()
             right_float = float(right_data)
-
             return left_float < right_float
-
-        except:
-            # in case float conversion bombs out, we must force a
-            # lexicographic string comparison. The parameters passed
+        else:
+            # Lexicographic string comparison. The parameters passed
             # to this method from a sortable table model are stored
             # in QtCore.QModelIndex instances.
             return str(left.data()) < str(right.data())
