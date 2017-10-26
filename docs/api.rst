@@ -17,7 +17,12 @@ Data Objects
 
 Object Event Handling
 ^^^^^^^^^^^^^^^^^^^^^
-.. automodapi:: specviz.core.comms
+.. automodapi:: specviz.core.events
+   :no-heading:
+
+Object Dispatch Machinery
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodapi:: specviz.core.dispatch
    :no-heading:
 
 Spectrum Layer Plotting
