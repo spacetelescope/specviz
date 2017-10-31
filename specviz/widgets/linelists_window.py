@@ -294,7 +294,8 @@ class LineListPane(QWidget):
         # buttons and selectors dedicated to the specific list
         # displayed in this pane.
         button_pane = QWidget()
-        hlayout = QHBoxLayout()
+        # hlayout = QHBoxLayout()
+        hlayout = QGridLayout()
 
         # 'add set' button
         self.create_set_button = QPushButton(self)
@@ -303,7 +304,7 @@ class LineListPane(QWidget):
         self.create_set_button.setText(_translate("MainWindow", "Create set"))
         self.create_set_button.setToolTip("Create new line set from selected lines.")
         self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(self.create_set_button)
+        hlayout.addWidget(self.create_set_button, 1, 0)
         self.create_set_button.setEnabled(False)
 
         # 'deselect all' button
@@ -313,20 +314,21 @@ class LineListPane(QWidget):
         deselect_button.setText(_translate("MainWindow", "Deselect"))
         deselect_button.setToolTip("Un-select everything on this set.")
         deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(deselect_button)
+        hlayout.addWidget(deselect_button,1, 1)
         deselect_button.clicked.connect(lambda: table_view.clearSelection())
 
         # color picker
         self.combo_box_color = QComboBox(self)
         self.combo_box_color.setObjectName("color_selector")
-        model = self.combo_box_color.model()
         self.combo_box_color.setToolTip("Color for selected lines in this set.")
+        model = self.combo_box_color.model()
         for cname in ID_COLORS:
             item = QStandardItem(cname)
             item.setForeground(ID_COLORS[cname])
             item.setData(QColor(ID_COLORS[cname]), role=Qt.UserRole)
             model.appendRow(item)
-        hlayout.addWidget(self.combo_box_color)
+        hlayout.addWidget(self.combo_box_color, 1, 2)
+        hlayout.addWidget(QLabel("Color"), 0, 2)
 
         # plotting height
         self.height_textbox = QLineEdit(str(DEFAULT_HEIGHT))
@@ -336,11 +338,33 @@ class LineListPane(QWidget):
         self.height_textbox.setFixedWidth(50)
         self.height_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.height_textbox.setToolTip("Relative height to plot.")
-        hlayout.addWidget(self.height_textbox)
+        hlayout.addWidget(self.height_textbox, 1, 3)
+        hlayout.addWidget(QLabel("Height"), 0, 3)
+
+        # redshift
+        self.redshift_textbox = QLineEdit(str(0.0))
+        validator = QDoubleValidator()
+        validator.setRange(-1.0, 50., decimals=4)
+        self.redshift_textbox.setValidator(validator)
+        self.redshift_textbox.setFixedWidth(70)
+        self.redshift_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.redshift_textbox.setToolTip("Redshift lines by")
+        hlayout.addWidget(self.redshift_textbox, 1, 4)
+        hlayout.addWidget(QLabel("Redshift"), 0, 4)
+
+        # redshift units
+        self.combo_box_z_units = QComboBox(self)
+        self.combo_box_z_units.setObjectName("redshift_units")
+        self.combo_box_z_units.setToolTip("Redshift units.")
+        model = self.combo_box_z_units.model()
+        for uname in ['z','km/s']:
+            item = QStandardItem(uname)
+            model.appendRow(item)
+        hlayout.addWidget(self.combo_box_z_units, 1, 5)
 
         # put it all together.
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        hlayout.addItem(spacerItem)
+        hlayout.addItem(spacerItem, 1, 6)
         button_pane.setLayout(hlayout)
 
         layout.addWidget(info)
