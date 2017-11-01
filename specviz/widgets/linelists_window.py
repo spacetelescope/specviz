@@ -1,6 +1,8 @@
 """
 Define all the line list-based windows and dialogs
 """
+import os
+
 from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
@@ -13,6 +15,10 @@ from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
 from ..core.comms import dispatch
 
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
+
+ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                         '..', 'data', 'qt', 'resources'))
+
 
 
 # We need our own mapping because the list with color names returned by
@@ -109,8 +115,7 @@ class UiLinelistsWindow(object):
         self.statusBar.setObjectName("statusBar")
         MainWindow.setStatusBar(self.statusBar)
         self.actionOpen = QAction(MainWindow)
-        icon = QIcon()
-        icon.addPixmap(QPixmap(":/img/Open Folder-48.png"), QIcon.Normal, QIcon.Off)
+        icon = QIcon(os.path.join(ICON_PATH, "Open Folder-48.png"))
         self.actionOpen.setIcon(icon)
         self.actionOpen.setObjectName("actionOpen")
         self.actionExit = QAction(MainWindow)
@@ -142,7 +147,7 @@ class UiLinelistsWindow(object):
         self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
         self.dismiss_button.setToolTip("Dismiss this window")
         self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.actionOpen.setText(_translate("MainWindow", "Open"))
+        # self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionRemove.setText(_translate("MainWindow", "Remove"))
         self.actionRemove.setToolTip(_translate("MainWindow", "Removes the selected layer"))
@@ -169,6 +174,19 @@ class LineListsWindow(UiLinelistsWindow):
         dispatch.on_request_linelists.emit()
 
         self._buildViews(plot_window)
+
+        # # Add tool tray buttons
+        # self.button_open_data = self.add_tool_bar_actions(
+        #     name="Open",
+        #     description='Open data file',
+        #     icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
+        #     category=('Loaders', 5),
+        #     priority=1,
+        #     callback=lambda: dispatch.on_file_open.emit())
+
+
+
+
 
         # Connect buttons to appropriate signals.
         #
