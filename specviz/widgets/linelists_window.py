@@ -344,7 +344,7 @@ class LineListPane(QWidget):
         # redshift
         self.redshift_textbox = QLineEdit(str(0.0))
         validator = QDoubleValidator()
-        validator.setRange(-1.0, 50., decimals=4)
+        validator.setRange(-1.e5, 1.e10, decimals=4)
         self.redshift_textbox.setValidator(validator)
         self.redshift_textbox.setFixedWidth(70)
         self.redshift_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)

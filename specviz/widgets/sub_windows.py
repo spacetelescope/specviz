@@ -16,7 +16,8 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
 from qtpy.QtCore import QEvent, Qt
 
 from ..core.comms import dispatch, DispatchHandle
-from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
+from ..core.linelist import ingest, LineList, \
+    REDSHIFTED_WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
@@ -491,6 +492,14 @@ class PlotSubWindow(UiPlotSubWindow):
 
                     new_list = line_list.extract_rows(model_selected_rows)
 
+                    # redshift correction for plotting the specific lines
+                    # defined in this list. Defined by the text content
+                    # and combo box setting.
+                    if tabbed_pane.redshift_textbox.hasAcceptableInput():
+                        redshift = float(tabbed_pane.redshift_textbox.text())
+                        z_units = tabbed_pane.combo_box_z_units.currentText()
+                        new_list.setRedshift(redshift, z_units)
+
                     # color for plotting the specific lines defined in
                     # this list, is defined by the itemData property.
                     index = tabbed_pane.combo_box_color.currentIndex()
@@ -535,7 +544,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # column names are defined in the YAML files
         # or by constants elsewhere.
-        wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
+        wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
         id_column = merged_linelist.columns[ID_COLUMN]
         color_column = merged_linelist[COLOR_COLUMN]
 

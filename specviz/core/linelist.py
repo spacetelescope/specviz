@@ -13,6 +13,7 @@ import numpy as np
 
 from astropy.io import ascii
 from astropy.table import Table, vstack
+from astropy import constants
 
 
 __all__ = [
@@ -32,6 +33,7 @@ UNITS_COLUMN = 'units'
 TOOLTIP_COLUMN = 'tooltip'
 
 # plotting helpers
+REDSHIFTED_WAVELENGTH_COLUMN = 'z_wavelength'
 COLOR_COLUMN = 'color'
 HEIGHT_COLUMN = 'height'
 DEFAULT_HEIGHT = 0.75
@@ -115,9 +117,11 @@ class LineList(Table):
 
         self._table = table
 
-        # each list has associated color and height attributes
+        # each list has associated color, height, and redshift attributes
         self.color = None
         self.height = DEFAULT_HEIGHT
+        self.redshift = 0.
+        self. z_units = 'z'
 
         # A line list (but not the underlying table) can have
         # tool tips associated to each column.
@@ -198,11 +202,18 @@ class LineList(Table):
             internal_table = linelist._table
             internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
 
-            # add columns to hold the color and height attributes
+            # add columns to hold color and height attributes
             color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
             internal_table[COLOR_COLUMN] = color_array
             height_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.height)
             internal_table[HEIGHT_COLUMN] = height_array
+
+            # add column to hold redshifted wavelength
+            f =  1. + linelist.redshift
+            if linelist.z_units == 'km/s':
+                f = 1. + linelist.redshift / constants.c.value * 1000.
+            z_wavelength = internal_table[WAVELENGTH_COLUMN] * f
+            internal_table[REDSHIFTED_WAVELENGTH_COLUMN] = z_wavelength
 
             tables.append(internal_table)
 
@@ -314,6 +325,10 @@ class LineList(Table):
         result = LineList(table, tooltips=self.tooltips, name=self.name)
 
         return result
+
+    def setRedshift(self, redshift, z_units):
+        self.redshift = redshift
+        self.z_units = z_units
 
     def setColor(self, color):
         self.color = color
