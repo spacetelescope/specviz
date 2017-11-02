@@ -10,7 +10,7 @@ from qtpy.QtGui import QPixmap, QIcon
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
-from ..core.comms import dispatch
+from ..core.events import dispatch
 
 
 #TODO work in progress

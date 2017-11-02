@@ -5,7 +5,7 @@ from ..widgets.plugin import Plugin
 from qtpy.QtWidgets import (QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout,
                             QCheckBox, QTreeWidget, QTreeWidgetItem)
 from qtpy.QtCore import *
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch, dispatch
 from qtpy.QtGui import *
 
 import numpy as np
@@ -75,7 +75,7 @@ class MaskEditorPlugin(Plugin):
 
         self.active_window.update_plot(layer)
 
-    @DispatchHandle.register_listener("on_updated_rois")
+    @dispatch.register_listener("on_updated_rois")
     def toggle_mask_button(self, rois):
         if rois:
             self.button_mask_data.setEnabled(True)
@@ -84,7 +84,7 @@ class MaskEditorPlugin(Plugin):
             self.button_mask_data.setEnabled(False)
             self.button_unmask_data.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_changed_layer")
+    @dispatch.register_listener("on_changed_layer")
     def load_dq_flags(self, layer_item=None, layer=None):
         self.tree_widget_dq.clear()
         if layer_item is None and layer is None:

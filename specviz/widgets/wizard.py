@@ -23,7 +23,7 @@ from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch
+from ..core.events import dispatch
 from ..core.data import Spectrum1DRef
 from ..interfaces.loaders import load_yaml_reader
 from ..widgets.utils import UI_PATH

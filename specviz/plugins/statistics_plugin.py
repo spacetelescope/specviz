@@ -11,7 +11,7 @@ from qtpy.uic import loadUi
 
 from ..widgets.plugin import Plugin
 from ..analysis import statistics
-from ..core.comms import DispatchHandle
+from ..core.events import dispatch
 from ..widgets.utils import UI_PATH
 
 
@@ -28,7 +28,7 @@ class StatisticsPlugin(Plugin):
     def setup_connections(self):
         pass
 
-    @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
+    @dispatch.register_listener("on_updated_rois", "on_selected_layer")
     def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
             if self.active_window is not None:

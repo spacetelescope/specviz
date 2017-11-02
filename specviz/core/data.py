@@ -4,13 +4,11 @@ Data Objects
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-# STDLIB
 import logging
 import re
 
-# THIRD-PARTY
 import numpy as np
-from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral
+from astropy.units import Quantity, LogQuantity, LogUnit, spectral_density, spectral, Unit
 from py_expression_eval import Parser
 
 # FIXME: the latest developer version of Astropy removes OrderedDict which is needed by
@@ -21,6 +19,7 @@ from astropy import utils
 utils.OrderedDict = OrderedDict
 
 from specutils.core.generic import Spectrum1DRef
+from astropy.nddata import StdDevUncertainty
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,6 +49,7 @@ def _make_quantity(data, unit):
     else:
         return Quantity(data, unit=unit)
 
+
 class Spectrum1DRefLayer(Spectrum1DRef):
     """
     Class to handle layers in SpecViz.
@@ -72,15 +72,21 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         Arguments passed to the
         `~spectutils.core.generic.Spectrum1DRef` object.
     """
-    def __init__(self, data, wcs=None, parent=None, layer_mask=None, *args,
-                 **kwargs):
-        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, *args,
-                                                 **kwargs)
+    def __init__(self, data, wcs=None, parent=None, layer_mask=None,
+                 uncertainty=None, unit=None, mask=None, *args,**kwargs):
+        uncertainty = StdDevUncertainty(np.zeros(data.shape)) if uncertainty is None else uncertainty
+        unit = unit or Unit('')
+        mask = mask if mask is not None else np.zeros(data.shape).astype(bool)
+
+        super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, unit=unit,
+                                                 uncertainty=uncertainty,
+                                                 mask=mask,
+                                                 *args,**kwargs)
         self._parent = parent
         self._layer_mask = layer_mask
 
     @classmethod
-    def from_parent(cls, parent, layer_mask=None, name=None):
+    def from_parent(cls, parent, layer_mask=None, name=None, copy=True):
         """
         Create a duplicate child layer from a parent layer
 
@@ -107,7 +113,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
                    dispersion=parent.dispersion,
                    dispersion_unit=parent.dispersion_unit,
                    layer_mask=layer_mask, parent=parent, meta=parent.meta,
-                   copy=False)
+                   copy=copy)
 
     def from_self(self, name="", layer_mask=None):
         """
@@ -126,10 +132,8 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         new_layer:
             The new, parentless, layer.
         """
-        gen_spec = Spectrum1DRef.copy(self, name=name)
-
         return self.from_parent(
-            parent=gen_spec, layer_mask=layer_mask, name=name
+            parent=self._parent, layer_mask=layer_mask, name=name, copy=True
         )
 
     @classmethod
@@ -302,6 +306,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             formula = formula.replace(layer.name,
                                       layer.name.replace(" ", "_"))
 
+        layer_vars = {layer.name.replace(" ", "_"):layer
+                      for layer in layers}
+
         try:
             expr = parser.parse(formula)
         except Exception as e:
@@ -309,33 +316,22 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             return
 
         # Extract variables
-        vars = expr.variables()
+        expr_vars = expr.variables()
 
-        # List the models in the same order as the variables
-        # sorted_layers = [next(l for v in vars for l in layers
-        #                       if l.name.replace(" ", "_") == v)]
-        # sorted_layers = [l for v in vars for l in layers
-        #                  if l.name.replace(" ", "_") == v]
-        sorted_layers = []
+        # Get the union of the sets of variables listed in the expression and
+        # layer names of the current layer list
+        union_set = set(layer_vars.keys()).union(set(expr_vars))
 
-        for v in vars:
-            for l in layers:
-                if l.name.replace(" ", "_") == v:
-                    sorted_layers.append(l)
-                    break
-
-        if len(sorted_layers) != len(vars):
-            logging.error("Incorrect layer arithmetic formula: the number "
-                          "of layers does not match the number of variables.")
+        if len(union_set) != 0:
+            logging.error("Mis-match between current layer list and expression:"
+                          "%s", union_set)
 
         try:
-            result = parser.evaluate(expr.simplify({}).toString(),
-                                     dict(pair for pair in
-                                          zip(vars, sorted_layers)))
-            result._dispersion = sorted_layers[0]._dispersion
-            result.dispersion_unit = sorted_layers[0].dispersion_unit
+            result = parser.evaluate(expr.simplify({}).toString(), layer_vars)
+            result = result.__class__.copy({'dispersion': layers[0].dispersion,
+                                            'dispersion_unit': layers[0].dispersion_unit})
         except Exception as e:
-            logging.error("While evaluating formula: {}".format(e))
+            logging.error("While evaluating formula: %s", e)
             return
 
         return result

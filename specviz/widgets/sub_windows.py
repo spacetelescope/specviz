@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
 from qtpy.QtCore import QEvent, Qt
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker
@@ -127,7 +127,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self.disable_errors = False
         self.disable_mask = True
 
-        DispatchHandle.setup(self)
+        dispatch.setup(self)
 
         self._dynamic_axis = DynamicAxisItem(orientation='top')
         self._plot_widget = pg.PlotWidget(
@@ -306,7 +306,7 @@ class PlotSubWindow(UiPlotSubWindow):
     def update_plot_item(self):
         self._plot_item.update()
 
-    @DispatchHandle.register_listener("on_update_model")
+    @dispatch.register_listener("on_update_model")
     def update_plot(self, layer=None, plot=None):
         if layer is not None:
             plot = self.get_plot(layer)
@@ -319,10 +319,10 @@ class PlotSubWindow(UiPlotSubWindow):
         # any line lists window that might be still open.
         dispatch.on_dismiss_linelists_window.emit()
 
-        DispatchHandle.tear_down(self)
+        dispatch.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
 
-    @DispatchHandle.register_listener("on_add_layer")
+    @dispatch.register_listener("on_add_layer")
     def add_plot(self, layer, window=None):
         if window is not None and window != self:
             return
@@ -334,44 +334,41 @@ class PlotSubWindow(UiPlotSubWindow):
             pstep = np.mean(plot.layer.dispersion[1:] -
                             plot.layer.dispersion[:-1])
 
-            return lstep == pstep
-
-        # print(all(map(lambda p: comp_disp(p, layer=layer), self._plots)))
+            return np.isclose(lstep.value, pstep.value)
 
         if not all(map(lambda p: comp_disp(p, layer=layer), self._plots)):
-            logging.error("New layer {} does not have the same dispersion as "
-                          "current plot data.".format(layer.name))
+            logging.warning("New layer '{}' does not have the same dispersion "
+                          "as current plot data.".format(layer.name))
 
             resample_dialog = ResampleDialog()
 
             if resample_dialog.exec_():
-                in_data = np.ones(layer.dispersion.data.value.shape,
-                                  [('wave', float), ('data', float),
+                in_data = np.ones(layer.dispersion.shape,
+                                  [('wave', float),
+                                   ('data', float),
                                    ('err', float)])
 
                 in_data['wave'] = layer.dispersion.data.value
                 in_data['data'] = layer.data.data.value
                 in_data['err'] = layer.uncertainty.array
 
-                pstep = np.mean(
-                    self._plots[0].layer.dispersion.data.value[1:] -
-                    self._plots[0].layer.dispersion.data.value[:-1])
-                wave_out = np.arange(layer.dispersion.data.value[0],
-                                     layer.dispersion.data.value[-1], pstep)
+                plot = self._plots[0]
 
-                out_data = resample(in_data, 'wave', wave_out, ('data', 'err'),
+                out_data = resample(in_data, 'wave', plot.layer.dispersion.data.value,
+                                    ('data', 'err'),
                                     kind=resample_dialog.method)
 
-                new_data = layer.__class__.copy(
+                new_data = layer.copy(
                     layer,
                     data=out_data['data'],
-                    dispersion=wave_out,
-                    uncertainty=layer.uncertainty.__class__(
-                        out_data['err']),
-                    mask=None)
+                    dispersion=out_data['wave'],
+                    uncertainty=layer.uncertainty.__class__(out_data['err']),
+                    dispersion_unit=layer.dispersion_unit)
 
-                layer = layer.__class__.from_parent(
-                    new_data, name="Interpolated {}".format(layer.name))
+                layer = layer.from_parent(
+                    new_data,
+                    name="Interpolated {}".format(layer.name),
+                    layer_mask=layer.layer_mask)
 
         new_plot = LinePlot.from_layer(layer,
                                        color=next(self._available_colors))
@@ -383,8 +380,9 @@ class PlotSubWindow(UiPlotSubWindow):
             is_convert_success = new_plot.change_units(*self._plot_units)
 
             if not is_convert_success[0] or not is_convert_success[1]:
-                logging.error("Unable to convert units of '{}' to current plot"
-                              " units.".format(new_plot.layer.name))
+                logging.error("Unable to convert {} axis units of '{}' to current plot"
+                              " units.".format('x' if not is_convert_success[0] else 'y',
+                                               new_plot.layer.name))
 
                 dispatch.on_remove_layer.emit(layer=layer)
                 return
@@ -406,7 +404,7 @@ class PlotSubWindow(UiPlotSubWindow):
         dispatch.on_added_layer.emit(layer=layer)
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
-    @DispatchHandle.register_listener("on_removed_layer")
+    @dispatch.register_listener("on_removed_layer")
     def remove_plot(self, layer, window=None):
         if window is not None and window != self:
             return
@@ -453,13 +451,13 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
-    @DispatchHandle.register_listener("on_request_linelists")
+    @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
 
-    @DispatchHandle.register_listener("on_plot_linelists")
+    @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, **kwargs):
 
         if not self._is_selected:
@@ -534,7 +532,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         plot_item.update()
 
-    @DispatchHandle.register_listener("on_erase_linelabels")
+    @dispatch.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
         if self._is_selected:
             for marker in self._line_labels:
@@ -546,7 +544,7 @@ class PlotSubWindow(UiPlotSubWindow):
     # line list window. It remains to be seen if it is what users
     # actually want.
 
-    @DispatchHandle.register_listener("on_activated_window")
+    @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):
         self._is_selected = window == self
 
@@ -556,14 +554,14 @@ class PlotSubWindow(UiPlotSubWindow):
             else:
                 self._linelist_window.hide()
 
-    @DispatchHandle.register_listener("on_show_linelists_window")
+    @dispatch.register_listener("on_show_linelists_window")
     def _show_linelists_window(self, *args, **kwargs):
         if self._is_selected:
             if self._linelist_window is None:
                 self._linelist_window = LineListsWindow(self)
             self._linelist_window.show()
 
-    @DispatchHandle.register_listener("on_dismiss_linelists_window")
+    @dispatch.register_listener("on_dismiss_linelists_window")
     def _dismiss_linelists_window(self, *args, **kwargs):
         if self._is_selected and self._linelist_window:
             self._linelist_window.hide()

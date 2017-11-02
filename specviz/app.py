@@ -29,7 +29,7 @@ from qtpy.QtWidgets import QApplication, QMenu, QToolBar
 from docopt import docopt
 
 from .widgets.utils import ICON_PATH
-from .core.comms import dispatch
+from .core.events import dispatch
 from .widgets.windows import MainWindow
 
 try:
@@ -40,7 +40,12 @@ except ModuleNotFoundError:
 
 
 class App(object):
-    def __init__(self, hide_plugins=False):
+    def __init__(self, hidden=None, disabled=None):
+        hidden = hidden or {}
+        disabled = disabled or {}
+
+        self._instanced_plugins = {}
+
         # Instantiate main window object
         self._all_tool_bars = {}
 
@@ -53,14 +58,18 @@ class App(object):
         # self.main_window.setDockNestingEnabled(True)
 
         # Load system and user plugins
-        self.load_plugins(hidden=hide_plugins)
+        self.load_plugins(hidden=hidden, disabled=disabled)
 
         # Setup up top-level connections
         self._setup_connections()
 
         # Parse arguments
-        args = docopt(__doc__, version=version)
-        self._parse_args(args)
+        try:
+            args = docopt(__doc__, version=version)
+        except SystemExit:
+            logging.error("Received unknown command line arguments.")
+        else:
+            self._parse_args(args)
 
     def _parse_args(self, args):
         if args.get("load", False):
@@ -68,37 +77,35 @@ class App(object):
             dispatch.on_file_read.emit(args.get("<path>"),
                                        file_filter=file_filter)
 
-    def load_plugins(self, hidden=False):
+    def load_plugins(self, hidden=None, disabled=None):
         from .interfaces.registries import plugin_registry
 
-        instance_plugins = [x() for x in plugin_registry.members]
+        self._instanced_plugins = {
+            x.name:x() for x in plugin_registry.members
+            if not disabled.get(x.name, False)}
 
-        for instance_plugin in sorted(instance_plugins,
+        for inst_plgn in sorted(self._instanced_plugins.values(),
                                       key=lambda x: x.priority):
-            if instance_plugin.location != 'hidden':
-                if instance_plugin.location == 'right':
+            if inst_plgn.location != 'hidden':
+                if inst_plgn.location == 'right':
                     location = Qt.RightDockWidgetArea
-                elif instance_plugin.location == 'top':
+                elif inst_plgn.location == 'top':
                     location = Qt.TopDockWidgetArea
                 else:
                     location = Qt.LeftDockWidgetArea
 
-                self.main_window.addDockWidget(location, instance_plugin)
+                self.main_window.addDockWidget(location, inst_plgn)
 
-                if hidden:
-                    instance_plugin.hide()
+                if hidden.get(inst_plgn.name):
+                    inst_plgn.hide()
 
                 # Add this dock's visibility action to the menu bar
                 self.menu_docks.addAction(
-                    instance_plugin.toggleViewAction())
-
-        # Resize the widgets now that they are all present
-        for ip in instance_plugins[::-1]:
-            ip.setMinimumSize(ip.sizeHint())
-        #     QApplication.processEvents()
+                    inst_plgn.toggleViewAction())
 
         # Sort actions based on priority
-        all_actions = [y for x in instance_plugins for y in x._actions]
+        all_actions = [y for x in self._instanced_plugins.values()
+                       for y in x._actions]
         all_categories = {}
 
         for act in all_actions:
@@ -133,16 +140,6 @@ class App(object):
             tool_bar = QToolBar(name)
             tool_bar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             tool_bar.setMovable(False)
-
-            tool_bar.setStyleSheet("""
-                QToolBar {
-                    icon-size: 32px;
-                }
-
-                QToolBar QToolButton {
-                    height: 48px;
-                }
-            """)
 
             self._all_tool_bars[name] = dict(widget=tool_bar,
                                              priority=int(priority),
@@ -219,7 +216,7 @@ def glue_setup():
         raise Exception("glue 0.10.2 or later is required for the specviz "
                         "plugin")
 
-    from .external.glue.data_viewer import SpecVizViewer
+    from .third_party.glue.data_viewer import SpecVizViewer
     from glue.config import qt_client
     qt_client.add(SpecVizViewer)
 

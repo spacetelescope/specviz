@@ -11,7 +11,7 @@ from qtpy import compat
 from ..widgets.wizard import open_wizard
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch, dispatch
 from ..widgets.utils import ICON_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
@@ -81,7 +81,7 @@ class DataListPlugin(Plugin):
         self._data_loaded(data, auto_open=auto_open)
         self._loader_threads.remove(thread)
 
-    @DispatchHandle.register_listener("on_add_data")
+    @dispatch.register_listener("on_add_data")
     def _data_loaded(self, data, auto_open=True):
         dispatch.on_added_data.emit(data=data)
 
@@ -113,7 +113,7 @@ class DataListPlugin(Plugin):
     def current_data_item(self):
         return self.contents.list_widget_data_list.currentItem()
 
-    @DispatchHandle.register_listener("on_file_open")
+    @dispatch.register_listener("on_file_open")
     def open_file(self, file_name=None):
         """
         Creates a :code:`specutils.core.generic.Spectrum1DRef` object from the `Qt`
@@ -154,7 +154,7 @@ class DataListPlugin(Plugin):
 
         return file_names[0], self._file_filter
 
-    @DispatchHandle.register_listener("on_file_read")
+    @dispatch.register_listener("on_file_read")
     def read_file(self, file_name, file_filter=None, auto_open=True):
         file_load_thread = FileLoadThread()
 
@@ -169,7 +169,7 @@ class DataListPlugin(Plugin):
         file_load_thread(file_name, file_filter)
         file_load_thread.start()
 
-    @DispatchHandle.register_listener("on_added_data")
+    @dispatch.register_listener("on_added_data")
     def add_data_item(self, data):
         """
         Adds a `Data` object to the loaded data list widget.
@@ -186,7 +186,7 @@ class DataListPlugin(Plugin):
 
         self.contents.list_widget_data_list.setCurrentItem(new_item)
 
-    @DispatchHandle.register_listener("on_remove_data")
+    @dispatch.register_listener("on_remove_data")
     def remove_data_item(self, data=None):
         if data is None:
             data = self.current_data
@@ -198,7 +198,7 @@ class DataListPlugin(Plugin):
 
         dispatch.on_removed_data.emit(data=self.current_data)
 
-    @DispatchHandle.register_listener("on_remove_all_data")
+    @dispatch.register_listener("on_remove_all_data")
     def remove_all_data(self):
         print('*' * 100, self.contents.list_widget_data_list.count())
         for i in range(self.contents.list_widget_data_list.count()):

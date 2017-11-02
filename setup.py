@@ -99,7 +99,7 @@ package_info['package_data'].setdefault(
     PACKAGENAME, [os.path.normpath(
         os.path.join("data", os.path.relpath(x[0], root_dir), "*"))
                   for x in os.walk(root_dir)])
-package_info['package_data'][PACKAGENAME].append('external/glue/*.ui')
+package_info['package_data'][PACKAGENAME].append('third_party/glue/*.ui')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
