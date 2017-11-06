@@ -241,8 +241,8 @@ class FitModelThread(QThread):
         if parent_layer is None:
             return
 
-        flux = parent_layer.data
-        dispersion = parent_layer.dispersion
+        flux = parent_layer.masked_data
+        dispersion = parent_layer.masked_dispersion
         model = model_layer.model
 
         # The fitting should only consider the masked regions

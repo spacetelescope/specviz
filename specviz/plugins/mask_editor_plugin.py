@@ -65,8 +65,8 @@ class MaskEditorPlugin(Plugin):
 
         root = self.tree_widget_dq.invisibleRootItem()
         layer = self.current_layer
-        current_bitmask = np.zeros_like(layer.data, dtype=np.int)
-        bitmask = layer.meta.get('bitmask', np.zeros(layer.data.shape[0], dtype=np.int))
+        current_bitmask = np.zeros_like(layer.masked_data, dtype=np.int)
+        bitmask = layer.meta.get('bitmask', np.zeros(layer.masked_data.shape[0], dtype=np.int))
         for item in [root.child(j) for j in range(root.childCount())]:
             if bool(item.checkState(col)):
                 current_bitmask |= bitmask & (1 << item.data(0, Qt.UserRole))

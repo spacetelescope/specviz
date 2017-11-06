@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>dialog_resample_warning</class>
- <widget class="QWidget" name="dialog_resample_warning">
+ <class>model_fitting_plugin</class>
+ <widget class="QWidget" name="model_fitting_plugin">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>298</width>
+    <height>678</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
@@ -10,16 +18,16 @@
     <enum>QLayout::SetMinAndMaxSize</enum>
    </property>
    <property name="leftMargin">
-    <number>6</number>
+    <number>12</number>
    </property>
    <property name="topMargin">
-    <number>6</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>6</number>
+    <number>12</number>
    </property>
    <property name="bottomMargin">
-    <number>6</number>
+    <number>12</number>
    </property>
    <item>
     <widget class="QGroupBox" name="groupBox">
@@ -47,6 +55,15 @@
         </property>
         <property name="text">
          <string>Select</string>
+        </property>
+        <property name="autoDefault">
+         <bool>false</bool>
+        </property>
+        <property name="default">
+         <bool>false</bool>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

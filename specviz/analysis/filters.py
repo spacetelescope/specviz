@@ -30,10 +30,10 @@ def smooth(data, kernel, *args, **kwargs):
         logging.error("Kernel {} is not currently supported.".format(kernel))
         return
 
-    raw_data = convolution.convolve(data.data, kernel)
+    raw_data = convolution.convolve(data.masked_data, kernel)
 
     new_data = data.__class__(data=raw_data, unit=data.unit,
-                              dispersion=data.dispersion,
+                              dispersion=data.masked_dispersion,
                               uncertainty=np.zeros(data.uncertainty.array.shape),
                               dispersion_unit=data.dispersion_unit,
                               name="Smoothed {}".format(data.name))

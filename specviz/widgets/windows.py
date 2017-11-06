@@ -88,4 +88,4 @@ class MdiArea(QMdiArea):
             e.ignore()
 
     def dropEvent(self, e):
-        dispatch.on_add_window.emit(data=e.mimeData.data())
+        dispatch.on_add_window.emit(data=e.mimeData.masked_data())
