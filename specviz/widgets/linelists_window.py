@@ -470,20 +470,24 @@ class LineListTableModel(QAbstractTableModel):
             return 0
         return len(self._linelist.columns)
 
+    def _get_data(self, index):
+        # this is the main bottleneck for sorting.
+        return self._linelist.columns[index.column()][index.row()]
+
     def data(self, index, role=None):
         if not index.isValid():
             return QVariant()
         elif role != Qt.DisplayRole:
             return QVariant()
 
-        object = self._linelist.columns[index.column()][index.row()]
-        if isinstance(object, QColor):
+        object = self._get_data(index)
 
-            # handling of a color object can be tricky. Color names
-            # returned by QColor.colorNames() are inconsistent with
-            # color names in Qt.GlobalColor. We just go to the basics
-            # and compare color equality (or closeness) using a distance
-            # criterion in r,g,b coordinates.
+        # handling of a color object can be tricky. Color names
+        # returned by QColor.colorNames() are inconsistent with
+        # color names in Qt.GlobalColor. We just go to the basics
+        # and compare color equality (or closeness) using a distance
+        # criterion in r,g,b coordinates.
+        if isinstance(object, QColor):
             r = object.red()
             g = object.green()
             b = object.blue()
@@ -500,7 +504,7 @@ class LineListTableModel(QAbstractTableModel):
 
             return QVariant(key)
 
-        return QVariant(str(self._linelist.columns[index.column()][index.row()]))
+        return QVariant(str(object))
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
