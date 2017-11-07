@@ -457,6 +457,8 @@ class LineListTableModel(QAbstractTableModel):
         # speed up the sorting (as far as some indications in
         # the net suggest:
         # http://www.qtforum.org/article/30638/qsortfilterproxymodel-qtreeview-sort-performance.html).
+        # Bummer... this is C++ only; PyQt never went to the trouble
+        # of converting it to python.
 
     def rowCount(self, parent=None, *args, **kwargs):
         if parent and parent.isValid():
@@ -526,18 +528,18 @@ class SortModel(QSortFilterProxyModel):
         self._name = name
 
     def lessThan(self, left, right):
-        if type(left) == type(0.) and type(right) == type(0.):
-            # numerical comparison
-            left_data = left.data()
-            left_float = float(left_data)
-            right_data = right.data()
-            right_float = float(right_data)
-            return left_float < right_float
+        left_data = left.data()
+        right_data = right.data()
+
+        # it's enough to find type using just one of the parameters,
+        # since they both necessarily come from the same table column.
+        if type(left_data) == float:
+            return float(left_data) < float(right_data)
         else:
             # Lexicographic string comparison. The parameters passed
             # to this method from a sortable table model are stored
             # in QtCore.QModelIndex instances.
-            return str(left.data()) < str(right.data())
+            return str(left_data) < str(right_data)
 
     def getName(self):
         return self._name
