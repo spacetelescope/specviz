@@ -19,7 +19,7 @@ from astropy import utils
 utils.OrderedDict = OrderedDict
 
 from specutils.core.generic import Spectrum1DRef
-from astropy.nddata import StdDevUncertainty
+from astropy.nddata import StdDevUncertainty, UnknownUncertainty
 
 logging.basicConfig(level=logging.INFO)
 
@@ -74,9 +74,16 @@ class Spectrum1DRefLayer(Spectrum1DRef):
     """
     def __init__(self, data, wcs=None, parent=None, layer_mask=None,
                  uncertainty=None, unit=None, mask=None, *args,**kwargs):
-        uncertainty = StdDevUncertainty(np.zeros(data.shape)) if uncertainty is None else uncertainty
-        unit = unit or Unit('')
-        mask = mask if mask is not None else np.zeros(data.shape).astype(bool)
+        # if not issubclass(data.__class__, Spectrum1DRefLayer):
+        if uncertainty is None:
+            uncertainty = StdDevUncertainty(np.zeros(data.shape))
+        elif isinstance(uncertainty, UnknownUncertainty):
+            uncertainty = StdDevUncertainty(uncertainty.array)
+        else:
+            print("Creating uncertainty of type: ", uncertainty.__class__)
+
+        if mask is None:
+            mask = np.zeros(data.shape).astype(bool)
 
         super(Spectrum1DRefLayer, self).__init__(data, wcs=wcs, unit=unit,
                                                  uncertainty=uncertainty,
@@ -169,7 +176,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         return new_layer
 
     @property
-    def data(self):
+    def masked_data(self):
         """Flux quantity with mask applied. Returns a masked array
         containing a Quantity object."""
         data = np.ma.array(
@@ -179,7 +186,15 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         return data
 
     @property
-    def dispersion(self):
+    def shape(self):
+        return self._data.shape
+
+    @property
+    def unit(self):
+        return self._unit or Unit("")
+
+    @property
+    def masked_dispersion(self):
         """Dispersion quantity with mask applied. Returns a masked array
         containing a Quantity object."""
         self._dispersion = super(Spectrum1DRefLayer, self).dispersion
@@ -261,7 +276,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         if disp_unit is not None and \
                 self.dispersion_unit.is_equivalent(disp_unit,
                                                    equivalencies=spectral()):
-            self._dispersion = self.dispersion.data.to(
+            self._dispersion = self.masked_dispersion.data.to(
                 disp_unit, equivalencies=spectral()).value
 
             # Finally, change the unit
@@ -272,16 +287,16 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         if data_unit is not None and \
                 self.unit.is_equivalent(data_unit,
                                         equivalencies=spectral_density(
-                                            self.dispersion.data)):
-            self._data = self.data.data.to(
+                                            self.masked_dispersion.data)):
+            self._data = self.masked_data.data.to(
                 data_unit, equivalencies=spectral_density(
-                    self.dispersion.data)).value
+                    self.masked_dispersion.data)).value
 
             if self._uncertainty is not None:
                 self._uncertainty = self._uncertainty.__class__(
                     self.raw_uncertainty.data.to(
                         data_unit, equivalencies=spectral_density(
-                            self.dispersion.data)).value)
+                            self.masked_dispersion.data)).value)
 
             # Finally, change the unit
             self._unit = data_unit
@@ -306,8 +321,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             formula = formula.replace(layer.name,
                                       layer.name.replace(" ", "_"))
 
-        layer_vars = {layer.name.replace(" ", "_"):layer
-                      for layer in layers}
+        layer_vars = {layer.name.replace(" ", "_"): layer for layer in layers}
 
         try:
             expr = parser.parse(formula)
@@ -318,9 +332,9 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         # Extract variables
         expr_vars = expr.variables()
 
-        # Get the union of the sets of variables listed in the expression and
-        # layer names of the current layer list
-        union_set = set(layer_vars.keys()).union(set(expr_vars))
+        # Get the intersection of the sets of variables listed in the
+        #  expression and layer names of the current layer list
+        union_set = set(layer_vars.keys()).intersection(set(expr_vars))
 
         if len(union_set) != 0:
             logging.error("Mis-match between current layer list and expression:"
@@ -328,8 +342,17 @@ class Spectrum1DRefLayer(Spectrum1DRef):
 
         try:
             result = parser.evaluate(expr.simplify({}).toString(), layer_vars)
-            result = result.__class__.copy({'dispersion': layers[0].dispersion,
-                                            'dispersion_unit': layers[0].dispersion_unit})
+            result._dispersion = np.copy(layers[0]._dispersion)
+            result._dispersion_unit = Unit(layers[0]._dispersion_unit)
+
+            # Make sure layer name is unique
+            i = 1
+
+            for layer in layers:
+                if layer.name == result.name:
+                    result.name = result.name + "{}".format(i)
+                    i += 1
+
         except Exception as e:
             logging.error("While evaluating formula: %s", e)
             return
@@ -386,16 +409,16 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
             if copy:
                 model = model.copy()
 
-            data = model(parent.dispersion.data.value)
+            data = model(parent.masked_dispersion.data.value)
         else:
-            data = np.zeros(parent.dispersion.shape)
+            data = np.zeros(parent.masked_dispersion.shape)
 
-        uncertainty = parent.uncertainty.__class__(np.zeros(parent.data.shape))
+        uncertainty = parent.uncertainty.__class__(np.zeros(parent.masked_data.shape))
 
         return cls(name=parent.name + " Model Layer", data=data,
                    unit=parent.unit, uncertainty=uncertainty,
                    mask=parent.mask, wcs=parent.wcs,
-                   dispersion=parent.dispersion,
+                   dispersion=parent.masked_dispersion,
                    dispersion_unit=parent.dispersion_unit,
                    layer_mask=layer_mask or parent.layer_mask,
                    parent=parent, model=model,
@@ -490,7 +513,7 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
         self._model = value
 
         if self._model is not None:
-            self._data = self._model(self.dispersion.data.value)
+            self._data = self._model(self.masked_dispersion.data.value)
 
     @classmethod
     def _evaluate(cls, models, formula):
@@ -539,8 +562,11 @@ class Spectrum1DRefModelLayer(Spectrum1DRefLayer):
                 logging.error("An error occurred.")
                 return
 
-        result = parser.evaluate(expr.simplify({}).toString(),
-                                 dict(pair for pair in
-                                      zip(vars, sorted_models)))
+        try:
+            result = parser.evaluate(expr.simplify({}).toString(),
+                                     dict(pair for pair in
+                                          zip(vars, sorted_models)))
 
-        return result
+            return result
+        except (AttributeError, TypeError) as e:
+            logging.error("Incorrectly formatted model formula: %s", e)

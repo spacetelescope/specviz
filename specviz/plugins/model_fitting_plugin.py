@@ -140,8 +140,8 @@ class ModelFittingPlugin(Plugin):
             mask = self.active_window.get_roi_mask(layer._parent)
 
             # pass raw data arrays to avoid unit-based issues in initialization
-            initialize(model, layer._parent.dispersion[mask].compressed().value,
-                       layer._parent.data[mask].compressed().value)
+            initialize(model, layer._parent.masked_dispersion[mask].compressed().value,
+                       layer._parent.masked_data[mask].compressed().value)
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
             if layer.model is not None:
@@ -151,8 +151,8 @@ class ModelFittingPlugin(Plugin):
         else:
             mask = self.active_window.get_roi_mask(layer)
 
-            initialize(model, layer.dispersion[mask].compressed().value,
-                       layer.data[mask].compressed().value)
+            initialize(model, layer.masked_dispersion[mask].compressed().value,
+                       layer.masked_data[mask].compressed().value)
 
             # If a layer is selected, but it's not a `ModelLayer`,
             # create a new `ModelLayer`
@@ -403,7 +403,7 @@ class ModelFittingPlugin(Plugin):
 
                 model_names = [model.name
                                for model in layer.model._submodels]
-
+                print(expr, model_names)
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:

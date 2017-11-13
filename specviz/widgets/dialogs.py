@@ -287,7 +287,7 @@ class DataUnitValidator(QValidator):
 
             if unit.is_equivalent(self._layer.unit,
                                   equivalencies=spectral_density(
-                                      self._layer.dispersion.data)):
+                                      self._layer.masked_dispersion.data)):
                 return (QValidator.Acceptable, p_str, p_int)
             else:
                 return (QValidator.Intermediate, p_str, p_int)

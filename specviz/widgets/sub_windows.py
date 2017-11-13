@@ -189,7 +189,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if container is None:
             return
 
-        mask = np.ones(layer.dispersion.shape, dtype=bool)
+        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
         mask_holder = []
         rois = [roi] if roi is not None else self._rois
 
@@ -198,8 +198,8 @@ class PlotSubWindow(UiPlotSubWindow):
             # x1, y1, x2, y2 = roi_shape.getCoords()
             x1, x2 = roi.getRegion()
 
-            mask = (container.layer.dispersion.data.value >= x1) & \
-                   (container.layer.dispersion.data.value <= x2)
+            mask = (container.layer.masked_dispersion.data.value >= x1) & \
+                   (container.layer.masked_dispersion.data.value <= x2)
 
             mask_holder.append(mask)
 
@@ -330,9 +330,9 @@ class PlotSubWindow(UiPlotSubWindow):
         # Make sure the new plot layer has the same sampling as the current
         # layers
         def comp_disp(plot, layer):
-            lstep = np.mean(layer.dispersion[1:] - layer.dispersion[:-1])
-            pstep = np.mean(plot.layer.dispersion[1:] -
-                            plot.layer.dispersion[:-1])
+            lstep = np.mean(layer.masked_dispersion[1:] - layer.masked_dispersion[:-1])
+            pstep = np.mean(plot.layer.masked_dispersion[1:] -
+                            plot.layer.masked_dispersion[:-1])
 
             return np.isclose(lstep.value, pstep.value)
 
@@ -343,18 +343,18 @@ class PlotSubWindow(UiPlotSubWindow):
             resample_dialog = ResampleDialog()
 
             if resample_dialog.exec_():
-                in_data = np.ones(layer.dispersion.shape,
+                in_data = np.ones(layer.masked_dispersion.shape,
                                   [('wave', float),
                                    ('data', float),
                                    ('err', float)])
 
-                in_data['wave'] = layer.dispersion.data.value
-                in_data['data'] = layer.data.data.value
+                in_data['wave'] = layer.masked_dispersion.data.value
+                in_data['data'] = layer.masked_data.data.value
                 in_data['err'] = layer.uncertainty.array
 
                 plot = self._plots[0]
 
-                out_data = resample(in_data, 'wave', plot.layer.dispersion.data.value,
+                out_data = resample(in_data, 'wave', plot.layer.masked_dispersion.data.value,
                                     ('data', 'err'),
                                     kind=resample_dialog.method)
 
@@ -400,7 +400,6 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
-
         dispatch.on_added_layer.emit(layer=layer)
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
@@ -443,8 +442,8 @@ class PlotSubWindow(UiPlotSubWindow):
         amax = 0.0
 
         for container in self._plots:
-            amin = min(amin, container.layer.dispersion.compressed().value[0])
-            amax = max(amax, container.layer.dispersion.compressed().value[-1])
+            amin = min(amin, container.layer.masked_dispersion.compressed().value[0])
+            amax = max(amax, container.layer.masked_dispersion.compressed().value[-1])
 
         amin = Quantity(amin, self._plot_units[0])
         amax = Quantity(amax, self._plot_units[0])

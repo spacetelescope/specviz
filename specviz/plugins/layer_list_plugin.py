@@ -101,8 +101,8 @@ class LayerListPlugin(Plugin):
     def _export_layer(self):
         from astropy.io import registry as io_registry
 
-        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].data
-        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].data
+        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].masked_data
+        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].masked_data
 
         write_mask = [True if x == 'Yes' else False for x in writable_formats]
         all_formats = all_formats[np.array(write_mask)]
@@ -346,7 +346,7 @@ class LayerListPlugin(Plugin):
             # otherwise create a new sub window to plot the spectra
             data_units_equiv = new_layer.unit.is_equivalent(
                 current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion.data))
+                equivalencies=spectral_density(new_layer.masked_dispersion.data))
 
             disp_units_equiv = new_layer.dispersion_unit.is_equivalent(
                 current_window._plot_units[0], equivalencies=spectral())
