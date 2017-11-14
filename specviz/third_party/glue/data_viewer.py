@@ -116,16 +116,16 @@ class SpecVizViewer(DataViewer):
                       handler=self._update_data)
 
     def _spectrum_from_component(self, layer, component, wcs, mask=None):
-        data = SpectralCube(component.masked_data, wcs)
+        data = SpectralCube(component.data, wcs)
 
         if mask is not None:
             data = data.with_mask(mask)
 
         spec_data = data.sum((1, 2))
 
-        spec_data = Spectrum1DRef(spec_data.masked_data,
+        spec_data = Spectrum1DRef(spec_data.data,
                                   unit=spec_data.unit,
-                                  dispersion=data.spectral_axis.masked_data,
+                                  dispersion=data.spectral_axis.data,
                                   dispersion_unit=data.spectral_axis.unit,
                                   wcs=data.wcs)
 
@@ -190,12 +190,12 @@ class SpecVizViewer(DataViewer):
             return
 
         subset = self._layer_widget.layer
-        cid = subset.masked_data.id[self._options_widget.file_att]
+        cid = subset.data.id[self._options_widget.file_att]
         mask = subset.to_mask()
-        component = subset.masked_data.get_component(cid)
+        component = subset.data.get_component(cid)
 
         self._spectrum_from_component(subset, component,
-                                      subset.masked_data.coords.wcs, mask=mask)
+                                      subset.data.coords.wcs, mask=mask)
 
     def _remove_subset(self, message):
         if message.subset in self._layer_widget:
