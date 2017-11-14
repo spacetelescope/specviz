@@ -64,7 +64,7 @@ activate it first before installing: ``$ source activate <environment_name>``.
 
 ::
 
-    $ pip install git+http://github.com/spacetelescope/specviz.git@v0.4.0
+    $ pip install git+http://github.com/spacetelescope/specviz.git@v0.4.4
 
 This uses the ``pip`` installation system, so please note that
 
