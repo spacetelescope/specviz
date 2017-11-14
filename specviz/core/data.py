@@ -79,8 +79,6 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             uncertainty = StdDevUncertainty(np.zeros(data.shape))
         elif isinstance(uncertainty, UnknownUncertainty):
             uncertainty = StdDevUncertainty(uncertainty.array)
-        else:
-            print("Creating uncertainty of type: ", uncertainty.__class__)
 
         if mask is None:
             mask = np.zeros(data.shape).astype(bool)

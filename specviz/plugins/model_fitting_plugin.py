@@ -43,6 +43,8 @@ class ModelFittingPlugin(Plugin):
         self.fit_model_thread.result.connect(
             lambda layer: dispatch.on_update_model.emit(layer=layer))
 
+        self.contents.tree_widget_current_models.setColumnWidth(2, 50)
+
     def setup_ui(self):
         loadUi(os.path.join(UI_PATH, "model_fitting_plugin.ui"), self.contents)
 
@@ -248,13 +250,14 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
+                new_para_item.setData(0, Qt.UserRole, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
                                        Qt.ItemIsEditable |
                                        Qt.ItemIsUserCheckable)
 
-                new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
+                new_para_item.setCheckState(2, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
             self.contents.tree_widget_current_models.addTopLevelItem(new_item)
@@ -403,7 +406,7 @@ class ModelFittingPlugin(Plugin):
 
                 model_names = [model.name
                                for model in layer.model._submodels]
-                print(expr, model_names)
+
                 expr = expr.format(*model_names)
             # If it's just a single model
             else:
@@ -471,7 +474,7 @@ class ModelFittingPlugin(Plugin):
         self.add_model_item(layer)
 
     def _model_parameter_validation(self, model_item, col=1):
-        if col == 0:
+        if col == 2:
             return
 
         try:
@@ -486,7 +489,8 @@ class ModelFittingPlugin(Plugin):
 
     def _fix_model_parameter(self, model_item, col=0):
         parent = model_item.parent()
-        if parent is not None:
+
+        if col == 2 and parent is not None:
             model = parent.data(0, Qt.UserRole)
             param = getattr(model, model_item.text(0))
             param.fixed = bool(model_item.checkState(col))
