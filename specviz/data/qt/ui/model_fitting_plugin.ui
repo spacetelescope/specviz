@@ -104,10 +104,19 @@ QCheckBox::indicator:unchecked:pressed {
 }</string>
         </property>
         <property name="columnCount">
-         <number>2</number>
+         <number>3</number>
         </property>
+        <attribute name="headerVisible">
+         <bool>true</bool>
+        </attribute>
         <attribute name="headerDefaultSectionSize">
-         <number>150</number>
+         <number>100</number>
+        </attribute>
+        <attribute name="headerMinimumSectionSize">
+         <number>50</number>
+        </attribute>
+        <attribute name="headerStretchLastSection">
+         <bool>false</bool>
         </attribute>
         <column>
          <property name="text">
@@ -117,6 +126,11 @@ QCheckBox::indicator:unchecked:pressed {
         <column>
          <property name="text">
           <string>Value</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>State</string>
          </property>
         </column>
        </widget>
