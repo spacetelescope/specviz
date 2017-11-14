@@ -250,6 +250,7 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
+                new_para_item.setData(0, Qt.UserRole, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
