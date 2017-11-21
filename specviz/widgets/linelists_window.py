@@ -471,7 +471,10 @@ class LineListTableModel(QAbstractTableModel):
         return len(self._linelist.columns)
 
     def _get_data(self, index):
-        # this is the main bottleneck for sorting.
+        # This is the main bottleneck for sorting. Profiling experiments
+        # show that the main culprit is the .columns[][] accessor in the
+        # astropy table. The index.column() and index.row() calls cause
+        # negligible CPU load.
         return self._linelist.columns[index.column()][index.row()]
 
     def data(self, index, role=None):
