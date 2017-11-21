@@ -12,6 +12,8 @@ from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDouble
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
+from astropy.table.row import Row
+
 from ..core.comms import dispatch
 
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
@@ -227,7 +229,7 @@ class LineListsWindow(UiLinelistsWindow):
                 # favor. We might add a toggle that users can set/reset depending
                 # on their preferences.
                 table_view.setSortingEnabled(False)
-                proxy = SortModel(table_model.getName())
+                proxy = SortModel(table_model.getName(), linelist)
                 proxy.setSourceModel(table_model)
                 table_view.setModel(proxy)
                 table_view.setSortingEnabled(True)
@@ -460,6 +462,10 @@ class LineListTableModel(QAbstractTableModel):
         # Bummer... this is C++ only; PyQt never went to the trouble
         # of converting it to python.
 
+        self._rows = []
+        for row in self._linelist:
+            self._rows.append(row)
+
     def rowCount(self, parent=None, *args, **kwargs):
         if parent and parent.isValid():
             return 0
@@ -470,12 +476,29 @@ class LineListTableModel(QAbstractTableModel):
             return 0
         return len(self._linelist.columns)
 
+    def _get_row(self, irow):
+        row = self._rows[irow]
+        return row
+
+    def _get_column(self, icolumn, row):
+        return row[icolumn]
+
     def _get_data(self, index):
         # This is the main bottleneck for sorting. Profiling experiments
         # show that the main culprit is the .columns[][] accessor in the
         # astropy table. The index.column() and index.row() calls cause
         # negligible CPU load.
-        return self._linelist.columns[index.column()][index.row()]
+        # return self._linelist.columns[index.column()][index.row()]
+        irow = index.row()
+        icolumn = index.column()
+
+        row = self._get_row(irow)
+
+        # going from an astropy table to a list of rows, the bottleneck
+        # narrows down to the astropy code that gets a colunn from a
+        # Row instance.
+
+        return self._get_column(icolumn, row)
 
     def data(self, index, role=None):
         if not index.isValid():
@@ -529,10 +552,15 @@ class LineListTableModel(QAbstractTableModel):
 
 class SortModel(QSortFilterProxyModel):
 
-    def __init__(self, name):
+    def __init__(self, name, linelist):
         super(SortModel, self).__init__()
 
         self._name = name
+        self.linelist = linelist
+
+    # def sort(self, column, order=Qt.AscendingOrder):
+    #     name = self.linelist.keys()[column]
+    #     self.linelist.sort(name)
 
     def lessThan(self, left, right):
         left_data = left.data()
