@@ -229,7 +229,7 @@ class LineListsWindow(UiLinelistsWindow):
                 # favor. We might add a toggle that users can set/reset depending
                 # on their preferences.
                 table_view.setSortingEnabled(False)
-                proxy = SortModel(table_model.getName(), linelist)
+                proxy = SortModel(table_model.getName())
                 proxy.setSourceModel(table_model)
                 table_view.setModel(proxy)
                 table_view.setSortingEnabled(True)
@@ -434,7 +434,7 @@ class PlottedLinesPane(QWidget):
             # will favor.
 
             table_view.setSortingEnabled(False)
-            proxy = SortModel(table_model.getName())
+            proxy = SortModel(table_model.getName(), )
             proxy.setSourceModel(table_model)
             table_view.setModel(proxy)
             table_view.setSortingEnabled(True)
@@ -460,50 +460,52 @@ class LineListTableModel(QAbstractTableModel):
         # the net suggest:
         # http://www.qtforum.org/article/30638/qsortfilterproxymodel-qtreeview-sort-performance.html).
         # Bummer... this is C++ only; PyQt never went to the trouble
-        # of converting it to python.
-
-        self._rows = []
+        # of converting QVector it to python.
+        #
+        # get rid of astropy table and store its entire contents in
+        # a 2-D list of lists. By using python lists instead of an
+        # astropy table, and storing the QVariant instances instead
+        # of the raw content, we can speed up sorting by a factor 10X.
+        self._nrows = 0
+        self._ncols = 0
+        self._row_cells = []
         for row in self._linelist:
-            self._rows.append(row)
+            cells = []
+            for rindex in range(len(row)):
+                cell = row[rindex]
+                cells.append(QVariant(str(cell)))
+            self._row_cells.append(cells)
+
+            # we have to do this here because some lists may
+            # have no lines at all.
+            self._nrows = len(self._row_cells)
+            self._ncols = len(self._row_cells[0])
 
     def rowCount(self, parent=None, *args, **kwargs):
-        if parent and parent.isValid():
-            return 0
-        return len(self._linelist.columns[0])
+        # this has to use a pre-computed number of rows,
+        # otherwise sorting gets significantly slowed
+        # down. Same for number of columns.
+        return self._nrows
 
     def columnCount(self, parent=None, *args, **kwargs):
-        if parent and parent.isValid():
-            return 0
-        return len(self._linelist.columns)
-
-    def _get_row(self, irow):
-        row = self._rows[irow]
-        return row
-
-    def _get_column(self, icolumn, row):
-        return row[icolumn]
+        return self._ncols
 
     def _get_data(self, index):
         # This is the main bottleneck for sorting. Profiling experiments
         # show that the main culprit is the .columns[][] accessor in the
         # astropy table. The index.column() and index.row() calls cause
         # negligible CPU load.
+        #
         # return self._linelist.columns[index.column()][index.row()]
-        irow = index.row()
-        icolumn = index.column()
-
-        row = self._get_row(irow)
-
+        #
         # going from an astropy table to a list of rows, the bottleneck
-        # narrows down to the astropy code that gets a colunn from a
+        # narrows down to the astropy code that gets a cell value from a
         # Row instance.
 
-        return self._get_column(icolumn, row)
+        return self._row_cells[index.row()][index.column()]
 
     def data(self, index, role=None):
-        if not index.isValid():
-            return QVariant()
-        elif role != Qt.DisplayRole:
+        if role != Qt.DisplayRole:
             return QVariant()
 
         object = self._get_data(index)
@@ -513,6 +515,11 @@ class LineListTableModel(QAbstractTableModel):
         # color names in Qt.GlobalColor. We just go to the basics
         # and compare color equality (or closeness) using a distance
         # criterion in r,g,b coordinates.
+        # Although costly, this would be a CPU burden only when
+        # sorting columns with color information. For now, only
+        # the Plotted Lines line list has such information, and
+        # the number of actuallly plotted lines tends to be small
+        # anyway.
         if isinstance(object, QColor):
             r = object.red()
             g = object.green()
@@ -530,7 +537,7 @@ class LineListTableModel(QAbstractTableModel):
 
             return QVariant(key)
 
-        return QVariant(str(object))
+        return object
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
@@ -552,15 +559,10 @@ class LineListTableModel(QAbstractTableModel):
 
 class SortModel(QSortFilterProxyModel):
 
-    def __init__(self, name, linelist):
+    def __init__(self, name):
         super(SortModel, self).__init__()
 
         self._name = name
-        self.linelist = linelist
-
-    # def sort(self, column, order=Qt.AscendingOrder):
-    #     name = self.linelist.keys()[column]
-    #     self.linelist.sort(name)
 
     def lessThan(self, left, right):
         left_data = left.data()
