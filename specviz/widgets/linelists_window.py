@@ -462,22 +462,55 @@ class LineListTableModel(QAbstractTableModel):
         # Bummer... this is C++ only; PyQt never went to the trouble
         # of converting QVector it to python.
         #
-        # get rid of astropy table and store its entire contents in
+        # get rid entirely of astropy table and store its contents in
         # a 2-D list of lists. By using python lists instead of an
         # astropy table, and storing the QVariant instances instead
-        # of the raw content, we can speed up sorting by a factor 10X.
+        # of the raw content, we can speed up sorting by a factor > 10X.
+
+        # we have to do this here because some lists may
+        # have no lines at all.
         self._nrows = 0
         self._ncols = 0
+
         self._row_cells = []
+
         for row in self._linelist:
             cells = []
             for rindex in range(len(row)):
                 cell = row[rindex]
-                cells.append(QVariant(str(cell)))
+
+                # handling of a color object can be tricky. Color names
+                # returned by QColor.colorNames() are inconsistent with
+                # color names in Qt.GlobalColor. We just go to the basics
+                # and compare color equality (or closeness) using a distance
+                # criterion in r,g,b coordinates.
+                # Although costly, this would be a CPU burden only when
+                # sorting columns with color information. For now, only
+                # the Plotted Lines line list has such information, and
+                # the number of actually plotted lines tends to be small
+                # anyway.
+                if isinstance(cell, QColor):
+                    r = cell.red()
+                    g = cell.green()
+                    b = cell.blue()
+                    min_dist = 100000
+                    result = cell
+                    for color_name, orig_color in ID_COLORS.items():
+                        orig_rgb = QColor(orig_color)
+                        dist = abs(orig_rgb.red() - r) + abs(orig_rgb.green() - g) + abs(orig_rgb.blue() - b)
+                        if dist < min_dist:
+                            min_dist = dist
+                            result = orig_color
+
+                    key = [k for k,value in ID_COLORS.items() if value == result][0]
+
+                    cells.append(QVariant(key))
+
+                else:
+                    cells.append(QVariant(str(cell)))
+
             self._row_cells.append(cells)
 
-            # we have to do this here because some lists may
-            # have no lines at all.
             self._nrows = len(self._row_cells)
             self._ncols = len(self._row_cells[0])
 
@@ -490,7 +523,10 @@ class LineListTableModel(QAbstractTableModel):
     def columnCount(self, parent=None, *args, **kwargs):
         return self._ncols
 
-    def _get_data(self, index):
+    def data(self, index, role=None):
+        if role != Qt.DisplayRole:
+            return QVariant()
+
         # This is the main bottleneck for sorting. Profiling experiments
         # show that the main culprit is the .columns[][] accessor in the
         # astropy table. The index.column() and index.row() calls cause
@@ -501,43 +537,7 @@ class LineListTableModel(QAbstractTableModel):
         # going from an astropy table to a list of rows, the bottleneck
         # narrows down to the astropy code that gets a cell value from a
         # Row instance.
-
         return self._row_cells[index.row()][index.column()]
-
-    def data(self, index, role=None):
-        if role != Qt.DisplayRole:
-            return QVariant()
-
-        object = self._get_data(index)
-
-        # handling of a color object can be tricky. Color names
-        # returned by QColor.colorNames() are inconsistent with
-        # color names in Qt.GlobalColor. We just go to the basics
-        # and compare color equality (or closeness) using a distance
-        # criterion in r,g,b coordinates.
-        # Although costly, this would be a CPU burden only when
-        # sorting columns with color information. For now, only
-        # the Plotted Lines line list has such information, and
-        # the number of actuallly plotted lines tends to be small
-        # anyway.
-        if isinstance(object, QColor):
-            r = object.red()
-            g = object.green()
-            b = object.blue()
-            min_dist = 100000
-            result = object
-            for color_name, orig_color in ID_COLORS.items():
-                orig_rgb = QColor(orig_color)
-                dist = abs(orig_rgb.red() - r) + abs(orig_rgb.green() - g) + abs(orig_rgb.blue() - b)
-                if dist < min_dist:
-                    min_dist = dist
-                    result = orig_color
-
-            key = [k for k,value in ID_COLORS.items() if value == result][0]
-
-            return QVariant(key)
-
-        return object
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
