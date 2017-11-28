@@ -11,7 +11,7 @@ from qtpy.uic import loadUi
 
 from ..widgets.plugin import Plugin
 from ..analysis import statistics
-from ..core.comms import DispatchHandle
+from ..core.events import dispatch
 from ..widgets.utils import UI_PATH
 
 
@@ -28,7 +28,7 @@ class StatisticsPlugin(Plugin):
     def setup_connections(self):
         pass
 
-    @DispatchHandle.register_listener("on_updated_rois", "on_selected_layer")
+    @dispatch.register_listener("on_updated_rois", "on_selected_layer")
     def update_statistics(self, rois=None, *args, **kwargs):
         if rois is None:
             if self.active_window is not None:
@@ -51,8 +51,8 @@ class StatisticsPlugin(Plugin):
 
         mask = self.active_window.get_roi_mask(layer=current_layer)
 
-        stat_dict = statistics.stats(current_layer.data.compressed().value,
-                                     mask=mask[~current_layer.data.mask] if mask is not None else None)
+        stat_dict = statistics.stats(current_layer.masked_data.compressed().value,
+                                     mask=mask[~current_layer.masked_data.mask] if mask is not None else None)
 
         self.contents.line_edit_mean.setText("{0:4.4g}".format(
             stat_dict['mean']))
@@ -101,9 +101,9 @@ class StatisticsPlugin(Plugin):
         rois[-1].setBrush(pg.mkBrush(QColor(255, 69, 0, 50)))
         rois[-1].update()
 
-        cont1_stat_dict = statistics.stats(current_layer.data.compressed().value,
+        cont1_stat_dict = statistics.stats(current_layer.masked_data.compressed().value,
                                            mask=roi_masks[0])
-        cont2_stat_dict = statistics.stats(current_layer.data.compressed().value,
+        cont2_stat_dict = statistics.stats(current_layer.masked_data.compressed().value,
                                            mask=np.concatenate(roi_masks[1:-1]))
 
         ew, flux, avg_cont = statistics.eq_width(cont1_stat_dict,

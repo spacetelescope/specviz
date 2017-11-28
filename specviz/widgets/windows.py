@@ -2,66 +2,22 @@ from qtpy.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QFrame, QMenu,
                             QStatusBar, QMenuBar, QMdiArea)
 from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QBrush, QColor
+from qtpy.uic import loadUi
+import os
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch, dispatch
 from ..core.data import Spectrum1DRefLayer
 from .sub_windows import PlotSubWindow
+from ..widgets.utils import UI_PATH
 
 
-class UiMainWindow(QMainWindow):
-    """
-    Main application window
-    """
-    def __init__(self, parent=None):
-        super(UiMainWindow, self).__init__(parent)
-        DispatchHandle.setup(self)
-
-        self.showMaximized()
-        self.setMinimumSize(QSize(640, 480))
-        self.setDockOptions(QMainWindow.AnimatedDocks)
-        self.setWindowTitle("SpecViz")
-
-        self.widget_central = QWidget(self)
-        self.setCentralWidget(self.widget_central)
-
-        # Toolbar
-        self.layout_vertical = QVBoxLayout(self.widget_central)
-
-        # MDI area setup
-        self.mdi_area = MdiArea(self.widget_central)
-        self.mdi_area.setFrameShape(QFrame.StyledPanel)
-        self.mdi_area.setFrameShadow(QFrame.Plain)
-        self.mdi_area.setLineWidth(2)
-        brush = QBrush(QColor(200, 200, 200))
-        brush.setStyle(Qt.SolidPattern)
-        self.mdi_area.setBackground(brush)
-        self.mdi_area.setAcceptDrops(True)
-
-        self.layout_vertical.addWidget(self.mdi_area)
-
-        # Menu bar setup
-        self.menu_bar = QMenuBar(self)
-
-        self.menu_file = QMenu(self.menu_bar)
-        self.menu_file.setTitle("File")
-        self.menu_edit = QMenu(self.menu_bar)
-        self.menu_edit.setTitle("Edit")
-        self.menu_view = QMenu(self.menu_bar)
-        self.menu_edit.setTitle("View")
-
-        self.menu_docks = QMenu(self.menu_bar)
-
-        self.setMenuBar(self.menu_bar)
-
-        # Status bar setup
-        self.status_bar = QStatusBar(self)
-
-        self.setStatusBar(self.status_bar)
-
-
-class MainWindow(UiMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
+
+        dispatch.setup(self)
+
+        loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
 
         self.mdi_area.subWindowActivated.connect(self._set_activated_window)
 
@@ -77,28 +33,35 @@ class MainWindow(UiMainWindow):
         dispatch.on_activated_window.emit(
             window=window.widget() if window is not None else None)
 
-    @DispatchHandle.register_listener("on_add_window", "on_add_to_window")
-    def add_sub_window(self, data=None, layer=None, window=None, *args,
-                       **kwargs):
+    @dispatch.register_listener("on_add_window")
+    def add_sub_window(self, data=None, layer=None, window=None):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
         is_new_window = window is None
         window = window or PlotSubWindow()
 
-        if not isinstance(layer, list):
-            layer = [layer]
-
-        for l in layer:
-            dispatch.on_add_layer.emit(layer=l, window=window)
-            window.setWindowTitle(l.name)
+        dispatch.on_add_layer.emit(layer=layer, window=window)
+        window.setWindowTitle(layer.name)
 
         if window is not None and is_new_window:
             mdi_sub_window = self.mdi_area.addSubWindow(window)
             window.show()
             self._set_activated_window(mdi_sub_window)
 
-    @DispatchHandle.register_listener("on_add_roi")
+            if self.mdi_area.viewMode() == self.mdi_area.TabbedView:
+                window.showMaximized()
+
+    @dispatch.register_listener("on_add_to_window")
+    def add_to_window(self, data=None, window=None):
+        # Find any sub windows currently active
+        window = window or next((x.widget() for x in self.mdi_area.subWindowList(
+            order=self.mdi_area.ActivationHistoryOrder)), None)
+
+        self.add_sub_window(data=data, window=window)
+
+    @dispatch.register_listener("on_add_roi")
     def add_roi(self, bounds=None, *args, **kwargs):
-        mdi_sub_window = self.mdi_area.activeSubWindow()
+        mdi_sub_window = self.mdi_area.activeSubWindow() or next((x for x in self.mdi_area.subWindowList(
+            order=self.mdi_area.ActivationHistoryOrder)), None)
 
         if mdi_sub_window is not None:
             window = mdi_sub_window.widget()
@@ -109,7 +72,7 @@ class MainWindow(UiMainWindow):
 
         return sw.get_roi_bounds()
 
-    @DispatchHandle.register_listener("on_status_message")
+    @dispatch.register_listener("on_status_message")
     def update_message(self, message, timeout=0):
         self.status_bar.showMessage(message, timeout)
 
@@ -125,4 +88,4 @@ class MdiArea(QMdiArea):
             e.ignore()
 
     def dropEvent(self, e):
-        dispatch.on_add_window.emit(data=e.mimeData.data())
+        dispatch.on_add_window.emit(data=e.mimeData.masked_data())

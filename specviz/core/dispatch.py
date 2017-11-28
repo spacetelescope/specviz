@@ -85,6 +85,32 @@ class Dispatch(object):
     """
     Central communications object for all events.
     """
+    def setup(self, inst):
+        """
+        Register all methods decorated by `register_listener`
+        """
+        logging.info("Dispatch is now watching: {}".format(inst))
+        members = inspect.getmembers(inst, predicate=inspect.ismethod)
+
+        for func_name, func in members:
+            if hasattr(func, 'wrapped'):
+                if func.wrapped:
+                    for name in func.event_names:
+                        self._register_listener(name, func)
+
+    def tear_down(self, inst):
+        """
+        Remove all registered methods from their events
+        """
+        logging.info("Dispatch has stopped watching: {}".format(inst))
+        members = inspect.getmembers(inst, predicate=inspect.ismethod)
+
+        for func_name, func in members:
+            if hasattr(func, 'wrapped'):
+                if func.wrapped:
+                    for name in func.event_names:
+                        self.unregister_listener(name, func)
+
     def register_event(self, name, args=None):
         """
         Add an `EventNode` to the list of possible events
@@ -106,7 +132,7 @@ class Dispatch(object):
             logging.warning("Event '{}' already exists. Please use a "
                             "different name.".format(name))
 
-    def register_listener(self, name, func):
+    def _register_listener(self, name, func):
         """
         Add a listener to an event
 
@@ -125,61 +151,7 @@ class Dispatch(object):
             logging.warning("No such event: {}. Event must be registered "
                             "before listeners can be assigned.".format(name))
 
-    def unregister_listener(self, name, func):
-        """
-        Remove a listener from an event
-
-        Parameters
-        ----------
-        name: str
-            The event from wich the listener should be removed.
-
-        func: function
-            The function to be removed
-        """
-        if hasattr(self, name):
-            call_func = getattr(self, name)
-            call_func -= func
-        else:
-            logging.warning("No such event: {}.".format(name))
-
-
-class DispatchHandle(object):
-    """
-    Interface for allowing classes to use decorators to define event
-    listeners. Otherwise, classes would have to define all listeners in the
-    `init` function using
-    """
-    @staticmethod
-    def setup(inst):
-        """
-        Register all methods decorated by `register_listener`
-        """
-        logging.info("Dispatch is now watching: {}".format(inst))
-        members = inspect.getmembers(inst, predicate=inspect.ismethod)
-
-        for func_name, func in members:
-            if hasattr(func, 'wrapped'):
-                if func.wrapped:
-                    for name in func.event_names:
-                        dispatch.register_listener(name, func)
-
-    @staticmethod
-    def tear_down(inst):
-        """
-        Remove all registered methods from their events
-        """
-        logging.info("Dispatch has stopped watching: {}".format(inst))
-        members = inspect.getmembers(inst, predicate=inspect.ismethod)
-
-        for func_name, func in members:
-            if hasattr(func, 'wrapped'):
-                if func.wrapped:
-                    for name in func.event_names:
-                        dispatch.unregister_listener(name, func)
-
-    @staticmethod
-    def register_listener(*args):
+    def register_listener(self, *args):
         """
         Decorate event listeners
         """
@@ -199,7 +171,11 @@ class DispatchHandle(object):
             return wrapper
         return decorator
 
+    def unregister_listener(self, name, func):
+        """
+        Remove a listener from an event
 
+<<<<<<< HEAD:specviz/core/comms.py
 # Register application-wide events
 dispatch = Dispatch()
 dispatch.register_event("on_activated_window", args=["window"])
@@ -255,5 +231,17 @@ dispatch.register_event("on_remove_all_data")
 
 dispatch.register_event("on_file_open", args=["file_name"])
 dispatch.register_event("on_file_read", args=["file_name", "file_filter", "auto_open"])
+=======
+        Parameters
+        ----------
+        name: str
+            The event from wich the listener should be removed.
 
-dispatch.register_event("on_status_message", args=["message", "timeout"])
+        func: function
+            The function to be removed
+        """
+        if hasattr(self, name):
+            call_func = getattr(self, name)
+            call_func -= func
+        else:
+            logging.warning("No such event: {}.".format(name))

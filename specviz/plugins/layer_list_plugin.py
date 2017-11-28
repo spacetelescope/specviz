@@ -13,7 +13,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QPixmap, QIcon
 
 from ..widgets.utils import ICON_PATH
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch, dispatch
 from ..core.data import Spectrum1DRefLayer, Spectrum1DRef
 from ..widgets.dialogs import LayerArithmeticDialog
 from ..widgets.plugin import Plugin
@@ -101,8 +101,8 @@ class LayerListPlugin(Plugin):
     def _export_layer(self):
         from astropy.io import registry as io_registry
 
-        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].data
-        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].data
+        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].masked_data
+        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].masked_data
 
         write_mask = [True if x == 'Yes' else False for x in writable_formats]
         all_formats = all_formats[np.array(write_mask)]
@@ -127,7 +127,7 @@ class LayerListPlugin(Plugin):
         else:
             self.contents.button_apply_model.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_paste_model")
+    @dispatch.register_listener("on_paste_model")
     def _paste_model(self, data=None, layer=None):
         if self._copied_model is None:
             logging.error("No copied model; unable to paste.")
@@ -185,7 +185,7 @@ class LayerListPlugin(Plugin):
 
         return layers
 
-    @DispatchHandle.register_listener("on_added_layer")
+    @dispatch.register_listener("on_added_layer")
     def add_layer_item(self, layer, unique=True, *args, **kwargs):
         """
         Adds a `Layer` object to the loaded layer list widget.
@@ -226,7 +226,16 @@ class LayerListPlugin(Plugin):
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
 
-    @DispatchHandle.register_listener("on_remove_layer")
+    @dispatch.register_listener("on_remove_data")
+    def remove_layer_items_with_data(self, data=None):
+        # Find all layers whose parent is the data object
+        layers = [x for x in self.all_layers if x._parent == data]
+
+        # Remove each layer
+        for layer in layers:
+            dispatch.on_remove_layer.emit(layer=layer)
+
+    @dispatch.register_listener("on_remove_layer")
     def remove_layer_item(self, layer=None):
         if layer is None:
             layer = self.current_layer
@@ -276,7 +285,7 @@ class LayerListPlugin(Plugin):
 
         dispatch.on_add_layer.emit(layer=new_layer, window=window)
 
-    @DispatchHandle.register_listener("on_added_plot", "on_updated_plot")
+    @dispatch.register_listener("on_added_plot", "on_updated_plot")
     def update_layer_item(self, plot=None, *args, **kwargs):
         if plot is None:
             return
@@ -292,7 +301,7 @@ class LayerListPlugin(Plugin):
             layer_item.setIcon(0, icon)
             layer_item.setCheckState(0, Qt.Checked if plot.checked else Qt.Unchecked)
 
-    @DispatchHandle.register_listener("on_selected_layer", "on_changed_layer")
+    @dispatch.register_listener("on_selected_layer", "on_changed_layer")
     def _update_layer_name(self, layer_item, checked_state=None, col=0):
         if layer_item is None:
             return
@@ -337,7 +346,7 @@ class LayerListPlugin(Plugin):
             # otherwise create a new sub window to plot the spectra
             data_units_equiv = new_layer.unit.is_equivalent(
                 current_window._plot_units[1],
-                equivalencies=spectral_density(new_layer.dispersion.data))
+                equivalencies=spectral_density(new_layer.masked_dispersion.data))
 
             disp_units_equiv = new_layer.dispersion_unit.is_equivalent(
                 current_window._plot_units[0], equivalencies=spectral())
@@ -387,7 +396,7 @@ class LayerListPlugin(Plugin):
 
             self.contents.button_copy_model.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_activated_window")
+    @dispatch.register_listener("on_activated_window")
     def update_layer_list(self, window):
         self.contents.tree_widget_layer_list.clear()
 
@@ -401,7 +410,7 @@ class LayerListPlugin(Plugin):
             plot = window.get_plot(layer)
             self.update_layer_item(plot)
 
-    @DispatchHandle.register_listener("on_clicked_layer")
+    @dispatch.register_listener("on_clicked_layer")
     def _set_layer_visibility(self, layer_item, col=0):
         """
         Toggles the visibility of the plot in the sub window.

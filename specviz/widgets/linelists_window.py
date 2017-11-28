@@ -12,9 +12,7 @@ from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDouble
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 
-from astropy.table.row import Row
-
-from ..core.comms import dispatch
+from ..core.events import dispatch
 
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 

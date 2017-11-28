@@ -20,9 +20,9 @@ from ..io.loaders import *
 
 
 def load_yaml_reader(f_path):
-
-    custom_loader = yaml.load(open(f_path, 'r'))
-    custom_loader.set_filter()
+    with open(f_path, 'r') as f:
+        custom_loader = yaml.load(f)
+        custom_loader.set_filter()
 
     # Figure out which of the loaders to associate this yaml file with
     #

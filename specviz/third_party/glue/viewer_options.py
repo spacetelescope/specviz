@@ -22,7 +22,7 @@ class OptionsWidget(QWidget):
                           directory=os.path.dirname(__file__))
 
         self.file_helper = ComponentIDComboHelper(self.ui.combo_file_attribute,
-                                                  data_viewer._data, categorical=True, numeric=False)
+                                                  data_viewer._data)
 
         self._data_viewer = data_viewer
 

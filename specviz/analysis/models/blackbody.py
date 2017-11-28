@@ -4,7 +4,7 @@ import astropy.units as u
 
 from astropy.modeling import Fittable1DModel
 from astropy.modeling.parameters import Parameter
-from astropy.analytic_functions import blackbody_lambda
+from astropy.modeling.blackbody import blackbody_lambda
 
 __all__ = ['BlackBody']
 

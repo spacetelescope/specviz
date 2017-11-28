@@ -3,6 +3,7 @@ Plugin enabling model definition and fitting
 """
 import logging
 import os
+import re
 
 import numpy as np
 from qtpy import compat
@@ -12,7 +13,7 @@ from qtpy.QtWidgets import QTreeWidgetItem
 from qtpy.QtGui import QIntValidator, QDoubleValidator
 from qtpy.uic import loadUi
 
-from ..core.comms import dispatch, DispatchHandle
+from ..core.events import dispatch
 from ..core.data import Spectrum1DRefModelLayer
 from ..core.threads import FitModelThread
 from ..interfaces.factories import ModelFactory, FitterFactory
@@ -41,6 +42,8 @@ class ModelFittingPlugin(Plugin):
 
         self.fit_model_thread.result.connect(
             lambda layer: dispatch.on_update_model.emit(layer=layer))
+
+        self.contents.tree_widget_current_models.setColumnWidth(2, 50)
 
     def setup_ui(self):
         loadUi(os.path.join(UI_PATH, "model_fitting_plugin.ui"), self.contents)
@@ -139,8 +142,8 @@ class ModelFittingPlugin(Plugin):
             mask = self.active_window.get_roi_mask(layer._parent)
 
             # pass raw data arrays to avoid unit-based issues in initialization
-            initialize(model, layer._parent.dispersion[mask].compressed().value,
-                       layer._parent.data[mask].compressed().value)
+            initialize(model, layer._parent.masked_dispersion[mask].compressed().value,
+                       layer._parent.masked_data[mask].compressed().value)
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
             if layer.model is not None:
@@ -150,8 +153,8 @@ class ModelFittingPlugin(Plugin):
         else:
             mask = self.active_window.get_roi_mask(layer)
 
-            initialize(model, layer.dispersion[mask].compressed().value,
-                       layer.data[mask].compressed().value)
+            initialize(model, layer.masked_dispersion[mask].compressed().value,
+                       layer.masked_data[mask].compressed().value)
 
             # If a layer is selected, but it's not a `ModelLayer`,
             # create a new `ModelLayer`
@@ -187,7 +190,7 @@ class ModelFittingPlugin(Plugin):
 
         return new_model_layer
 
-    @DispatchHandle.register_listener("on_add_model")
+    @dispatch.register_listener("on_add_model")
     def add_model_item(self, layer=None, model=None, unique=True):
         """
         Adds an `astropy.modeling.Model` to the loaded model tree widget.
@@ -220,15 +223,20 @@ class ModelFittingPlugin(Plugin):
             name = model.name
 
             if not name:
-                count = 1
+                count = 0
 
                 root = self.contents.tree_widget_current_models.invisibleRootItem()
 
                 for i in range(root.childCount()):
                     child = root.child(i)
+                    pre_mod = child.data(0, Qt.UserRole)
+                    pre_name = child.text(0)
 
-                    if isinstance(model, child.data(0, Qt.UserRole).__class__):
-                        count += 1
+                    if isinstance(model, pre_mod.__class__):
+                        cur_num = next(iter([int(x) for x in re.findall(r'\d+', pre_name)]), 0) + 1
+
+                        if cur_num > count:
+                            count = cur_num
 
                 name = model.__class__.__name__.replace('1D', '') + str(count)
                 model._name = name
@@ -242,13 +250,14 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
+                new_para_item.setData(0, Qt.UserRole, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
                                        Qt.ItemIsEditable |
                                        Qt.ItemIsUserCheckable)
 
-                new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
+                new_para_item.setCheckState(2, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
             self.contents.tree_widget_current_models.addTopLevelItem(new_item)
@@ -256,7 +265,7 @@ class ModelFittingPlugin(Plugin):
 
         self._update_arithmetic_text(layer)
 
-    @DispatchHandle.register_listener("on_update_model")
+    @dispatch.register_listener("on_update_model")
     def update_model_item(self, layer):
         if hasattr(layer.model, '_submodels'):
             models = layer.model._submodels
@@ -283,7 +292,7 @@ class ModelFittingPlugin(Plugin):
             self.current_layer.model = layer.model
             self.contents.tree_widget_current_models.blockSignals(False)
 
-    @DispatchHandle.register_listener("on_remove_model")
+    @dispatch.register_listener("on_remove_model")
     def remove_model_item(self, model=None):
         if model is None:
             model = self.current_model
@@ -387,7 +396,7 @@ class ModelFittingPlugin(Plugin):
 
         return np.sum(models) if len(models) > 1 else models[0]
 
-    @DispatchHandle.register_listener("on_update_model")
+    @dispatch.register_listener("on_update_model")
     def _update_arithmetic_text(self, layer):
         if hasattr(layer, '_model'):
             # If the model is a compound
@@ -407,7 +416,7 @@ class ModelFittingPlugin(Plugin):
 
             return expr
 
-    @DispatchHandle.register_listener("on_selected_model", "on_changed_model")
+    @dispatch.register_listener("on_selected_model", "on_changed_model")
     def _update_model_name(self, model_item, col=0):
         if model_item is None:
             return
@@ -433,7 +442,7 @@ class ModelFittingPlugin(Plugin):
 
         self._update_arithmetic_text(self.current_layer)
 
-    @DispatchHandle.register_listener("on_changed_model")
+    @dispatch.register_listener("on_changed_model")
     def _update_model_parameters(self, *args, **kwargs):
         model_layer = self.current_layer
         model_dict = self.get_model_inputs()
@@ -449,7 +458,7 @@ class ModelFittingPlugin(Plugin):
             logging.error("Cannot set `ModelLayer` model to new compound "
                           "model.")
 
-    @DispatchHandle.register_listener("on_selected_layer")
+    @dispatch.register_listener("on_selected_layer")
     def update_model_list(self, layer_item=None, layer=None):
         self.contents.tree_widget_current_models.clear()
         self.contents.line_edit_model_arithmetic.clear()
@@ -465,7 +474,7 @@ class ModelFittingPlugin(Plugin):
         self.add_model_item(layer)
 
     def _model_parameter_validation(self, model_item, col=1):
-        if col == 0:
+        if col == 2:
             return
 
         try:
@@ -480,7 +489,8 @@ class ModelFittingPlugin(Plugin):
 
     def _fix_model_parameter(self, model_item, col=0):
         parent = model_item.parent()
-        if parent is not None:
+
+        if col == 2 and parent is not None:
             model = parent.data(0, Qt.UserRole)
             param = getattr(model, model_item.text(0))
             param.fixed = bool(model_item.checkState(col))
@@ -532,7 +542,7 @@ class ModelFittingPlugin(Plugin):
 
     # this is also called in response to the "on_remove_model" signal,
     # however indirectly via the remove_model_item method.
-    @DispatchHandle.register_listener("on_add_model")
+    @dispatch.register_listener("on_add_model")
     def toggle_fitting(self, *args, **kwargs):
         root = self.contents.tree_widget_current_models.invisibleRootItem()
 
@@ -543,7 +553,7 @@ class ModelFittingPlugin(Plugin):
             self.contents.group_box_fitting.setEnabled(False)
             self.contents.button_save_model.setEnabled(False)
 
-    @DispatchHandle.register_listener("on_selected_layer")
+    @dispatch.register_listener("on_selected_layer")
     def toggle_io(self, layer_item, *args, **kwargs):
         if layer_item:
             self.contents.button_load_model.setEnabled(True)
