@@ -323,7 +323,7 @@ class PlotSubWindow(UiPlotSubWindow):
         super(PlotSubWindow, self).closeEvent(event)
 
     @dispatch.register_listener("on_add_layer")
-    def add_plot(self, layer, window=None):
+    def add_plot(self, layer, window=None, style=None):
         if window is not None and window != self:
             return
 
@@ -370,8 +370,8 @@ class PlotSubWindow(UiPlotSubWindow):
                     name="Interpolated {}".format(layer.name),
                     layer_mask=layer.layer_mask)
 
-        new_plot = LinePlot.from_layer(layer,
-                                       color=next(self._available_colors))
+        new_plot = LinePlot.from_layer(
+            layer, **(style or {'color': next(self._available_colors)}))
 
         if len(self._plots) == 0:
             is_convert_success = self.change_units(

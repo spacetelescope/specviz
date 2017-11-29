@@ -30,8 +30,8 @@ def simple_generic_writer(data, file_name, **kwargs):
     Basic `Spectrum1DRef` FITS writer.
     """
     # Create fits columns
-    flux_col = fits.Column(name='FLUX', format='E', array=data.data.data.value)
-    disp_col = fits.Column(name='WAVE', format='E', array=data.dispersion.data.value)
+    flux_col = fits.Column(name='FLUX', format='E', array=data.data)
+    disp_col = fits.Column(name='WAVE', format='E', array=data.dispersion)
     uncert_col = fits.Column(name='UNCERT', format='E', array=data.uncertainty.array)
     mask_col = fits.Column(name='MASK', format='L', array=data.mask)
 
@@ -41,8 +41,7 @@ def simple_generic_writer(data, file_name, **kwargs):
     tbhdu = fits.BinTableHDU.from_columns(cols)
 
     # Create header
-    prihdu = fits.PrimaryHDU(header=data.meta.get('header')
-                                    or data.wcs.to_header())
+    prihdu = fits.PrimaryHDU(header=data.meta.get('header', data.wcs.to_header()))
 
     # Compose
     thdulist = fits.HDUList([prihdu, tbhdu])

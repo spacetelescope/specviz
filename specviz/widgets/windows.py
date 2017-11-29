@@ -34,12 +34,12 @@ class MainWindow(QMainWindow):
             window=window.widget() if window is not None else None)
 
     @dispatch.register_listener("on_add_window")
-    def add_sub_window(self, data=None, layer=None, window=None):
+    def add_sub_window(self, data=None, layer=None, window=None, style=None):
         layer = layer or Spectrum1DRefLayer.from_parent(data)
         is_new_window = window is None
         window = window or PlotSubWindow()
 
-        dispatch.on_add_layer.emit(layer=layer, window=window)
+        dispatch.on_add_layer.emit(layer=layer, window=window, style=style)
         window.setWindowTitle(layer.name)
 
         if window is not None and is_new_window:
@@ -51,12 +51,12 @@ class MainWindow(QMainWindow):
                 window.showMaximized()
 
     @dispatch.register_listener("on_add_to_window")
-    def add_to_window(self, data=None, window=None):
+    def add_to_window(self, data=None, window=None, style=None):
         # Find any sub windows currently active
         window = window or next((x.widget() for x in self.mdi_area.subWindowList(
             order=self.mdi_area.ActivationHistoryOrder)), None)
 
-        self.add_sub_window(data=data, window=window)
+        self.add_sub_window(data=data, window=window, style=style)
 
     @dispatch.register_listener("on_add_roi")
     def add_roi(self, bounds=None, *args, **kwargs):

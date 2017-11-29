@@ -60,7 +60,7 @@ class PlotToolsPlugin(Plugin):
             icon_path=os.path.join(ICON_PATH, "Label-48.png"),
             category='Selections',
             callback=dispatch.on_show_linelists_window.emit,
-            enabled=False)
+            enabled=True)
 
         self.button_plot_settings = self.add_tool_bar_actions(
             name="Plot Settings",
