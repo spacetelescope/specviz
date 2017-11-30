@@ -150,12 +150,35 @@ class PlotSubWindow(UiPlotSubWindow):
         # Incorporate event filter
         self.installEventFilter(self)
 
+        # Create a single vertical line object that can be used to indicate
+        # wavelength position
+        self._disp_line = pg.InfiniteLine(movable=True, pen={'color': 'g'})
+        self._plot_item.addItem(self._disp_line)
+
+        # When the user moves the dispersion vertical line, send an event
+        self._disp_line.sigPositionChanged.connect(lambda:
+            dispatch.change_dispersion_position.emit(
+                pos=self._disp_line.value()))
+
     def _setup_connections(self):
         # Connect cursor position to UI element
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
         #                        rateLimit=30, slot=self.cursor_moved)
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
+
+    @dispatch.register_listener("changed_dispersion_position")
+    def _move_vertical_line(self, pos):
+        # Get the actual dispersion value from the index provided
+        disp = 0
+
+        try:
+            disp = self._plots[0].layer.dispersion[pos]
+        except IndexError:
+            logging.error("No available plots from which to get dispersion"
+                          "position.")
+
+        self._disp_line.setValue(disp)
 
     def cursor_moved(self, evt):
         pos = evt

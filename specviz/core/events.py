@@ -58,3 +58,5 @@ dispatch.register_event("on_file_open", args=["file_name"])
 dispatch.register_event("on_file_read", args=["file_name", "file_filter", "auto_open"])
 
 dispatch.register_event("on_status_message", args=["message", "timeout"])
+dispatch.register_event("changed_dispersion_position", args=["pos"])
+dispatch.register_event("change_dispersion_position", args=["pos"])
