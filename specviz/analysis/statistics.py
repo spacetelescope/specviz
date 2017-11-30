@@ -4,7 +4,6 @@ from __future__ import (absolute_import, division, print_function,
 
 # THIRD-PARTY
 import numpy as np
-import scipy as sp
 
 # LOCAL
 from ..core.data import Spectrum1DRef
