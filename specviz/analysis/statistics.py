@@ -124,8 +124,8 @@ def eq_width(cont1_stats, cont2_stats, line, mask=None):
     >>> flux, ew = eq_width(cont1_stats, cont2_stats, line)
 
     """
-    flux, wave = line.data.compressed().value, \
-                 line.dispersion.compressed().value
+    flux, wave = line.masked_data.compressed().value, \
+                 line.masked_dispersion.compressed().value
 
     mask = np.ones(flux.shape, dtype=bool) if mask is None else np.array(mask)
 
@@ -232,8 +232,8 @@ def centroid(line, avg_cont, mask=None):
     >>> line = extract(d, (15000, 20000))
     >>> wcen_em = centroid(line)
     """
-    flux, wave = line.data.compressed().value, \
-                 line.dispersion.compressed().value
+    flux, wave = line.masked_data.compressed().value, \
+                 line.masked_dispersion.compressed().value
 
     flux -= avg_cont
 

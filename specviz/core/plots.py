@@ -106,22 +106,22 @@ class LinePlot(object):
         plot_container:
             The new LinePlot
         """
-        plot_data_item = pg.PlotDataItem(layer.dispersion, layer.data)
+        plot_data_item = pg.PlotDataItem(layer.masked_dispersion, layer.masked_data)
 
         plot_container = LinePlot(layer=layer, plot=plot_data_item, **kwargs)
 
         if plot_container.layer.raw_uncertainty is not None:
             plot_error_item = pg.ErrorBarItem(
-                x=plot_container.layer.dispersion.compressed().value,
-                y=plot_container.layer.data.compressed().value,
+                x=plot_container.layer.masked_dispersion.compressed().value,
+                y=plot_container.layer.masked_data.compressed().value,
                 height=plot_container.layer.raw_uncertainty.compressed().value,
             )
             plot_container.error = plot_error_item
 
         if plot_container.layer.mask is not None:
             mask = plot_container.layer.mask
-            x = plot_container.layer.dispersion.data.value[mask]
-            y = plot_container.layer.data.data.value[mask]
+            x = plot_container.layer.masked_dispersion.data.value[mask]
+            y = plot_container.layer.masked_data.data.value[mask]
             plot_mask_item = pg.ScatterPlotItem(
                 x=x,
                 y=y,
@@ -159,7 +159,7 @@ class LinePlot(object):
             is_convert_success[0] = False
 
         if not self._layer.unit.is_equivalent(
-                y, equivalencies=spectral_density(self.layer.dispersion)):
+                y, equivalencies=spectral_density(self.layer.masked_dispersion)):
             logging.error("Failed to convert y-axis plot units from [{}] to "
                           "[{}].".format(self._layer.unit, y))
             y = self._layer.unit
@@ -326,8 +326,8 @@ class LinePlot(object):
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
 
         else:
-            disp = self.layer.dispersion.compressed().value
-            data = self.layer.data.compressed().value
+            disp = self.layer.masked_dispersion.compressed().value
+            data = self.layer.masked_data.compressed().value
             uncert = self.layer.raw_uncertainty.compressed().value
 
         # Change specific marker for scatter plot rendering
@@ -349,6 +349,6 @@ class LinePlot(object):
                                y=data, height=uncert)
         if self.mask is not None:
             mask = self.layer.mask
-            x = self.layer.dispersion.data.value[mask]
-            y = self.layer.data.data.value[mask]
+            x = self.layer.masked_dispersion.data.value[mask]
+            y = self.layer.masked_data.data.value[mask]
             self.mask.setData(x=x, y=y)

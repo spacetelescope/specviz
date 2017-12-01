@@ -259,9 +259,9 @@ class SortModel(QSortFilterProxyModel):
 
     def lessThan(self, left, right):
         try:
-            left_data = left.data()
+            left_data = left.masked_data()
             left_float = float(left_data)
-            right_data = right.data()
+            right_data = right.masked_data()
             right_float = float(right_data)
 
             return left_float < right_float

@@ -43,6 +43,8 @@ class ModelFittingPlugin(Plugin):
         self.fit_model_thread.result.connect(
             lambda layer: dispatch.on_update_model.emit(layer=layer))
 
+        self.contents.tree_widget_current_models.setColumnWidth(2, 50)
+
     def setup_ui(self):
         loadUi(os.path.join(UI_PATH, "model_fitting_plugin.ui"), self.contents)
 
@@ -140,8 +142,8 @@ class ModelFittingPlugin(Plugin):
             mask = self.active_window.get_roi_mask(layer._parent)
 
             # pass raw data arrays to avoid unit-based issues in initialization
-            initialize(model, layer._parent.dispersion[mask].compressed().value,
-                       layer._parent.data[mask].compressed().value)
+            initialize(model, layer._parent.masked_dispersion[mask].compressed().value,
+                       layer._parent.masked_data[mask].compressed().value)
             # The layer is a `ModelLayer`, in which case, additionally
             # add the model to the compound model and update plot
             if layer.model is not None:
@@ -151,8 +153,8 @@ class ModelFittingPlugin(Plugin):
         else:
             mask = self.active_window.get_roi_mask(layer)
 
-            initialize(model, layer.dispersion[mask].compressed().value,
-                       layer.data[mask].compressed().value)
+            initialize(model, layer.masked_dispersion[mask].compressed().value,
+                       layer.masked_data[mask].compressed().value)
 
             # If a layer is selected, but it's not a `ModelLayer`,
             # create a new `ModelLayer`
@@ -248,13 +250,14 @@ class ModelFittingPlugin(Plugin):
             for i, para in enumerate(model.param_names):
                 new_para_item = QTreeWidgetItem(new_item)
                 new_para_item.setText(0, para)
+                new_para_item.setData(0, Qt.UserRole, para)
                 new_para_item.setData(1, Qt.UserRole, model.parameters[i])
                 new_para_item.setText(1, "{:g}".format(model.parameters[i]))
                 new_para_item.setFlags(new_para_item.flags() |
                                        Qt.ItemIsEditable |
                                        Qt.ItemIsUserCheckable)
 
-                new_para_item.setCheckState(0, Qt.Checked if model.fixed.get(para)
+                new_para_item.setCheckState(2, Qt.Checked if model.fixed.get(para)
                                                           else Qt.Unchecked)
 
             self.contents.tree_widget_current_models.addTopLevelItem(new_item)
@@ -471,7 +474,7 @@ class ModelFittingPlugin(Plugin):
         self.add_model_item(layer)
 
     def _model_parameter_validation(self, model_item, col=1):
-        if col == 0:
+        if col == 2:
             return
 
         try:
@@ -486,7 +489,8 @@ class ModelFittingPlugin(Plugin):
 
     def _fix_model_parameter(self, model_item, col=0):
         parent = model_item.parent()
-        if parent is not None:
+
+        if col == 2 and parent is not None:
             model = parent.data(0, Qt.UserRole)
             param = getattr(model, model_item.text(0))
             param.fixed = bool(model_item.checkState(col))
