@@ -54,34 +54,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menu_bar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1280</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menu_file">
-    <property name="title">
-     <string>File</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_edit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menu_plugins">
-    <property name="title">
-     <string>Plugins</string>
-    </property>
-   </widget>
-   <addaction name="menu_file"/>
-   <addaction name="menu_edit"/>
-   <addaction name="menu_plugins"/>
-  </widget>
   <widget class="QStatusBar" name="status_bar"/>
   <widget class="QToolBar" name="tool_bar">
    <property name="windowTitle">

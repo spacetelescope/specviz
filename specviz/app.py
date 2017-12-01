@@ -40,7 +40,7 @@ except ModuleNotFoundError:
 
 
 class App(object):
-    def __init__(self, hidden=None, disabled=None):
+    def __init__(self, hidden=None, disabled=None, menubar=True):
         hidden = hidden or {}
         disabled = disabled or {}
 
@@ -49,11 +49,12 @@ class App(object):
         # Instantiate main window object
         self._all_tool_bars = {}
 
-        self.main_window = MainWindow()
-        self.menu_docks = QMenu("Plugins")
-        self.main_window.menu_bar.addMenu(self.menu_docks)
-
-        self.menu_docks.addSeparator()
+        self.main_window = MainWindow(menubar=menubar)
+        if self.main_window.menu_bar is not None:
+            self.menu_docks = self.main_window.menu_bar.addMenu('Plugins')
+            self.menu_docks.addSeparator()
+        else:
+            self.menu_docks = None
 
         # self.main_window.setDockNestingEnabled(True)
 
@@ -100,8 +101,8 @@ class App(object):
                     inst_plgn.hide()
 
                 # Add this dock's visibility action to the menu bar
-                self.menu_docks.addAction(
-                    inst_plgn.toggleViewAction())
+                if self.menu_docks is not None:
+                    self.menu_docks.addAction(inst_plgn.toggleViewAction())
 
         # Sort actions based on priority
         all_actions = [y for x in self._instanced_plugins.values()

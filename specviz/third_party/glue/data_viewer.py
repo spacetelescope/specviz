@@ -60,10 +60,8 @@ class SpecVizViewer(DataViewer):
                                   'Statistics': True,
                                   'Model Fitting': True,
                                   'Mask Editor': True,
-                                  'Data List': True})
-
-        # Remove the menubar so that it does not interfere with Glue's
-        self.viewer.main_window.menu_bar = None
+                                  'Data List': True},
+                          menubar=False)
 
         # Remove Glue's viewer status bar
         self.statusBar().hide()

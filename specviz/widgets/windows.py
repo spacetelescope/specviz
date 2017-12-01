@@ -12,12 +12,17 @@ from ..widgets.utils import UI_PATH
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, parent=None, *args, **kwargs):
+    def __init__(self, parent=None, menubar=True, *args, **kwargs):
         super(MainWindow, self).__init__(parent)
 
         dispatch.setup(self)
 
         loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
+
+        if menubar:
+            self.menu_bar = self.menuBar()
+        else:
+            self.menu_bar = None
 
         self.mdi_area.subWindowActivated.connect(self._set_activated_window)
 
