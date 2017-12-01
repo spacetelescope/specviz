@@ -127,7 +127,8 @@ class SpecVizViewer(DataViewer):
                                   unit=spec_data.unit,
                                   dispersion=data.spectral_axis.data,
                                   dispersion_unit=data.spectral_axis.unit,
-                                  wcs=data.wcs)
+                                  wcs=data.wcs,
+                                  name=layer.label)
 
         # Store the relation between the component and the specviz data. If
         # the data exists, first remove the component from specviz and then
