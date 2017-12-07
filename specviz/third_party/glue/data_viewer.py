@@ -8,7 +8,7 @@ from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox
 from spectral_cube import SpectralCube
 
 from ...app import App
@@ -70,7 +70,7 @@ class SpecVizViewer(DataViewer):
 
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
-            # tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
+            tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
             tb['widget'].setIconSize(QSize(24, 24))
 
         # Set the view mode of mdi area to tabbed so that user aren't confused
@@ -85,12 +85,17 @@ class SpecVizViewer(DataViewer):
         model_fitting = self.viewer._instanced_plugins.get('Model Fitting')
         self._model_fitting = model_fitting.widget() if model_fitting is not None else None
 
+        # Create combo box to hold the types of data summation that can be done
+        self._data_operation = QComboBox()
+        self._data_operation.addItems(['Sum', 'Mean', 'Median'])
+
         self._unified_options = QWidget()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._options_widget)
-        layout.addWidget(self._layer_widget)
+        layout.addWidget(self._data_operation)
+        # layout.addWidget(self._options_widget)
+        # layout.addWidget(self._layer_widget)
         layout.addWidget(self._layer_list)
 
         self._unified_options.setLayout(layout)
@@ -114,6 +119,20 @@ class SpecVizViewer(DataViewer):
 
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
+
+    def _on_operation_changed(self):
+        # Get the data cube
+        data = None
+
+        # Perform the operation
+        if self._data_operation.currentIndex() == 0:
+            spec_data = data.sum((1, 2))
+        elif self._data_operation.currentIndex() == 1:
+            spec_data = data.mean((1, 2))
+        elif self._data_operation.currentIndex() == 2:
+            spec_data = data.median((1, 2))
+
+        #
 
     def _spectrum_from_component(self, layer, component, wcs, mask=None):
         data = SpectralCube(component.data, wcs)
@@ -139,7 +158,8 @@ class SpecVizViewer(DataViewer):
 
         self._specviz_data_cache[layer] = spec_data
 
-        dispatch.on_add_to_window.emit(data=spec_data, style={'color': layer.style.rgba[:3]})
+        dispatch.on_add_to_window.emit(data=spec_data,
+                                       style={'color': layer.style.rgba[:3]})
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
@@ -163,7 +183,7 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(data):
             return
 
-        layer = self._layer_widget.layer
+        layer = data #self._layer_widget.layer
         cid = layer.id[self._options_widget.file_att]
         component = layer.get_component(cid)
 
@@ -190,7 +210,7 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(message.subset):
             return
 
-        subset = self._layer_widget.layer
+        subset = message.subset #self._layer_widget.layer
         cid = subset.data.id[self._options_widget.file_att]
         mask = subset.to_mask()
         component = subset.data.get_component(cid)

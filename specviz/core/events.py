@@ -60,3 +60,4 @@ dispatch.register_event("on_file_read", args=["file_name", "file_filter", "auto_
 dispatch.register_event("on_status_message", args=["message", "timeout"])
 dispatch.register_event("changed_dispersion_position", args=["pos"])
 dispatch.register_event("change_dispersion_position", args=["pos"])
+dispatch.register_event("changed_roi_mask", args=["mask"])

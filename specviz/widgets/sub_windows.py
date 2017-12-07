@@ -271,6 +271,10 @@ class PlotSubWindow(UiPlotSubWindow):
             lambda: dispatch.on_updated_rois.emit(rois=self._rois))
         roi.sigRegionChangeFinished.connect(
             lambda: dispatch.on_updated_rois.emit(rois=self._rois))
+        roi.sigRegionChangeFinished.connect(
+            lambda: dispatch.changed_roi_mask.emit(
+                mask=self.get_roi_mask(layer=self.get_all_layers()[0])))
+
 
     def get_roi_bounds(self):
         bounds = []
