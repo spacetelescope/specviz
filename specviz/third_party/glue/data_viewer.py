@@ -4,11 +4,12 @@ from collections import OrderedDict
 import numpy as np
 from glue.core import message as msg
 from glue.core import Subset
+from glue.core.subset_group import GroupedSubset
 from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout
 from spectral_cube import SpectralCube
 
 from ...app import App
@@ -70,7 +71,7 @@ class SpecVizViewer(DataViewer):
 
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
-            tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
+            # tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
             tb['widget'].setIconSize(QSize(24, 24))
 
         # Set the view mode of mdi area to tabbed so that user aren't confused
@@ -89,11 +90,18 @@ class SpecVizViewer(DataViewer):
         self._data_operation = QComboBox()
         self._data_operation.addItems(['Sum', 'Mean', 'Median'])
 
+        self._data_operation.currentIndexChanged.connect(
+            self._on_operation_changed)
+
+        data_op_form = QFormLayout()
+        data_op_form.addRow("Collapse Operation", self._data_operation)
+        data_op_form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+
         self._unified_options = QWidget()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._data_operation)
+        layout.addLayout(data_op_form)
         # layout.addWidget(self._options_widget)
         # layout.addWidget(self._layer_widget)
         layout.addWidget(self._layer_list)
@@ -120,19 +128,20 @@ class SpecVizViewer(DataViewer):
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
 
-    def _on_operation_changed(self):
-        # Get the data cube
-        data = None
+    def _on_operation_changed(self, index):
+        for layer in self._specviz_data_cache:
+            if issubclass(layer.__class__, Subset):
+                cid = layer.data.id[self._options_widget.file_att]
+                component = layer.data.get_component(cid)
+                mask = layer.to_mask()
+                wcs = layer.data.coords.wcs
+            else:
+                cid = layer.id[self._options_widget.file_att]
+                component = layer.get_component(cid)
+                mask = None
+                wcs = layer.coords.wcs
 
-        # Perform the operation
-        if self._data_operation.currentIndex() == 0:
-            spec_data = data.sum((1, 2))
-        elif self._data_operation.currentIndex() == 1:
-            spec_data = data.mean((1, 2))
-        elif self._data_operation.currentIndex() == 2:
-            spec_data = data.median((1, 2))
-
-        #
+            self._spectrum_from_component(layer, component, wcs, mask=mask)
 
     def _spectrum_from_component(self, layer, component, wcs, mask=None):
         data = SpectralCube(component.data, wcs)
@@ -140,7 +149,12 @@ class SpecVizViewer(DataViewer):
         if mask is not None:
             data = data.with_mask(mask)
 
-        spec_data = data.sum((1, 2))
+        if self._data_operation.currentIndex() == 1:
+            spec_data = data.mean((1, 2))
+        elif self._data_operation.currentIndex() == 2:
+            spec_data = data.median((1, 2))
+        else:
+            spec_data = data.sum((1, 2))
 
         spec_data = Spectrum1DRef(spec_data.data,
                                   unit=spec_data.unit,
@@ -187,7 +201,7 @@ class SpecVizViewer(DataViewer):
         cid = layer.id[self._options_widget.file_att]
         component = layer.get_component(cid)
 
-        self._spectrum_from_component(layer, component, data.coords.wcs)
+        self._spectrum_from_component(layer, component, layer.coords.wcs)
 
         return True
 
