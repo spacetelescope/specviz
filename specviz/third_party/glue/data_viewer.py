@@ -4,11 +4,12 @@ from collections import OrderedDict
 import numpy as np
 from glue.core import message as msg
 from glue.core import Subset
+from glue.core.subset_group import GroupedSubset
 from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout
 from spectral_cube import SpectralCube
 
 from ...app import App
@@ -83,12 +84,24 @@ class SpecVizViewer(DataViewer):
         model_fitting = self.viewer._instanced_plugins.get('Model Fitting')
         self._model_fitting = model_fitting.widget() if model_fitting is not None else None
 
+        # Create combo box to hold the types of data summation that can be done
+        self._data_operation = QComboBox()
+        self._data_operation.addItems(['Sum', 'Mean', 'Median'])
+
+        self._data_operation.currentIndexChanged.connect(
+            self._on_operation_changed)
+
+        data_op_form = QFormLayout()
+        data_op_form.addRow("Collapse Operation", self._data_operation)
+        data_op_form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
+
         self._unified_options = QWidget()
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._options_widget)
-        layout.addWidget(self._layer_widget)
+        layout.addLayout(data_op_form)
+        # layout.addWidget(self._options_widget)
+        # layout.addWidget(self._layer_widget)
         layout.addWidget(self._layer_list)
 
         self._unified_options.setLayout(layout)
@@ -113,19 +126,40 @@ class SpecVizViewer(DataViewer):
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
 
+    def _on_operation_changed(self, index):
+        for layer in self._specviz_data_cache:
+            if issubclass(layer.__class__, Subset):
+                cid = layer.data.id[self._options_widget.file_att]
+                component = layer.data.get_component(cid)
+                mask = layer.to_mask()
+                wcs = layer.data.coords.wcs
+            else:
+                cid = layer.id[self._options_widget.file_att]
+                component = layer.get_component(cid)
+                mask = None
+                wcs = layer.coords.wcs
+
+            self._spectrum_from_component(layer, component, wcs, mask=mask)
+
     def _spectrum_from_component(self, layer, component, wcs, mask=None):
         data = SpectralCube(component.data, wcs)
 
         if mask is not None:
             data = data.with_mask(mask)
 
-        spec_data = data.sum((1, 2))
+        if self._data_operation.currentIndex() == 1:
+            spec_data = data.mean((1, 2))
+        elif self._data_operation.currentIndex() == 2:
+            spec_data = data.median((1, 2))
+        else:
+            spec_data = data.sum((1, 2))
 
         spec_data = Spectrum1DRef(spec_data.data,
                                   unit=spec_data.unit,
                                   dispersion=data.spectral_axis.data,
                                   dispersion_unit=data.spectral_axis.unit,
-                                  wcs=data.wcs)
+                                  wcs=data.wcs,
+                                  name=layer.label)
 
         # Store the relation between the component and the specviz data. If
         # the data exists, first remove the component from specviz and then
@@ -136,7 +170,8 @@ class SpecVizViewer(DataViewer):
 
         self._specviz_data_cache[layer] = spec_data
 
-        dispatch.on_add_to_window.emit(spec_data)
+        dispatch.on_add_to_window.emit(data=spec_data,
+                                       style={'color': layer.style.rgba[:3]})
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
@@ -160,11 +195,11 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(data):
             return
 
-        layer = self._layer_widget.layer
+        layer = data #self._layer_widget.layer
         cid = layer.id[self._options_widget.file_att]
         component = layer.get_component(cid)
 
-        self._spectrum_from_component(layer, component, data.coords.wcs)
+        self._spectrum_from_component(layer, component, layer.coords.wcs)
 
         return True
 
@@ -187,7 +222,7 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(message.subset):
             return
 
-        subset = self._layer_widget.layer
+        subset = message.subset #self._layer_widget.layer
         cid = subset.data.id[self._options_widget.file_att]
         mask = subset.to_mask()
         component = subset.data.get_component(cid)

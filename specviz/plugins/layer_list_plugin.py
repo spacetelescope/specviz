@@ -101,8 +101,8 @@ class LayerListPlugin(Plugin):
     def _export_layer(self):
         from astropy.io import registry as io_registry
 
-        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].masked_data
-        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].masked_data
+        all_formats = io_registry.get_formats(Spectrum1DRef)['Format'].data
+        writable_formats = io_registry.get_formats(Spectrum1DRef)['Write'].data
 
         write_mask = [True if x == 'Yes' else False for x in writable_formats]
         all_formats = all_formats[np.array(write_mask)]
