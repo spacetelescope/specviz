@@ -23,7 +23,7 @@ from ..widgets.plugin import Plugin
 from ..widgets.utils import UI_PATH
 
 # To memorize last visited directory.
-_model_directory = os.environ["HOME"]
+_model_directory = os.path.expanduser('~')
 
 
 class ModelFittingPlugin(Plugin):
