@@ -14,7 +14,7 @@ dispatch.register_event("on_added_to_window", args=["layer", "window"])
 dispatch.register_event("on_show_linelists_window")
 dispatch.register_event("on_dismiss_linelists_window")
 dispatch.register_event("on_request_linelists")
-dispatch.register_event("on_plot_linelists", args=["table_views"])
+dispatch.register_event("on_plot_linelists", args=["table_views", "tabbed_panes", "units"])
 dispatch.register_event("on_erase_linelabels")
 
 dispatch.register_event("on_removed_data", args=["data"])
