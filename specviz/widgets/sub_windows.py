@@ -520,21 +520,28 @@ class PlotSubWindow(UiPlotSubWindow):
                     # redshift correction for plotting the specific lines
                     # defined in this list. Defined by the text content
                     # and combo box setting.
-                    if tabbed_pane.redshift_textbox.hasAcceptableInput():
-                        redshift = float(tabbed_pane.redshift_textbox.text())
-                        z_units = tabbed_pane.combo_box_z_units.currentText()
+                    # This needs to be implemented in a loop that scans all
+                    # tabs (sets) associated to a given line list, and add
+                    # all together ina single plot. For now, with just pick
+                    # the one, sole tab in there.
+
+                    pane = tabbed_pane.currentWidget()
+
+                    if pane.redshift_textbox.hasAcceptableInput():
+                        redshift = float(pane.redshift_textbox.text())
+                        z_units = pane.combo_box_z_units.currentText()
                         new_list.setRedshift(redshift, z_units)
 
                     # color for plotting the specific lines defined in
                     # this list, is defined by the itemData property.
-                    index = tabbed_pane.combo_box_color.currentIndex()
-                    color = tabbed_pane.combo_box_color.itemData(index, role=Qt.UserRole)
+                    index = pane.combo_box_color.currentIndex()
+                    color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
                     new_list.setColor(color)
 
                     # height for plotting the specific lines defined in
                     # this list. Defined by the line edit text.
-                    if tabbed_pane.height_textbox.hasAcceptableInput():
-                        height = float(tabbed_pane.height_textbox.text())
+                    if pane.height_textbox.hasAcceptableInput():
+                        height = float(pane.height_textbox.text())
                         new_list.setHeight(height)
 
                     linelists_with_selections.append(new_list)
