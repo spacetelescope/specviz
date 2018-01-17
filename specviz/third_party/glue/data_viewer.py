@@ -236,7 +236,7 @@ class SpecVizViewer(DataViewer):
         if message.subset in self._layer_widget:
             self._layer_widget.remove_layer(message.subset)
 
-        subset = self._layer_widget.layer
+        subset = message.subset
 
         spec_data = self._specviz_data_cache.pop(subset)
         dispatch.on_remove_data.emit(spec_data)
