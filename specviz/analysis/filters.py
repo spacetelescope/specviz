@@ -3,8 +3,10 @@ from astropy import convolution
 from collections import OrderedDict
 import numpy as np
 
+from .operations import FunctionalOperation
 
-def smooth(data, kernel, *args, **kwargs):
+
+def smooth(spectral_axis, data, kernel, *args, **kwargs):
     """
     Operates on a spectrum object to return a new, convolved, data set.
 
@@ -30,12 +32,11 @@ def smooth(data, kernel, *args, **kwargs):
         logging.error("Kernel {} is not currently supported.".format(kernel))
         return
 
-    raw_data = convolution.convolve(data.masked_data, kernel)
+    raw_data = convolution.convolve(data, kernel)
 
-    new_data = data.__class__(data=raw_data, unit=data.unit,
-                              dispersion=data.masked_dispersion,
-                              uncertainty=np.zeros(data.uncertainty.array.shape),
-                              dispersion_unit=data.dispersion_unit,
-                              name="Smoothed {}".format(data.name))
+    return raw_data
 
-    return new_data
+
+class SmoothingOperation(FunctionalOperation):
+    def __init__(self, *args, **kwargs):
+        super(SmoothingOperation, self).__init__(smooth, args, kwargs)

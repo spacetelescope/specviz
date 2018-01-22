@@ -15,6 +15,8 @@ if not _ASTROPY_SETUP_:
 
     pass
 
+# Setup a temporary global settings singleton-esque object
+GLOBAL_SETTINGS = {}
 
 from .interfaces.loaders import _load_yaml, _load_py
 
