@@ -5,26 +5,29 @@ from ..core.events import dispatch
 
 
 class StackOperation(type):
+    """Meta class that stores the :class:`~FunctionalOperation` instance on an 
+    operation stack that can be used again in the future.
+    """
     _operations = []
 
     def __call__(cls, *args, **kwargs):
-        instance = super(StackOperation, cls).__call__(cls, *args, **kwargs)
+        instance = super(StackOperation, cls).__call__(*args, **kwargs)
         cls._operations.append(instance)
 
         # Fire an event to let the application know a new operation has been
         # performed
-        dispatch.operation_performed.emit(op=instance)
+        dispatch.performed_operation.emit(operation=instance)
 
         return instance
 
     @classmethod
     def last_operation(cls):
-        return cls._operations.pop()
+        return cls._operations[-1]
 
 
 @six.add_metaclass(StackOperation)
 class Operation(object):
-    
+
     @abc.abstractmethod
     def __call__(self, flux, spectral_axis=None):
         raise NotImplementedError
@@ -46,7 +49,6 @@ class FunctionalOperation(Operation):
     kwargs : dict
         Additional keyword arguments to pass to the function
     """
-    
     def __init__(self, function, args=[], kwargs={}):
         self.function = function
         self.args = args

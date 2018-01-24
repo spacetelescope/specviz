@@ -83,16 +83,6 @@ class ToolTrayPlugin(Plugin):
             category='Options',
             enabled=False)
 
-        # ---
-        # Setup plot options
-        self.add_tool_bar_actions(
-            name="Apply to Cube",
-            description='Apply latest function to cube',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='Options',
-            enabled=True,
-            callback=self.apply_to_cube)
-
     def setup_connections(self):
         self._smoothing_kernel_dialog.accepted.connect(
             self._perform_smooth)
