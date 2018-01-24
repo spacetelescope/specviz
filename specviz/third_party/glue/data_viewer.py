@@ -17,6 +17,9 @@ from ...core import dispatch
 from ...core.data import Spectrum1DRef
 from .layer_widget import LayerWidget
 from .viewer_options import OptionsWidget
+from ...widgets.plugin import Plugin
+from ...widgets.utils import ICON_PATH
+from ...analysis.filters import SmoothingOperation
 
 __all__ = ['SpecVizViewer']
 
@@ -256,3 +259,24 @@ class SpecVizViewer(DataViewer):
 
     def options_widget(self):
         return self._model_fitting
+
+
+class SpectralOperationPlugin(Plugin):
+    name = "CubeViz Operations"
+    location = "hidden"
+    priority = 0
+
+    def setup_ui(self):
+        self.add_tool_bar_actions(
+            name="Apply to Cube",
+            description='Apply latest function to cube',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='CubeViz Operations',
+            enabled=True,
+            callback=self.apply_to_cube)
+
+    def setup_connections(self):
+        pass
+
+    def apply_to_cube(self):
+        dispatch.apply_function.emit(func=SmoothingOperation.last_operation())
