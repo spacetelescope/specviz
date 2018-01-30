@@ -30,7 +30,7 @@ The following are some brief notes I took during our meeting.
   a possible list (used with HST?), Ivo?
 
 
-2nd round (Susan, Tony, Nick, Ivo)
+2nd round (Susan, Tony, Nick, Ivo, 1/30/2018)
 
 - Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
   drop-down or similar selector to allow user to pick out specific line lists from internal library or
