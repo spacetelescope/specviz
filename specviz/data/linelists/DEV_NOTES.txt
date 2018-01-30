@@ -28,3 +28,19 @@ The following are some brief notes I took during our meeting.
 
 - We will need an optical line list that can be redshifted (down to near UV?). Action on me. Do you have
   a possible list (used with HST?), Ivo?
+
+
+2nd round (Susan, Tony, Nick, Ivo)
+
+- Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
+  drop-down or similar selector to allow user to pick out specific line lists from internal library or
+  external file. User will also select wavelength end points from pre-populated text fields. And select
+  species and intensities from appropriate GUI elements TBD.
+
+- Add ability to write line lists. Reading is already specified by requirement above.
+
+- Y axis locking when displaying line ID markers.
+
+- Use ECSV format throughout.
+
+
