@@ -496,7 +496,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         linelists_with_selections = []
 
-        for table_view, tabbed_pane in zip(table_views, tabbed_panes):
+        for table_view, pane in zip(table_views, tabbed_panes):
             # Find matching line list by its name. This could be made
             # simpler by the use of a dict. That breaks code elsewhere
             # though: it is assumed by that code that self.linelists
@@ -520,13 +520,6 @@ class PlotSubWindow(UiPlotSubWindow):
                     # redshift correction for plotting the specific lines
                     # defined in this list. Defined by the text content
                     # and combo box setting.
-                    # This needs to be implemented in a loop that scans all
-                    # tabs (sets) associated to a given line list, and add
-                    # all together ina single plot. For now, with just pick
-                    # the one, sole tab in there.
-
-                    pane = tabbed_pane.currentWidget()
-
                     if pane.redshift_textbox.hasAcceptableInput():
                         redshift = float(pane.redshift_textbox.text())
                         z_units = pane.combo_box_z_units.currentText()

@@ -198,7 +198,7 @@ class LineListsWindow(UiLinelistsWindow):
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
             table_views=self._table_views,
-            tabbed_panes=self.tabbed_panes,
+            tabbed_panes=self.panes,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
@@ -430,7 +430,6 @@ class LineListPane(QWidget):
         pane, table_view = self.caller._createLineListPane(local_list, table_model)
 
         self.caller._set_tabbed_panes[self.caller.tabWidget.currentIndex()].addTab(pane, "NEXT")
-
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
