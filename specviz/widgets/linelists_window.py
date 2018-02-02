@@ -263,9 +263,9 @@ class LineListsWindow(UiLinelistsWindow):
         # favor. We might add a toggle that users can set/reset depending
         # on their preferences.
         table_view.setSortingEnabled(False)
-        proxy = SortModel(table_model.getName())
-        proxy.setSourceModel(table_model)
-        table_view.setModel(proxy)
+        self.sort_proxy = SortModel(table_model.getName())
+        self.sort_proxy.setSourceModel(table_model)
+        table_view.setModel(self.sort_proxy)
         table_view.setSortingEnabled(True)
         table_view.horizontalHeader().setStretchLastSection(True)
 
@@ -283,7 +283,7 @@ class LineListsWindow(UiLinelistsWindow):
         # of the list. Use zero to sort by wavelength
         # on load. Doesn't seem to affect performance
         # by much tough.
-        proxy.sort(-1, Qt.AscendingOrder)
+        self.sort_proxy.sort(-1, Qt.AscendingOrder)
 
         # table selections will change the total count of lines selected.
         selectionModel = table_view.selectionModel()
@@ -425,10 +425,21 @@ class LineListPane(QWidget):
     def _createSet(self):
         # build list with only the selected rows
         rows = self.table_view.selectionModel().selectedRows()
-        r = [x.row() for x in rows]
-        local_list = self.linelist[r]
+
+        # rows = self.caller.sort_proxy.mapSelectionToSource(rows)
+
+        if len(rows) > 0:
+            r = [x.row() for x in rows]
+
+            print("@@@@@@  file linelists_window.py; line 435 - ",  r)
+
+            local_list = self.linelist[r]
+        else:
+            local_list = self.linelist
 
         table_model = LineListTableModel(local_list)
+
+
 
         # we re-use most of the code in the caller. No need to
         # replicate it, even though we are now in a different tabbed
@@ -489,7 +500,7 @@ class PlottedLinesPane(QWidget):
             # will favor.
 
             table_view.setSortingEnabled(False)
-            proxy = SortModel(table_model.getName(), )
+            proxy = SortModel(table_model.getName())
             proxy.setSourceModel(table_model)
             table_view.setModel(proxy)
             table_view.setSortingEnabled(True)
