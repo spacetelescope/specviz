@@ -423,25 +423,18 @@ class LineListPane(QWidget):
         panel_layout.addWidget(button_pane)
 
     def _createSet(self):
-        # when called, this method needs to know which line list is
-        # having a new view created from. The table model can be created
-        # here, locally, without the need for testing number of rows,
-        # since the line list was already accepted.
-        local_list = self.linelist
+        # build list with only the selected rows
+        rows = self.table_view.selectionModel().selectedRows()
+        r = [x.row() for x in rows]
+        local_list = self.linelist[r]
+
         table_model = LineListTableModel(local_list)
-
-
-        print("@@@@@@  file  ; line 433 - ",  self.table_view.selectionModel().selectedRows())
-
-
 
         # we re-use most of the code in the caller. No need to
         # replicate it, even though we are now in a different tabbed
         # pane altogether.
         pane, table_view = self.caller._createLineListPane(local_list, table_model)
-
         current_index = self.caller.tabWidget.currentIndex()
-
         self.caller.tab_count[current_index] += 1
         self.caller.set_tabbed_panes[current_index].addTab(pane, str(self.caller.tab_count[current_index]))
 
