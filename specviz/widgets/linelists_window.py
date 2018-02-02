@@ -213,6 +213,7 @@ class LineListsWindow(UiLinelistsWindow):
         # in each line list.
         self.table_views = []
         self.set_tabbed_panes = []
+        self.tab_count = []
 
         # separate pane that lists the lines actually plotted.
         self._plotted_lines_pane = QWidget()
@@ -237,6 +238,7 @@ class LineListsWindow(UiLinelistsWindow):
                 # store for use down stream.
                 self.table_views.append(table_view)
                 self.set_tabbed_panes.append(set_tabbed_pane)
+                self.tab_count.append(0)
                 self.panes.append(pane)
 
         # add extra tab to hold the plotted lines view.
@@ -324,7 +326,7 @@ class LineListPane(QWidget):
 
         self.linelist = linelist
         self.caller = caller
-        self.count = 0
+        self.table_view = table_view
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -429,7 +431,7 @@ class LineListPane(QWidget):
         table_model = LineListTableModel(local_list)
 
 
-# table_view.selectionModel().selectedRows()
+        print("@@@@@@  file  ; line 433 - ",  self.table_view.selectionModel().selectedRows())
 
 
 
@@ -438,8 +440,10 @@ class LineListPane(QWidget):
         # pane altogether.
         pane, table_view = self.caller._createLineListPane(local_list, table_model)
 
-        self.count += 1
-        self.caller.set_tabbed_panes[self.caller.tabWidget.currentIndex()].addTab(pane, str(self.count))
+        current_index = self.caller.tabWidget.currentIndex()
+
+        self.caller.tab_count[current_index] += 1
+        self.caller.set_tabbed_panes[current_index].addTab(pane, str(self.caller.tab_count[current_index]))
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
