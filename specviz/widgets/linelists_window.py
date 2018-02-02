@@ -197,7 +197,7 @@ class LineListsWindow(UiLinelistsWindow):
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
-            table_views=self._table_views,
+            table_views=self.table_views,
             tabbed_panes=self.panes,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
@@ -211,8 +211,8 @@ class LineListsWindow(UiLinelistsWindow):
         # passed to  whoever is going to do the actual line list plotting.
         # The plotting code must know which lines (table rows) are selected
         # in each line list.
-        self._table_views = []
-        self._set_tabbed_panes = []
+        self.table_views = []
+        self.set_tabbed_panes = []
 
         # separate pane that lists the lines actually plotted.
         self._plotted_lines_pane = QWidget()
@@ -235,8 +235,8 @@ class LineListsWindow(UiLinelistsWindow):
                 self.tabWidget.addTab(set_tabbed_pane, table_model.getName())
 
                 # store for use down stream.
-                self._table_views.append(table_view)
-                self._set_tabbed_panes.append(set_tabbed_pane)
+                self.table_views.append(table_view)
+                self.set_tabbed_panes.append(set_tabbed_pane)
                 self.panes.append(pane)
 
         # add extra tab to hold the plotted lines view.
@@ -301,7 +301,7 @@ class LineListsWindow(UiLinelistsWindow):
 
     def _countSelections(self):
         count = 0
-        for table_view in self._table_views:
+        for table_view in self.table_views:
             count += len(table_view.selectionModel().selectedRows())
         self.lines_selected_label.setText(str(count))
 
@@ -324,6 +324,7 @@ class LineListPane(QWidget):
 
         self.linelist = linelist
         self.caller = caller
+        self.count = 0
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -427,13 +428,22 @@ class LineListPane(QWidget):
         local_list = self.linelist
         table_model = LineListTableModel(local_list)
 
+
+# table_view.selectionModel().selectedRows()
+
+
+
+        # we re-use most of the code in the caller. No need to
+        # replicate it, even though we are now in a different tabbed
+        # pane altogether.
         pane, table_view = self.caller._createLineListPane(local_list, table_model)
 
-        self.caller._set_tabbed_panes[self.caller.tabWidget.currentIndex()].addTab(pane, "NEXT")
+        self.count += 1
+        self.caller.set_tabbed_panes[self.caller.tabWidget.currentIndex()].addTab(pane, str(self.count))
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
-        self.caller._table_views.append(table_view)
+        self.caller.table_views.append(table_view)
 
         # it remains to be seen if this is really necessary. It is used by
         # the drawing code though.
