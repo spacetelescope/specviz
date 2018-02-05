@@ -28,6 +28,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMenu, QToolBar
 from docopt import docopt
 
+from . import GLOBAL_SETTINGS
 from .widgets.utils import ICON_PATH
 from .core.events import dispatch
 from .widgets.windows import MainWindow

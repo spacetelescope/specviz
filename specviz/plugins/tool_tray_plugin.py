@@ -3,11 +3,13 @@ Holder for the general UI operations
 """
 import os
 
-from ..widgets.utils import ICON_PATH
-from ..analysis.filters import smooth
-from ..core.events import dispatch, dispatch
+import numpy as np
+
+from ..analysis.filters import SmoothingOperation
+from ..core.events import dispatch
 from ..widgets.dialogs import SmoothingDialog
 from ..widgets.plugin import Plugin
+from ..widgets.utils import ICON_PATH
 
 
 class ToolTrayPlugin(Plugin):
@@ -63,7 +65,6 @@ class ToolTrayPlugin(Plugin):
             enabled=False,
             callback=self._smoothing_kernel_dialog.exec_)
 
-
         # ---
         # Setup transformations buttons
         self.add_tool_bar_actions(
@@ -87,9 +88,22 @@ class ToolTrayPlugin(Plugin):
             self._perform_smooth)
 
     def _perform_smooth(self):
-        new_data = smooth(self.current_layer,
-                          self._smoothing_kernel_dialog.kernel,
-                          *self._smoothing_kernel_dialog.args)
+        layer = self.current_layer
+
+        smoothing_operation = SmoothingOperation(
+            self._smoothing_kernel_dialog.kernel,
+            *self._smoothing_kernel_dialog.args)
+
+        raw_data = smoothing_operation(layer.data)
+
+        new_data = layer.__class__(data=raw_data,
+                                   unit=layer.unit,
+                                   mask=layer.mask,
+                                   dispersion=layer.masked_dispersion,
+                                   uncertainty=np.zeros(
+                                       layer.uncertainty.array.shape),
+                                   dispersion_unit=layer.dispersion_unit,
+                                   name="Smoothed {}".format(layer.name))
 
         dispatch.on_add_layer.emit(layer=new_data)
 

@@ -296,6 +296,7 @@ class PlotSubWindow(UiPlotSubWindow):
     def get_all_layers(self):
         return [plot.layer for plot in self._plots]
 
+    @dispatch.register_listener("changed_units")
     def change_units(self, x=None, y=None, z=None):
         for cntr in self._plots:
             cntr.change_units(x, y, z)
