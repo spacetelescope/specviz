@@ -263,9 +263,10 @@ class LineListsWindow(UiLinelistsWindow):
         # favor. We might add a toggle that users can set/reset depending
         # on their preferences.
         table_view.setSortingEnabled(False)
-        self.sort_proxy = SortModel(table_model.getName())
-        self.sort_proxy.setSourceModel(table_model)
-        table_view.setModel(self.sort_proxy)
+        sort_proxy = SortModel(table_model.getName())
+        sort_proxy.setSourceModel(table_model)
+
+        table_view.setModel(sort_proxy)
         table_view.setSortingEnabled(True)
         table_view.horizontalHeader().setStretchLastSection(True)
 
@@ -283,12 +284,12 @@ class LineListsWindow(UiLinelistsWindow):
         # of the list. Use zero to sort by wavelength
         # on load. Doesn't seem to affect performance
         # by much tough.
-        self.sort_proxy.sort(-1, Qt.AscendingOrder)
+        sort_proxy.sort(-1, Qt.AscendingOrder)
 
         # table selections will change the total count of lines selected.
         selectionModel = table_view.selectionModel()
         selectionModel.selectionChanged.connect(self._countSelections)
-        pane = LineListPane(table_view, linelist, self)
+        pane = LineListPane(table_view, linelist, sort_proxy, self)
 
         return pane, table_view
 
@@ -321,12 +322,13 @@ class LineListPane(QWidget):
 
     # this builds a single pane dedicated to a single list.
 
-    def __init__(self, table_view, linelist, caller, *args, **kwargs):
+    def __init__(self, table_view, linelist, sort_proxy, caller, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
 
         self.linelist = linelist
         self.caller = caller
         self.table_view = table_view
+        self.sort_proxy = sort_proxy
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -423,23 +425,18 @@ class LineListPane(QWidget):
         panel_layout.addWidget(button_pane)
 
     def _createSet(self):
-        # build list with only the selected rows
-        rows = self.table_view.selectionModel().selectedRows()
-
-        # rows = self.caller.sort_proxy.mapSelectionToSource(rows)
-
-        if len(rows) > 0:
-            r = [x.row() for x in rows]
-
-            print("@@@@@@  file linelists_window.py; line 435 - ",  r)
-
+        # build list with only the selected rows. These must be model
+        # rows, not view rows!
+        selected_view_rows = self.table_view.selectionModel().selectedRows()
+        selected_model_rows = [self.sort_proxy.mapToSource(x) for x in selected_view_rows]
+        if len(selected_model_rows) > 0:
+            r = [x.row() for x in selected_model_rows]
             local_list = self.linelist[r]
         else:
+            # if no rows are selected, get the entire thing.
             local_list = self.linelist
 
         table_model = LineListTableModel(local_list)
-
-
 
         # we re-use most of the code in the caller. No need to
         # replicate it, even though we are now in a different tabbed
@@ -614,7 +611,11 @@ class LineListTableModel(QAbstractTableModel):
             if self._linelist.colnames[section] in [WAVELENGTH_COLUMN, ERROR_COLUMN]:
                 result = self._linelist.columns[section].unit
             else:
-                result = self._linelist.tooltips[section]
+                # this captures glitches that generate None tooltips
+                if self._linelist.tooltips:
+                    result = self._linelist.tooltips[section]
+                else:
+                    result = ''
             return str(result)
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
