@@ -14,7 +14,7 @@ The following are some brief notes I took during our meeting.
   option on view.  DONE
 
 - Allow line list groups to be viewed, also selected and edited to form new (smaller) line lists from
-  a subset of lines in a list.
+  a subset of lines in a list. DONE
 
 - Line list tables should be sortable as well as selectable by name as well as wavelength (or any column
   of information available) DONE
