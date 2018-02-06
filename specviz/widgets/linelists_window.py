@@ -91,6 +91,8 @@ class UiLinelistsWindow(object):
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.tabWidget = QTabWidget(self.centralWidget)
         self.tabWidget.setObjectName("tabWidget")
+        # self.tabWidget.setTabsClosable(True)
+        # self.tabWidget.tabCloseRequested.connect(self.tab_close)
         self.verticalLayout_11.addWidget(self.tabWidget)
         self.gridLayout.addLayout(self.verticalLayout_11, 0, 0, 1, 1)
         self.horizontalLayout_7 = QHBoxLayout()
@@ -131,9 +133,11 @@ class UiLinelistsWindow(object):
         self.menuBar.addAction(self.menuFile.menuAction())
         self.mainToolBar.addAction(self.actionOpen)
         self.mainToolBar.addSeparator()
-
         self.retranslateUi(MainWindow)
         QMetaObject.connectSlotsByName(MainWindow)
+
+    # def tab_close(self, index):
+    #     self.tabWidget.removeTab(index)
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
@@ -228,6 +232,9 @@ class LineListsWindow(UiLinelistsWindow):
                 # original line list), to the tabbed pane that contains
                 # the sets corresponding to the current line list.
                 set_tabbed_pane = QTabWidget()
+                # set_tabbed_pane.setTabsClosable(True)
+                # set_tabbed_pane.tabCloseRequested.connect(self.tab_close)
+
                 pane, table_view = self._createLineListPane(linelist, table_model)
                 set_tabbed_pane.addTab(pane, "Original")
 
@@ -243,6 +250,10 @@ class LineListsWindow(UiLinelistsWindow):
 
         # add extra tab to hold the plotted lines view.
         self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
+
+    # def tab_close(self, index):
+    #     self..removeTab(index)
+
 
     def _createLineListPane(self, linelist, table_model):
         # this method creates one single tabbed pane with, initially,
