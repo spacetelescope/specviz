@@ -487,17 +487,26 @@ class PlotSubWindow(UiPlotSubWindow):
         self.linelists = ingest(self.waverange)
 
     @dispatch.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, tabbed_panes, units, **kwargs):
+    def _plot_linelists(self, table_views_2D, panes_2D, units, **kwargs):
 
         if not self._is_selected:
             return
 
+        # first, we have to flatten out the 2-D lists into 1-D
+        # to conform with the logic previously used in this code.
+        table_views = []
+        panes = []
+        for tws, ps in zip(table_views_2D, panes_2D):
+            for table_view in tws:
+                table_views.append(table_view)
+            for pane in ps:
+                panes.append(pane)
+
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
-
         linelists_with_selections = []
 
-        for table_view, pane in zip(table_views, tabbed_panes):
+        for table_view, pane in zip(table_views, panes):
             # Find matching line list by its name. This could be made
             # simpler by the use of a dict. That breaks code elsewhere
             # though: it is assumed by that code that self.linelists

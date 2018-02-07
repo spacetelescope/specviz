@@ -91,8 +91,8 @@ class UiLinelistsWindow(object):
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.tabWidget = QTabWidget(self.centralWidget)
         self.tabWidget.setObjectName("tabWidget")
-        # self.tabWidget.setTabsClosable(True)
-        # self.tabWidget.tabCloseRequested.connect(self.tab_close)
+        self.tabWidget.setTabsClosable(True)
+        self.tabWidget.tabCloseRequested.connect(self.tab_close)
         self.verticalLayout_11.addWidget(self.tabWidget)
         self.gridLayout.addLayout(self.verticalLayout_11, 0, 0, 1, 1)
         self.horizontalLayout_7 = QHBoxLayout()
@@ -136,8 +136,8 @@ class UiLinelistsWindow(object):
         self.retranslateUi(MainWindow)
         QMetaObject.connectSlotsByName(MainWindow)
 
-    # def tab_close(self, index):
-    #     self.tabWidget.removeTab(index)
+    def tab_close(self, index):
+        self.tabWidget.removeTab(index)
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
@@ -201,21 +201,23 @@ class LineListsWindow(UiLinelistsWindow):
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
-            table_views=self.table_views,
-            tabbed_panes=self.panes,
+            table_views_2D=self.table_views,
+            panes_2D=self.panes,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
 
     def _buildViews(self, plot_window):
 
+        # 2-D lists of lists that stores all panes and views
+        # that are alive at any given time.
         self.panes = []
+        self.table_views = []
 
         # Table views must be preserved in the instance so they can be
         # passed to  whoever is going to do the actual line list plotting.
         # The plotting code must know which lines (table rows) are selected
         # in each line list.
-        self.table_views = []
         self.set_tabbed_panes = []
         self.tab_count = []
 
@@ -243,10 +245,10 @@ class LineListsWindow(UiLinelistsWindow):
                 self.tabWidget.addTab(set_tabbed_pane, table_model.getName())
 
                 # store for use down stream.
-                self.table_views.append(table_view)
+                self.table_views.append([table_view])
                 self.set_tabbed_panes.append(set_tabbed_pane)
                 self.tab_count.append(0)
-                self.panes.append(pane)
+                self.panes.append([pane])
 
         # add extra tab to hold the plotted lines view.
         self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
@@ -315,11 +317,12 @@ class LineListsWindow(UiLinelistsWindow):
 
     def _countSelections(self):
         count = 0
-        for table_view in self.table_views:
-            count += len(table_view.selectionModel().selectedRows())
+        for sublist in self.table_views:
+            for table_view in sublist:
+                count += len(table_view.selectionModel().selectedRows())
         self.lines_selected_label.setText(str(count))
 
-        color = 'black' if count < 200 else 'red'
+        color = 'black' if count < 100 else 'red'
         self.lines_selected_label.setStyleSheet('color:'+color)
 
     def show(self):
@@ -338,8 +341,8 @@ class LineListPane(QWidget):
 
         self.linelist = linelist
         self.caller = caller
-        self.table_view = table_view
-        self.sort_proxy = sort_proxy
+        self._sort_proxy = sort_proxy
+        self._table_view = table_view
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -426,6 +429,8 @@ class LineListPane(QWidget):
             model.appendRow(item)
         hlayout.addWidget(self.combo_box_z_units, 1, 5)
 
+        self.caller.tabWidget.tabCloseRequested.connect(self.kill_panes)
+
         # put it all together.
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         hlayout.addItem(spacerItem, 1, 6)
@@ -435,11 +440,29 @@ class LineListPane(QWidget):
         panel_layout.addWidget(table_view)
         panel_layout.addWidget(button_pane)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def kill_panes(self, index):
+
+        if self in self.caller.panes[index]:
+
+            # pass
+
+            element = self.caller.table_views[index]
+            self.caller.table_views.remove(element)
+
+#TODO removing a pane here affects the logic
+
+            element = self.caller.panes[index]
+            self.caller.panes.remove(element)
+
     def _createSet(self):
+
         # build list with only the selected rows. These must be model
         # rows, not view rows!
-        selected_view_rows = self.table_view.selectionModel().selectedRows()
-        selected_model_rows = [self.sort_proxy.mapToSource(x) for x in selected_view_rows]
+        selected_view_rows = self._table_view.selectionModel().selectedRows()
+        selected_model_rows = [self._sort_proxy.mapToSource(x) for x in selected_view_rows]
         if len(selected_model_rows) > 0:
             r = [x.row() for x in selected_model_rows]
             local_list = self.linelist[r]
@@ -459,11 +482,8 @@ class LineListPane(QWidget):
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
-        self.caller.table_views.append(table_view)
-
-        # it remains to be seen if this is really necessary. It is used by
-        # the drawing code though.
-        self.caller.panes.append(pane)
+        self.caller.table_views[current_index].append(table_view)
+        self.caller.panes[current_index].append(pane)
 
 
 class PlottedLinesPane(QWidget):
