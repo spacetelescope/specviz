@@ -201,8 +201,8 @@ class LineListsWindow(UiLinelistsWindow):
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
-            table_views_2D=self.table_views,
-            panes_2D=self.panes,
+            table_views=self.table_views,
+            panes=self.panes,
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
@@ -245,10 +245,10 @@ class LineListsWindow(UiLinelistsWindow):
                 self.tabWidget.addTab(set_tabbed_pane, table_model.getName())
 
                 # store for use down stream.
-                self.table_views.append([table_view])
+                self.table_views.append(table_view)
                 self.set_tabbed_panes.append(set_tabbed_pane)
                 self.tab_count.append(0)
-                self.panes.append([pane])
+                self.panes.append(pane)
 
         # add extra tab to hold the plotted lines view.
         self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
@@ -317,8 +317,9 @@ class LineListsWindow(UiLinelistsWindow):
 
     def _countSelections(self):
         count = 0
-        for sublist in self.table_views:
-            for table_view in sublist:
+        # for sublist in self.table_views:
+        #     for table_view in sublist:
+        for table_view in self.table_views:
                 count += len(table_view.selectionModel().selectedRows())
         self.lines_selected_label.setText(str(count))
 
@@ -482,8 +483,10 @@ class LineListPane(QWidget):
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
-        self.caller.table_views[current_index].append(table_view)
-        self.caller.panes[current_index].append(pane)
+        # self.caller.table_views[current_index].append(table_view)
+        # self.caller.panes[current_index].append(pane)
+        self.caller.table_views.append(table_view)
+        self.caller.panes.append(pane)
 
 
 class PlottedLinesPane(QWidget):
