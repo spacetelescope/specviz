@@ -245,42 +245,29 @@ class LineListsWindow(UiLinelistsWindow):
 
     def _buildViews(self, plot_window):
 
-        # 2-D lists of lists that stores all panes and views
-        # that are alive at any given time.
-        # self.panes = []
-        # self.table_views = []
-
-        # Table views must be preserved in the instance so they can be
-        # passed to  whoever is going to do the actual line list plotting.
-        # The plotting code must know which lines (table rows) are selected
-        # in each line list.
-        # self.set_tabbed_panes = []
-        # self.tab_count = []
-
-        # separate pane that lists the lines actually plotted.
-        # self._plotted_lines_pane = QWidget()
-
         for linelist in plot_window.linelists:
 
             table_model = LineListTableModel(linelist)
 
             if table_model.rowCount() > 0:
-
                 # here we add the first pane (the one with the entire
                 # original line list), to the tabbed pane that contains
-                # the sets corresponding to the current line list.
-                set_tabbed_pane = QTabWidget()
-                set_tabbed_pane.setTabsClosable(True)
-                # set_tabbed_pane.tabCloseRequested.connect(self.tab_close)
+                # the line sets corresponding to the current line list.
+                lineset_tabbed_pane = QTabWidget()
+                lineset_tabbed_pane.setTabsClosable(True)
+                # lineset_tabbed_pane.tabCloseRequested.connect(self.tab_close)
 
                 pane, table_view = _createLineListPane(linelist, table_model)
-                set_tabbed_pane.addTab(pane, "Original")
-                self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
-                table_view.selectionModel().selectionChanged.connect(self._countSelections)
+                lineset_tabbed_pane.addTab(pane, "Original")
+                pane.setLineSetsTabbedPane(lineset_tabbed_pane)
 
-                # now we add this "set tabbed pane" to the main tabbed
+                # connect signals
+                table_view.selectionModel().selectionChanged.connect(self._countSelections)
+                self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
+
+                # now we add this "line set tabbed pane" to the main tabbed
                 # pane, with name taken from the list model.
-                self.tabWidget.addTab(set_tabbed_pane, table_model.getName())
+                self.tabWidget.addTab(lineset_tabbed_pane, table_model.getName())
 
                 # store for use down stream.
                 # self.table_views.append(table_view)
@@ -452,12 +439,14 @@ class LineListPane(QWidget):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def setLineSetsTabbedPane(self, pane):
+        self._sets_tabbed_pane = pane
+
     def kill_panes(self, index):
         # nothing for now
         pass
 
     def _createSet(self):
-
         # build list with only the selected rows. These must be model
         # rows, not view rows!
         selected_view_rows = self.table_view.selectionModel().selectedRows()
@@ -471,14 +460,14 @@ class LineListPane(QWidget):
 
         table_model = LineListTableModel(local_list)
 
-        # we re-use most of the code in the caller. No need to
-        # replicate it, even though we are now in a different tabbed
-        # pane altogether.
         pane, table_view = _createLineListPane(local_list, table_model)
 
-        current_index = self.caller.tabWidget.currentIndex()
-        self.caller.tab_count[current_index] += 1
-        self.caller.set_tabbed_panes[current_index].addTab(pane, str(self.caller.tab_count[current_index]))
+        pane.setLineSetsTabbedPane(self._sets_tabbed_pane)
+
+
+        npanels = self._sets_tabbed_pane.count()
+
+        self._sets_tabbed_pane.addTab(pane, str(npanels))
 
         # self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
 
@@ -486,12 +475,7 @@ class LineListPane(QWidget):
 
 
 
-        # when creating a new set, it must ne included in the app-wide list of
-        # views so the drawing code can pick it up.
-        # self.caller.table_views[current_index].append(table_view)
-        # self.caller.panes[current_index].append(pane)
-        # self.caller.table_views.append(table_view)
-        # self.caller.panes.append(pane)
+
 
 
 class PlottedLinesPane(QWidget):
