@@ -21,7 +21,6 @@ ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          '..', 'data', 'qt', 'resources'))
 
 
-
 # We need our own mapping because the list with color names returned by
 # QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
 ID_COLORS = {
@@ -40,6 +39,49 @@ PLOTTED = "Plotted"
 
 
 #TODO work in progress
+
+
+# Function that creates one single tabbed pane with one single view of a line list.
+
+def _createLineListPane(linelist, table_model):
+
+    table_view = QTableView()
+
+    # disabling sorting will significantly speed up the rendering,
+    # in particular of large line lists. These lists are often jumbled
+    # in wavelength, and consequently difficult to read and use, so
+    # having a sorting option is useful indeed. It remains to be seen
+    # what would be the approach users will favor. We might add a toggle
+    # that users can set/reset depending on their preferences.
+    table_view.setSortingEnabled(False)
+    sort_proxy = SortModel(table_model.getName())
+    sort_proxy.setSourceModel(table_model)
+
+    table_view.setModel(sort_proxy)
+    table_view.setSortingEnabled(True)
+    table_view.horizontalHeader().setStretchLastSection(True)
+
+    # playing with these doesn't speed up the sorting, regardless of whatever
+    # you may read on the net.
+    #
+    # table_view.horizontalHeader().setResizeMode(QHeaderView.Fixed)
+    # table_view.verticalHeader().setResizeMode(QHeaderView.Fixed)
+    # table_view.horizontalHeader().setStretchLastSection(False)
+    # table_view.verticalHeader().setStretchLastSection(False)
+    table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+    table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
+    table_view.resizeColumnsToContents()
+
+    # this preserves the original sorting state of the list. Use zero
+    # to sort by wavelength on load. Doesn't seem to affect performance
+    # by much tough.
+    sort_proxy.sort(-1, Qt.AscendingOrder)
+
+    # table selections will change the total count of lines selected.
+    pane = LineListPane(table_view, linelist, sort_proxy)
+
+    return pane, table_view
+
 
 # The line list window must be a full fledged window and not a dialog.
 # Dialogs do not support things like menu bars and central widgets.
@@ -168,6 +210,7 @@ class ClosableMainWindow(QMainWindow):
 
 
 class LineListsWindow(UiLinelistsWindow):
+
     def __init__(self, plot_window, parent=None):
         super(LineListsWindow, self).__init__()
 
@@ -189,10 +232,6 @@ class LineListsWindow(UiLinelistsWindow):
         #     priority=1,
         #     callback=lambda: dispatch.on_file_open.emit())
 
-
-
-
-
         # Connect buttons to appropriate signals.
         #
         # Note that, for the Draw operation, we have to pass the table views to
@@ -201,8 +240,8 @@ class LineListsWindow(UiLinelistsWindow):
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
         self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
-            table_views=self.table_views,
-            panes=self.panes,
+            table_views=self._getTableViews(),
+            panes=self._getPanes(),
             units=plot_window.waverange[0].unit))
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
@@ -211,18 +250,18 @@ class LineListsWindow(UiLinelistsWindow):
 
         # 2-D lists of lists that stores all panes and views
         # that are alive at any given time.
-        self.panes = []
-        self.table_views = []
+        # self.panes = []
+        # self.table_views = []
 
         # Table views must be preserved in the instance so they can be
         # passed to  whoever is going to do the actual line list plotting.
         # The plotting code must know which lines (table rows) are selected
         # in each line list.
-        self.set_tabbed_panes = []
-        self.tab_count = []
+        # self.set_tabbed_panes = []
+        # self.tab_count = []
 
         # separate pane that lists the lines actually plotted.
-        self._plotted_lines_pane = QWidget()
+        # self._plotted_lines_pane = QWidget()
 
         for linelist in plot_window.linelists:
 
@@ -234,95 +273,71 @@ class LineListsWindow(UiLinelistsWindow):
                 # original line list), to the tabbed pane that contains
                 # the sets corresponding to the current line list.
                 set_tabbed_pane = QTabWidget()
-                # set_tabbed_pane.setTabsClosable(True)
+                set_tabbed_pane.setTabsClosable(True)
                 # set_tabbed_pane.tabCloseRequested.connect(self.tab_close)
 
-                pane, table_view = self._createLineListPane(linelist, table_model)
+                pane, table_view = _createLineListPane(linelist, table_model)
                 set_tabbed_pane.addTab(pane, "Original")
+                self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
+                table_view.selectionModel().selectionChanged.connect(self._countSelections)
 
                 # now we add this "set tabbed pane" to the main tabbed
                 # pane, with name taken from the list model.
                 self.tabWidget.addTab(set_tabbed_pane, table_model.getName())
 
                 # store for use down stream.
-                self.table_views.append(table_view)
-                self.set_tabbed_panes.append(set_tabbed_pane)
-                self.tab_count.append(0)
-                self.panes.append(pane)
+                # self.table_views.append(table_view)
+                # self.set_tabbed_panes.append(set_tabbed_pane)
+                # self.tab_count.append(0)
+                # self.panes.append(pane)
 
         # add extra tab to hold the plotted lines view.
-        self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
+        if self.tabWidget.count() > 0:
+            self.tabWidget.addTab(QWidget(), PLOTTED)
 
     # def tab_close(self, index):
     #     self..removeTab(index)
 
 
-    def _createLineListPane(self, linelist, table_model):
-        # this method creates one single tabbed pane with, initially,
-        # one single view of a line list (defining a 'set'). In case
-        # more views/sets are desired, a separate table model must
-        # be provided for each one, even when the line list instance
-        # is the same among the sets. This is to enable model-dependent
-        # operations that can be performed independently among the
-        # multiple views/sets of the same line list.
-
-        table_view = QTableView()
-
-        # disabling sorting will significantly speed up the
-        # rendering, in particular of large line lists. These lists are
-        # often jumbled in wavelength, and consequently difficult
-        # to read and use, so having a sorting option is useful indeed.
-        # It remains to be seen what would be the approach users will
-        # favor. We might add a toggle that users can set/reset depending
-        # on their preferences.
-        table_view.setSortingEnabled(False)
-        sort_proxy = SortModel(table_model.getName())
-        sort_proxy.setSourceModel(table_model)
-
-        table_view.setModel(sort_proxy)
-        table_view.setSortingEnabled(True)
-        table_view.horizontalHeader().setStretchLastSection(True)
-
-        # playing with these doesn't speed up the sorting,
-        # regardless of whatever you may read on the net.
-        # table_view.horizontalHeader().setResizeMode(QHeaderView.Fixed)
-        # table_view.verticalHeader().setResizeMode(QHeaderView.Fixed)
-        # table_view.horizontalHeader().setStretchLastSection(False)
-        # table_view.verticalHeader().setStretchLastSection(False)
-        table_view.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
-        table_view.resizeColumnsToContents()
-
-        # this preserves the original sorting state
-        # of the list. Use zero to sort by wavelength
-        # on load. Doesn't seem to affect performance
-        # by much tough.
-        sort_proxy.sort(-1, Qt.AscendingOrder)
-
-        # table selections will change the total count of lines selected.
-        selectionModel = table_view.selectionModel()
-        selectionModel.selectionChanged.connect(self._countSelections)
-        pane = LineListPane(table_view, linelist, sort_proxy, self)
-
-        return pane, table_view
-
     def displayPlottedLines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
-        self.tabWidget.removeTab(self._index_plotted)
-        self._index_plotted = self.tabWidget.insertTab(self._index_plotted, self._plotted_lines_pane, PLOTTED)
+        index_last = self.tabWidget.count() - 1
+        self.tabWidget.removeTab(index_last)
+        self.tabWidget.insertTab(index_last, self._plotted_lines_pane, PLOTTED)
 
     def erasePlottedLines(self):
-        self.tabWidget.removeTab(self._index_plotted)
-        self._index_plotted = self.tabWidget.addTab(QWidget(), PLOTTED)
+        index_last = self.tabWidget.count() - 1
+        self.tabWidget.removeTab(index_last)
+        self.tabWidget.addTab(QWidget(), PLOTTED)
+
+    def _getTableViews(self):
+        result = []
+        for i1 in range(self.tabWidget.count()):
+            widget = self.tabWidget.widget(i1)
+            if isinstance(widget, QTabWidget):
+                for i2 in range(widget.count()):
+                    result.append(widget.widget(i2).table_view)
+        return result
+
+    def _getPanes(self):
+        result = []
+        for i1 in range(self.tabWidget.count()):
+            widget = self.tabWidget.widget(i1)
+            if isinstance(widget, QTabWidget):
+                for i2 in range(widget.count()):
+                    result.append(widget.widget(i2))
+        return result
 
     def _countSelections(self):
         count = 0
-        # for sublist in self.table_views:
-        #     for table_view in sublist:
-        for table_view in self.table_views:
-                count += len(table_view.selectionModel().selectedRows())
-        self.lines_selected_label.setText(str(count))
+        for i1 in range(self.tabWidget.count()):
+            widget = self.tabWidget.widget(i1)
+            if isinstance(widget, QTabWidget):
+                for i2 in range(widget.count()):
+                    count += len(widget.widget(i2).table_view.selectionModel().selectedRows())
 
+        # display total selected rows, with eventual warning.
+        self.lines_selected_label.setText(str(count))
         color = 'black' if count < 100 else 'red'
         self.lines_selected_label.setStyleSheet('color:'+color)
 
@@ -337,13 +352,12 @@ class LineListPane(QWidget):
 
     # this builds a single pane dedicated to a single list.
 
-    def __init__(self, table_view, linelist, sort_proxy, caller, *args, **kwargs):
+    def __init__(self, table_view, linelist, sort_proxy, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
 
+        self.table_view = table_view
         self.linelist = linelist
-        self.caller = caller
         self._sort_proxy = sort_proxy
-        self._table_view = table_view
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -430,8 +444,6 @@ class LineListPane(QWidget):
             model.appendRow(item)
         hlayout.addWidget(self.combo_box_z_units, 1, 5)
 
-        self.caller.tabWidget.tabCloseRequested.connect(self.kill_panes)
-
         # put it all together.
         spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
         hlayout.addItem(spacerItem, 1, 6)
@@ -462,7 +474,7 @@ class LineListPane(QWidget):
 
         # build list with only the selected rows. These must be model
         # rows, not view rows!
-        selected_view_rows = self._table_view.selectionModel().selectedRows()
+        selected_view_rows = self.table_view.selectionModel().selectedRows()
         selected_model_rows = [self._sort_proxy.mapToSource(x) for x in selected_view_rows]
         if len(selected_model_rows) > 0:
             r = [x.row() for x in selected_model_rows]
@@ -476,17 +488,24 @@ class LineListPane(QWidget):
         # we re-use most of the code in the caller. No need to
         # replicate it, even though we are now in a different tabbed
         # pane altogether.
-        pane, table_view = self.caller._createLineListPane(local_list, table_model)
+        pane, table_view = _createLineListPane(local_list, table_model)
+
         current_index = self.caller.tabWidget.currentIndex()
         self.caller.tab_count[current_index] += 1
         self.caller.set_tabbed_panes[current_index].addTab(pane, str(self.caller.tab_count[current_index]))
+
+        # self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
+
+
+
+
 
         # when creating a new set, it must ne included in the app-wide list of
         # views so the drawing code can pick it up.
         # self.caller.table_views[current_index].append(table_view)
         # self.caller.panes[current_index].append(pane)
-        self.caller.table_views.append(table_view)
-        self.caller.panes.append(pane)
+        # self.caller.table_views.append(table_view)
+        # self.caller.panes.append(pane)
 
 
 class PlottedLinesPane(QWidget):
@@ -681,3 +700,5 @@ class SortModel(QSortFilterProxyModel):
 
     def getName(self):
         return self._name
+
+
