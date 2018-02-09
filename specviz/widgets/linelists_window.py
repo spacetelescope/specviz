@@ -43,7 +43,7 @@ PLOTTED = "Plotted"
 
 # Function that creates one single tabbed pane with one single view of a line list.
 
-def _createLineListPane(linelist, table_model):
+def _createLineListPane(linelist, table_model, caller):
 
     table_view = QTableView()
 
@@ -78,7 +78,7 @@ def _createLineListPane(linelist, table_model):
     sort_proxy.sort(-1, Qt.AscendingOrder)
 
     # table selections will change the total count of lines selected.
-    pane = LineListPane(table_view, linelist, sort_proxy)
+    pane = LineListPane(table_view, linelist, sort_proxy, caller)
 
     return pane, table_view
 
@@ -255,9 +255,8 @@ class LineListsWindow(UiLinelistsWindow):
                 # the line sets corresponding to the current line list.
                 lineset_tabbed_pane = QTabWidget()
                 lineset_tabbed_pane.setTabsClosable(True)
-                # lineset_tabbed_pane.tabCloseRequested.connect(self.tab_close)
 
-                pane, table_view = _createLineListPane(linelist, table_model)
+                pane, table_view = _createLineListPane(linelist, table_model, self)
                 lineset_tabbed_pane.addTab(pane, "Original")
                 pane.setLineSetsTabbedPane(lineset_tabbed_pane)
 
@@ -335,12 +334,13 @@ class LineListPane(QWidget):
 
     # this builds a single pane dedicated to a single list.
 
-    def __init__(self, table_view, linelist, sort_proxy, *args, **kwargs):
+    def __init__(self, table_view, linelist, sort_proxy, caller, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
 
         self.table_view = table_view
         self.linelist = linelist
         self._sort_proxy = sort_proxy
+        self._caller = caller
 
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -442,6 +442,11 @@ class LineListPane(QWidget):
     def setLineSetsTabbedPane(self, pane):
         self._sets_tabbed_pane = pane
 
+        # this must be set only once per tabbed pane, otherwise multiple
+        # signal handlers can result in more than one tab being closed
+        # when just one closing request is posted.
+        self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
+
     def kill_panes(self, index):
         # nothing for now
         pass
@@ -458,24 +463,19 @@ class LineListPane(QWidget):
             # if no rows are selected, get the entire thing.
             local_list = self.linelist
 
+        # name is used to match lists with table views
+        local_list.name = self.linelist.name
+
         table_model = LineListTableModel(local_list)
+        pane, table_view = _createLineListPane(local_list, table_model, self._caller)
 
-        pane, table_view = _createLineListPane(local_list, table_model)
-
-        pane.setLineSetsTabbedPane(self._sets_tabbed_pane)
-
+        table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
 
         npanels = self._sets_tabbed_pane.count()
-
         self._sets_tabbed_pane.addTab(pane, str(npanels))
 
-        # self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
-
-
-
-
-
-
+    def tab_close(self, index):
+        self._sets_tabbed_pane.removeTab(index)
 
 
 class PlottedLinesPane(QWidget):
