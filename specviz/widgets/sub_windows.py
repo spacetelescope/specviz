@@ -194,7 +194,7 @@ class PlotSubWindow(UiPlotSubWindow):
             mouse_point = vb.mapSceneToView(pos)
             index = int(mouse_point.x())
 
-            if index > 0 and index < vb.viewRange()[0][1]:
+            if index >= 0 and index < vb.viewRange()[0][1]:
                 self.line_edit_cursor_pos.setText("Pos: {0:4.4g}, "
                                                   "{1:4.4g}".format(
                     mouse_point.x(), mouse_point.y())
