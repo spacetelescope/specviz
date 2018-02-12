@@ -459,20 +459,17 @@ class LineListPane(QWidget):
         if len(selected_model_rows) > 0:
             r = [x.row() for x in selected_model_rows]
             local_list = self.linelist[r]
-        else:
-            # if no rows are selected, get the entire thing.
-            local_list = self.linelist
 
-        # name is used to match lists with table views
-        local_list.name = self.linelist.name
+            # name is used to match lists with table views
+            local_list.name = self.linelist.name
 
-        table_model = LineListTableModel(local_list)
-        pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+            table_model = LineListTableModel(local_list)
+            pane, table_view = _createLineListPane(local_list, table_model, self._caller)
 
-        table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+            table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
 
-        npanels = self._sets_tabbed_pane.count()
-        self._sets_tabbed_pane.addTab(pane, str(npanels))
+            npanels = self._sets_tabbed_pane.count()
+            self._sets_tabbed_pane.addTab(pane, str(npanels))
 
     def tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
