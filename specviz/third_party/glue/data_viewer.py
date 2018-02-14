@@ -280,4 +280,4 @@ class SpectralOperationPlugin(Plugin):
         # Send the operation stack, ensure reverse order so newer operations
         # are first
         dispatch.apply_operations.emit(
-            stack=SmoothingOperation.operations().reverse())
+            stack=SmoothingOperation.operations()[::-1])
