@@ -277,4 +277,7 @@ class SpectralOperationPlugin(Plugin):
         pass
 
     def apply_to_cube(self):
-        dispatch.apply_function.emit(func=SmoothingOperation.last_operation())
+        # Send the operation stack, ensure reverse order so newer operations
+        # are first
+        dispatch.apply_operations.emit(
+            stack=SmoothingOperation.operations().reverse())
