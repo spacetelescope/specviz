@@ -24,6 +24,10 @@ class StackOperation(type):
     def last_operation(cls):
         return cls._operations[-1]
 
+    @classmethod
+    def operations(cls):
+        return cls._operations
+
 
 @six.add_metaclass(StackOperation)
 class Operation(object):
