@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from pyqtgraph import functions, TextItem
+from pyqtgraph import functions, TextItem, ViewBox
 
 from qtpy.QtCore import QPointF
 from qtpy.QtGui import QTransform, QPolygonF, QPen, QColor
@@ -22,7 +22,7 @@ class LineIDMarker(TextItem):
         due to a bug in pyqtgraph's function 'functions.mkColor', which
         bombs when presented with an argument of type Qt.GlobalColor.
     '''
-    def __init__(self, text, plot_item, tip="", color=(0,0,0), orientation='horizontal'):
+    def __init__(self, text, plot_item, widget, tip="", color=(0,0,0), orientation='horizontal'):
 
         self._plot_item = plot_item
         self._orientation = orientation
@@ -35,9 +35,47 @@ class LineIDMarker(TextItem):
 
         # self.setFlag(self.ItemIgnoresTransformations)
         self.setFlag(self.ItemIsMovable)
-        self.setFlag(self.ItemSendsGeometryChanges)
-        # self.setFlag(self.ItemIsMovable)
+        # self.setFlag(self.ItemSendsGeometryChanges)
         self.setToolTip(tip)
+
+        widget.sigYRangeChanged.connect(self._handle_zoom)
+
+    def _handle_zoom(self):
+        pass
+        # self._plot_item.disableAutoRange(axis='y')
+        # self._plot_item.vb.enableAutoRange(axis=ViewBox.YAxis, enable=True)
+
+        # self._plot_item.removeItem(self)
+        #
+        # # current range in viewbox
+        # range = self._plot_item.vb.viewRange()
+        # ymin = range[1][0]
+        # ymax = range[1][1]
+        #
+        # height = (ymax - ymin) * 0.5 + ymin
+        #
+        # # print ('@@@@@@     line: 49  - ', ymin, ymax)
+        #
+        # print ('@@@@@@     line: 56  - ', self.y())
+        # self.setPos(self.x(), height)
+        # print ('@@@@@@     line: 58  - ', self.y())
+        #
+        # # self._plot_item.addItem(self, ignoreBounds=True)
+        # self._plot_item.enableAutoRange(axis='y', enable=True)
+
+        # t = self._widget.transform()
+
+        # for e in dir(t)
+        #     print ('@@@@@@     line: 52  - ', e)
+
+
+        # t = self.transform()
+        # newT = QTransform(t)
+        # t2 = newT.translate(0.,0.)
+        #
+        # print("@@@@@@  file annotation.py; line 72 - ",  newT.m11(), newT.m21(), newT.m31(), newT.m21(), newT.m22(), newT.m32(),  newT.m31(), newT.m32(), newT.m33())
+        # print("@@@@@@  file annotation.py; line 73 - ",  t2.m11(), t2.m21(), t2.m31(), t2.m21(), t2.m22(), t2.m32(),  t2.m31(), t2.m32(), t2.m33())
+
 
     # TODO these are attempts to reposition the line labels on the fly, as
     # the data is zoomed in and out. Nothing works. The behavior that is

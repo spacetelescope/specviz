@@ -595,7 +595,7 @@ class PlotSubWindow(UiPlotSubWindow):
                     value = merged_linelist.columns[col_index][row_index]
                     tool_tip += col_name + '=' + str(value) + ', '
 
-            marker = LineIDMarker(id_column[row_index], plot_item,
+            marker = LineIDMarker(id_column[row_index], plot_item, self._plot_widget,
                                   tip=tool_tip,
                                   color=color_column[row_index],
                                   orientation='vertical')
@@ -605,7 +605,8 @@ class PlotSubWindow(UiPlotSubWindow):
             plot_item.addItem(marker)
             self._line_labels.append(marker)
 
-        plot_item.enableAutoRange(enable=True)
+        plot_item.enableAutoRange(pg.ViewBox.XAxis, True)
+        plot_item.enableAutoRange(pg.ViewBox.YAxis, True)
 
         plot_item.update()
 
