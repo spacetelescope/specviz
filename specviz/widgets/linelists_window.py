@@ -11,6 +11,7 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
 from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDoubleValidator, QHeaderView
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
+from qtpy import compat
 
 from ..core.events import dispatch
 
@@ -144,20 +145,26 @@ class UiLinelistsWindow(object):
         self.horizontalLayout_7.setObjectName("horizontalLayout_7")
         self.gridLayout.addLayout(self.horizontalLayout_7, 2, 0, 2, 1)
         MainWindow.setCentralWidget(self.centralWidget)
-        self.menuBar = QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QRect(0, 0, 767, 22))
-        self.menuBar.setObjectName("menuBar")
-        self.menuFile = QMenu(self.menuBar)
-        self.menuFile.setObjectName("menuFile")
-        MainWindow.setMenuBar(self.menuBar)
+
+        # self.menuBar = QMenuBar(MainWindow)
+        # self.menuBar.setGeometry(QRect(0, 0, 767, 22))
+        # self.menuBar.setObjectName("menuBar")
+        #
+        # self.menuFile = QMenu(self.menuBar)
+        # self.menuFile.setObjectName("menuFile")
+        #
+        # MainWindow.setMenuBar(self.menuBar)
+
         self.mainToolBar = QToolBar(MainWindow)
         self.mainToolBar.setMovable(False)
         self.mainToolBar.setFloatable(False)
         self.mainToolBar.setObjectName("mainToolBar")
         MainWindow.addToolBar(Qt.TopToolBarArea, self.mainToolBar)
-        self.statusBar = QStatusBar(MainWindow)
-        self.statusBar.setObjectName("statusBar")
-        MainWindow.setStatusBar(self.statusBar)
+
+        # self.statusBar = QStatusBar(MainWindow)
+        # self.statusBar.setObjectName("statusBar")
+        # MainWindow.setStatusBar(self.statusBar)
+
         self.actionOpen = QAction(MainWindow)
         icon = QIcon(os.path.join(ICON_PATH, "Open Folder-48.png"))
         self.actionOpen.setIcon(icon)
@@ -168,10 +175,10 @@ class UiLinelistsWindow(object):
         self.actionRemove.setObjectName("actionRemove")
         self.actionChange_Color = QAction(MainWindow)
         self.actionChange_Color.setObjectName("actionChange_Color")
-        self.menuFile.addAction(self.actionOpen)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(self.actionExit)
-        self.menuBar.addAction(self.menuFile.menuAction())
+        # self.menuFile.addAction(self.actionOpen)
+        # self.menuFile.addSeparator()
+        # self.menuFile.addAction(self.actionExit)
+        # self.menuBar.addAction(self.menuFile.menuAction())
         self.mainToolBar.addAction(self.actionOpen)
         self.mainToolBar.addSeparator()
         self.retranslateUi(MainWindow)
@@ -189,8 +196,8 @@ class UiLinelistsWindow(object):
         self.erase_button.setToolTip("Erase all markers")
         self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
         self.dismiss_button.setToolTip("Dismiss this window")
-        self.menuFile.setTitle(_translate("MainWindow", "File"))
-        # self.actionOpen.setText(_translate("MainWindow", "Open"))
+        # self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionRemove.setText(_translate("MainWindow", "Remove"))
         self.actionRemove.setToolTip(_translate("MainWindow", "Removes the selected layer"))
@@ -220,15 +227,6 @@ class LineListsWindow(UiLinelistsWindow):
 
         self._buildViews(plot_window)
 
-        # # Add tool tray buttons
-        # self.button_open_data = self.add_tool_bar_actions(
-        #     name="Open",
-        #     description='Open data file',
-        #     icon_path=os.path.join(ICON_PATH, "Open Folder-48.png"),
-        #     category=('Loaders', 5),
-        #     priority=1,
-        #     callback=lambda: dispatch.on_file_open.emit())
-
         # Connect buttons to appropriate signals.
         #
         # Note that, for the Draw operation, we have to pass the table views to
@@ -240,8 +238,24 @@ class LineListsWindow(UiLinelistsWindow):
             table_views=self._getTableViews(),
             panes=self._getPanes(),
             units=plot_window.waverange[0].unit))
+
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
+
+        self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+
+    def _open_linelist_file(self, file_name=None):
+        print ('@@@@@@     line: 256  - ', file_name)
+
+        if file_name is None:
+
+            file_name, _file_filter = compat.getopenfilenames(filters='Line lists (*.yaml)')
+
+            if file_name is not None:
+                print ('@@@@@@     line: 255  - ', file_name, "   -   ", _file_filter)
+
+
+            #     self.read_file(file_name, file_filter=selected_filter)
 
     def _buildViews(self, plot_window):
 
