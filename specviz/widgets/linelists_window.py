@@ -8,13 +8,15 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, QDoubleValidator, QHeaderView
+from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, \
+                       QDoubleValidator, QHeaderView, QFont
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 
 from ..core.events import dispatch
 
+from ..core import linelist
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 from ..core.linelist import LineList
 
@@ -169,6 +171,9 @@ class UiLinelistsWindow(object):
         icon = QIcon(os.path.join(ICON_PATH, "Open Folder-48.png"))
         self.actionOpen.setIcon(icon)
         self.actionOpen.setObjectName("actionOpen")
+
+        self.line_list_selector = QComboBox()
+
         self.actionExit = QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.actionRemove = QAction(MainWindow)
@@ -181,6 +186,7 @@ class UiLinelistsWindow(object):
         # self.menuBar.addAction(self.menuFile.menuAction())
         self.mainToolBar.addAction(self.actionOpen)
         self.mainToolBar.addSeparator()
+        self.mainToolBar.addWidget(self.line_list_selector)
         self.retranslateUi(MainWindow)
         QMetaObject.connectSlotsByName(MainWindow)
 
@@ -225,9 +231,20 @@ class LineListsWindow(UiLinelistsWindow):
         # Request that line lists be read from wherever are they sources.
         dispatch.on_request_linelists.emit()
 
+        # Populate line list selector with internal line lists
+        model = self.line_list_selector.model()
+        for description in linelist.descriptions():
+            item = QStandardItem(str(description))
+            font = QFont("Monospace")
+            font.setStyleHint(QFont.TypeWriter)
+            font.setPointSize(12)
+            item.setFont(font)
+            model.appendRow(item)
+
+        # Populate GUI.
         self._buildViews(plot_window)
 
-        # Connect buttons to appropriate signals.
+        # Connect controls to appropriate signals.
         #
         # Note that, for the Draw operation, we have to pass the table views to
         # the handler, even though it would be better to handle the row selections
@@ -241,8 +258,8 @@ class LineListsWindow(UiLinelistsWindow):
 
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
-
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+        self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
     def _open_linelist_file(self, file_name=None):
         print ('@@@@@@     line: 256  - ', file_name)
@@ -257,36 +274,43 @@ class LineListsWindow(UiLinelistsWindow):
 
             #     self.read_file(file_name, file_filter=selected_filter)
 
+    def _lineList_selection_change(self, index):
+        line_list = linelist.get_from_cache(index)
+        self._build_view(line_list, 0)
+
+    def _build_view(self, linelist, index):
+
+        table_model = LineListTableModel(linelist)
+
+        if table_model.rowCount() > 0:
+            # here we add the first pane (the one with the entire
+            # original line list), to the tabbed pane that contains
+            # the line sets corresponding to the current line list.
+            lineset_tabbed_pane = QTabWidget()
+            lineset_tabbed_pane.setTabsClosable(True)
+
+            pane, table_view = _createLineListPane(linelist, table_model, self)
+            lineset_tabbed_pane.addTab(pane, "Original")
+            pane.setLineSetsTabbedPane(lineset_tabbed_pane)
+
+            # connect signals
+            table_view.selectionModel().selectionChanged.connect(self._countSelections)
+            self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
+
+            # now we add this "line set tabbed pane" to the main tabbed
+            # pane, with name taken from the list model.
+            self.tabWidget.insertTab(index, lineset_tabbed_pane, table_model.getName())
+
+            # store for use down stream.
+            # self.table_views.append(table_view)
+            # self.set_tabbed_panes.append(set_tabbed_pane)
+            # self.tab_count.append(0)
+            # self.panes.append(pane)
+
     def _buildViews(self, plot_window):
-
-        for linelist in plot_window.linelists:
-
-            table_model = LineListTableModel(linelist)
-
-            if table_model.rowCount() > 0:
-                # here we add the first pane (the one with the entire
-                # original line list), to the tabbed pane that contains
-                # the line sets corresponding to the current line list.
-                lineset_tabbed_pane = QTabWidget()
-                lineset_tabbed_pane.setTabsClosable(True)
-
-                pane, table_view = _createLineListPane(linelist, table_model, self)
-                lineset_tabbed_pane.addTab(pane, "Original")
-                pane.setLineSetsTabbedPane(lineset_tabbed_pane)
-
-                # connect signals
-                table_view.selectionModel().selectionChanged.connect(self._countSelections)
-                self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
-
-                # now we add this "line set tabbed pane" to the main tabbed
-                # pane, with name taken from the list model.
-                self.tabWidget.addTab(lineset_tabbed_pane, table_model.getName())
-
-                # store for use down stream.
-                # self.table_views.append(table_view)
-                # self.set_tabbed_panes.append(set_tabbed_pane)
-                # self.tab_count.append(0)
-                # self.panes.append(pane)
+        window_linelists = plot_window.linelists
+        for linelist, index  in zip(window_linelists, range(len(window_linelists))):
+            self._build_view(linelist, index)
 
         # add extra tab to hold the plotted lines view.
         if self.tabWidget.count() > 0:

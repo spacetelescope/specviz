@@ -59,6 +59,10 @@ def populate_linelists_cache():
         _linelists_cache.append(linelist)
 
 
+def get_from_cache(index):
+    return _linelists_cache[index]
+
+
 def ingest(range):
     """
     Returns a list with LineList instances.
@@ -81,6 +85,31 @@ def ingest(range):
         ll = linelist.extract_range(range)
 
         result.append(ll)
+
+    return result
+
+
+def descriptions():
+    """
+    Returns a python list with strings containing a description of each line list.
+
+    Returns
+    -------
+    list
+        The list of strings.
+    """
+    result = []
+    for linelist in _linelists_cache:
+
+        desc = linelist.name
+        nlast = len(linelist[WAVELENGTH_COLUMN]) - 1
+        w1 = linelist[WAVELENGTH_COLUMN][0]
+        w2 = linelist[WAVELENGTH_COLUMN][nlast]
+        units = linelist[WAVELENGTH_COLUMN].unit
+
+        description = '{:15} ({:>d}, [{:.2f} {:.2f}] {})'.format(desc, nlast, w1, w2, units)
+
+        result.append(description)
 
     return result
 
