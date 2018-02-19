@@ -38,12 +38,19 @@ COLOR_COLUMN = 'color'
 HEIGHT_COLUMN = 'height'
 DEFAULT_HEIGHT = 0.75
 
-
 _linelists_cache = []
+
+
+def get_from_file(linelist_path, yaml_filename):
+
+    loader = yaml.load(open(yaml_filename, 'r'))
+    linelist_fullname = linelist_path + os.path.sep + loader.filename
+
+    return LineList.read_list(linelist_fullname, loader)
+
 
 # This should be called at the appropriate time when starting the
 # app, so the lists are cached for speedier access later on.
-
 def populate_linelists_cache():
     # we could benefit from a threaded approach here. But I couldn't
     # see the benefits, since the reading of even the largest line
@@ -53,9 +60,7 @@ def populate_linelists_cache():
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
-        loader = yaml.load(open(yaml_filename, 'r'))
-        linelist_fullname = linelist_path + loader.filename
-        linelist = LineList.read_list(linelist_fullname, loader)
+        linelist = get_from_file(linelist_path, yaml_filename)
         _linelists_cache.append(linelist)
 
 

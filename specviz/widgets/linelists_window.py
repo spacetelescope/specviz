@@ -262,17 +262,16 @@ class LineListsWindow(UiLinelistsWindow):
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
     def _open_linelist_file(self, file_name=None):
-        print ('@@@@@@     line: 256  - ', file_name)
-
         if file_name is None:
 
             file_name, _file_filter = compat.getopenfilenames(filters='Line lists (*.yaml)')
 
-            if file_name is not None:
-                print ('@@@@@@     line: 255  - ', file_name, "   -   ", _file_filter)
-
-
-            #     self.read_file(file_name, file_filter=selected_filter)
+            # for now, lets assume both the line list itself, and its
+            # associated YAML descriptor file, live in the same directory.
+            if file_name is not None and len(file_name) > 0:
+                name = file_name[0]
+                line_list = linelist.get_from_file(os.path.dirname(name), name)
+                self._build_view(line_list, 0)
 
     def _lineList_selection_change(self, index):
         line_list = linelist.get_from_cache(index)
