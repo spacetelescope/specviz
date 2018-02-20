@@ -9,13 +9,14 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
 from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, \
-                       QDoubleValidator, QHeaderView, QFont
+                       QDoubleValidator, QHeaderView, QFont, QDialog
 from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 
-from ..core.events import dispatch
+from astropy.units import Quantity
 
+from ..core.events import dispatch
 from ..core import linelist
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 from ..core.linelist import LineList
@@ -282,16 +283,71 @@ class LineListsWindow(UiLinelistsWindow):
                 self._build_view(line_list, 0, waverange=None)
 
     def _lineList_selection_change(self, index):
+        # ignore first element in drop down. It contains
+        # the "Select line list" message.
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
+            wave_range = self._waverange_dialog()
+            self._build_view(line_list, 0, waverange=wave_range)
 
-            #TODO dialog to read wave range. Use self.plot_window.waverange[0]
+    def _waverange_dialog(self):
+        dialog = QDialog(parent=self.centralWidget)
+        dialog.setWindowTitle("Wavelength range")
+        dialog.setWindowModality(Qt.ApplicationModal)
+        dialog.resize(200, 80)
 
-            self._build_view(line_list, 0, waverange=None)
+        button_ok = QPushButton("OK", dialog)
+        button_ok.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-    def _build_view(self, linelist, index, waverange=None):
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(button_ok)
 
-        table_model = LineListTableModel(linelist)
+        min_text = QLineEdit(str(DEFAULT_HEIGHT))
+        max_text = QLineEdit(str(DEFAULT_HEIGHT))
+
+        validator = QDoubleValidator()
+        # validator.setRange(0.05, 0.95, decimals=2)
+        min_text.setValidator(validator)
+        max_text.setValidator(validator)
+        min_text.setFixedWidth(50)
+        max_text.setFixedWidth(50)
+        min_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        max_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        min_text.setToolTip("Minimum wavelength to read from list.")
+        max_text.setToolTip("Maximum wavelength to read from list.")
+
+        text_layout = QHBoxLayout()
+        text_layout.addWidget(QLabel("Min."))
+        text_layout.addWidget(min_text)
+        text_layout.addWidget(QLabel("Max."))
+        text_layout.addWidget(max_text)
+
+        text_layout.addWidget(min_text)
+        text_layout.addWidget(max_text)
+
+        main_layout = QVBoxLayout(dialog)
+        main_layout.addLayout(text_layout)
+        main_layout.addLayout(button_layout)
+
+        value = dialog.exec()
+
+        print("@@@@@@  file linelists_window.py; line 300 - ",  value)
+
+
+        units_ = self.plot_window._plot_units[0]
+        amin = Quantity(1980., units_)
+        amax = Quantity(2000, units_)
+
+        return (amin, amax)
+
+
+    def _build_view(self, line_list, index, waverange=None):
+
+        if waverange:
+            line_list = line_list.extract_range(waverange)
+
+        table_model = LineListTableModel(line_list)
 
         if table_model.rowCount() > 0:
             # here we add the first pane (the one with the entire
@@ -300,7 +356,7 @@ class LineListsWindow(UiLinelistsWindow):
             lineset_tabbed_pane = QTabWidget()
             lineset_tabbed_pane.setTabsClosable(True)
 
-            pane, table_view = _createLineListPane(linelist, table_model, self)
+            pane, table_view = _createLineListPane(line_list, table_model, self)
             lineset_tabbed_pane.addTab(pane, "Original")
             pane.setLineSetsTabbedPane(lineset_tabbed_pane)
 

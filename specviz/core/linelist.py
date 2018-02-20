@@ -274,7 +274,7 @@ class LineList(Table):
 
         Parameters
         ----------
-        wrange: (float, float)
+        wrange: (Quantity, Quantity)
             minimum and maximum wavelength of the data
             (spectrum) wavelength range
 
