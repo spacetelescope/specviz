@@ -223,6 +223,8 @@ class LineListsWindow(UiLinelistsWindow):
     def __init__(self, plot_window, parent=None):
         super(LineListsWindow, self).__init__()
 
+        self.plot_window = plot_window
+
         # Builds GUI
         self._main_window = ClosableMainWindow()
         self.setupUi(self._main_window, str(plot_window))
@@ -272,19 +274,18 @@ class LineListsWindow(UiLinelistsWindow):
             # for now, lets assume both the line list itself, and its
             # associated YAML descriptor file, live in the same directory.
             if file_name is not None and len(file_name) > 0:
-
-                #TODO dialog to read wave range
-
-
                 name = file_name[0]
                 line_list = linelist.get_from_file(os.path.dirname(name), name)
+
+                #TODO dialog to read wave range. Use self.plot_window.waverange[0]
+
                 self._build_view(line_list, 0, waverange=None)
 
     def _lineList_selection_change(self, index):
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
 
-            #TODO dialog to read wave range
+            #TODO dialog to read wave range. Use self.plot_window.waverange[0]
 
             self._build_view(line_list, 0, waverange=None)
 
