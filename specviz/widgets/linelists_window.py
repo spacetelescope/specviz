@@ -233,11 +233,14 @@ class LineListsWindow(UiLinelistsWindow):
 
         # Populate line list selector with internal line lists
         model = self.line_list_selector.model()
+        item = QStandardItem("Select line list")
+        font = QFont("Monospace")
+        font.setStyleHint(QFont.TypeWriter)
+        font.setPointSize(12)
+        item.setFont(font)
+        model.appendRow(item)
         for description in linelist.descriptions():
             item = QStandardItem(str(description))
-            font = QFont("Monospace")
-            font.setStyleHint(QFont.TypeWriter)
-            font.setPointSize(12)
             item.setFont(font)
             model.appendRow(item)
 
@@ -269,15 +272,23 @@ class LineListsWindow(UiLinelistsWindow):
             # for now, lets assume both the line list itself, and its
             # associated YAML descriptor file, live in the same directory.
             if file_name is not None and len(file_name) > 0:
+
+                #TODO dialog to read wave range
+
+
                 name = file_name[0]
                 line_list = linelist.get_from_file(os.path.dirname(name), name)
-                self._build_view(line_list, 0)
+                self._build_view(line_list, 0, waverange=None)
 
     def _lineList_selection_change(self, index):
-        line_list = linelist.get_from_cache(index)
-        self._build_view(line_list, 0)
+        if index > 0:
+            line_list = linelist.get_from_cache(index-1)
 
-    def _build_view(self, linelist, index):
+            #TODO dialog to read wave range
+
+            self._build_view(line_list, 0, waverange=None)
+
+    def _build_view(self, linelist, index, waverange=None):
 
         table_model = LineListTableModel(linelist)
 

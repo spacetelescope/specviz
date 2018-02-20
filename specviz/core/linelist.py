@@ -17,8 +17,12 @@ from astropy import constants
 
 
 __all__ = [
-    'LineList',
+    'get_from_file',
+    'get_from_cache',
     'ingest',
+    'populate_linelists_cache',
+    'descriptions',
+    'LineList',
 ]
 
 # yaml specs
@@ -107,12 +111,12 @@ def descriptions():
     for linelist in _linelists_cache:
 
         desc = linelist.name
-        nlast = len(linelist[WAVELENGTH_COLUMN]) - 1
+        nlines = len(linelist[WAVELENGTH_COLUMN])
         w1 = linelist[WAVELENGTH_COLUMN][0]
-        w2 = linelist[WAVELENGTH_COLUMN][nlast]
+        w2 = linelist[WAVELENGTH_COLUMN][nlines-1]
         units = linelist[WAVELENGTH_COLUMN].unit
 
-        description = '{:15} ({:>d}, [{:.2f} {:.2f}] {})'.format(desc, nlast, w1, w2, units)
+        description = '{:15} ({:>d}, [{:.2f} {:.2f}] {})'.format(desc, nlines, w1, w2, units)
 
         result.append(description)
 
