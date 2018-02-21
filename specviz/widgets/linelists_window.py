@@ -269,6 +269,17 @@ class LineListsWindow(UiLinelistsWindow):
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
+    def _get_waverange_from_dialog(self):
+        # there is a widget-wide wavelength range so as to preserve
+        # the user definition from call to call. At the initial
+        # call, the wave range is initialized with whatever range
+        # is being displayed in the spectrum plot window.
+        global wave_range
+        if wave_range[0] == None or wave_range[1] == None:
+            wave_range = self.plot_window._find_wavelength_range()
+        wrange = self._waverange_dialog(wave_range)
+        wave_range = wrange
+
     def _open_linelist_file(self, file_name=None):
         if file_name is None:
 
@@ -280,9 +291,10 @@ class LineListsWindow(UiLinelistsWindow):
                 name = file_name[0]
                 line_list = linelist.get_from_file(os.path.dirname(name), name)
 
-                #TODO dialog to read wave range. Use self.plot_window.waverange[0]
-
-                self._build_view(line_list, 0, waverange=None)
+                self._get_waverange_from_dialog()
+                global wave_range
+                if wave_range[0] and wave_range[1]:
+                    self._build_view(line_list, 0, waverange=wave_range)
 
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains
@@ -290,14 +302,10 @@ class LineListsWindow(UiLinelistsWindow):
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
 
+            self._get_waverange_from_dialog()
             global wave_range
-            if wave_range[0] == None or wave_range[1] == None:
-                wave_range = self.plot_window._find_wavelength_range()
-
-            wrange = self._waverange_dialog(wave_range)
-            wave_range = wrange
-
-            self._build_view(line_list, 0, waverange=wave_range)
+            if wave_range[0] and wave_range[1]:
+                self._build_view(line_list, 0, waverange=wave_range)
 
     def _waverange_dialog(self, wave_range):
         dialog = QDialog(parent=self.centralWidget)
@@ -364,7 +372,7 @@ class LineListsWindow(UiLinelistsWindow):
         accepted = dialog.exec_() > 0
 
         amin = amax = None
-        if accepted:
+        if accepted and min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
             units = self.plot_window._plot_units[0]
@@ -374,9 +382,9 @@ class LineListsWindow(UiLinelistsWindow):
         return (amin, amax)
 
 
-    def _build_view(self, line_list, index, waverange=None):
+    def _build_view(self, line_list, index, waverange=(None,None)):
 
-        if waverange:
+        if waverange[0] and wave_range[1]:
             line_list = line_list.extract_range(waverange)
 
         table_model = LineListTableModel(line_list)
