@@ -41,6 +41,8 @@ ID_COLORS = {
 
 PLOTTED = "Plotted"
 
+wave_range = (None, None)
+
 
 #TODO work in progress
 
@@ -287,57 +289,87 @@ class LineListsWindow(UiLinelistsWindow):
         # the "Select line list" message.
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
-            wave_range = self._waverange_dialog()
+
+            global wave_range
+            if wave_range[0] == None or wave_range[1] == None:
+                wave_range = self.plot_window._find_wavelength_range()
+
+            wrange = self._waverange_dialog(wave_range)
+            wave_range = wrange
+
             self._build_view(line_list, 0, waverange=wave_range)
 
-    def _waverange_dialog(self):
+    def _waverange_dialog(self, wave_range):
         dialog = QDialog(parent=self.centralWidget)
         dialog.setWindowTitle("Wavelength range")
         dialog.setWindowModality(Qt.ApplicationModal)
-        dialog.resize(200, 80)
+        dialog.resize(370, 170)
 
-        button_ok = QPushButton("OK", dialog)
+        button_ok = QPushButton("OK")
         button_ok.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        button_cancel = QPushButton("Cancel")
+        button_cancel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(button_ok)
+        button_ok.clicked.connect(dialog.accept)
+        button_cancel.clicked.connect(dialog.reject)
 
-        min_text = QLineEdit(str(DEFAULT_HEIGHT))
-        max_text = QLineEdit(str(DEFAULT_HEIGHT))
+        min_text = QLineEdit(str(wave_range[0].value))
+        max_text = QLineEdit(str(wave_range[1].value))
 
         validator = QDoubleValidator()
         # validator.setRange(0.05, 0.95, decimals=2)
         min_text.setValidator(validator)
         max_text.setValidator(validator)
-        min_text.setFixedWidth(50)
-        max_text.setFixedWidth(50)
+
+        min_text.setFixedWidth(150)
+        max_text.setFixedWidth(150)
         min_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         max_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         min_text.setToolTip("Minimum wavelength to read from list.")
         max_text.setToolTip("Maximum wavelength to read from list.")
 
-        text_layout = QHBoxLayout()
-        text_layout.addWidget(QLabel("Min."))
-        text_layout.addWidget(min_text)
-        text_layout.addWidget(QLabel("Max."))
-        text_layout.addWidget(max_text)
+        # set up layouts and widgets for the dialog.
+        text_pane = QWidget()
+        text_layout = QGridLayout()
 
-        text_layout.addWidget(min_text)
-        text_layout.addWidget(max_text)
+        text_layout.addWidget(min_text, 1, 0)
+        text_layout.addWidget(QLabel("Minimum wavelength"), 0, 0)
+        text_layout.addWidget(max_text, 1, 1)
+        text_layout.addWidget(QLabel("Maximum wavelength"), 0, 1)
 
-        main_layout = QVBoxLayout(dialog)
-        main_layout.addLayout(text_layout)
-        main_layout.addLayout(button_layout)
+        spacerItem = QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        text_layout.addItem(spacerItem, 1, 2)
+        text_pane.setLayout(text_layout)
 
-        value = dialog.exec()
+        button_pane = QWidget()
+        button_layout = QHBoxLayout()
 
-        print("@@@@@@  file linelists_window.py; line 300 - ",  value)
+        button_layout.addStretch()
+        button_layout.addWidget(button_cancel)
+        button_layout.addWidget(button_ok)
+        button_pane.setLayout(button_layout)
 
+        dialog_layout = QVBoxLayout()
+        dialog_layout.setSizeConstraint(QLayout.SetMaximumSize)
 
-        units_ = self.plot_window._plot_units[0]
-        amin = Quantity(1980., units_)
-        amax = Quantity(2000, units_)
+        dialog_layout.addWidget(text_pane)
+        dialog_layout.addStretch()
+        dialog_layout.addWidget(button_pane)
+
+        dialog.setLayout(dialog_layout)
+
+        button_ok.setDefault(True)
+        button_cancel.setDefault(False)
+
+        accepted = dialog.exec_() > 0
+
+        amin = amax = None
+        if accepted:
+            amin = float(min_text.text())
+            amax = float(max_text.text())
+            units = self.plot_window._plot_units[0]
+            amin = Quantity(amin, units)
+            amax = Quantity(amax, units)
 
         return (amin, amax)
 
@@ -463,7 +495,6 @@ class LineListPane(QWidget):
         # buttons and selectors dedicated to the specific list
         # displayed in this pane.
         button_pane = QWidget()
-        # hlayout = QHBoxLayout()
         hlayout = QGridLayout()
 
         # 'add set' button
