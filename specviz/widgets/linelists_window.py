@@ -19,11 +19,9 @@ from astropy.units import Quantity
 from ..core.events import dispatch
 from ..core import linelist
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
-from ..core.linelist import LineList
 
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          '..', 'data', 'qt', 'resources'))
-
 
 # We need our own mapping because the list with color names returned by
 # QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
@@ -42,9 +40,6 @@ ID_COLORS = {
 PLOTTED = "Plotted"
 
 wave_range = (None, None)
-
-
-#TODO work in progress
 
 
 # Function that creates one single tabbed pane with one single view of a line list.
@@ -308,6 +303,7 @@ class LineListsWindow(UiLinelistsWindow):
                 self._build_view(line_list, 0, waverange=wave_range)
 
     def _waverange_dialog(self, wave_range):
+
         dialog = QDialog(parent=self.centralWidget)
         dialog.setWindowTitle("Wavelength range")
         dialog.setWindowModality(Qt.ApplicationModal)
@@ -321,11 +317,12 @@ class LineListsWindow(UiLinelistsWindow):
         button_ok.clicked.connect(dialog.accept)
         button_cancel.clicked.connect(dialog.reject)
 
-        min_text = QLineEdit(str(wave_range[0].value))
-        max_text = QLineEdit(str(wave_range[1].value))
+        min_text = QLineEdit("%.2f" % wave_range[0].value)
+        max_text = QLineEdit("%.2f" % wave_range[1].value)
 
         validator = QDoubleValidator()
-        # validator.setRange(0.05, 0.95, decimals=2)
+        validator.setBottom(0.0)
+        validator.setDecimals(2)
         min_text.setValidator(validator)
         max_text.setValidator(validator)
 
@@ -375,9 +372,12 @@ class LineListsWindow(UiLinelistsWindow):
         if accepted and min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
-            units = self.plot_window._plot_units[0]
-            amin = Quantity(amin, units)
-            amax = Quantity(amax, units)
+            if amax > amin:
+                units = self.plot_window._plot_units[0]
+                amin = Quantity(amin, units)
+                amax = Quantity(amax, units)
+            else:
+                return (None, None)
 
         return (amin, amax)
 

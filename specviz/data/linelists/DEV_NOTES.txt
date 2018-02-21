@@ -32,12 +32,17 @@ The following are some brief notes I took during our meeting.
 
 2nd round (Susan, Tony, Nick, Ivo, 1/30/2018)
 
-- Y axis locking when displaying line ID markers.
+- Y axis locking when displaying line ID markers. MUCH HARDER TO DO THAN IT SEEMS AT FIRST.
 
-- Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
+ß- DONE: Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
   drop-down or similar selector to allow user to pick out specific line lists from internal library or
-  external file. User will also select wavelength end points from pre-populated text fields. And select
-  species and intensities from appropriate GUI elements TBD.
+  external file. User will also select wavelength end points from pre-populated text fields. And select species
+  and intensities from appropriate GUI elements TBD.
+
+  NOTES: (1) automatic ingestion is still in place. Can be turned off entirely by commenting out one single line
+             of code. Or, we could have a more useful criterion, such as including only small lists to prevent
+             the beach ball from showing.
+         (2) Selecting species and intensities can be done with sort-select-create set sequence.
 
 - Add ability to write line lists. Reading is already specified by requirement above.
 
