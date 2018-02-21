@@ -170,7 +170,13 @@ class UiLinelistsWindow(object):
         self.actionOpen.setIcon(icon)
         self.actionOpen.setObjectName("actionOpen")
 
+        self.actionExport = QAction(MainWindow)
+        icon = QIcon(os.path.join(ICON_PATH, "Export-48.png"))
+        self.actionExport.setIcon(icon)
+        self.actionExport.setObjectName("actionExport")
+
         self.line_list_selector = QComboBox()
+        self.line_list_selector.setToolTip("Select line list from internal library")
 
         self.actionExit = QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
@@ -183,6 +189,7 @@ class UiLinelistsWindow(object):
         # self.menuFile.addAction(self.actionExit)
         # self.menuBar.addAction(self.menuFile.menuAction())
         self.mainToolBar.addAction(self.actionOpen)
+        self.mainToolBar.addAction(self.actionExport)
         self.mainToolBar.addSeparator()
         self.mainToolBar.addWidget(self.line_list_selector)
         self.retranslateUi(MainWindow)
@@ -202,6 +209,7 @@ class UiLinelistsWindow(object):
         self.dismiss_button.setToolTip("Dismiss this window")
         # self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
+        self.actionExport.setText(_translate("MainWindow", "Export plotted lines"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionRemove.setText(_translate("MainWindow", "Remove"))
         self.actionRemove.setToolTip(_translate("MainWindow", "Removes the selected layer"))
@@ -262,6 +270,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.erase_button.clicked.connect(dispatch.on_erase_linelabels.emit)
         self.dismiss_button.clicked.connect(dispatch.on_dismiss_linelists_window.emit)
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+        self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
     def _get_waverange_from_dialog(self):
@@ -290,6 +299,22 @@ class LineListsWindow(UiLinelistsWindow):
                 global wave_range
                 if wave_range[0] and wave_range[1]:
                     self._build_view(line_list, 0, waverange=wave_range)
+
+    def _export_to_file(self, file_name=None):
+        if file_name is None:
+
+            file_name, _file_filter = compat.getopenfilenames(filters='Line lists (*.yaml)')
+
+            # # for now, lets assume both the line list itself, and its
+            # # associated YAML descriptor file, live in the same directory.
+            # if file_name is not None and len(file_name) > 0:
+            #     name = file_name[0]
+            #     line_list = linelist.get_from_file(os.path.dirname(name), name)
+            #
+            #     self._get_waverange_from_dialog()
+            #     global wave_range
+            #     if wave_range[0] and wave_range[1]:
+            #         self._build_view(line_list, 0, waverange=wave_range)
 
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains
@@ -407,6 +432,7 @@ class LineListsWindow(UiLinelistsWindow):
             # now we add this "line set tabbed pane" to the main tabbed
             # pane, with name taken from the list model.
             self.tabWidget.insertTab(index, lineset_tabbed_pane, table_model.getName())
+            self.tabWidget.setCurrentIndex(index)
 
             # store for use down stream.
             # self.table_views.append(table_view)
