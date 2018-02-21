@@ -257,6 +257,7 @@ class PlotSubWindow(UiPlotSubWindow):
         def remove():
             self._plot_item.removeItem(roi)
             self._rois.remove(roi)
+            dispatch.removed_roi.emit(roi=roi)
 
         roi = LinearRegionItem(values=[start, stop])
         self._rois.append(roi)
@@ -275,6 +276,8 @@ class PlotSubWindow(UiPlotSubWindow):
             lambda: dispatch.changed_roi_mask.emit(
                 mask=self.get_roi_mask(layer=self.get_all_layers()[0])))
 
+        # Signal that an ROI has been created and added to plot
+        dispatch.added_roi.emit(roi=roi)
 
     def get_roi_bounds(self):
         bounds = []
