@@ -136,7 +136,7 @@ class SpecVizViewer(DataViewer):
     def _on_added_roi(self, roi):
         self._rois.append(roi)
 
-    @dispatch.register_listener("removed_roi"):
+    @dispatch.register_listener("removed_roi")
     def _on_removed_roi(self, roi):
         self._rois.remove(roi)
 
