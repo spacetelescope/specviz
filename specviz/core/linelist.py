@@ -112,11 +112,11 @@ def descriptions():
 
         desc = linelist.name
         nlines = len(linelist[WAVELENGTH_COLUMN])
-        w1 = linelist[WAVELENGTH_COLUMN][0]
-        w2 = linelist[WAVELENGTH_COLUMN][nlines-1]
+        w1 = linelist.wmin
+        w2 = linelist.wmax
         units = linelist[WAVELENGTH_COLUMN].unit
 
-        description = '{:15} ({:>d}, [{:.2f} {:.2f}] {})'.format(desc, nlines, w1, w2, units)
+        description = '{:15}  ({:>d},  [ {:.2f} - {:.2f} ] {})'.format(desc, nlines, w1, w2, units)
 
         result.append(description)
 
@@ -160,6 +160,12 @@ class LineList(Table):
         self.height = DEFAULT_HEIGHT
         self.redshift = 0.
         self. z_units = 'z'
+
+        if len(table[WAVELENGTH_COLUMN].data):
+            self.wmin = table[WAVELENGTH_COLUMN].data.min()
+            self.wmax = table[WAVELENGTH_COLUMN].data.max()
+        else:
+            self.wmin = self.wmax = None
 
         # A line list (but not the underlying table) can have
         # tool tips associated to each column.
