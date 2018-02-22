@@ -827,9 +827,11 @@ class SortModel(QSortFilterProxyModel):
 
         # it's enough to find type using just one of the parameters,
         # since they both necessarily come from the same table column.
-        if type(left_data) == float:
-            return float(left_data) < float(right_data)
-        else:
+        try:
+            l = float(left_data)
+            r = float(right_data)
+            return l < r
+        except:
             # Lexicographic string comparison. The parameters passed
             # to this method from a sortable table model are stored
             # in QtCore.QModelIndex instances.

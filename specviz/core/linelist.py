@@ -166,7 +166,7 @@ class LineList(Table):
         self.tooltips = tooltips
 
     @classmethod
-    def read_list(self, filename, yaml_loader):
+    def read_list(cls, filename, yaml_loader):
         names_list = []
         start_list = []
         end_list = []
@@ -209,7 +209,7 @@ class LineList(Table):
         # is taken from the 'name' element in the
         # YAML file descriptor.
 
-        return LineList(tab, tooltips=tooltips_list, name=yaml_loader.name)
+        return cls(tab, tooltips=tooltips_list, name=yaml_loader.name)
 
     @classmethod
     def merge(cls, lists, target_units):

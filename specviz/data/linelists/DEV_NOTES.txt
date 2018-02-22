@@ -34,7 +34,7 @@ The following are some brief notes I took during our meeting.
 
 - Y axis locking when displaying line ID markers. MUCH HARDER TO DO THAN IT SEEMS AT FIRST.
 
-ß- DONE: Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
+- DONE: Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
   drop-down or similar selector to allow user to pick out specific line lists from internal library or
   external file. User will also select wavelength end points from pre-populated text fields. And select species
   and intensities from appropriate GUI elements TBD.
