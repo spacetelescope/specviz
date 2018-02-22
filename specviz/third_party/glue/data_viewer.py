@@ -33,6 +33,9 @@ class SpecVizViewer(DataViewer):
         # Connect the dataview to the specviz messaging system
         dispatch.setup(self)
 
+        # Store a list of the current ROIs visible on SpecViz
+        self._rois = []
+
         # We now set up the options widget. This controls for example which
         # attribute should be used to indicate the filenames of the spectra.
         self._options_widget = OptionsWidget(data_viewer=self)
@@ -128,6 +131,29 @@ class SpecVizViewer(DataViewer):
 
         hub.subscribe(self, msg.DataUpdateMessage,
                       handler=self._update_data)
+
+    @dispatch.register_listener("added_roi")
+    def _on_added_roi(self, roi):
+        self._rois.append(roi)
+
+    @dispatch.register_listener("removed_roi")
+    def _on_removed_roi(self, roi):
+        self._rois.remove(roi)
+
+    @property
+    def rois(self):
+        """
+        Returns the current list of ROIs on the SpecViz Viewer.
+        """
+        return self._rois
+
+    @property
+    def roi_bounds(self):
+        """
+        Returns a list of tuples with the current upper and lower bounds of
+        each ROI in the SpecViz viewer.
+        """
+        return [roi.getRegion() for roi in self._rois]
 
     def _on_operation_changed(self, index):
         for layer in self._specviz_data_cache:
@@ -277,4 +303,7 @@ class SpectralOperationPlugin(Plugin):
         pass
 
     def apply_to_cube(self):
-        dispatch.apply_function.emit(func=SmoothingOperation.last_operation())
+        # Send the operation stack, ensure reverse order so newer operations
+        # are first
+        dispatch.apply_operations.emit(
+            stack=SmoothingOperation.operations()[::-1])
