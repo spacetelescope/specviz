@@ -5,12 +5,12 @@ import os
 
 from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
-                            QMenu, QMenuBar, QSizePolicy, QToolBar, QStatusBar,
+                            QSizePolicy, QToolBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QPixmap, QIcon, QColor, QStandardItem, QLineEdit, \
+from qtpy.QtGui import QIcon, QColor, QStandardItem, QLineEdit, \
                        QDoubleValidator, QHeaderView, QFont, QDialog
-from qtpy.QtCore import (QSize, QRect, QCoreApplication, QMetaObject, Qt,
+from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 
@@ -281,7 +281,9 @@ class LineListsWindow(UiLinelistsWindow):
         global wave_range
         if wave_range[0] == None or wave_range[1] == None:
             wave_range = self.plot_window._find_wavelength_range()
+
         wrange = self._waverange_dialog(wave_range)
+
         wave_range = wrange
 
     def _open_linelist_file(self, file_name=None):
@@ -627,8 +629,8 @@ class LineListPane(QWidget):
         selected_view_rows = self.table_view.selectionModel().selectedRows()
         selected_model_rows = [self._sort_proxy.mapToSource(x) for x in selected_view_rows]
         if len(selected_model_rows) > 0:
-            r = [x.row() for x in selected_model_rows]
-            local_list = self.linelist[r]
+            r = [x for x in selected_model_rows]
+            local_list = self.linelist.extract_rows(r)
 
             # name is used to match lists with table views
             local_list.name = self.linelist.name
@@ -636,10 +638,10 @@ class LineListPane(QWidget):
             table_model = LineListTableModel(local_list)
             pane, table_view = _createLineListPane(local_list, table_model, self._caller)
 
+            pane._sets_tabbed_pane = self._sets_tabbed_pane
             table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
 
-            npanels = self._sets_tabbed_pane.count()
-            self._sets_tabbed_pane.addTab(pane, str(npanels))
+            self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
 
     def tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
