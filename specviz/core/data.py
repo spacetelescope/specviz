@@ -272,20 +272,29 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             The flux units.
         """
         if disp_unit is not None and \
+                (self.dispersion_unit.is_unity() or
                 self.dispersion_unit.is_equivalent(disp_unit,
-                                                   equivalencies=spectral()):
+                                                   equivalencies=spectral())):
+
+            if self.dispersion_unit.is_unity():
+                self.dispersion_unit = disp_unit
+
             self._dispersion = self.masked_dispersion.data.to(
                 disp_unit, equivalencies=spectral()).value
 
             # Finally, change the unit
             self.dispersion_unit = disp_unit
         else:
-            logging.warning("Units are not compatible.")
+            logging.warning("Disperion units are not compatible.")
 
         if data_unit is not None and \
+                (self.unit.is_unity() or
                 self.unit.is_equivalent(data_unit,
                                         equivalencies=spectral_density(
-                                            self.masked_dispersion.data)):
+                                            self.masked_dispersion.data))):
+            if self.unit.is_unity():
+                self._unit = data_unit
+
             self._data = self.masked_data.data.to(
                 data_unit, equivalencies=spectral_density(
                     self.masked_dispersion.data)).value
@@ -299,7 +308,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
             # Finally, change the unit
             self._unit = data_unit
         else:
-            logging.warning("Units are not compatible.")
+            logging.warning("Data units are not compatible.")
 
     @classmethod
     def _evaluate(cls, layers, formula):

@@ -94,6 +94,10 @@ class PlotToolsPlugin(Plugin):
         self._unit_change_dialog.set_layer(self.current_layer)
 
         if self._unit_change_dialog.exec_():
+            logging.info("Unit change operation accepted ({}, {}).".format(
+                self._unit_change_dialog.disp_unit,
+                self._unit_change_dialog.flux_unit
+            ))
             x_text = self._unit_change_dialog.disp_unit
             y_text = self._unit_change_dialog.flux_unit
 
