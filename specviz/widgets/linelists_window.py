@@ -273,7 +273,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
-    def _get_waverange_from_dialog(self):
+    def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
         # the user definition from call to call. At the initial
         # call, the wave range is initialized with whatever range
@@ -282,7 +282,7 @@ class LineListsWindow(UiLinelistsWindow):
         if wave_range[0] == None or wave_range[1] == None:
             wave_range = self.plot_window._find_wavelength_range()
 
-        wrange = self._waverange_dialog(wave_range)
+        wrange = self._build_waverange_dialog(wave_range, line_list)
 
         wave_range = wrange
 
@@ -297,7 +297,7 @@ class LineListsWindow(UiLinelistsWindow):
                 name = file_name[0]
                 line_list = linelist.get_from_file(os.path.dirname(name), name)
 
-                self._get_waverange_from_dialog()
+                self._get_waverange_from_dialog(line_list)
                 global wave_range
                 if wave_range[0] and wave_range[1]:
                     self._build_view(line_list, 0, waverange=wave_range)
@@ -324,17 +324,17 @@ class LineListsWindow(UiLinelistsWindow):
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
 
-            self._get_waverange_from_dialog()
+            self._get_waverange_from_dialog(line_list)
             global wave_range
             if wave_range[0] and wave_range[1]:
                 self._build_view(line_list, 0, waverange=wave_range)
 
-    def _waverange_dialog(self, wave_range):
+    def _build_waverange_dialog(self, wave_range, line_list):
 
         dialog = QDialog(parent=self.centralWidget)
         dialog.setWindowTitle("Wavelength range")
         dialog.setWindowModality(Qt.ApplicationModal)
-        dialog.resize(370, 170)
+        dialog.resize(370, 250)
 
         button_ok = QPushButton("OK")
         button_ok.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -360,6 +360,13 @@ class LineListsWindow(UiLinelistsWindow):
         min_text.setToolTip("Minimum wavelength to read from list.")
         max_text.setToolTip("Maximum wavelength to read from list.")
 
+        r = (wave_range[0], wave_range[1])
+        extracted = line_list.extract_range(r)
+        nlines = len(extracted[WAVELENGTH_COLUMN].data)
+        nlines_label = QLabel(str(nlines))
+        color = 'black' if nlines < 2000 else 'red'
+        nlines_label.setStyleSheet('color:'+color)
+
         # set up layouts and widgets for the dialog.
         text_pane = QWidget()
         text_layout = QGridLayout()
@@ -373,6 +380,13 @@ class LineListsWindow(UiLinelistsWindow):
         text_layout.addItem(spacerItem, 1, 2)
         text_pane.setLayout(text_layout)
 
+        label_pane = QWidget()
+        label_layout = QHBoxLayout()
+        label_layout.addWidget(nlines_label)
+        label_layout.addWidget(QLabel(" lines included in range."))
+        label_layout.addStretch()
+        label_pane.setLayout(label_layout)
+
         button_pane = QWidget()
         button_layout = QHBoxLayout()
 
@@ -385,6 +399,7 @@ class LineListsWindow(UiLinelistsWindow):
         dialog_layout.setSizeConstraint(QLayout.SetMaximumSize)
 
         dialog_layout.addWidget(text_pane)
+        dialog_layout.addWidget(label_pane)
         dialog_layout.addStretch()
         dialog_layout.addWidget(button_pane)
 
@@ -403,6 +418,13 @@ class LineListsWindow(UiLinelistsWindow):
                 units = self.plot_window._plot_units[0]
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
+
+                r = (amin, amax)
+                extracted = line_list.extract_range(r)
+                nlines = len(extracted[WAVELENGTH_COLUMN].data)
+
+                # self._waverange_dialog.set_nlines(nlines)
+
             else:
                 return (None, None)
 
