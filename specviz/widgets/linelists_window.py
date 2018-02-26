@@ -429,6 +429,7 @@ class LineListsWindow(UiLinelistsWindow):
 
             # connect signals
             table_view.selectionModel().selectionChanged.connect(self._countSelections)
+            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
             self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
 
             # now we add this "line set tabbed pane" to the main tabbed
@@ -541,7 +542,8 @@ class LineListPane(QWidget):
         self.create_set_button.setToolTip("Create new line set from selected lines.")
         self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(self.create_set_button, 1, 0)
-        # self.create_set_button.setEnabled(False)
+        # the create_set button is enabled/disabled by logic elsewhere
+        self.create_set_button.setEnabled(False)
         self.create_set_button.clicked.connect(lambda: self._createSet())
 
         # 'deselect all' button
@@ -640,11 +642,16 @@ class LineListPane(QWidget):
 
             pane._sets_tabbed_pane = self._sets_tabbed_pane
             table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
             self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
 
     def tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
+
+    def handle_button_activation(self):
+        nselected = len(self.table_view.selectionModel().selectedRows())
+        self.create_set_button.setEnabled(nselected > 0)
 
 
 class PlottedLinesPane(QWidget):
