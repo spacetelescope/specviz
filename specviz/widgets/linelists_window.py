@@ -360,12 +360,12 @@ class LineListsWindow(UiLinelistsWindow):
         min_text.setToolTip("Minimum wavelength to read from list.")
         max_text.setToolTip("Maximum wavelength to read from list.")
 
-        r = (wave_range[0], wave_range[1])
-        extracted = line_list.extract_range(r)
-        nlines = len(extracted[WAVELENGTH_COLUMN].data)
-        nlines_label = QLabel(str(nlines))
-        color = 'black' if nlines < 2000 else 'red'
-        nlines_label.setStyleSheet('color:'+color)
+        nlines_label = self._compute_nlines_in_waverange(line_list, min_text, max_text)
+
+        min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 min_text, max_text, label=nlines_label))
+        max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 min_text, max_text, label=nlines_label))
 
         # set up layouts and widgets for the dialog.
         text_pane = QWidget()
@@ -411,25 +411,46 @@ class LineListsWindow(UiLinelistsWindow):
         accepted = dialog.exec_() > 0
 
         amin = amax = None
-        if accepted and min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
+        if accepted:
+            return self._get_range_from_textfields(min_text, max_text)
+
+        return (amin, amax)
+
+    def _get_range_from_textfields(self, min_text, max_text):
+        amin = amax = None
+        if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
             if amax > amin:
                 units = self.plot_window._plot_units[0]
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
-
-                r = (amin, amax)
-                extracted = line_list.extract_range(r)
-                nlines = len(extracted[WAVELENGTH_COLUMN].data)
-
-                # self._waverange_dialog.set_nlines(nlines)
-
             else:
                 return (None, None)
 
         return (amin, amax)
 
+    # computes how many lines in the supplied list
+    # fall within the supplied wavelength range. The
+    # result populates the supplied label. Or, it
+    # builds a fresh QLabel with the result.
+    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label=None):
+
+        amin, amax = self._get_range_from_textfields(min_text, max_text)
+
+        if amin != None or amax != None:
+            r = (amin, amax)
+            extracted = line_list.extract_range(r)
+            nlines = len(extracted[WAVELENGTH_COLUMN].data)
+
+            if label == None:
+                label = QLabel(str(nlines))
+            else:
+                label.setText(str(nlines))
+            color = 'black' if nlines < 2000 else 'red'
+            label.setStyleSheet('color:' + color)
+
+        return label
 
     def _build_view(self, line_list, index, waverange=(None,None)):
 

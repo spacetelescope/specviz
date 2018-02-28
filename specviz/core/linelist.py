@@ -273,10 +273,11 @@ class LineList(Table):
         the subset of lines that fall within the
         wavelength range defined by 'wmin' and 'wmax'.
 
-        The actual range is somewhat wider, to allow
-        for radial velocity and redshift effects. The
-        actual handling of this must wait until we get
-        more detailed specs for the redshift functionality.
+        REMOVED FOR NOW: The actual range is somewhat
+        wider, to allow for radial velocity and redshift
+        effects. The actual handling of this must wait
+        until we get more detailed specs for the redshift
+        functionality.
 
         Parameters
         ----------
@@ -303,8 +304,12 @@ class LineList(Table):
         # be enough at the short end, but it remains to be
         # seen how this plays out when we add redshift
         # functionality to the app.
-        wmin = wmin.value - wmin.value * 0.1
-        wmax = wmax.value + wmax.value * 0.1
+        #
+        # REMOVING THIS FOR NOW.
+        # wmin = wmin.value - wmin.value * 0.1
+        # wmax = wmax.value + wmax.value * 0.1
+        wmin = wmin.value
+        wmax = wmax.value
 
         # 'indices' points to rows with wavelength values
         # that lie outside the wavelength range.
