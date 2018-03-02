@@ -133,7 +133,8 @@ class LinePlot(object):
 
     def change_units(self, x, y=None, z=None):
         """
-        Change the displayed units
+        Change the displayed units. Note that if I an axis is defined as unit-
+        less, providing a new unit will defined that axis as being that unit.
 
         Parameters
         ----------
@@ -148,17 +149,29 @@ class LinePlot(object):
         """
         is_convert_success = [True, True, True]
 
-        x = x or Unit('')
-        y = y or Unit('')
+        if x is not None:
+            x = Unit(x)
+        else:
+            x = Unit(self._layer.dispersion_unit)
+        
+        if y is not None:
+            y = Unit(y)
+        else:
+            y = Unit(self._layer.unit)
 
-        if not self._layer.dispersion_unit.is_equivalent(
-                x, equivalencies=spectral()):
+        logging.info("Changing units from {} and {} to {} and {}.".format(
+            self._layer.unit, self._layer.dispersion_unit, x, y
+        ))
+
+        if not self._layer.dispersion_unit.is_unity() and \
+            not self._layer.dispersion_unit.is_equivalent(x, equivalencies=spectral()):
             logging.error("Failed to convert x-axis plot units from [{}] to"
                           " [{}].".format(self._layer.dispersion_unit, x))
             x = None
             is_convert_success[0] = False
 
-        if not self._layer.unit.is_equivalent(
+        if not self._layer.unit.is_unity() and \
+            not self._layer.unit.is_equivalent(
                 y, equivalencies=spectral_density(self.layer.masked_dispersion)):
             logging.error("Failed to convert y-axis plot units from [{}] to "
                           "[{}].".format(self._layer.unit, y))
