@@ -175,6 +175,9 @@ class PlotSubWindow(UiPlotSubWindow):
             dispatch.change_dispersion_position.emit(
                 pos=self._disp_line.value()))
 
+        self._disp_line.sigPositionChangeFinished.connect(lambda:
+            dispatch.finished_position_change.emit())
+
     def _setup_connections(self):
         # Connect cursor position to UI element
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
