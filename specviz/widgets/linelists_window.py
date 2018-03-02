@@ -15,6 +15,8 @@ from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
 from qtpy import compat
 
 from astropy.units import Quantity
+from astropy.table import QTable, Column
+from astropy.io import ascii
 
 from ..core.events import dispatch
 from ..core import linelist
@@ -305,18 +307,11 @@ class LineListsWindow(UiLinelistsWindow):
     def _export_to_file(self, file_name=None):
         if file_name is None:
 
-            file_name, _file_filter = compat.getopenfilenames(filters='Line lists (*.yaml)')
+            if self._plotted_lines_pane:
+                file_name, _file_filter = compat.getsavefilename(filters='ECSV (*.ecsv')
 
-            # # for now, lets assume both the line list itself, and its
-            # # associated YAML descriptor file, live in the same directory.
-            # if file_name is not None and len(file_name) > 0:
-            #     name = file_name[0]
-            #     line_list = linelist.get_from_file(os.path.dirname(name), name)
-            #
-            #     self._get_waverange_from_dialog()
-            #     global wave_range
-            #     if wave_range[0] and wave_range[1]:
-            #         self._build_view(line_list, 0, waverange=wave_range)
+                ascii.write(self._plotted_lines_pane.plotted_lines, output=file_name, format='ecsv')
+
 
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains
@@ -724,6 +719,8 @@ class PlottedLinesPane(QWidget):
 
     def __init__(self, plotted_lines, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
+
+        self.plotted_lines = plotted_lines
 
         layout = QVBoxLayout()
         layout.setSizeConstraint(QLayout.SetMaximumSize)
