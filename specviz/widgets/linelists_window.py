@@ -8,7 +8,7 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QSizePolicy, QToolBar,
                             QAction, QTableView, QMainWindow,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QIcon, QColor, QStandardItem, QLineEdit, \
+from qtpy.QtGui import QIcon, QColor, QStandardItem, QLineEdit, QTabBar, \
                        QDoubleValidator, QHeaderView, QFont, QDialog
 from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
@@ -492,8 +492,10 @@ class LineListsWindow(UiLinelistsWindow):
             self._build_view(linelist, index)
 
         # add extra tab to hold the plotted lines view.
-        if self.tabWidget.count() > 0:
+        widget_count = self.tabWidget.count()
+        if widget_count > 0:
             self.tabWidget.addTab(QWidget(), PLOTTED)
+            self.tabWidget.tabBar().setTabButton(widget_count-1, QTabBar.LeftSide, None)
 
     def tab_close(self, index):
         self.tabWidget.removeTab(index)
