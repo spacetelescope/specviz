@@ -48,12 +48,24 @@ columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN]
 _linelists_cache = []
 
 
-def get_from_file(linelist_path, yaml_filename):
+def get_from_file(linelist_path, filename):
 
-    loader = yaml.load(open(yaml_filename, 'r'))
-    linelist_fullname = linelist_path + os.path.sep + loader.filename
+    if filename.endswith('.yaml'):
+        loader = yaml.load(open(filename, 'r'))
+        linelist_fullname = linelist_path + os.path.sep + loader.filename
 
-    return LineList.read_list(linelist_fullname, loader)
+        return LineList.read_list(linelist_fullname, loader)
+
+    elif filename.endswith('.ecsv'):
+        table = Table.read(filename, format='ascii.ecsv')
+
+        linelist = LineList(table, name=os.path.split(filename)[1])
+        _linelists_cache.append(linelist)
+
+        return linelist
+
+    else:
+        return None
 
 
 # This should be called at the appropriate time when starting the

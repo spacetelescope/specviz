@@ -291,26 +291,30 @@ class LineListsWindow(UiLinelistsWindow):
     def _open_linelist_file(self, file_name=None):
         if file_name is None:
 
-            file_name, _file_filter = compat.getopenfilenames(caption='Load line list from file',
-                                                              filters='Line lists (*.yaml)')
+            filters = ['Line list (*.yaml *.ecsv)']
+            file_name, _file_filter = compat.getopenfilenames(filters=";;".join(filters))
 
-            # for now, lets assume both the line list itself, and its
+            # For now, lets assume both the line list itself, and its
             # associated YAML descriptor file, live in the same directory.
+            # Not an issue for self-contained ecsv files.
             if file_name is not None and len(file_name) > 0:
                 name = file_name[0]
                 line_list = linelist.get_from_file(os.path.dirname(name), name)
 
-                self._get_waverange_from_dialog(line_list)
-                global wave_range
-                if wave_range[0] and wave_range[1]:
-                    self._build_view(line_list, 0, waverange=wave_range)
+                if line_list:
+                    self._get_waverange_from_dialog(line_list)
+                    global wave_range
+                    if wave_range[0] and wave_range[1]:
+                        line_list = self._build_view(line_list, 0, waverange=wave_range)
+                        self.plot_window.linelists.append(line_list)
 
     def _export_to_file(self, file_name=None):
         if file_name is None:
 
             if hasattr(self, '_plotted_lines_pane') and self._plotted_lines_pane:
-                file_name, _file_filter = compat.getsavefilename(caption='Export to .ecsv file',
-                                                                 filters='ECSV (*.ecsv')
+
+                filters = ['Line list (*.ecsv)']
+                file_name, _file_filter = compat.getsavefilename(filters=";;".join(filters))
 
                 if not file_name.endswith('.ecsv'):
                     file_name += '.ecsv'
@@ -318,7 +322,8 @@ class LineListsWindow(UiLinelistsWindow):
                 output_table = self._plotted_lines_pane.plotted_lines.table
 
                 for colum_name in columns_to_remove:
-                    output_table.remove_column(colum_name)
+                    if colum_name in output_table.colnames:
+                        output_table.remove_column(colum_name)
 
                 ascii.write(output_table, output=file_name, format='ecsv')
 
@@ -489,6 +494,8 @@ class LineListsWindow(UiLinelistsWindow):
             # self.set_tabbed_panes.append(set_tabbed_pane)
             # self.tab_count.append(0)
             # self.panes.append(pane)
+
+            return line_list
 
     def _buildViews(self, plot_window):
         window_linelists = plot_window.linelists
