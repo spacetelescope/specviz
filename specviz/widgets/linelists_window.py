@@ -15,12 +15,12 @@ from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
 from qtpy import compat
 
 from astropy.units import Quantity
-from astropy.table import QTable, Column
 from astropy.io import ascii
 
 from ..core.events import dispatch
 from ..core import linelist
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
+from ..core.linelist import columns_to_remove
 
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          '..', 'data', 'qt', 'resources'))
@@ -291,7 +291,8 @@ class LineListsWindow(UiLinelistsWindow):
     def _open_linelist_file(self, file_name=None):
         if file_name is None:
 
-            file_name, _file_filter = compat.getopenfilenames(filters='Line lists (*.yaml)')
+            file_name, _file_filter = compat.getopenfilenames(caption='Load line list from file',
+                                                              filters='Line lists (*.yaml)')
 
             # for now, lets assume both the line list itself, and its
             # associated YAML descriptor file, live in the same directory.
@@ -307,11 +308,19 @@ class LineListsWindow(UiLinelistsWindow):
     def _export_to_file(self, file_name=None):
         if file_name is None:
 
-            if self._plotted_lines_pane:
-                file_name, _file_filter = compat.getsavefilename(filters='ECSV (*.ecsv')
+            if hasattr(self, '_plotted_lines_pane') and self._plotted_lines_pane:
+                file_name, _file_filter = compat.getsavefilename(caption='Export to .ecsv file',
+                                                                 filters='ECSV (*.ecsv')
 
-                ascii.write(self._plotted_lines_pane.plotted_lines, output=file_name, format='ecsv')
+                if not file_name.endswith('.ecsv'):
+                    file_name += '.ecsv'
 
+                output_table = self._plotted_lines_pane.plotted_lines.table
+
+                for colum_name in columns_to_remove:
+                    output_table.remove_column(colum_name)
+
+                ascii.write(output_table, output=file_name, format='ecsv')
 
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains

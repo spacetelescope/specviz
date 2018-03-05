@@ -42,6 +42,9 @@ COLOR_COLUMN = 'color'
 HEIGHT_COLUMN = 'height'
 DEFAULT_HEIGHT = 0.75
 
+# columns to remove when exporting the plotted lines
+columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN]
+
 _linelists_cache = []
 
 
@@ -170,6 +173,10 @@ class LineList(Table):
         # A line list (but not the underlying table) can have
         # tool tips associated to each column.
         self.tooltips = tooltips
+
+    @property
+    def table(self):
+        return self._table
 
     @classmethod
     def read_list(cls, filename, yaml_loader):
