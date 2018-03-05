@@ -44,7 +44,7 @@ The following are some brief notes I took during our meeting.
              the beach ball from showing.
          (2) Selecting species and intensities can be done with sort-select-create set sequence.
 
-- Add ability to write line lists. Reading is already specified by requirement above.
+- DONE: Add ability to write line lists. Reading is already specified by requirement above.
 
 - Use ECSV format throughout.
 
