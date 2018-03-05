@@ -46,6 +46,8 @@ The following are some brief notes I took during our meeting.
 
 - DONE: Add ability to write line lists. Reading is already specified by requirement above.
 
-- Use ECSV format throughout.
+- DONE: Use ECSV format throughout. Can read form ECSV files; internal lists still kept under yaml+ascii format.
+
+
 
 
