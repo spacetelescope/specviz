@@ -22,114 +22,48 @@ class LineIDMarker(TextItem):
         due to a bug in pyqtgraph's function 'functions.mkColor', which
         bombs when presented with an argument of type Qt.GlobalColor.
     '''
-    def __init__(self, text, plot_item, widget, tip="", color=(0,0,0), orientation='horizontal'):
+    def __init__(self, marker=None, text=None, plot_item=None, tip="", color=(0,0,0), orientation='horizontal'):
 
-        self._plot_item = plot_item
-        self._orientation = orientation
-        self._color = functions.mkColor(color)
+        if marker == None:
+            self._text = text
+            self._plot_item = plot_item
+            self._orientation = orientation
+            self._color = functions.mkColor(color)
+            # self._color = color
 
-        anchor = orientations[orientation]['anchor']
-        angle = orientations[orientation]['angle']
+            self._anchor = orientations[orientation]['anchor']
+            self._angle = orientations[orientation]['angle']
 
-        super(LineIDMarker, self).__init__(text=text, color=color, anchor=anchor, angle=angle)
+            super(LineIDMarker, self).__init__(text=text, color=color, anchor=self._anchor, angle=self._angle)
 
-        # self.setFlag(self.ItemIgnoresTransformations)
+            self._tooltip = tip
+            self.setToolTip(tip)
+
+        else:
+            self._text = marker._text
+            self._plot_item = marker._plot_item
+            self._orientation = marker._orientation
+            self._color = marker._color
+
+            self._anchor = marker._anchor
+            self._angle = marker._angle
+
+            super(LineIDMarker, self).__init__(text=self._text, color=self._color,
+                                               anchor=self._anchor, angle=self._angle)
+
+            self._tooltip = marker._tooltip
+            self.setToolTip(marker._tooltip)
+
         self.setFlag(self.ItemIsMovable)
-        # self.setFlag(self.ItemSendsGeometryChanges)
-        self.setToolTip(tip)
 
-        widget.sigYRangeChanged.connect(self._handle_zoom)
-
-    def _handle_zoom(self):
-        pass
-        # self._plot_item.disableAutoRange(axis='y')
-        # self._plot_item.vb.enableAutoRange(axis=ViewBox.YAxis, enable=True)
-
-        # self._plot_item.removeItem(self)
-        #
-        # # current range in viewbox
-        # range = self._plot_item.vb.viewRange()
-        # ymin = range[1][0]
-        # ymax = range[1][1]
-        #
-        # height = (ymax - ymin) * 0.5 + ymin
-        #
-        # # print ('@@@@@@     line: 49  - ', ymin, ymax)
-        #
-        # print ('@@@@@@     line: 56  - ', self.y())
-        # self.setPos(self.x(), height)
-        # print ('@@@@@@     line: 58  - ', self.y())
-        #
-        # # self._plot_item.addItem(self, ignoreBounds=True)
-        # self._plot_item.enableAutoRange(axis='y', enable=True)
-
-        # t = self._widget.transform()
-
-        # for e in dir(t)
-        #     print ('@@@@@@     line: 52  - ', e)
-
-
-        # t = self.transform()
-        # newT = QTransform(t)
-        # t2 = newT.translate(0.,0.)
-        #
-        # print("@@@@@@  file annotation.py; line 72 - ",  newT.m11(), newT.m21(), newT.m31(), newT.m21(), newT.m22(), newT.m32(),  newT.m31(), newT.m32(), newT.m33())
-        # print("@@@@@@  file annotation.py; line 73 - ",  t2.m11(), t2.m21(), t2.m31(), t2.m21(), t2.m22(), t2.m32(),  t2.m31(), t2.m32(), t2.m33())
-
-
-    # TODO these are attempts to reposition the line labels on the fly, as
-    # the data is zoomed in and out. Nothing works. The behavior that is
-    # described in the PyQt documentation is not observed. It appears that
-    # the setFlags(ItemSendsGeometryChanges) does not work. I am using pyqt
-    # version 4.8, so support for this flag should be there.
-    # The ItemIgnoresTransformations flag doesn't work either. When set, it
-    # messes the entire plot. This could be dues to interference with pyqtgraph.
-    # No way to know.
-
-    # def itemChange(self, change, value):
-    #     ret = super(LineIDMarker, self).itemChange(change, value)
-    #
-    #     print("@@@@@@  file annotation.py; line 43 - ",  change, value)
-    #
-    #     print("@@@@@@  file annotation.py; line 45 - ",  self.x(), self.y())
-    #
-    #     # if change == self.ItemPositionChange:
-    #
-    #         # print("@@@@@@  file annotation.py; line 49 -   AAAAAAA")
-    #
-    #         # newPos = self.scenePos()
-    #
-    #         # print("@@@@@@  file annotation.py; line 45 - ",  newPos)
-    #
-    #         # rect = self.sceneBoundingRect()
-    #
-    #         # newPos.setY(y)
-    #
-    #         # print("@@@@@@  file annotation.py; line 54 - ",  self.scenePos())
-    #         # return newPos
-    #         # # return ret
-    #
-    #         # newPos.setY(self.y() * 0.7)
-    #
-    #         # return newPos
-    #
-    #         # t = self.transform()
-    #         # newT = QTransform(t)
-    #         # t2 = newT.translate(0.,10.)
-    #         #
-    #         # print("@@@@@@  file annotation.py; line 72 - ",  newT.m22(), newT.m32())
-    #         # print("@@@@@@  file annotation.py; line 73 - ",  t2.m22(), t2.m32())
-    #         #
-    #         # return t2
-    #
-    #     if hasattr(value, 'y'):
-    #         return QPointF(self.pos().x(), value.y())
-    #
-    #
-    #
-    #         # return ret
-    #
-    #     return ret
+    # Repositioning the line labels on the fly, as the data is  zoomed in and out,
+    # does not work. The behavior that is described in the PyQt documentation is not
+    # observed. It appears that the setFlags(ItemSendsGeometryChanges) does not work.
+    # I am using pyqt version 4.8, so support for this flag should be there. The
+    # ItemIgnoresTransformations flag doesn't work either. When set, it messes up with
+    # the entire plot. This could be due to interference with pyqtgraph, or a threading
+    # issue. We give up on this approach and let the caller handle the zoom requests and
+    # the repainting.
 
     def paint(self, p, *args):
         ''' Overrides the default implementation so as

@@ -169,6 +169,8 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
+        self._plot_widget.sigYRangeChanged.connect(self._handle_zoom)
+
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
         # Get the actual dispersion value from the index provided
@@ -483,11 +485,92 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
+    def _handle_zoom(self):
+        # this handles zoom signals that can be emitted
+        # when a merged line list is not available yet.
+        if hasattr(self, '_merged_linelist') and self._displaying_markers:
+
+            self._remove_linelabels_from_plot()
+
+            height = self._compute_height(self._merged_linelist, self._plot_item)
+            wave_column = self._merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
+
+            new_line_labels = []
+            for marker, row_index in zip(self._line_labels, range(len(wave_column))):
+                self._plot_item.removeItem(marker)
+
+                new_marker = LineIDMarker(marker=marker)
+
+                new_marker.setPos(marker.x(), height[row_index])
+
+                self._plot_item.addItem(new_marker)
+                new_line_labels.append(new_marker)
+
+            self._line_labels = new_line_labels
+            self._plot_item.update()
+
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
+
+    def _compute_height(self, merged_linelist, plot_item):
+        # compute height to display each marker
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+
+        return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
+
+    def _go_plot_markers(self, merged_linelist):
+        # Code below is plotting all markers at a fixed height in
+        # the screen coordinate system. Still TBD how to do this in
+        # the generic case. Maybe derive heights from curve data
+        # instead? Make the markers follow the curve ups and downs?
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same height in the window even
+        # when the plot is zoomed. This kind of functionality doesn't
+        # seem to be possible under pyqtgraph though. This requires
+        # more investigation.
+        plot_item = self._plot_item
+        # curve = plot_item.curves[0]
+
+        height = self._compute_height(merged_linelist, plot_item)
+
+        # column names are defined in the YAML files
+        # or by constants elsewhere.
+        wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
+        id_column = merged_linelist.columns[ID_COLUMN]
+        color_column = merged_linelist[COLOR_COLUMN]
+        # plot_item.enableAutoRange(enable=False)
+        for row_index in range(len(wave_column)):
+
+            # tool tip contains all info in table.
+            tool_tip = ""
+            for col_index in range(len(merged_linelist.columns)):
+                col_name = merged_linelist.colnames[col_index]
+                if not col_name in [COLOR_COLUMN]:
+                    value = merged_linelist.columns[col_index][row_index]
+                    tool_tip += col_name + '=' + str(value) + ', '
+
+            marker = LineIDMarker(text=id_column[row_index],
+                                  plot_item=plot_item,
+                                  tip=tool_tip,
+                                  color=color_column[row_index],
+                                  orientation='vertical')
+
+            marker.setPos(wave_column[row_index], height[row_index])
+
+            plot_item.addItem(marker)
+            self._line_labels.append(marker)
+
+        # plot_item.enableAutoRange(pg.ViewBox.XAxis, True)
+        # plot_item.enableAutoRange(pg.ViewBox.YAxis, True)
+        plot_item.update()
 
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
@@ -552,78 +635,28 @@ class PlotSubWindow(UiPlotSubWindow):
 
                     linelists_with_selections.append(new_list)
 
-        # Merge all line lists into a single one. This might
-        # change in the future to enable customized plotting
-        # for each line list.
+        # Merge all line lists into a single one.
         merged_linelist = LineList.merge(linelists_with_selections, units)
 
-        # Code below is plotting all markers at a fixed height in
-        # the screen coordinate system. Still TBD how to do this in
-        # the generic case. Maybe derive heights from curve data
-        # instead? Make the markers follow the curve ups and downs?
-        #
-        # Ideally we would like to have the marker's X coordinate
-        # pinned down to the plot surface in data value, and the Y
-        # coordinate pinned down in screen value. This would make
-        # the markers to stay at the same height in the window even
-        # when the plot is zoomed. This kind of functionality doesn't
-        # seem to be possible under pyqtgraph though. This requires
-        # more investigation.
-
-        plot_item = self._plot_item
-
-        # curve = plot_item.curves[0]
-
-        # compute height to display each marker
-        data_range = plot_item.vb.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
-        height = (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
-
-        # column names are defined in the YAML files
-        # or by constants elsewhere.
-        wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
-        id_column = merged_linelist.columns[ID_COLUMN]
-        color_column = merged_linelist[COLOR_COLUMN]
-
-        plot_item.enableAutoRange(enable=False)
-
-        for row_index in range(len(wave_column)):
-
-            # tool tip contains all info in table.
-            tool_tip = ""
-            for col_index in range(len(merged_linelist.columns)):
-                col_name = merged_linelist.colnames[col_index]
-                if not col_name in [COLOR_COLUMN]:
-                    value = merged_linelist.columns[col_index][row_index]
-                    tool_tip += col_name + '=' + str(value) + ', '
-
-            marker = LineIDMarker(id_column[row_index], plot_item, self._plot_widget,
-                                  tip=tool_tip,
-                                  color=color_column[row_index],
-                                  orientation='vertical')
-
-            marker.setPos(wave_column[row_index], height[row_index])
-
-            plot_item.addItem(marker)
-            self._line_labels.append(marker)
-
-        plot_item.enableAutoRange(pg.ViewBox.XAxis, True)
-        plot_item.enableAutoRange(pg.ViewBox.YAxis, True)
-
-        plot_item.update()
+        self._go_plot_markers(merged_linelist)
 
         self._linelist_window.displayPlottedLines(merged_linelist)
 
+        self._merged_linelist = merged_linelist
+
+        self._displaying_markers = True
+
     @dispatch.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
-        if self._is_selected:
-            self._plot_item.enableAutoRange(enable=False)
-            for marker in self._line_labels:
-                self._plot_item.removeItem(marker)
-            self._plot_item.enableAutoRange(enable=True)
-            self._plot_item.update()
+        if self._linelist_window and self._is_selected:
+            self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
+            self._displaying_markers = False
+
+    def _remove_linelabels_from_plot(self):
+        for marker in self._line_labels:
+            self._plot_item.removeItem(marker)
+        self._plot_item.update()
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the
