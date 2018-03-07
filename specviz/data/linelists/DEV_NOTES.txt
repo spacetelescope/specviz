@@ -32,7 +32,8 @@ The following are some brief notes I took during our meeting.
 
 2nd round (Susan, Tony, Nick, Ivo, 1/30/2018)
 
-- Y axis locking when displaying line ID markers. MUCH HARDER TO DO THAN IT SEEMS AT FIRST.
+- DONE: Y axis locking when displaying line ID markers. MUCH HARDER TO DO THAN IT SEEMS AT FIRST.
+        Works for small number of markers. Needs speed up via buffering, perhaps threading as well.
 
 - DONE: Turn off automatic ingestion of line lists at app startup. Replace by guided approach by user, using a
   drop-down or similar selector to allow user to pick out specific line lists from internal library or
