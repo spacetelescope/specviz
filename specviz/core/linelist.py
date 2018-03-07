@@ -40,10 +40,11 @@ TOOLTIP_COLUMN = 'tooltip'
 REDSHIFTED_WAVELENGTH_COLUMN = 'z_wavelength'
 COLOR_COLUMN = 'color'
 HEIGHT_COLUMN = 'height'
+MARKER_COLUMN = 'marker'
 DEFAULT_HEIGHT = 0.75
 
 # columns to remove when exporting the plotted lines
-columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN]
+columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN, MARKER_COLUMN]
 
 _linelists_cache = []
 
@@ -277,6 +278,10 @@ class LineList(Table):
                 f = 1. + linelist.redshift / constants.c.value * 1000.
             z_wavelength = internal_table[WAVELENGTH_COLUMN] * f
             internal_table[REDSHIFTED_WAVELENGTH_COLUMN] = z_wavelength
+
+            # add column to hold plot markers
+            marker_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), None)
+            internal_table[MARKER_COLUMN] = marker_array
 
             tables.append(internal_table)
 

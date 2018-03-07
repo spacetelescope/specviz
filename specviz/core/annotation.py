@@ -1,10 +1,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-from pyqtgraph import functions, TextItem, ViewBox
+from pyqtgraph import functions, TextItem
 
 from qtpy.QtCore import QPointF
-from qtpy.QtGui import QTransform, QPolygonF, QPen, QColor
+from qtpy.QtGui import QPolygonF, QPen, QColor
 
 
 orientations = {
@@ -28,8 +28,7 @@ class LineIDMarker(TextItem):
             self._text = text
             self._plot_item = plot_item
             self._orientation = orientation
-            self._color = functions.mkColor(color)
-            # self._color = color
+            self._color = color
 
             self._anchor = orientations[orientation]['anchor']
             self._angle = orientations[orientation]['angle']
@@ -64,6 +63,9 @@ class LineIDMarker(TextItem):
     # the entire plot. This could be due to interference with pyqtgraph, or a threading
     # issue. We give up on this approach and let the caller handle the zoom requests and
     # the repainting.
+
+    def __str__(self):
+        return str(self._text)
 
     def paint(self, p, *args):
         ''' Overrides the default implementation so as

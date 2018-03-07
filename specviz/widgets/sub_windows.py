@@ -17,7 +17,7 @@ from qtpy.QtCore import QEvent, Qt
 
 from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, \
-    REDSHIFTED_WAVELENGTH_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
+    REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 from ..core.plots import LinePlot
 from ..core.annotation import LineIDMarker
@@ -94,7 +94,6 @@ class UiPlotSubWindow(QMainWindow):
 
         # Line labels
         self._linelist_window = None
-        self._line_labels = []
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
@@ -486,42 +485,38 @@ class PlotSubWindow(UiPlotSubWindow):
         return (amin, amax)
 
     def _handle_zoom(self):
-        # this handles zoom signals that can be emitted
+        # this method may be called by zoom signals that can be emitted
         # when a merged line list is not available yet.
         if hasattr(self, '_merged_linelist') and self._displaying_markers:
 
-            self._remove_linelabels_from_plot()
+            # prevent burst calls to step into each other.
+            self._plot_widget.sigYRangeChanged.disconnect(self._handle_zoom)
 
-            height = self._compute_height(self._merged_linelist, self._plot_item)
-            wave_column = self._merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
+            # update height column in line list based on
+            # the new, zoomed coordinates.
+            height_array = self._compute_height(self._merged_linelist, self._plot_item)
 
-            new_line_labels = []
-            for marker, row_index in zip(self._line_labels, range(len(wave_column))):
+            marker_column = self._merged_linelist[MARKER_COLUMN]
+            for row_index in range(len(marker_column)):
+                marker = marker_column[row_index]
+
                 self._plot_item.removeItem(marker)
 
                 new_marker = LineIDMarker(marker=marker)
-
-                new_marker.setPos(marker.x(), height[row_index])
+                new_marker.setPos(marker.x(), height_array[row_index])
 
                 self._plot_item.addItem(new_marker)
-                new_line_labels.append(new_marker)
+                marker_column[row_index] = new_marker
 
-            self._line_labels = new_line_labels
             self._plot_item.update()
+
+            self._plot_widget.sigYRangeChanged.connect(self._handle_zoom)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
-
-    def _compute_height(self, merged_linelist, plot_item):
-        # compute height to display each marker
-        data_range = plot_item.vb.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
-
-        return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
 
     def _go_plot_markers(self, merged_linelist):
         # Code below is plotting all markers at a fixed height in
@@ -533,9 +528,17 @@ class PlotSubWindow(UiPlotSubWindow):
         # pinned down to the plot surface in data value, and the Y
         # coordinate pinned down in screen value. This would make
         # the markers to stay at the same height in the window even
-        # when the plot is zoomed. This kind of functionality doesn't
-        # seem to be possible under pyqtgraph though. This requires
-        # more investigation.
+        # when the plot is zoomed. The elegant nice way to do this
+        # would be via the marker objects themselves to reposition
+        # themselves on screen. This did not work though. There seems
+        # to be a clash (maybe thread-related) in between the setPos
+        # method and the auto-range facility in pyqtgraph.
+        #
+        # We managed to get the pinning in Y by brute force: remove
+        # the markers and re-draw them in the new zoomed coordinates.
+        # This is handled by the _handle_zoom method that in turn relies
+        # in the storage of markers row-wise in the line list table.
+
         plot_item = self._plot_item
         # curve = plot_item.curves[0]
 
@@ -546,6 +549,11 @@ class PlotSubWindow(UiPlotSubWindow):
         wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
         id_column = merged_linelist.columns[ID_COLUMN]
         color_column = merged_linelist[COLOR_COLUMN]
+
+        # To enable marker removal from plot, markers are stored
+        # row-wise so as to match row selections in table views.
+        marker_column = merged_linelist[MARKER_COLUMN]
+
         # plot_item.enableAutoRange(enable=False)
         for row_index in range(len(wave_column)):
 
@@ -566,11 +574,17 @@ class PlotSubWindow(UiPlotSubWindow):
             marker.setPos(wave_column[row_index], height[row_index])
 
             plot_item.addItem(marker)
-            self._line_labels.append(marker)
+            marker_column[row_index] = marker
 
-        # plot_item.enableAutoRange(pg.ViewBox.XAxis, True)
-        # plot_item.enableAutoRange(pg.ViewBox.YAxis, True)
         plot_item.update()
+
+    def _compute_height(self, merged_linelist, plot_item):
+        # compute height to display each marker
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+
+        return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
 
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
@@ -578,19 +592,11 @@ class PlotSubWindow(UiPlotSubWindow):
         if not self._is_selected:
             return
 
-        # first, we have to flatten out the 2-D lists into 1-D
-        # to conform with the logic previously used in this code.
-        # table_views = []
-        # panes = []
-        # for tws, ps in zip(table_views, panes):
-        #     for table_view in tws:
-        #         table_views.append(table_view)
-        #     for pane in ps:
-        #         panes.append(pane)
-
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
         linelists_with_selections = []
+
+        self._remove_linelabels_from_plot()
 
         for table_view, pane in zip(table_views, panes):
             # Find matching line list by its name. This could be made
@@ -654,9 +660,11 @@ class PlotSubWindow(UiPlotSubWindow):
             self._displaying_markers = False
 
     def _remove_linelabels_from_plot(self):
-        for marker in self._line_labels:
-            self._plot_item.removeItem(marker)
-        self._plot_item.update()
+        if hasattr(self, '_merged_linelist'):
+            marker_column = self._merged_linelist[MARKER_COLUMN]
+            for index in range(len(marker_column)):
+                self._plot_item.removeItem(marker_column[index])
+            self._plot_item.update()
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the
