@@ -13,7 +13,7 @@ from astropy.units import Quantity
 
 from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
-from qtpy.QtCore import QEvent, Qt
+from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex
 
 from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, \
@@ -168,7 +168,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
-        self._plot_widget.sigYRangeChanged.connect(self._handle_zoom)
+        self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
 
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
@@ -484,13 +484,26 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
-    def _handle_zoom(self):
+    # Buffering of zoom events.
+    def _process_zoom_signal(self):
+        if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
+
+            data_range = self._plot_item.vb.viewRange()
+            ymin = data_range[1][0]
+            ymax = data_range[1][1]
+
+            self._zoom_event_buffer.access((ymin, ymax), put=True)
+
+    def handle_zoom(self):
         # this method may be called by zoom signals that can be emitted
         # when a merged line list is not available yet.
-        if hasattr(self, '_merged_linelist') and self._displaying_markers:
+
+        #TODO _is_displaying_markers is redundant with the thread itself.
+        # remove after implementing thread.
+        if hasattr(self, '_merged_linelist') and self._is_displaying_markers:
 
             # prevent burst calls to step into each other.
-            self._plot_widget.sigYRangeChanged.disconnect(self._handle_zoom)
+#            self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
 
             # update height column in line list based on
             # the new, zoomed coordinates.
@@ -510,7 +523,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._plot_item.update()
 
-            self._plot_widget.sigYRangeChanged.connect(self._handle_zoom)
+#            self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
@@ -536,7 +549,7 @@ class PlotSubWindow(UiPlotSubWindow):
         #
         # We managed to get the pinning in Y by brute force: remove
         # the markers and re-draw them in the new zoomed coordinates.
-        # This is handled by the _handle_zoom method that in turn relies
+        # This is handled by the handle_zoom method that in turn relies
         # in the storage of markers row-wise in the line list table.
 
         plot_item = self._plot_item
@@ -645,19 +658,25 @@ class PlotSubWindow(UiPlotSubWindow):
         merged_linelist = LineList.merge(linelists_with_selections, units)
 
         self._go_plot_markers(merged_linelist)
+        self._is_displaying_markers = True
+        self._zoom_event_buffer = ZoomEventBuffer()
+        self._zoom_markers_thread = ZoomMarkersThread(self)
+        self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
+        self._zoom_markers_thread.start()
 
         self._linelist_window.displayPlottedLines(merged_linelist)
 
         self._merged_linelist = merged_linelist
 
-        self._displaying_markers = True
-
     @dispatch.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
         if self._linelist_window and self._is_selected:
+
+            self._is_displaying_markers = False
+            self._zoom_markers_thread = None
+
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
-            self._displaying_markers = False
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
@@ -693,3 +712,47 @@ class PlotSubWindow(UiPlotSubWindow):
         if self._is_selected and self._linelist_window:
             self._linelist_window.hide()
             self._linelist_window = None
+
+
+class ZoomMarkersThread(QThread):
+    result = Signal()
+
+    def __init__(self, caller):
+        super(ZoomMarkersThread, self).__init__()
+        self.caller = caller
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+
+        buffer = self.caller._zoom_event_buffer
+
+        self.caller.handle_zoom()
+
+        self.result.emit()
+
+
+class ZoomEventBuffer(object):
+
+    def __init__(self):
+        self.buffer = []
+        self.mutex = QMutex()
+
+    # we need all access to the internal buffer
+    # to be under control of a single mutex.
+    def access(self, value=None, put=False):
+        self.mutex.lock()
+
+        if put:
+            # store in buffer
+            self.buffer.insert(0, value)
+        else:
+            # get from buffer
+            if len(self.buffer) > 0:
+                value = self.buffer.pop()
+            else:
+                value = None
+
+        self.mutex.unlock()
+        return value
