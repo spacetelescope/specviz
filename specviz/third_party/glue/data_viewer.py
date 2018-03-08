@@ -52,8 +52,8 @@ class SpecVizViewer(DataViewer):
             nonpartial(self._update_options))
         # self._layer_widget.ui.combo_active_layer.currentIndexChanged.connect(
         #     nonpartial(self._refresh_data))
-        # self._options_widget.ui.combo_file_attribute.currentIndexChanged.connect(
-        #     nonpartial(self._refresh_data))
+        self._options_widget.ui.combo_file_attribute.currentIndexChanged.connect(
+            self._on_operation_changed)
 
         # We keep a cache of the specviz data objects that correspond to a given
         # filename - although this could take up a lot of memory if there are
@@ -98,7 +98,6 @@ class SpecVizViewer(DataViewer):
             self._on_operation_changed)
 
         data_op_form = QFormLayout()
-        data_op_form.addRow("Collapse Operation", self._data_operation)
         data_op_form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
 
         self._unified_options = QWidget()
@@ -106,8 +105,9 @@ class SpecVizViewer(DataViewer):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(data_op_form)
-        # layout.addWidget(self._options_widget)
-        # layout.addWidget(self._layer_widget)
+        layout.addWidget(self._layer_widget)
+        layout.addWidget(self._options_widget)
+        data_op_form.addRow("Collapse Operation", self._data_operation)
         layout.addWidget(self._layer_list)
 
         self._unified_options.setLayout(layout)
@@ -298,6 +298,14 @@ class SpectralOperationPlugin(Plugin):
             category='CubeViz Operations',
             enabled=True,
             callback=self.apply_to_cube)
+        
+        self.add_tool_bar_actions(
+            name="Create Linemap",
+            description='Collapse the cube over the selected channels to create a linemap',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='CubeViz Operations',
+            enabled=True,
+            callback=self.create_simple_linemap)
 
     def setup_connections(self):
         pass
@@ -307,3 +315,6 @@ class SpectralOperationPlugin(Plugin):
         # are first
         dispatch.apply_operations.emit(
             stack=SmoothingOperation.operations()[::-1])
+
+    def create_simple_linemap(self):
+        pass
