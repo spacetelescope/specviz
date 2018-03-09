@@ -10,7 +10,7 @@ from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout, QToolButton, QTabBar
 from spectral_cube import SpectralCube
 
 from ...app import App
@@ -53,8 +53,8 @@ class SpecVizViewer(DataViewer):
             nonpartial(self._update_options))
         # self._layer_widget.ui.combo_active_layer.currentIndexChanged.connect(
         #     nonpartial(self._refresh_data))
-        # self._options_widget.ui.combo_file_attribute.currentIndexChanged.connect(
-        #     nonpartial(self._refresh_data))
+        self._options_widget.ui.combo_file_attribute.currentIndexChanged.connect(
+            self._on_operation_changed)
 
         # We keep a cache of the specviz data objects that correspond to a given
         # filename - although this could take up a lot of memory if there are
@@ -76,14 +76,21 @@ class SpecVizViewer(DataViewer):
 
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
-            # tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
+            tb['widget'].setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             tb['widget'].setIconSize(QSize(24, 24))
+
+            for child in tb['widget'].children():
+                if isinstance(child, QToolButton):
+                    child.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Set the view mode of mdi area to tabbed so that user aren't confused
         mdi_area = self.viewer.main_window.mdi_area
         mdi_area.setViewMode(mdi_area.TabbedView)
         mdi_area.setDocumentMode(True)
         mdi_area.setTabPosition(QTabWidget.South)
+
+        # Hide the tab bar
+        mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
         self._layer_list = layer_list.widget() if layer_list is not None else None
@@ -99,7 +106,6 @@ class SpecVizViewer(DataViewer):
             self._on_operation_changed)
 
         data_op_form = QFormLayout()
-        data_op_form.addRow("Collapse Operation", self._data_operation)
         data_op_form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
 
         self._unified_options = QWidget()
@@ -107,8 +113,9 @@ class SpecVizViewer(DataViewer):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(data_op_form)
-        # layout.addWidget(self._options_widget)
-        # layout.addWidget(self._layer_widget)
+        layout.addWidget(self._layer_widget)
+        layout.addWidget(self._options_widget)
+        data_op_form.addRow("Collapse Operation", self._data_operation)
         layout.addWidget(self._layer_list)
 
         self._unified_options.setLayout(layout)
@@ -327,6 +334,14 @@ class SpectralOperationPlugin(Plugin):
             category='CubeViz Operations',
             enabled=True,
             callback=self.apply_to_cube)
+        
+        # self.add_tool_bar_actions(
+        #     name="Create Linemap",
+        #     description='Collapse the cube over the selected channels to create a linemap',
+        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+        #     category='CubeViz Operations',
+        #     enabled=True,
+        #     callback=self.create_simple_linemap)
 
     def setup_connections(self):
         pass
@@ -336,3 +351,6 @@ class SpectralOperationPlugin(Plugin):
         # are first
         dispatch.apply_operations.emit(
             stack=SmoothingOperation.operations()[::-1])
+
+    def create_simple_linemap(self):
+        pass
