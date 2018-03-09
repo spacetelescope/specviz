@@ -72,6 +72,9 @@ class LineIDMarker(TextItem):
             to draw a vertical marker.
         '''
         # draw the text
+        # In fact, calling the base class makes no difference. The text
+        # is drawn regardless. Even commenting out everything in the
+        # paint() method, the text still gets to be drawn.
         super(LineIDMarker, self).paint(p, args)
 
         # Add marker. Geometry depends on the

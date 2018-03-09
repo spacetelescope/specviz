@@ -13,7 +13,7 @@ from astropy.units import Quantity
 
 from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
-from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex
+from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QPoint
 
 from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, \
@@ -486,28 +486,28 @@ class PlotSubWindow(UiPlotSubWindow):
 
     # Buffering of zoom events.
     def _process_zoom_signal(self):
-        if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
+        # if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             data_range = self._plot_item.vb.viewRange()
+            xmin = data_range[0][0]
+            xmax = data_range[0][1]
             ymin = data_range[1][0]
             ymax = data_range[1][1]
 
-            self._zoom_event_buffer.access((ymin, ymax), put=True)
+            # self._zoom_event_buffer.access((ymin, ymax), put=True)
+            self.handle_zoom((xmin, xmax), (ymin, ymax))
 
-    def handle_zoom(self):
+    def handle_zoom(self, xrange, yrange):
         # this method may be called by zoom signals that can be emitted
         # when a merged line list is not available yet.
-
-        #TODO _is_displaying_markers is redundant with the thread itself.
-        # remove after implementing thread.
         if hasattr(self, '_merged_linelist') and self._is_displaying_markers:
 
             # prevent burst calls to step into each other.
-#            self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
+            self._plot_widget.sigYRangeChanged.disconnect(self._process_zoom_signal)
 
             # update height column in line list based on
             # the new, zoomed coordinates.
-            height_array = self._compute_height(self._merged_linelist, self._plot_item)
+            height_array = self._compute_height(self._merged_linelist, yrange)
 
             marker_column = self._merged_linelist[MARKER_COLUMN]
             for row_index in range(len(marker_column)):
@@ -518,12 +518,18 @@ class PlotSubWindow(UiPlotSubWindow):
                 new_marker = LineIDMarker(marker=marker)
                 new_marker.setPos(marker.x(), height_array[row_index])
 
-                self._plot_item.addItem(new_marker)
+                # self._plot_item.addItem(new_marker)
                 marker_column[row_index] = new_marker
+
+            self._clean_markers(marker_column, xrange)
+
+            # add markers to plot AFTER the markers get cleaned
+            for marker in marker_column:
+                self._plot_item.addItem(marker)
 
             self._plot_item.update()
 
-#            self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
+            self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
@@ -551,11 +557,15 @@ class PlotSubWindow(UiPlotSubWindow):
         # the markers and re-draw them in the new zoomed coordinates.
         # This is handled by the handle_zoom method that in turn relies
         # in the storage of markers row-wise in the line list table.
-
-        plot_item = self._plot_item
         # curve = plot_item.curves[0]
 
-        height = self._compute_height(merged_linelist, plot_item)
+        plot_item = self._plot_item
+
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+
+        height = self._compute_height(merged_linelist, (ymin, ymax))
 
         # column names are defined in the YAML files
         # or by constants elsewhere.
@@ -586,18 +596,53 @@ class PlotSubWindow(UiPlotSubWindow):
 
             marker.setPos(wave_column[row_index], height[row_index])
 
-            plot_item.addItem(marker)
+            # plot_item.addItem(marker)
             marker_column[row_index] = marker
+
+        # find out about packing on screen.
+        xmin = data_range[0][0]
+        xmax = data_range[0][1]
+        self._clean_markers(marker_column, (xmin, xmax))
+
+        # add markers to plot AFTER the markers get cleaned
+        for marker in marker_column:
+            self._plot_item.addItem(marker)
 
         plot_item.update()
 
-    def _compute_height(self, merged_linelist, plot_item):
-        # compute height to display each marker
-        data_range = plot_item.vb.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
+    def _compute_height(self, merged_linelist, yrange):
+        ymin = yrange[0]
+        ymax = yrange[1]
 
         return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
+
+    def _clean_markers(self, markers, xrange):
+        xmin = xrange[0]
+        xmax = xrange[1]
+        xspan = xmax - xmin
+
+        # for index in range(1, len(markers)):
+            # x1 = markers[index-1].x()
+            # x2 = markers[index].x()
+            # p1 = (x1 - xmin) / xspan
+            # p2 = (x2 - xmin) / xspan
+            # if (p2 - p1) < 200:
+            #     markers[index].short_form = True
+            # else:
+            #     markers[index].short_form = False
+
+
+        x = np.array([marker.x() for marker in markers])
+
+
+        # p = (x - xmin) / xspan
+        p = (x - xmin)
+        differences = np.diff(p)
+
+
+        # for marker, difference in zip(markers, differences):
+        #     marker.short_form = difference < 20
+
 
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
@@ -659,10 +704,9 @@ class PlotSubWindow(UiPlotSubWindow):
 
         self._go_plot_markers(merged_linelist)
         self._is_displaying_markers = True
-        self._zoom_event_buffer = ZoomEventBuffer()
-        self._zoom_markers_thread = ZoomMarkersThread(self)
-        self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
-        self._zoom_markers_thread.start()
+        # self._zoom_event_buffer = ZoomEventBuffer()
+        # self._zoom_markers_thread = ZoomMarkersThread(self)
+        # self._zoom_markers_thread.start()
 
         self._linelist_window.displayPlottedLines(merged_linelist)
 
@@ -673,7 +717,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if self._linelist_window and self._is_selected:
 
             self._is_displaying_markers = False
-            self._zoom_markers_thread = None
+            # self._zoom_markers_thread = None
 
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
@@ -715,22 +759,33 @@ class PlotSubWindow(UiPlotSubWindow):
 
 
 class ZoomMarkersThread(QThread):
-    result = Signal()
 
     def __init__(self, caller):
         super(ZoomMarkersThread, self).__init__()
+
         self.caller = caller
+        self.mutex = QMutex()
+
+        self._buffer = self.caller._zoom_event_buffer
 
     def __del__(self):
         self.wait()
 
     def run(self):
+        self.mutex.lock()
 
-        buffer = self.caller._zoom_event_buffer
+        while(1):
+            if len(self._buffer.buffer) > 0:
 
-        self.caller.handle_zoom()
+                yrange = self._buffer.buffer.pop()
 
-        self.result.emit()
+                print("@@@@@@  file sub_windows.py; line 737 - ",  yrange)
+
+                self.caller.handle_zoom(yrange)
+
+            # QThread.sleep(1)
+
+        self.mutex.unlock()
 
 
 class ZoomEventBuffer(object):
@@ -755,4 +810,11 @@ class ZoomEventBuffer(object):
                 value = None
 
         self.mutex.unlock()
+
+        print("@@@@@@  file sub_windows.py; line 769 - ",  value, self.size)
+
         return value
+
+    @property
+    def size(self):
+        return len(self.buffer)
