@@ -335,13 +335,13 @@ class SpectralOperationPlugin(Plugin):
             enabled=True,
             callback=self.apply_to_cube)
         
-        self.add_tool_bar_actions(
-            name="Create Linemap",
-            description='Collapse the cube over the selected channels to create a linemap',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='CubeViz Operations',
-            enabled=True,
-            callback=self.create_simple_linemap)
+        # self.add_tool_bar_actions(
+        #     name="Create Linemap",
+        #     description='Collapse the cube over the selected channels to create a linemap',
+        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+        #     category='CubeViz Operations',
+        #     enabled=True,
+        #     callback=self.create_simple_linemap)
 
     def setup_connections(self):
         pass

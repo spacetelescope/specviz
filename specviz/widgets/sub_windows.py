@@ -348,8 +348,18 @@ class PlotSubWindow(UiPlotSubWindow):
         if line_width is not None:
             plot.set_line_width(line_width)
 
-    def update_axis(self, layer=None, mode=None, **kwargs):
-        self._dynamic_axis.update_axis(layer, mode, **kwargs)
+    @dispatch.register_listener("change_redshift")
+    def update_axis(self, layer=None, mode=None, redshift=None, ref_wave=None):
+        layer = layer or self._plots[0].layer
+
+        if redshift is not None:
+            mode = 1 # Redshift in combo box
+        elif ref_wave is not None:
+            mode = 2 # Velocity in combo box
+        else:
+            mode = 0 # Pixel space
+
+        self._dynamic_axis.update_axis(layer, mode, redshift, ref_wave)
         self._plot_widget.update()
 
     def update_plot_item(self):

@@ -30,7 +30,7 @@ class DynamicAxisItem(pg.AxisItem):
         self.redshift = 0.0
         self.ref_wave = 0.0
 
-    def update_axis(self, layer, mode, **kwargs):
+    def update_axis(self, layer, mode, redshift, ref_wave):
         """
         Update axis display
 
@@ -42,20 +42,20 @@ class DynamicAxisItem(pg.AxisItem):
         mode: int
             The display mode to use.
 
-        ref_wave: float
-            if `mode` == 0, velocity, this specfies
-            the reference wavelength.
-
         redshift: float
             If `mode` == `, redshift, this
             specifies the redshift.
+
+        ref_wave: float
+            if `mode` == 0, velocity, this specfies
+            the reference wavelength.
         """
         self.mode = mode
 
         if self.mode == 0:
-            self.ref_wave = kwargs['ref_wave']
+            self.ref_wave = ref_wave
         elif self.mode == 1:
-            self.redshift = kwargs['redshift']
+            self.redshift = redshift
         elif self.mode == 2:
             pass
 
