@@ -9,7 +9,7 @@ from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout
+from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout, QToolButton, QTabBar
 from spectral_cube import SpectralCube
 
 from ...app import App
@@ -75,14 +75,21 @@ class SpecVizViewer(DataViewer):
 
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
-            # tb['widget'].setToolButtonStyle(Qt.ToolButtonIconOnly)
+            tb['widget'].setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
             tb['widget'].setIconSize(QSize(24, 24))
+
+            for child in tb['widget'].children():
+                if isinstance(child, QToolButton):
+                    child.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Set the view mode of mdi area to tabbed so that user aren't confused
         mdi_area = self.viewer.main_window.mdi_area
         mdi_area.setViewMode(mdi_area.TabbedView)
         mdi_area.setDocumentMode(True)
         mdi_area.setTabPosition(QTabWidget.South)
+
+        # Hide the tab bar
+        mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
         self._layer_list = layer_list.widget() if layer_list is not None else None
