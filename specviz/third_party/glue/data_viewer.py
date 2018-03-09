@@ -3,7 +3,8 @@ from collections import OrderedDict
 
 import numpy as np
 from glue.core import message as msg
-from glue.core import Subset
+from glue.core import Data, Subset
+from glue.core.exceptions import IncompatibleAttribute
 from glue.core.subset_group import GroupedSubset
 from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
@@ -120,17 +121,38 @@ class SpecVizViewer(DataViewer):
     def register_to_hub(self, hub):
         super(SpecVizViewer, self).register_to_hub(hub)
 
+        # We only listen to subset creation and deletion for subsets for which
+        # the data is already present as a layer in Specviz.
+
         hub.subscribe(self, msg.SubsetCreateMessage,
-                      handler=self._add_subset)
+                      handler=self._add_subset,
+                      filter=self._has_data)
 
         hub.subscribe(self, msg.SubsetUpdateMessage,
-                      handler=self._update_subset)
+                      handler=self._update_subset,
+                      filter=self._has_data)
 
         hub.subscribe(self, msg.SubsetDeleteMessage,
-                      handler=self._remove_subset)
+                      handler=self._remove_subset,
+                      filter=self._has_data)
 
         hub.subscribe(self, msg.DataUpdateMessage,
-                      handler=self._update_data)
+                      handler=self._update_data,
+                      filter=self._has_data)
+
+    def _has_data(self, message):
+        if isinstance(message.sender, Data):
+            return message.sender in self._specviz_data_cache
+        elif isinstance(message.sender, Subset):
+            return message.sender.data in self._specviz_data_cache
+        else:
+            return False
+
+    def _has_subset(self, message):
+        if isinstance(message.sender, Subset):
+            return message.sender in self._specviz_data_cache
+        else:
+            return False
 
     @dispatch.register_listener("added_roi")
     def _on_added_roi(self, roi):
@@ -160,7 +182,10 @@ class SpecVizViewer(DataViewer):
             if issubclass(layer.__class__, Subset):
                 cid = layer.data.id[self._options_widget.file_att]
                 component = layer.data.get_component(cid)
-                mask = layer.to_mask()
+                try:
+                    mask = layer.to_mask()
+                except IncompatibleAttribute:
+                    mask = np.zeros(layer.shape, dtype=bool)
                 wcs = layer.data.coords.wcs
             else:
                 cid = layer.id[self._options_widget.file_att]
@@ -248,12 +273,16 @@ class SpecVizViewer(DataViewer):
         self.add_subset(message.subset)
 
     def _update_subset(self, message):
+
         if not self._update_combo_boxes(message.subset):
             return
 
-        subset = message.subset #self._layer_widget.layer
+        subset = message.subset  #self._layer_widget.layer
         cid = subset.data.id[self._options_widget.file_att]
-        mask = subset.to_mask()
+        try:
+            mask = subset.to_mask()
+        except IncompatibleAttribute:
+            mask = np.zeros(subset.shape, dtype=bool)
         component = subset.data.get_component(cid)
 
         self._spectrum_from_component(subset, component,
