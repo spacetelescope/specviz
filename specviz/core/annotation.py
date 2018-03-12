@@ -72,6 +72,14 @@ class LineIDMarker(TextItem):
             to draw a vertical marker.
         '''
         # draw the text
+        #
+        # Note that this actually doesn't work. Commenting out this call to the base
+        # class doesn't prevent the text to be painted on screen regardless. Tests with
+        # the base class itself prove that the base class paint() is not responsible for
+        # painting the text. Even when the base class' code in its paint() method is
+        # replaced by a sole 'pass' statement, the text still shows up on the plot.
+        # Thus there is something else in either pyqtgraph or pyqt that paints the text
+        # even though the entire painting mechanism in the classes is disabled.
         super(LineIDMarker, self).paint(p, args)
 
         # Add marker. Geometry depends on the

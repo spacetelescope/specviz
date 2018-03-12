@@ -168,7 +168,8 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
-        self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
+        # self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
+        self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
@@ -503,7 +504,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if hasattr(self, '_merged_linelist') and self._is_displaying_markers:
 
             # prevent burst calls to step into each other.
-#            self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
+            self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
 
             # update height column in line list based on
             # the new, zoomed coordinates.
@@ -518,12 +519,17 @@ class PlotSubWindow(UiPlotSubWindow):
                 new_marker = LineIDMarker(marker=marker)
                 new_marker.setPos(marker.x(), height_array[row_index])
 
-                self._plot_item.addItem(new_marker)
                 marker_column[row_index] = new_marker
+
+            # after all markers are created, check their positions
+            # and disable some to de-clutter the plot.
+            new_column = self._declutter(marker_column)
+            for marker in new_column:
+                self._plot_item.addItem(marker)
 
             self._plot_item.update()
 
-#            self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
+            self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
@@ -586,10 +592,25 @@ class PlotSubWindow(UiPlotSubWindow):
 
             marker.setPos(wave_column[row_index], height[row_index])
 
-            plot_item.addItem(marker)
             marker_column[row_index] = marker
 
+        # after all markers are created, check their positions
+        # and disable some to de-clutter the plot.
+        new_column = self._declutter(marker_column)
+        for marker in new_column:
+            self._plot_item.addItem(marker)
+
         plot_item.update()
+
+    def _declutter(self, marker_column):
+
+        new_column = [marker for marker in marker_column]
+
+
+
+
+
+        return new_column
 
     def _compute_height(self, merged_linelist, plot_item):
         # compute height to display each marker
@@ -659,10 +680,10 @@ class PlotSubWindow(UiPlotSubWindow):
 
         self._go_plot_markers(merged_linelist)
         self._is_displaying_markers = True
-        self._zoom_event_buffer = ZoomEventBuffer()
-        self._zoom_markers_thread = ZoomMarkersThread(self)
-        self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
-        self._zoom_markers_thread.start()
+        # self._zoom_event_buffer = ZoomEventBuffer()
+        # self._zoom_markers_thread = ZoomMarkersThread(self)
+        # self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
+        # self._zoom_markers_thread.start()
 
         self._linelist_window.displayPlottedLines(merged_linelist)
 
