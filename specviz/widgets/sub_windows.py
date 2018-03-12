@@ -525,7 +525,8 @@ class PlotSubWindow(UiPlotSubWindow):
             # and disable some to de-clutter the plot.
             new_column = self._declutter(marker_column)
             for marker in new_column:
-                self._plot_item.addItem(marker)
+                if marker:
+                    self._plot_item.addItem(marker)
 
             self._plot_item.update()
 
@@ -598,7 +599,8 @@ class PlotSubWindow(UiPlotSubWindow):
         # and disable some to de-clutter the plot.
         new_column = self._declutter(marker_column)
         for marker in new_column:
-            self._plot_item.addItem(marker)
+            if marker:
+                self._plot_item.addItem(marker)
 
         plot_item.update()
 
@@ -606,7 +608,11 @@ class PlotSubWindow(UiPlotSubWindow):
 
         new_column = [marker for marker in marker_column]
 
+        x1 = np.array([marker.x() for marker in new_column[:]])
+        x2 = np.array([marker.x() for marker in new_column[1:]])
+        diff = x2 - x1
 
+        print ('@@@@@@     line: 615  - ', diff)
 
 
 
