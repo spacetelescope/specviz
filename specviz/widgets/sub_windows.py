@@ -489,11 +489,11 @@ class PlotSubWindow(UiPlotSubWindow):
     def _process_zoom_signal(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
-            data_range = self._plot_item.vb.viewRange()
-            ymin = data_range[1][0]
-            ymax = data_range[1][1]
+            data_range = self._plot_item.viewRange()
+            xmin = data_range[0][0]
+            xmax = data_range[0][1]
 
-            self._zoom_event_buffer.access((ymin, ymax), put=True)
+            self._zoom_event_buffer.access((xmin, xmax), put=True)
 
     def handle_zoom(self):
         # this method may be called by zoom signals that can be emitted
@@ -523,7 +523,10 @@ class PlotSubWindow(UiPlotSubWindow):
 
             # after all markers are created, check their positions
             # and disable some to de-clutter the plot.
+
             new_column = self._declutter(marker_column)
+            # new_column = marker_column
+
             for marker in new_column:
                 if marker:
                     self._plot_item.addItem(marker)
@@ -605,22 +608,34 @@ class PlotSubWindow(UiPlotSubWindow):
         plot_item.update()
 
     def _declutter(self, marker_column):
+        # Returns a new list with marker objets to be plotted.
+        # This list is a copy of the input list, but where objects
+        # references are set to None whenever their distance in X
+        # pixels to the next neighbor is smaller than a given
+        # threshold.
+        threshold = 5
+
+        # compute distance in between markers, in screen pixels
+        data_range = self._plot_item.viewRange()
+        x_pixels = self._plot_item.sceneBoundingRect().width()
+        xmin = data_range[0][0]
+        xmax = data_range[0][1]
 
         new_column = [marker for marker in marker_column]
 
-        x1 = np.array([marker.x() for marker in new_column[:]])
-        x2 = np.array([marker.x() for marker in new_column[1:]])
-        diff = x2 - x1
+        x = np.array([marker.x() for marker in new_column])
+        diff = np.diff(x)
+        diff *= x_pixels / (xmax - xmin)
 
-        print ('@@@@@@     line: 615  - ', diff)
-
-
+        for index in range(len(diff)):
+            if diff[index] < threshold:
+                new_column[index] = None
 
         return new_column
 
     def _compute_height(self, merged_linelist, plot_item):
         # compute height to display each marker
-        data_range = plot_item.vb.viewRange()
+        data_range = plot_item.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
 
