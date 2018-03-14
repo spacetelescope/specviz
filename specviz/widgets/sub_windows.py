@@ -643,7 +643,7 @@ class PlotSubWindow(UiPlotSubWindow):
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
 
-        #TODO move this to encapsulated code in new class
+        #TODO move this to a constant in encapsulated code in new class
         self._mouse_detection_margin = 10
 
         if not self._is_selected:
@@ -715,7 +715,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._zoom_markers_thread.start()
         # self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
 
-        self._plot_item.scene().sigMouseMoved.connect(self._control_thread)
+        self._plot_item.scene().sigMouseMoved.connect(self._control_zoom_thread)
         # self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
         # Populate the plotted lines pane in the line list window.
@@ -725,39 +725,45 @@ class PlotSubWindow(UiPlotSubWindow):
         # use in subsequent operations.
         self._merged_linelist = merged_linelist
 
-    def _control_thread(self, event):
+    def _control_zoom_thread(self, event):
         # Turns time-consuming processing in the zoom thread on/off when
         # mouse enter/leaves the plot. This enables that other parts of
         # the app retain their full computational speed when the mouse
         # pointer is outside the plot window.
 
-        scene_bounding_rect = self._plot_item.sceneBoundingRect()
-        x0 = scene_bounding_rect.x()
-        y0 = scene_bounding_rect.y()
-        xl = scene_bounding_rect.width()
-        yl = scene_bounding_rect.height()
-        target_rectangle = QRectF(x0+self._mouse_detection_margin, y0+self._mouse_detection_margin, xl-2*self._mouse_detection_margin, yl-2*self._mouse_detection_margin)
+        if self._zoom_markers_thread:
+            # There is no simple way here to detect mouse enter/exit events.
+            # The pyqtgraph classes that allow that, HoverEventXXX, require
+            # that self._plot_item be locally subclassed. We don't want to do
+            # that since this object is part of the larger app infrastructure.
+            #
+            # Thus we create an artificial "margin" where the more usual pyqt
+            # sigMouseMoved signals can be detected and used to drive the
+            # enter/exit condition.
+            scene_bounding_rect = self._plot_item.sceneBoundingRect()
+            x0 = scene_bounding_rect.x()
+            y0 = scene_bounding_rect.y()
+            xl = scene_bounding_rect.width()
+            yl = scene_bounding_rect.height()
+            target_rectangle = QRectF(x0+self._mouse_detection_margin, y0+self._mouse_detection_margin,
+                                      xl-2*self._mouse_detection_margin, yl-2*self._mouse_detection_margin)
 
-        is_inside = target_rectangle.contains(event)
-        is_processing = self._zoom_markers_thread.is_processing
+            is_inside = target_rectangle.contains(event)
+            is_processing = self._zoom_markers_thread.is_processing
 
-        # Detects when mouse entered the plot area but the thread is
-        # not processing yet.
-        if is_inside and not is_processing:
-            self._zoom_markers_thread.start_processing()
-            return
+            # Detects when mouse entered the plot area but the thread is not processing yet.
+            if is_inside and not is_processing:
+                self._zoom_markers_thread.start_processing()
+                return
 
-        #
-        if not is_inside and is_processing:
-            self._zoom_markers_thread.stop_processing()
+                # Detects the complimentary condition: mouse exited plot and thread still processing.
+            if not is_inside and is_processing:
+                self._zoom_markers_thread.stop_processing()
 
     @dispatch.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
         if self._linelist_window and self._is_selected:
-
-            self._is_displaying_markers = False
-            #TODO maybe we have to stop the thread instead of just releasing the reference.
-            self._zoom_markers_thread = None
+            self._destroy_zoom_markers_thread()
 
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
@@ -768,6 +774,14 @@ class PlotSubWindow(UiPlotSubWindow):
             for index in range(len(marker_column)):
                 self._plot_item.removeItem(marker_column[index])
             self._plot_item.update()
+
+    def _destroy_zoom_markers_thread(self):
+        self._is_displaying_markers = False
+        # TODO maybe we have to stop the thread instead of just releasing the reference.
+        if self._zoom_markers_thread:
+            self._zoom_markers_thread.stop_processing()
+            self._plot_item.scene().sigMouseMoved.disconnect(self._control_zoom_thread)
+            self._zoom_markers_thread = None
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the
@@ -797,6 +811,8 @@ class PlotSubWindow(UiPlotSubWindow):
             self._linelist_window.hide()
             self._linelist_window = None
 
+            self._destroy_zoom_markers_thread()
+
 
 class ZoomMarkersThread(QThread):
     result = Signal()
@@ -806,9 +822,6 @@ class ZoomMarkersThread(QThread):
         self.caller = caller
         self.is_processing = False
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
         buffer = self.caller._zoom_event_buffer
 
@@ -817,12 +830,15 @@ class ZoomMarkersThread(QThread):
             if self.is_processing:
                 print ('@@@@@@     line: 774  - ', len(buffer.buffer))
 
+            # sleep so other parts of the code
+            # can run faster. The actual value
+            # should be found by trial and error.
             QThread.sleep(1)
-
 
 
         # self.caller.handle_zoom()
 
+        # use this for cleanup when leaving?
         self.result.emit()
 
     # Once created, the thread keeps running until destroyed.
@@ -838,6 +854,12 @@ class ZoomMarkersThread(QThread):
 
 
 class ZoomEventBuffer(object):
+
+    # A mutex-lockable buffer that stores zoom request events.
+    #
+    # Eventually we will put in place a mechanism to limit the
+    # number of requests so as to prevent choking the app when
+    # request bursts are generated by, say, the mouse wheel.
 
     def __init__(self):
         self.buffer = []
