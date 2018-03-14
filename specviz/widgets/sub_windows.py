@@ -13,7 +13,7 @@ from astropy.units import Quantity
 
 from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
-from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex
+from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QRectF
 
 from ..core.events import dispatch
 from ..core.linelist import ingest, LineList, \
@@ -168,8 +168,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
-        # self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
-        self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
+        self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
 
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
@@ -493,7 +492,7 @@ class PlotSubWindow(UiPlotSubWindow):
             xmin = data_range[0][0]
             xmax = data_range[0][1]
 
-            self._zoom_event_buffer.access((xmin, xmax), put=True)
+            self._zoom_event_buffer.put((xmin, xmax))
 
     def handle_zoom(self):
         # this method may be called by zoom signals that can be emitted
@@ -644,6 +643,9 @@ class PlotSubWindow(UiPlotSubWindow):
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
 
+        #TODO move this to encapsulated code in new class
+        self._mouse_detection_margin = 10
+
         if not self._is_selected:
             return
 
@@ -700,21 +702,61 @@ class PlotSubWindow(UiPlotSubWindow):
         merged_linelist = LineList.merge(linelists_with_selections, units)
 
         self._go_plot_markers(merged_linelist)
-        self._is_displaying_markers = True
-        # self._zoom_event_buffer = ZoomEventBuffer()
-        # self._zoom_markers_thread = ZoomMarkersThread(self)
-        # self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
-        # self._zoom_markers_thread.start()
 
+        # Zooming the markers is a tricky business. On top of saving some plot
+        # time by having the plot being de-cluttered at every zoom step, we
+        # must control the rate at which the time-consuming zoom operation is
+        # run, to prevent the app to become unresponsive. We use a threaded
+        # mechanism to store zoom request events in a buffer, and then manage
+        # its size, and the speed at which its contents get consumed.
+        self._is_displaying_markers = True
+        self._zoom_event_buffer = ZoomEventBuffer()
+        self._zoom_markers_thread = ZoomMarkersThread(self)
+        self._zoom_markers_thread.start()
+        # self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
+
+        self._plot_item.scene().sigMouseMoved.connect(self._control_thread)
+        # self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
+
+        # Populate the plotted lines pane in the line list window.
         self._linelist_window.displayPlottedLines(merged_linelist)
 
+        # The new line list just created becomes the default for
+        # use in subsequent operations.
         self._merged_linelist = merged_linelist
+
+    def _control_thread(self, event):
+        # Turns time-consuming processing in the zoom thread on/off when
+        # mouse enter/leaves the plot. This enables that other parts of
+        # the app retain their full computational speed when the mouse
+        # pointer is outside the plot window.
+
+        scene_bounding_rect = self._plot_item.sceneBoundingRect()
+        x0 = scene_bounding_rect.x()
+        y0 = scene_bounding_rect.y()
+        xl = scene_bounding_rect.width()
+        yl = scene_bounding_rect.height()
+        target_rectangle = QRectF(x0+self._mouse_detection_margin, y0+self._mouse_detection_margin, xl-2*self._mouse_detection_margin, yl-2*self._mouse_detection_margin)
+
+        is_inside = target_rectangle.contains(event)
+        is_processing = self._zoom_markers_thread.is_processing
+
+        # Detects when mouse entered the plot area but the thread is
+        # not processing yet.
+        if is_inside and not is_processing:
+            self._zoom_markers_thread.start_processing()
+            return
+
+        #
+        if not is_inside and is_processing:
+            self._zoom_markers_thread.stop_processing()
 
     @dispatch.register_listener("on_erase_linelabels")
     def erase_linelabels(self, *args, **kwargs):
         if self._linelist_window and self._is_selected:
 
             self._is_displaying_markers = False
+            #TODO maybe we have to stop the thread instead of just releasing the reference.
             self._zoom_markers_thread = None
 
             self._remove_linelabels_from_plot()
@@ -762,17 +804,37 @@ class ZoomMarkersThread(QThread):
     def __init__(self, caller):
         super(ZoomMarkersThread, self).__init__()
         self.caller = caller
+        self.is_processing = False
 
     def __del__(self):
         self.wait()
 
     def run(self):
-
         buffer = self.caller._zoom_event_buffer
 
-        self.caller.handle_zoom()
+        while(True):
+
+            if self.is_processing:
+                print ('@@@@@@     line: 774  - ', len(buffer.buffer))
+
+            QThread.sleep(1)
+
+
+
+        # self.caller.handle_zoom()
 
         self.result.emit()
+
+    # Once created, the thread keeps running until destroyed.
+    # We can turn the time-consuming part of the calculation
+    # on and off so other parts of the app retain their full
+    # computational speed when the mouse pointer is outside
+    # the plot window.
+    def start_processing(self):
+        self.is_processing = True
+
+    def stop_processing(self):
+        self.is_processing = False
 
 
 class ZoomEventBuffer(object):
@@ -781,20 +843,16 @@ class ZoomEventBuffer(object):
         self.buffer = []
         self.mutex = QMutex()
 
-    # we need all access to the internal buffer
-    # to be under control of a single mutex.
-    def access(self, value=None, put=False):
+    def put(self, value):
         self.mutex.lock()
+        self.buffer.insert(0, value)
+        self.mutex.unlock()
 
-        if put:
-            # store in buffer
-            self.buffer.insert(0, value)
+    def get(self):
+        self.mutex.lock()
+        if len(self.buffer) > 0:
+            value = self.buffer.pop()
         else:
-            # get from buffer
-            if len(self.buffer) > 0:
-                value = self.buffer.pop()
-            else:
-                value = None
-
+            value = None
         self.mutex.unlock()
         return value
