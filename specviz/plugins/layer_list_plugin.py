@@ -410,8 +410,8 @@ class LayerListPlugin(Plugin):
             plot = window.get_plot(layer)
             self.update_layer_item(plot)
 
-    @dispatch.register_listener("on_clicked_layer")
-    def _set_layer_visibility(self, layer_item, col=0):
+    @dispatch.register_listener("on_clicked_layer", "toggle_layer_visibility")
+    def _set_layer_visibility(self, layer=None, layer_item=None, state=None, col=0):
         """
         Toggles the visibility of the plot in the sub window.
 
@@ -423,13 +423,22 @@ class LayerListPlugin(Plugin):
         col : int
             QtTreeWidget data column.
         """
-        layer = layer_item.data(0, Qt.UserRole)
+        if layer is None:
+            layer = layer_item.data(0, Qt.UserRole)
+        elif layer_item is None:
+            layer_item = self.get_layer_item(layer)
+
         current_window = self.active_window
 
         if layer is None or current_window is None:
             return
 
         plot = current_window.get_plot(layer)
-        plot.checked = layer_item.checkState(col) == Qt.Checked
+
+        if state is not None:
+            plot.checked = state
+            layer_item.setCheckState(0, Qt.Checked if state else Qt.Unchecked)
+        else:
+            plot.checked = layer_item.checkState(col) == Qt.Checked
 
         current_window.set_active_plot(layer)

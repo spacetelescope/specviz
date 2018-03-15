@@ -10,8 +10,10 @@ from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import QTabWidget, QVBoxLayout, QWidget, QComboBox, QFormLayout, QToolButton, QTabBar
+from qtpy.QtWidgets import (QTabWidget, QVBoxLayout, QWidget, QComboBox,
+                            QFormLayout, QToolButton, QTabBar, QDialog)
 from spectral_cube import SpectralCube
+from qtpy.uic import loadUi
 
 from ...app import App
 from ...core import dispatch
@@ -19,10 +21,13 @@ from ...core.data import Spectrum1DRef
 from .layer_widget import LayerWidget
 from .viewer_options import OptionsWidget
 from ...widgets.plugin import Plugin
-from ...widgets.utils import ICON_PATH
+from ...widgets.utils import ICON_PATH, UI_PATH
 from ...analysis.filters import SmoothingOperation
 
 __all__ = ['SpecVizViewer']
+
+
+dispatch.register_event("toggle_component_visibility", ["data", "state"])
 
 
 class SpecVizViewer(DataViewer):
@@ -49,8 +54,8 @@ class SpecVizViewer(DataViewer):
 
         # Make sure we update the viewer if either the selected layer or the
         # column specifying the filename is changed.
-        self._layer_widget.ui.combo_active_layer.currentIndexChanged.connect(
-            nonpartial(self._update_options))
+        # self._layer_widget.ui.combo_active_layer.currentIndexChanged.connect(
+        #     nonpartial(self._update_options))
         # self._layer_widget.ui.combo_active_layer.currentIndexChanged.connect(
         #     nonpartial(self._refresh_data))
         self._options_widget.ui.combo_file_attribute.currentIndexChanged.connect(
@@ -88,9 +93,10 @@ class SpecVizViewer(DataViewer):
         mdi_area.setViewMode(mdi_area.TabbedView)
         mdi_area.setDocumentMode(True)
         mdi_area.setTabPosition(QTabWidget.South)
+        mdi_area.setTabsClosable(True)
 
         # Hide the tab bar
-        mdi_area.findChild(QTabBar).hide()
+        # mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
         self._layer_list = layer_list.widget() if layer_list is not None else None
@@ -113,7 +119,7 @@ class SpecVizViewer(DataViewer):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(data_op_form)
-        layout.addWidget(self._layer_widget)
+        # layout.addWidget(self._layer_widget)
         layout.addWidget(self._options_widget)
         data_op_form.addRow("Collapse Operation", self._data_operation)
         layout.addWidget(self._layer_list)
@@ -320,37 +326,11 @@ class SpecVizViewer(DataViewer):
     def options_widget(self):
         return self._model_fitting
 
+    @dispatch.register_listener("toggle_component_visibility")
+    def on_toggle_component_visibility(self, data, state):
+        """
+        Hide a display specviz spectrum provided a glue layer component.
+        """
+        spec_data = self._specviz_data_cache.get(data)
 
-class SpectralOperationPlugin(Plugin):
-    name = "CubeViz Operations"
-    location = "hidden"
-    priority = 0
-
-    def setup_ui(self):
-        self.add_tool_bar_actions(
-            name="Apply to Cube",
-            description='Apply latest function to cube',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='CubeViz Operations',
-            enabled=True,
-            callback=self.apply_to_cube)
-        
-        # self.add_tool_bar_actions(
-        #     name="Create Linemap",
-        #     description='Collapse the cube over the selected channels to create a linemap',
-        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-        #     category='CubeViz Operations',
-        #     enabled=True,
-        #     callback=self.create_simple_linemap)
-
-    def setup_connections(self):
-        pass
-
-    def apply_to_cube(self):
-        # Send the operation stack, ensure reverse order so newer operations
-        # are first
-        dispatch.apply_operations.emit(
-            stack=SmoothingOperation.operations()[::-1])
-
-    def create_simple_linemap(self):
-        pass
+        dispatch.toggle_layer_visibility.emit(data=spec_data, state=state)
