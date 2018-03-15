@@ -494,6 +494,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._zoom_event_buffer.put((xmin, xmax))
 
+    @dispatch.register_listener("on_zoom_linelabels")
     def handle_zoom(self):
         # this method may be called by zoom signals that can be emitted
         # when a merged line list is not available yet.
@@ -503,7 +504,7 @@ class PlotSubWindow(UiPlotSubWindow):
         if hasattr(self, '_merged_linelist') and self._is_displaying_markers:
 
             # prevent burst calls to step into each other.
-            self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
+            # self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
 
             # update height column in line list based on
             # the new, zoomed coordinates.
@@ -532,7 +533,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._plot_item.update()
 
-            self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
+            # self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
@@ -713,10 +714,8 @@ class PlotSubWindow(UiPlotSubWindow):
         self._zoom_event_buffer = ZoomEventBuffer()
         self._zoom_markers_thread = ZoomMarkersThread(self)
         self._zoom_markers_thread.start()
-        # self._zoom_markers_thread.result.connect(dispatch.on_zoom_linelabels.emit)
 
         self._plot_item.scene().sigMouseMoved.connect(self._control_zoom_thread)
-        # self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
         # Populate the plotted lines pane in the line list window.
         self._linelist_window.displayPlottedLines(merged_linelist)
@@ -820,23 +819,25 @@ class ZoomMarkersThread(QThread):
     def __init__(self, caller):
         super(ZoomMarkersThread, self).__init__()
         self.caller = caller
+        self.buffer = self.caller._zoom_event_buffer
         self.is_processing = False
 
     def run(self):
-        buffer = self.caller._zoom_event_buffer
 
         while(True):
-
             if self.is_processing:
-                print ('@@@@@@     line: 774  - ', len(buffer.buffer))
+
+                value = self.buffer.get()
+
+                if value:
+                    dispatch.on_zoom_linelabels.emit()
 
             # sleep so other parts of the code
             # can run faster. The actual value
             # should be found by trial and error.
-            QThread.sleep(1)
+            QThread.sleep(0.5)
 
 
-        # self.caller.handle_zoom()
 
         # use this for cleanup when leaving?
         self.result.emit()
@@ -867,7 +868,14 @@ class ZoomEventBuffer(object):
 
     def put(self, value):
         self.mutex.lock()
+
+        # Don't let the buffer fill up too much.
+        # Keep just the most recent zoom events.
+        while len(self.buffer) > 5:
+            self.buffer.pop()
+
         self.buffer.insert(0, value)
+
         self.mutex.unlock()
 
     def get(self):
