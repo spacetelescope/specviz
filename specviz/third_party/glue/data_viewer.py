@@ -334,3 +334,85 @@ class SpecVizViewer(DataViewer):
         spec_data = self._specviz_data_cache.get(data)
 
         dispatch.toggle_layer_visibility.emit(data=spec_data, state=state)
+
+
+class SpectralOperationPlugin(Plugin):
+    name = "CubeViz Operations"
+    location = "hidden"
+    priority = 0
+
+    def setup_ui(self):
+        self.add_tool_bar_actions(
+            name="Apply to Cube",
+            description='Apply latest function to cube',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='CubeViz Operations',
+            enabled=True,
+            callback=self.apply_to_cube)
+
+    def setup_connections(self):
+        pass
+
+    def apply_to_cube(self):
+        # Send the operation stack, ensure reverse order so newer operations
+        # are first
+        dispatch.apply_operations.emit(
+            stack=SmoothingOperation.operations()[::-1])
+
+    def create_simple_linemap(self):
+        linemap_operation = SimpleLinemapOperation(
+            mask=self.active_window.get_roi_mask(layer=self.current_layer))
+
+        dispatch.apply_operations.emit(
+            stack=[linemap_operation])
+
+    def create_fitted_linemap(self):
+        # - Have user select region an creation fitted model
+        # - Click the create fitted linemap button
+        # - Spawn new SpecViz window, ask if user accepts the fit
+        fitted_linemap_dialog = QDialog()
+        loadUi(os.path.join(UI_PATH, "fitted_linemap_dialog.ui"), fitted_linemap_dialog)
+
+    def create_sliced_cube(self):
+        cube_slice_operation = CubeSliceOperation(
+            mask=self.active_window.get_roi_mask(layer=self.current_layer),
+            axis='cube')
+
+        dispatch.apply_operations.emit(
+            stack=[cube_slice_operation])
+
+
+from ...analysis.operations import FunctionalOperation
+
+def fitted_linemap(spectral_axis, data, mask=None):
+    # The `data` argument should be the spectral axis of the cube given
+    # for a particular pixel position in spatial space
+    pass
+
+
+def simple_linemap(spectral_axis, data, mask=None):
+    print(data.shape)
+    print(mask.shape)
+    data = data[mask, :, :]
+
+    return np.sum(data)
+
+
+def cube_slice(spectral_axis, data, mask=None):
+    print(mask)
+    return data[mask, :, :]
+
+
+class FittedLinemapOperation(FunctionalOperation):
+    def __init__(self, *args, **kwargs):
+        super(FittedLinemapOperation, self).__init__(fitted_linemap, *args, **kwargs)
+
+
+class SimpleLinemapOperation(FunctionalOperation):
+    def __init__(self, *args, **kwargs):
+        super(SimpleLinemapOperation, self).__init__(simple_linemap, *args, **kwargs)
+
+
+class CubeSliceOperation(FunctionalOperation):
+    def __init__(self, *args, **kwargs):
+        super(CubeSliceOperation, self).__init__(cube_slice, *args, **kwargs)
