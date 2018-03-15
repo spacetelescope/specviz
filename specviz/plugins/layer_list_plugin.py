@@ -225,6 +225,20 @@ class LayerListPlugin(Plugin):
 
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
+        
+        # Try again but the layer's parent object.
+        # TODO this should not be needed.
+        for i in range(root.childCount()):
+            child = root.child(i)
+
+            if child.data(0, Qt.UserRole)._parent == layer:
+                return child
+
+            for j in range(child.childCount()):
+                sec_child = child.child(j)
+
+                if sec_child.data(0, Qt.UserRole)._parent == layer:
+                    return sec_child
 
     @dispatch.register_listener("on_remove_data")
     def remove_layer_items_with_data(self, data=None):

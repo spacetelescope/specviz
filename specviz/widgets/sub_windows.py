@@ -312,6 +312,12 @@ class PlotSubWindow(UiPlotSubWindow):
             if plot.layer == layer:
                 return plot
 
+        # Try again but with the layer's parent.
+        # TODO: This should not be needed.
+        for plot in self._plots:
+            if plot.layer._parent == layer:
+                return plot
+
     def get_all_layers(self):
         return [plot.layer for plot in self._plots]
 
