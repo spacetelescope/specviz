@@ -333,7 +333,7 @@ class SpecVizViewer(DataViewer):
         """
         spec_data = self._specviz_data_cache.get(data)
 
-        dispatch.toggle_layer_visibility.emit(data=spec_data, state=state)
+        dispatch.toggle_layer_visibility.emit(layer=spec_data, state=state)
 
 
 class SpectralOperationPlugin(Plugin):
@@ -391,16 +391,9 @@ def fitted_linemap(spectral_axis, data, mask=None):
 
 
 def simple_linemap(spectral_axis, data, mask=None):
-    print(data.shape)
-    print(mask.shape)
     data = data[mask, :, :]
 
     return np.sum(data)
-
-
-def cube_slice(spectral_axis, data, mask=None):
-    print(mask)
-    return data[mask, :, :]
 
 
 class FittedLinemapOperation(FunctionalOperation):
