@@ -238,7 +238,7 @@ class SpecVizViewer(DataViewer):
         self._specviz_data_cache[layer] = spec_data
 
         dispatch.on_add_to_window.emit(data=spec_data,
-                                       style={'color': layer.style.rgba[:3]})
+                style={'color': layer.style.rgba[:3], 'line_width': 3})
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
