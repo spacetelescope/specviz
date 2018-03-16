@@ -13,19 +13,18 @@ from astropy.units import Quantity
 
 from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
                             QLineEdit, QPushButton, QWidget)
-from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QRectF
+from qtpy.QtCore import QEvent, Qt
 
 from ..core.events import dispatch
-
+from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ..core.plots import LinePlot
+from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 from .dialogs import ResampleDialog
 from ..analysis.utils import resample
 
 from .linelists_window import LineListsWindow
-from ..core.linelist import ingest
-from .line_labels_plotter import LineLabelsPlotter
 
 
 pg.setConfigOption('background', 'w')
@@ -92,7 +91,8 @@ class UiPlotSubWindow(QMainWindow):
         self.line_edit_cursor_pos.setText("Pos: 0, 0")
 
         # Line labels
-        self.linelist_window = None
+        self._linelist_window = None
+        self._line_labels = []
 
         self.horizontal_layout.addWidget(self.line_edit_cursor_pos)
         self.horizontal_layout.addStretch()
@@ -102,25 +102,10 @@ class UiPlotSubWindow(QMainWindow):
 
         self.vertical_layout.addLayout(self.horizontal_layout)
 
-        self.main_widget = EnterExitQWidget(self)
+        self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.vertical_layout)
 
         self.setCentralWidget(self.main_widget)
-
-
-class EnterExitQWidget(QWidget):
-    """
-    Subclasses QWidget in order to trap mouse enter/exit events
-    and send them to registered listeners.
-    """
-    def __init__(self, *args, **kwargs):
-        super(QWidget, self).__init__(*args, **kwargs)
-
-    def enterEvent(self, event):
-        dispatch.mouse_enterexit.emit(event_type=event.type())
-
-    def leaveEvent(self, event):
-        dispatch.mouse_enterexit.emit(event_type=event.type())
 
 
 class PlotSubWindow(UiPlotSubWindow):
@@ -132,12 +117,12 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plots = []
         self._dynamic_axis = None
         self._plot_widget = None
-        self.plot_item = None
+        self._plot_item = None
         self._plots_units = None
         self._rois = []
         self._measure_rois = []
         self._centroid_roi = None
-        self.is_selected = True
+        self._is_selected = True
         self._layer_items = []
         self.disable_errors = False
         self.disable_mask = True
@@ -150,14 +135,14 @@ class PlotSubWindow(UiPlotSubWindow):
         # self.setCentralWidget(self._plot_widget)
         self.vertical_layout.insertWidget(0, self._plot_widget)
 
-        self.plot_item = self._plot_widget.getPlotItem()
-        self.plot_item.showAxis('top', True)
+        self._plot_item = self._plot_widget.getPlotItem()
+        self._plot_item.showAxis('top', True)
         # Add grids to the plot
-        self.plot_item.showGrid(True, True)
-
-        self.linelists = []
+        self._plot_item.showGrid(True, True)
 
         self._setup_connections()
+
+        self.linelists = []
 
         # Initial color list for this sub window
         self._available_colors = cycle(AVAILABLE_COLORS)
@@ -168,7 +153,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Create a single vertical line object that can be used to indicate
         # wavelength position
         self._disp_line = pg.InfiniteLine(movable=True, pen={'color': 'g'})
-        self.plot_item.addItem(self._disp_line)
+        self._plot_item.addItem(self._disp_line)
 
         # When the user moves the dispersion vertical line, send an event
         self._disp_line.sigPositionChanged.connect(lambda:
@@ -182,7 +167,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # Connect cursor position to UI element
         # proxy = pg.SignalProxy(self._plot_item.scene().sigMouseMoved,
         #                        rateLimit=30, slot=self.cursor_moved)
-        self.plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
+        self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
     @dispatch.register_listener("changed_dispersion_position")
@@ -206,9 +191,9 @@ class PlotSubWindow(UiPlotSubWindow):
         # disp = self._containers[0].dispersion.value
 
         # Plot range
-        vb = self.plot_item.getViewBox()
+        vb = self._plot_item.getViewBox()
 
-        if self.plot_item.sceneBoundingRect().contains(pos):
+        if self._plot_item.sceneBoundingRect().contains(pos):
             mouse_point = vb.mapSceneToView(pos)
             index = int(mouse_point.x())
 
@@ -220,7 +205,7 @@ class PlotSubWindow(UiPlotSubWindow):
                 )
 
     def _reset_view(self):
-        view_box = self.plot_item.getViewBox()
+        view_box = self._plot_item.getViewBox()
         view_box.autoRange()
 
     def get_roi_mask(self, layer=None, container=None, roi=None):
@@ -265,7 +250,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
     def add_roi(self, bounds=None, *args, **kwargs):
         if bounds is None:
-            view_range = self.plot_item.viewRange()
+            view_range = self._plot_item.viewRange()
             x_len = (view_range[0][1] - view_range[0][0]) * 0.5
             x_pos = x_len * 0.5 + view_range[0][0]
             start, stop = x_pos, x_pos + x_len
@@ -273,13 +258,13 @@ class PlotSubWindow(UiPlotSubWindow):
             start, stop = bounds
 
         def remove():
-            self.plot_item.removeItem(roi)
+            self._plot_item.removeItem(roi)
             self._rois.remove(roi)
             dispatch.removed_roi.emit(roi=roi)
 
         roi = LinearRegionItem(values=[start, stop])
         self._rois.append(roi)
-        self.plot_item.addItem(roi)
+        self._plot_item.addItem(roi)
 
         # Connect the remove functionality
         roi.sigRemoveRequested.connect(remove)
@@ -327,11 +312,11 @@ class PlotSubWindow(UiPlotSubWindow):
             cntr.change_units(x, y, z)
 
         self.set_labels(x_label=x, y_label=y)
-        self.plot_item.enableAutoRange()
+        self._plot_item.enableAutoRange()
         self._plot_units = [x, y, z]
 
     def set_labels(self, x_label='', y_label=''):
-        self.plot_item.setLabels(
+        self._plot_item.setLabels(
             left="Flux [{}]".format(
                 y_label or str(self._plots[0].layer.unit)),
             bottom="Wavelength [{}]".format(
@@ -369,7 +354,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_widget.update()
 
     def update_plot_item(self):
-        self.plot_item.update()
+        self._plot_item.update()
 
     @dispatch.register_listener("on_update_model")
     def update_plot(self, layer=None, plot=None):
@@ -453,13 +438,13 @@ class PlotSubWindow(UiPlotSubWindow):
                 return
 
         if new_plot.error is not None:
-            self.plot_item.addItem(new_plot.error)
+            self._plot_item.addItem(new_plot.error)
 
         if new_plot.mask is not None:
-            self.plot_item.addItem(new_plot.mask)
+            self._plot_item.addItem(new_plot.mask)
 
         self._plots.append(new_plot)
-        self.plot_item.addItem(new_plot.plot)
+        self._plot_item.addItem(new_plot.plot)
 
         self.set_active_plot(new_plot.layer)
 
@@ -475,13 +460,13 @@ class PlotSubWindow(UiPlotSubWindow):
 
         for plot in self._plots:
             if plot.layer == layer:
-                self.plot_item.removeItem(plot.plot)
+                self._plot_item.removeItem(plot.plot)
 
                 if plot.error is not None:
-                    self.plot_item.removeItem(plot.error)
+                    self._plot_item.removeItem(plot.error)
 
                 if plot.mask is not None:
-                    self.plot_item.removeItem(plot.mask)
+                    self._plot_item.removeItem(plot.mask)
 
                 self._plots.remove(plot)
 
@@ -501,7 +486,7 @@ class PlotSubWindow(UiPlotSubWindow):
     # Finds the wavelength range spanned by the spectrum (or spectra)
     # at hand. The range will be used to bracket the set of lines
     # actually read from the line list table(s).
-    def find_wavelength_range(self):
+    def _find_wavelength_range(self):
         # increasing dispersion values!
         amin = sys.float_info.max
         amax = 0.0
@@ -515,36 +500,118 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
-    # The 3 handlers below, and their associated signals, are part
-    # of the logic that defines the show/hide/dismiss behavior of
-    # the line list window. It remains to be seen if it is what
-    # users actually want.
-
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
-        self.waverange = self.find_wavelength_range()
+        self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
 
+    @dispatch.register_listener("on_plot_linelists")
+    def _plot_linelists(self, table_views, **kwargs):
+
+        if not self._is_selected:
+            return
+
+        # Get a list of the selected indices in each line list.
+        # Build new line lists with only the selected rows.
+
+        linelists_with_selections = []
+
+        for table_view in table_views:
+            # Find matching line list by its name. This could be made
+            # simpler by the use of a dict. That breaks code elsewhere
+            # though: it is assumed by that code that self.linelists
+            # is a list and not a dict.
+            view_name = table_view.model().getName()
+            for k in range(len(self.linelists)):
+                line_list = self.linelists[k]
+                line_list_name = line_list.name
+
+                if line_list_name == view_name:
+                    # must map between view and underlying model
+                    # because of row sorting.
+                    selected_rows = table_view.selectionModel().selectedRows()
+                    model_selected_rows = []
+                    for sr in selected_rows:
+                        model_row = table_view.model().mapToSource(sr)
+                        model_selected_rows.append(model_row)
+
+                    new_list = line_list.extract_rows(model_selected_rows)
+
+                    linelists_with_selections.append(new_list)
+
+        # Merge all line lists into a single one. This might
+        # change in the future to enable customized plotting
+        # for each line list.
+        merged_linelist = LineList.merge(linelists_with_selections)
+
+        # Code below is plotting all markers at a fixed height in
+        # the screen coordinate system. Still TBD how to do this in
+        # the generic case. Maybe derive heights from curve data
+        # instead? Make the markers follow the curve ups and downs?
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same height in the window even
+        # when the plot is zoomed. This kind of functionality doesn't
+        # seem to be possible under pyqtgraph though. This requires
+        # more investigation.
+
+        plot_item = self._plot_item
+
+        # curve = plot_item.curves[0]
+
+        data_range = plot_item.vb.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+        height = (ymax - ymin) * 0.75 + ymin
+
+        # column names are defined in the YAML files.
+        wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
+        id_column = merged_linelist.columns[ID_COLUMN]
+
+        for i in range(len(wave_column)):
+            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
+
+            marker.setPos(wave_column[i], height)
+
+            plot_item.addItem(marker)
+            self._line_labels.append(marker)
+
+        plot_item.update()
+
+    @dispatch.register_listener("on_erase_linelabels")
+    def erase_linelabels(self, *args, **kwargs):
+        if self._is_selected:
+            for marker in self._line_labels:
+                self._plot_item.removeItem(marker)
+            self._plot_item.update()
+
+    # The 3 handlers below, and their associated signals, implement
+    # the logic that defines the show/hide/dismiss behavior of the
+    # line list window. It remains to be seen if it is what users
+    # actually want.
+
     @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):
-        self.is_selected = window == self
+        self._is_selected = window == self
 
-        if self.linelist_window:
-            if self.is_selected:
-                self.linelist_window.show()
+        if self._linelist_window:
+            if self._is_selected:
+                self._linelist_window.show()
             else:
-                self.linelist_window.hide()
+                self._linelist_window.hide()
 
     @dispatch.register_listener("on_show_linelists_window")
     def _show_linelists_window(self, *args, **kwargs):
-        if self.is_selected:
-            if self.linelist_window is None:
-                self.linelist_window = LineListsWindow(self)
-                self.line_labels_plotter = LineLabelsPlotter(self)
+        if self._is_selected:
+            if self._linelist_window is None:
+                self._linelist_window = LineListsWindow(self)
+            self._linelist_window.show()
 
-                self._plot_widget.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
-
-            self.linelist_window.show()
-
-
+    @dispatch.register_listener("on_dismiss_linelists_window")
+    def _dismiss_linelists_window(self, *args, **kwargs):
+        if self._is_selected and self._linelist_window:
+            self._linelist_window.hide()
+            self._linelist_window = None

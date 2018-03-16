@@ -51,7 +51,7 @@ class LinePlot(object):
         self._plot_units = (self._layer.dispersion_unit,
                             self._layer.unit,
                             None)
-        self.line_width = 1
+        self.line_width = 3
         self.mode = None
         self.checked = True
 
