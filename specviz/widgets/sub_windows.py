@@ -152,7 +152,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # Create a single vertical line object that can be used to indicate
         # wavelength position
-        self._disp_line = pg.InfiniteLine(movable=True, pen={'color': 'g'})
+        self._disp_line = pg.InfiniteLine(movable=True, pen={'color': 'g', 'width': 3})
         self._plot_item.addItem(self._disp_line)
 
         # When the user moves the dispersion vertical line, send an event
