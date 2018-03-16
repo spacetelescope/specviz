@@ -494,46 +494,45 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._zoom_event_buffer.put((xmin, xmax))
 
-    @dispatch.register_listener("on_zoom_linelabels")
+    # Slot called by the zoom control thread.
     def handle_zoom(self):
         # this method may be called by zoom signals that can be emitted
         # when a merged line list is not available yet.
-
-        #TODO _is_displaying_markers is redundant with the thread itself.
-        # remove after implementing thread.
-        if hasattr(self, '_merged_linelist') and self._is_displaying_markers:
-
-            # prevent burst calls to step into each other.
-            # self._plot_widget.sigYRangeChanged.disconnect(self.handle_zoom)
+        if hasattr(self, '_merged_linelist'):
 
             # update height column in line list based on
             # the new, zoomed coordinates.
             height_array = self._compute_height(self._merged_linelist, self._plot_item)
 
+            # update markers based on what is stored in the
+            # marker_column table column.
             marker_column = self._merged_linelist[MARKER_COLUMN]
             for row_index in range(len(marker_column)):
                 marker = marker_column[row_index]
 
                 self._plot_item.removeItem(marker)
 
+                # New marker is built with same parameters as
+                # older marker that was just removed, but for
+                # the new Y position.
                 new_marker = LineIDMarker(marker=marker)
                 new_marker.setPos(marker.x(), height_array[row_index])
 
+                # Replace old marker with new.
                 marker_column[row_index] = new_marker
 
-            # after all markers are created, check their positions
-            # and disable some to de-clutter the plot.
-
+            # after all markers are created, check their relative
+            # positions on screen and disable some to de-clutter
+            # the plot.
             new_column = self._declutter(marker_column)
-            # new_column = marker_column
 
+            # Finally, add the de-cluttered new markers to
+            # the plot.
             for marker in new_column:
                 if marker:
                     self._plot_item.addItem(marker)
 
             self._plot_item.update()
-
-            # self._plot_widget.sigYRangeChanged.connect(self.handle_zoom)
 
     @dispatch.register_listener("on_request_linelists")
     def _request_linelists(self, *args, **kwargs):
@@ -559,11 +558,18 @@ class PlotSubWindow(UiPlotSubWindow):
         #
         # We managed to get the pinning in Y by brute force: remove
         # the markers and re-draw them in the new zoomed coordinates.
-        # This is handled by the handle_zoom method that in turn relies
-        # in the storage of markers row-wise in the line list table.
-
+        # Note that it's not enough to remove a marker, reset its position,
+        # and add it back to the plot. It's necessary to rebuild a new
+        # marker instance. This probably has to do with the affine
+        # transform objects that are stored inside each marker instance.
+        # These transforms do not behave as expected when we run everything
+        # with auto range turned on. Switching auto range on and off when
+        # necessary does not work either.
+        #
+        # The pinning of the Y coordinate is handled by the handle_zoom
+        # method that in turn relies in the storage of marker instances
+        # row-wise in the line list table.
         plot_item = self._plot_item
-        # curve = plot_item.curves[0]
 
         height = self._compute_height(merged_linelist, plot_item)
 
@@ -577,7 +583,6 @@ class PlotSubWindow(UiPlotSubWindow):
         # row-wise so as to match row selections in table views.
         marker_column = merged_linelist[MARKER_COLUMN]
 
-        # plot_item.enableAutoRange(enable=False)
         for row_index in range(len(wave_column)):
 
             # tool tip contains all info in table.
@@ -607,34 +612,42 @@ class PlotSubWindow(UiPlotSubWindow):
 
         plot_item.update()
 
-    def _declutter(self, marker_column):
-        # Returns a new list with marker objets to be plotted.
-        # This list is a copy of the input list, but where objects
-        # references are set to None whenever their distance in X
-        # pixels to the next neighbor is smaller than a given
+    def _declutter(self, marker_list):
+        # Returns a new list with marker instances to be plotted.
+        # This list is a (shallow) copy of the input list, where
+        # objects references are set to None whenever their distance
+        # in X pixels to the next neighbor is smaller than a given
         # threshold.
+        #
+        # This algorithm is handling the entire marker list as if
+        # all markers had the same height. This may cause excessive
+        # de-clutter when a densely packed list is merged with a
+        # sparsely packed one and each one is plotted at a different
+        # height. A better algorithm would account for the height of
+        # each marker and de-clutter separately marker sets made by
+        # markers that share the same height.
         threshold = 5
 
-        # compute distance in between markers, in screen pixels
         data_range = self._plot_item.viewRange()
         x_pixels = self._plot_item.sceneBoundingRect().width()
         xmin = data_range[0][0]
         xmax = data_range[0][1]
 
-        new_column = [marker for marker in marker_column]
+        new_list = [marker for marker in marker_list]
 
-        x = np.array([marker.x() for marker in new_column])
+        # compute X distance in between markers, in screen pixels
+        x = np.array([marker.x() for marker in new_list])
         diff = np.diff(x)
         diff *= x_pixels / (xmax - xmin)
 
         for index in range(len(diff)):
             if diff[index] < threshold:
-                new_column[index] = None
+                new_list[index] = None
 
-        return new_column
+        return new_list
 
+    # compute height to display each marker
     def _compute_height(self, merged_linelist, plot_item):
-        # compute height to display each marker
         data_range = plot_item.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
@@ -710,12 +723,18 @@ class PlotSubWindow(UiPlotSubWindow):
         # run, to prevent the app to become unresponsive. We use a threaded
         # mechanism to store zoom request events in a buffer, and then manage
         # its size, and the speed at which its contents get consumed.
-        self._is_displaying_markers = True
+        #
+        # Notice that we can't use the dispatch mechanism to manage the zoom
+        # thread and its signal-slot dependencies. Something in the dispatch
+        # code messes up with the timing relationships in the GUI and secondary
+        # threads, causing the “Timers cannot be started from another thread”
+        # warning, and eventual app crash. We have to manage signals with explicit
+        # code within the thread and in here.
         self._zoom_event_buffer = ZoomEventBuffer()
         self._zoom_markers_thread = ZoomMarkersThread(self)
+        self._zoom_markers_thread.do_zoom.connect(self.handle_zoom)
         self._zoom_markers_thread.start()
-
-        self._plot_item.scene().sigMouseMoved.connect(self._control_zoom_thread)
+        self._plot_item.scene().sigMouseMoved.connect(self._handle_mouse_events)
 
         # Populate the plotted lines pane in the line list window.
         self._linelist_window.displayPlottedLines(merged_linelist)
@@ -724,7 +743,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # use in subsequent operations.
         self._merged_linelist = merged_linelist
 
-    def _control_zoom_thread(self, event):
+    def _handle_mouse_events(self, event):
         # Turns time-consuming processing in the zoom thread on/off when
         # mouse enter/leaves the plot. This enables that other parts of
         # the app retain their full computational speed when the mouse
@@ -755,7 +774,7 @@ class PlotSubWindow(UiPlotSubWindow):
                 self._zoom_markers_thread.start_processing()
                 return
 
-                # Detects the complimentary condition: mouse exited plot and thread still processing.
+            # Detects the complimentary condition: mouse exited plot and thread still processing.
             if not is_inside and is_processing:
                 self._zoom_markers_thread.stop_processing()
 
@@ -775,11 +794,9 @@ class PlotSubWindow(UiPlotSubWindow):
             self._plot_item.update()
 
     def _destroy_zoom_markers_thread(self):
-        self._is_displaying_markers = False
-        # TODO maybe we have to stop the thread instead of just releasing the reference.
         if self._zoom_markers_thread:
             self._zoom_markers_thread.stop_processing()
-            self._plot_item.scene().sigMouseMoved.disconnect(self._control_zoom_thread)
+            self._plot_item.scene().sigMouseMoved.disconnect(self._handle_mouse_events)
             self._zoom_markers_thread = None
 
     # The 3 handlers below, and their associated signals, implement
@@ -814,7 +831,16 @@ class PlotSubWindow(UiPlotSubWindow):
 
 
 class ZoomMarkersThread(QThread):
-    result = Signal()
+
+    # Notice that we can't use the dispatch mechanism to manage the zoom
+    # thread and its signal-slot dependencies. Something in the dispatch
+    # code messes up with the timing relationships in the GUI and secondary
+    # threads, causing the “Timers cannot be started from another thread”
+    # warning, and eventual app crash. We have to manage a locally-defined
+    # signal instead, explicitly connecting it with its slot in the caller
+    # code
+
+    do_zoom = Signal()
 
     def __init__(self, caller):
         super(ZoomMarkersThread, self).__init__()
@@ -823,24 +849,17 @@ class ZoomMarkersThread(QThread):
         self.is_processing = False
 
     def run(self):
-
         while(True):
             if self.is_processing:
 
                 value = self.buffer.get()
-
                 if value:
-                    dispatch.on_zoom_linelabels.emit()
+                    self.do_zoom.emit()
 
             # sleep so other parts of the code
             # can run faster. The actual value
             # should be found by trial and error.
             QThread.sleep(0.5)
-
-
-
-        # use this for cleanup when leaving?
-        self.result.emit()
 
     # Once created, the thread keeps running until destroyed.
     # We can turn the time-consuming part of the calculation
@@ -857,10 +876,6 @@ class ZoomMarkersThread(QThread):
 class ZoomEventBuffer(object):
 
     # A mutex-lockable buffer that stores zoom request events.
-    #
-    # Eventually we will put in place a mechanism to limit the
-    # number of requests so as to prevent choking the app when
-    # request bursts are generated by, say, the mouse wheel.
 
     def __init__(self):
         self.buffer = []
