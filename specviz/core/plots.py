@@ -42,7 +42,8 @@ class LinePlot(object):
         If defined, the pen style to use for the error/uncertainty.
     """
     def __init__(self, layer, plot=None, visible=True, style='line',
-                 pen=None, err_pen=None, mask_pen=None, color=(0, 0, 0)):
+                 pen=None, err_pen=None, mask_pen=None, color=(0, 0, 0),
+                 line_width=1):
         self._layer = layer
         self.style = style
         self._plot = plot
@@ -51,7 +52,7 @@ class LinePlot(object):
         self._plot_units = (self._layer.dispersion_unit,
                             self._layer.unit,
                             None)
-        self.line_width = 1
+        self.line_width = line_width
         self.mode = None
         self.checked = True
 
