@@ -301,6 +301,13 @@ class SpecVizViewer(DataViewer):
         self._spectrum_from_component(subset, component,
                                       subset.data.coords.wcs, mask=mask)
 
+        # Hide the median of the spectrum if there are other subsets (regions)
+        # defined.  If there are no other subsets (regions) then we will
+        # show the cube again.
+        if len(self._specviz_data_cache) > 1:
+            key = list(self._specviz_data_cache.keys())[0]
+            dispatch.toggle_component_visibility.emit(data=key, state=False)
+
     def _remove_subset(self, message):
         if message.subset in self._layer_widget:
             self._layer_widget.remove_layer(message.subset)
@@ -309,6 +316,13 @@ class SpecVizViewer(DataViewer):
 
         spec_data = self._specviz_data_cache.pop(subset)
         dispatch.on_remove_data.emit(spec_data)
+
+        # Hide the median of the spectrum if there are other subsets (regions)
+        # defined.  If there are no other subsets (regions) then we will
+        # show the cube again.
+        if len(self._specviz_data_cache) == 1:
+            key = list(self._specviz_data_cache.keys())[0]
+            dispatch.toggle_component_visibility.emit(data=key, state=True)
 
     # When the selected layer is changed, we need to update the combo box with
     # the attributes from which the filename attribute can be selected. The
@@ -409,3 +423,4 @@ class SimpleLinemapOperation(FunctionalOperation):
 class CubeSliceOperation(FunctionalOperation):
     def __init__(self, *args, **kwargs):
         super(CubeSliceOperation, self).__init__(cube_slice, *args, **kwargs)
+
