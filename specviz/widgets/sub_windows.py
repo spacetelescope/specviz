@@ -168,7 +168,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
-        self._plot_widget.sigYRangeChanged.connect(self._process_zoom_signal)
+        self._plot_widget.sigYRangeChanged.connect(self.process_zoom_signal)
 
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
@@ -470,7 +470,7 @@ class PlotSubWindow(UiPlotSubWindow):
     # Finds the wavelength range spanned by the spectrum (or spectra)
     # at hand. The range will be used to bracket the set of lines
     # actually read from the line list table(s).
-    def _find_wavelength_range(self):
+    def find_wavelength_range(self):
         # increasing dispersion values!
         amin = sys.float_info.max
         amax = 0.0
@@ -484,8 +484,10 @@ class PlotSubWindow(UiPlotSubWindow):
 
         return (amin, amax)
 
+#--------  Public API of the new class that will encapsulate line label plotting.
+
     # Buffering of zoom events.
-    def _process_zoom_signal(self):
+    def process_zoom_signal(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             data_range = self._plot_item.viewRange()
@@ -494,165 +496,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._zoom_event_buffer.put((xmin, xmax))
 
-    # Slot called by the zoom control thread.
-    def handle_zoom(self):
-        # this method may be called by zoom signals that can be emitted
-        # when a merged line list is not available yet.
-        if hasattr(self, '_merged_linelist'):
-
-            # update height column in line list based on
-            # the new, zoomed coordinates.
-            height_array = self._compute_height(self._merged_linelist, self._plot_item)
-
-            # update markers based on what is stored in the
-            # marker_column table column.
-            marker_column = self._merged_linelist[MARKER_COLUMN]
-            for row_index in range(len(marker_column)):
-                marker = marker_column[row_index]
-
-                self._plot_item.removeItem(marker)
-
-                # New marker is built with same parameters as
-                # older marker that was just removed, but for
-                # the new Y position.
-                new_marker = LineIDMarker(marker=marker)
-                new_marker.setPos(marker.x(), height_array[row_index])
-
-                # Replace old marker with new.
-                marker_column[row_index] = new_marker
-
-            # after all markers are created, check their relative
-            # positions on screen and disable some to de-clutter
-            # the plot.
-            new_column = self._declutter(marker_column)
-
-            # Finally, add the de-cluttered new markers to
-            # the plot.
-            for marker in new_column:
-                if marker:
-                    self._plot_item.addItem(marker)
-
-            self._plot_item.update()
-
-    @dispatch.register_listener("on_request_linelists")
-    def _request_linelists(self, *args, **kwargs):
-        self.waverange = self._find_wavelength_range()
-
-        self.linelists = ingest(self.waverange)
-
-    def _go_plot_markers(self, merged_linelist):
-        # Code below is plotting all markers at a fixed height in
-        # the screen coordinate system. Still TBD how to do this in
-        # the generic case. Maybe derive heights from curve data
-        # instead? Make the markers follow the curve ups and downs?
-        #
-        # Ideally we would like to have the marker's X coordinate
-        # pinned down to the plot surface in data value, and the Y
-        # coordinate pinned down in screen value. This would make
-        # the markers to stay at the same height in the window even
-        # when the plot is zoomed. The elegant nice way to do this
-        # would be via the marker objects themselves to reposition
-        # themselves on screen. This did not work though. There seems
-        # to be a clash (maybe thread-related) in between the setPos
-        # method and the auto-range facility in pyqtgraph.
-        #
-        # We managed to get the pinning in Y by brute force: remove
-        # the markers and re-draw them in the new zoomed coordinates.
-        # Note that it's not enough to remove a marker, reset its position,
-        # and add it back to the plot. It's necessary to rebuild a new
-        # marker instance. This probably has to do with the affine
-        # transform objects that are stored inside each marker instance.
-        # These transforms do not behave as expected when we run everything
-        # with auto range turned on. Switching auto range on and off when
-        # necessary does not work either.
-        #
-        # The pinning of the Y coordinate is handled by the handle_zoom
-        # method that in turn relies in the storage of marker instances
-        # row-wise in the line list table.
-        plot_item = self._plot_item
-
-        height = self._compute_height(merged_linelist, plot_item)
-
-        # column names are defined in the YAML files
-        # or by constants elsewhere.
-        wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
-        id_column = merged_linelist.columns[ID_COLUMN]
-        color_column = merged_linelist[COLOR_COLUMN]
-
-        # To enable marker removal from plot, markers are stored
-        # row-wise so as to match row selections in table views.
-        marker_column = merged_linelist[MARKER_COLUMN]
-
-        for row_index in range(len(wave_column)):
-
-            # tool tip contains all info in table.
-            tool_tip = ""
-            for col_index in range(len(merged_linelist.columns)):
-                col_name = merged_linelist.colnames[col_index]
-                if not col_name in [COLOR_COLUMN]:
-                    value = merged_linelist.columns[col_index][row_index]
-                    tool_tip += col_name + '=' + str(value) + ', '
-
-            marker = LineIDMarker(text=id_column[row_index],
-                                  plot_item=plot_item,
-                                  tip=tool_tip,
-                                  color=color_column[row_index],
-                                  orientation='vertical')
-
-            marker.setPos(wave_column[row_index], height[row_index])
-
-            marker_column[row_index] = marker
-
-        # after all markers are created, check their positions
-        # and disable some to de-clutter the plot.
-        new_column = self._declutter(marker_column)
-        for marker in new_column:
-            if marker:
-                self._plot_item.addItem(marker)
-
-        plot_item.update()
-
-    def _declutter(self, marker_list):
-        # Returns a new list with marker instances to be plotted.
-        # This list is a (shallow) copy of the input list, where
-        # objects references are set to None whenever their distance
-        # in X pixels to the next neighbor is smaller than a given
-        # threshold.
-        #
-        # This algorithm is handling the entire marker list as if
-        # all markers had the same height. This may cause excessive
-        # de-clutter when a densely packed list is merged with a
-        # sparsely packed one and each one is plotted at a different
-        # height. A better algorithm would account for the height of
-        # each marker and de-clutter separately marker sets made by
-        # markers that share the same height.
-        threshold = 5
-
-        data_range = self._plot_item.viewRange()
-        x_pixels = self._plot_item.sceneBoundingRect().width()
-        xmin = data_range[0][0]
-        xmax = data_range[0][1]
-
-        new_list = [marker for marker in marker_list]
-
-        # compute X distance in between markers, in screen pixels
-        x = np.array([marker.x() for marker in new_list])
-        diff = np.diff(x)
-        diff *= x_pixels / (xmax - xmin)
-
-        for index in range(len(diff)):
-            if diff[index] < threshold:
-                new_list[index] = None
-
-        return new_list
-
-    # compute height to display each marker
-    def _compute_height(self, merged_linelist, plot_item):
-        data_range = plot_item.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
-
-        return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
+#--------  Slots in he new class that are called by the dispatch facility.
 
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
@@ -732,7 +576,7 @@ class PlotSubWindow(UiPlotSubWindow):
         # code within the thread and in here.
         self._zoom_event_buffer = ZoomEventBuffer()
         self._zoom_markers_thread = ZoomMarkersThread(self)
-        self._zoom_markers_thread.do_zoom.connect(self.handle_zoom)
+        self._zoom_markers_thread.do_zoom.connect(self._handle_zoom)
         self._zoom_markers_thread.start()
         self._plot_item.scene().sigMouseMoved.connect(self._handle_mouse_events)
 
@@ -743,61 +587,19 @@ class PlotSubWindow(UiPlotSubWindow):
         # use in subsequent operations.
         self._merged_linelist = merged_linelist
 
-    def _handle_mouse_events(self, event):
-        # Turns time-consuming processing in the zoom thread on/off when
-        # mouse enter/leaves the plot. This enables that other parts of
-        # the app retain their full computational speed when the mouse
-        # pointer is outside the plot window.
+    @dispatch.register_listener("on_request_linelists")
+    def _request_linelists(self, *args, **kwargs):
+        self.waverange = self.find_wavelength_range()
 
-        if self._zoom_markers_thread:
-            # There is no simple way here to detect mouse enter/exit events.
-            # The pyqtgraph classes that allow that, HoverEventXXX, require
-            # that self._plot_item be locally subclassed. We don't want to do
-            # that since this object is part of the larger app infrastructure.
-            #
-            # Thus we create an artificial "margin" where the more usual pyqt
-            # sigMouseMoved signals can be detected and used to drive the
-            # enter/exit condition.
-            scene_bounding_rect = self._plot_item.sceneBoundingRect()
-            x0 = scene_bounding_rect.x()
-            y0 = scene_bounding_rect.y()
-            xl = scene_bounding_rect.width()
-            yl = scene_bounding_rect.height()
-            target_rectangle = QRectF(x0+self._mouse_detection_margin, y0+self._mouse_detection_margin,
-                                      xl-2*self._mouse_detection_margin, yl-2*self._mouse_detection_margin)
-
-            is_inside = target_rectangle.contains(event)
-            is_processing = self._zoom_markers_thread.is_processing
-
-            # Detects when mouse entered the plot area but the thread is not processing yet.
-            if is_inside and not is_processing:
-                self._zoom_markers_thread.start_processing()
-                return
-
-            # Detects the complimentary condition: mouse exited plot and thread still processing.
-            if not is_inside and is_processing:
-                self._zoom_markers_thread.stop_processing()
+        self.linelists = ingest(self.waverange)
 
     @dispatch.register_listener("on_erase_linelabels")
-    def erase_linelabels(self, *args, **kwargs):
+    def _erase_linelabels(self, *args, **kwargs):
         if self._linelist_window and self._is_selected:
             self._destroy_zoom_markers_thread()
 
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
-
-    def _remove_linelabels_from_plot(self):
-        if hasattr(self, '_merged_linelist'):
-            marker_column = self._merged_linelist[MARKER_COLUMN]
-            for index in range(len(marker_column)):
-                self._plot_item.removeItem(marker_column[index])
-            self._plot_item.update()
-
-    def _destroy_zoom_markers_thread(self):
-        if self._zoom_markers_thread:
-            self._zoom_markers_thread.stop_processing()
-            self._plot_item.scene().sigMouseMoved.disconnect(self._handle_mouse_events)
-            self._zoom_markers_thread = None
 
     # The 3 handlers below, and their associated signals, implement
     # the logic that defines the show/hide/dismiss behavior of the
@@ -829,6 +631,207 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._destroy_zoom_markers_thread()
 
+#--------  Private methods in he new class that will encapsulate line label plotting.
+
+    def _go_plot_markers(self, merged_linelist):
+        # Code below is plotting all markers at a fixed height in
+        # the screen coordinate system. Still TBD how to do this in
+        # the generic case. Maybe derive heights from curve data
+        # instead? Make the markers follow the curve ups and downs?
+        #
+        # Ideally we would like to have the marker's X coordinate
+        # pinned down to the plot surface in data value, and the Y
+        # coordinate pinned down in screen value. This would make
+        # the markers to stay at the same height in the window even
+        # when the plot is zoomed. The elegant nice way to do this
+        # would be via the marker objects themselves to reposition
+        # themselves on screen. This did not work though. There seems
+        # to be a clash (maybe thread-related) in between the setPos
+        # method and the auto-range facility in pyqtgraph.
+        #
+        # We managed to get the pinning in Y by brute force: remove
+        # the markers and re-draw them in the new zoomed coordinates.
+        # Note that it's not enough to remove a marker, reset its position,
+        # and add it back to the plot. It's necessary to rebuild a new
+        # marker instance. This probably has to do with the affine
+        # transform objects that are stored inside each marker instance.
+        # These transforms do not behave as expected when we run everything
+        # with auto range turned on. Switching auto range on and off when
+        # necessary does not work either.
+        #
+        # The pinning of the Y coordinate is handled by the handle_zoom
+        # method that in turn relies in the storage of marker instances
+        # row-wise in the line list table.
+        plot_item = self._plot_item
+
+        height = self._compute_height(merged_linelist, plot_item)
+
+        # column names are defined in the YAML files
+        # or by constants elsewhere.
+        wave_column = merged_linelist.columns[REDSHIFTED_WAVELENGTH_COLUMN]
+        id_column = merged_linelist.columns[ID_COLUMN]
+        color_column = merged_linelist[COLOR_COLUMN]
+
+        # To enable marker removal from plot, markers are stored
+        # row-wise so as to match row selections in table views.
+        marker_column = merged_linelist[MARKER_COLUMN]
+
+        for row_index in range(len(wave_column)):
+
+            # tool tip contains all info in table.
+            tool_tip = ""
+            for col_index in range(len(merged_linelist.columns)):
+                col_name = merged_linelist.colnames[col_index]
+                if not col_name in [COLOR_COLUMN]:
+                    value = merged_linelist.columns[col_index][row_index]
+                    tool_tip += col_name + '=' + str(value) + ', '
+
+            marker = LineIDMarker(text=id_column[row_index],
+                                  plot_item=plot_item,
+                                  tip=tool_tip,
+                                  color=color_column[row_index],
+                                  orientation='vertical')
+
+            marker.setPos(wave_column[row_index], height[row_index])
+
+            marker_column[row_index] = marker
+
+        # after all markers are created, check their positions
+        # and disable some to de-clutter the plot.
+        new_column = self._declutter(marker_column)
+        for marker in new_column:
+            if marker:
+                self._plot_item.addItem(marker)
+
+        plot_item.update()
+
+    # Slot called by the zoom control thread.
+    def _handle_zoom(self):
+        # this method may be called by zoom signals that can be emitted
+        # when a merged line list is not available yet.
+        if hasattr(self, '_merged_linelist'):
+
+            # update height column in line list based on
+            # the new, zoomed coordinates.
+            height_array = self._compute_height(self._merged_linelist, self._plot_item)
+
+            # update markers based on what is stored in the
+            # marker_column table column.
+            marker_column = self._merged_linelist[MARKER_COLUMN]
+            for row_index in range(len(marker_column)):
+                marker = marker_column[row_index]
+
+                self._plot_item.removeItem(marker)
+
+                # New marker is built with same parameters as
+                # older marker that was just removed, but for
+                # the new Y position.
+                new_marker = LineIDMarker(marker=marker)
+                new_marker.setPos(marker.x(), height_array[row_index])
+
+                # Replace old marker with new.
+                marker_column[row_index] = new_marker
+
+            # after all markers are created, check their relative
+            # positions on screen and disable some to de-clutter
+            # the plot.
+            new_column = self._declutter(marker_column)
+
+            # Finally, add the de-cluttered new markers to
+            # the plot.
+            for marker in new_column:
+                if marker:
+                    self._plot_item.addItem(marker)
+
+            self._plot_item.update()
+
+    # compute height to display each marker
+    def _compute_height(self, merged_linelist, plot_item):
+        data_range = plot_item.viewRange()
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
+
+        return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
+
+    # Returns a new list with marker instances to be plotted.
+    # This list is a (shallow) copy of the input list, where
+    # objects references are set to None whenever their distance
+    # in X pixels to the next neighbor is smaller than a given
+    # threshold.
+    def _declutter(self, marker_list):
+        # This algorithm is handling the entire marker list as if
+        # all markers had the same height. This may cause excessive
+        # de-clutter when a densely packed list is merged with a
+        # sparsely packed one and each one is plotted at a different
+        # height. A better algorithm would account for the height of
+        # each marker and de-clutter separately marker sets made by
+        # markers that share the same height.
+        threshold = 5
+
+        data_range = self._plot_item.viewRange()
+        x_pixels = self._plot_item.sceneBoundingRect().width()
+        xmin = data_range[0][0]
+        xmax = data_range[0][1]
+
+        new_list = [marker for marker in marker_list]
+
+        # compute X distance in between markers, in screen pixels
+        x = np.array([marker.x() for marker in new_list])
+        diff = np.diff(x)
+        diff *= x_pixels / (xmax - xmin)
+
+        marker_list_array = np.array(marker_list[1:])
+        new_list = (np.where(diff < threshold, None, marker_list_array)).tolist()
+
+        return new_list
+
+    def _handle_mouse_events(self, event):
+        # Turns time-consuming processing in the zoom thread on/off when
+        # mouse enter/leaves the plot. This enables that other parts of
+        # the app retain their full computational speed when the mouse
+        # pointer is outside the plot window.
+        if self._zoom_markers_thread:
+            # There is no simple way here to detect mouse enter/exit events.
+            # The pyqtgraph classes that allow that, HoverEventXXX, require
+            # that self._plot_item be locally subclassed. We don't want to do
+            # that since this object is part of the larger app infrastructure.
+            #
+            # Thus we create an artificial "margin" where the more usual pyqt
+            # sigMouseMoved signals can be detected and used to drive the
+            # enter/exit condition.
+            scene_bounding_rect = self._plot_item.sceneBoundingRect()
+            x0 = scene_bounding_rect.x()
+            y0 = scene_bounding_rect.y()
+            xl = scene_bounding_rect.width()
+            yl = scene_bounding_rect.height()
+            target_rectangle = QRectF(x0+self._mouse_detection_margin, y0+self._mouse_detection_margin,
+                                      xl-2*self._mouse_detection_margin, yl-2*self._mouse_detection_margin)
+
+            is_inside = target_rectangle.contains(event)
+            is_processing = self._zoom_markers_thread.is_processing
+
+            # Detects when mouse entered the plot area but the thread is not processing yet.
+            if is_inside and not is_processing:
+                self._zoom_markers_thread.start_processing()
+                return
+
+            # Detects the complimentary condition: mouse exited plot and thread still processing.
+            if not is_inside and is_processing:
+                self._zoom_markers_thread.stop_processing()
+
+    def _remove_linelabels_from_plot(self):
+        if hasattr(self, '_merged_linelist'):
+            marker_column = self._merged_linelist[MARKER_COLUMN]
+            for index in range(len(marker_column)):
+                self._plot_item.removeItem(marker_column[index])
+            self._plot_item.update()
+
+    def _destroy_zoom_markers_thread(self):
+        if self._zoom_markers_thread:
+            self._zoom_markers_thread.stop_processing()
+            self._plot_item.scene().sigMouseMoved.disconnect(self._handle_mouse_events)
+            self._zoom_markers_thread = None
+
 
 class ZoomMarkersThread(QThread):
 
@@ -859,7 +862,7 @@ class ZoomMarkersThread(QThread):
             # sleep so other parts of the code
             # can run faster. The actual value
             # should be found by trial and error.
-            QThread.sleep(0.5)
+            QThread.sleep(0.8)
 
     # Once created, the thread keeps running until destroyed.
     # We can turn the time-consuming part of the calculation
@@ -886,7 +889,7 @@ class ZoomEventBuffer(object):
 
         # Don't let the buffer fill up too much.
         # Keep just the most recent zoom events.
-        while len(self.buffer) > 5:
+        while len(self.buffer) > 2:
             self.buffer.pop()
 
         self.buffer.insert(0, value)

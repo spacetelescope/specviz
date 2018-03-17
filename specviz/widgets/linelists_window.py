@@ -282,7 +282,7 @@ class LineListsWindow(UiLinelistsWindow):
         # is being displayed in the spectrum plot window.
         global wave_range
         if wave_range[0] == None or wave_range[1] == None:
-            wave_range = self.plot_window._find_wavelength_range()
+            wave_range = self.plot_window.find_wavelength_range()
 
         wrange = self._build_waverange_dialog(wave_range, line_list)
 
