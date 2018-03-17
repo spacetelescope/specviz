@@ -773,15 +773,13 @@ class PlotSubWindow(UiPlotSubWindow):
         xmin = data_range[0][0]
         xmax = data_range[0][1]
 
-        new_list = [marker for marker in marker_list]
-
         # compute X distance in between markers, in screen pixels
-        x = np.array([marker.x() for marker in new_list])
+        x = np.array([marker.x() for marker in marker_list])
         diff = np.diff(x)
         diff *= x_pixels / (xmax - xmin)
 
-        marker_list_array = np.array(marker_list[1:])
-        new_list = (np.where(diff < threshold, None, marker_list_array)).tolist()
+        # replace cluttered markers with None
+        new_list = (np.where(diff < threshold, None, np.array(marker_list[1:]))).tolist()
 
         return new_list
 
