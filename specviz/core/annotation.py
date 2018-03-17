@@ -9,7 +9,7 @@ from qtpy.QtGui import QPolygonF, QPen, QColor
 
 orientations = {
     'horizontal': {'anchor': (0.5, 1), 'angle': 0},
-    'vertical':   {'anchor': (0, 0.5), 'angle': -90}
+    'vertical':   {'anchor': (0, 0.5), 'angle': 90}
 }
 
 
