@@ -322,7 +322,7 @@ class LineLabelsPlotter(object):
                 self._zoom_markers_thread.start_processing()
                 return
 
-            # Detects the complimentary condition: mouse exited plot and thread still processing.
+            # Detects the complementary condition: mouse exited plot and thread still processing.
             if event_type == QEvent.Leave and is_processing:
                 self._zoom_markers_thread.stop_processing()
 
