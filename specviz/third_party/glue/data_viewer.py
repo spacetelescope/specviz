@@ -2,6 +2,7 @@ import os
 from collections import OrderedDict
 
 import numpy as np
+from astropy.modeling.fitting import LevMarLSQFitter
 from glue.core import message as msg
 from glue.core import Data, Subset
 from glue.core.exceptions import IncompatibleAttribute
@@ -10,19 +11,21 @@ from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import (QTabWidget, QVBoxLayout, QWidget, QComboBox,
-                            QFormLayout, QToolButton, QTabBar, QDialog)
-from spectral_cube import SpectralCube
+from qtpy.QtWidgets import (QComboBox, QDialog, QFormLayout, QTabBar,
+                            QTabWidget, QToolButton, QVBoxLayout, QWidget)
 from qtpy.uic import loadUi
+from spectral_cube import SpectralCube
 
+from ...analysis.filters import SmoothingOperation
+from ...analysis.operations import FunctionalOperation
 from ...app import App
 from ...core import dispatch
 from ...core.data import Spectrum1DRef
-from .layer_widget import LayerWidget
-from .viewer_options import OptionsWidget
+from ...interfaces.model_io.yaml_model_io import build_model_from_dict
 from ...widgets.plugin import Plugin
 from ...widgets.utils import ICON_PATH, UI_PATH
-from ...analysis.filters import SmoothingOperation
+from .layer_widget import LayerWidget
+from .viewer_options import OptionsWidget
 
 __all__ = ['SpecVizViewer']
 
@@ -82,7 +85,7 @@ class SpecVizViewer(DataViewer):
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
             tb['widget'].setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            tb['widget'].setIconSize(QSize(24, 24))
+            tb['widget'].setIconSize(QSize(20, 20))
 
             for child in tb['widget'].children():
                 if isinstance(child, QToolButton):
@@ -341,6 +344,10 @@ class SpectralOperationPlugin(Plugin):
     location = "hidden"
     priority = 0
 
+    def __init__(self, *args, **kwargs):
+        super(SpectralOperationPlugin, self).__init__(*args, **kwargs)
+        self._current_model = None
+
     def setup_ui(self):
         self.add_tool_bar_actions(
             name="Apply to Cube",
@@ -349,6 +356,34 @@ class SpectralOperationPlugin(Plugin):
             category='CubeViz Operations',
             enabled=True,
             callback=self.apply_to_cube)
+
+        self.add_tool_bar_actions(
+            name="Simple Linemap",
+            description='Apply latest function to cube',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='CubeViz Operations',
+            enabled=True,
+            callback=self.create_simple_linemap)
+
+        self.add_tool_bar_actions(
+            name="Fitted Linemap",
+            description='Apply latest function to cube',
+            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+            category='CubeViz Operations',
+            enabled=True,
+            callback=self.create_fitted_linemap)
+
+        # self.add_tool_bar_actions(
+        #     name="Cube Slice",
+        #     description='Apply latest function to cube',
+        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
+        #     category='CubeViz Operations',
+        #     enabled=True,
+        #     callback=self.create_sliced_cube)
+
+    @dispatch.register_listener("on_update_model")
+    def on_model_updated(self, layer):
+        self._current_model = layer.model
 
     def setup_connections(self):
         pass
@@ -361,17 +396,34 @@ class SpectralOperationPlugin(Plugin):
 
     def create_simple_linemap(self):
         linemap_operation = SimpleLinemapOperation(
+            keep_shape=True, # Change to False to make this an overlay
             mask=self.active_window.get_roi_mask(layer=self.current_layer))
 
         dispatch.apply_operations.emit(
             stack=[linemap_operation])
 
     def create_fitted_linemap(self):
-        # - Have user select region an creation fitted model
-        # - Click the create fitted linemap button
-        # - Spawn new SpecViz window, ask if user accepts the fit
-        fitted_linemap_dialog = QDialog()
-        loadUi(os.path.join(UI_PATH, "fitted_linemap_dialog.ui"), fitted_linemap_dialog)
+        if self._current_model is None:
+            dialog = QDialog()
+            loadUi(os.path.join(UI_PATH, "no_model_error_dialog.ui"), dialog)
+            dialog.exec_()
+            return
+
+        # Ask user if they'd like to perform the fit interactively.
+        # dialog = QDialog()
+        # loadUi(os.path.join(UI_PATH, "fitted_linemap_dialog.ui"), dialog)
+
+        # if dialog.exec_():
+        #     if dialog.inspect_each_spaxel_check_box.isChecked():
+        #         pass
+        #     else:
+        linemap_operation = FittedLinemapOperation(
+            keep_shape=True, # Change to False to make this an overlay
+            model=self._current_model,
+            mask=self.active_window.get_roi_mask(layer=self.current_layer))
+
+        dispatch.apply_operations.emit(
+            stack=[linemap_operation])
 
     def create_sliced_cube(self):
         cube_slice_operation = CubeSliceOperation(
@@ -382,18 +434,27 @@ class SpectralOperationPlugin(Plugin):
             stack=[cube_slice_operation])
 
 
-from ...analysis.operations import FunctionalOperation
 
-def fitted_linemap(spectral_axis, data, mask=None):
+def fitted_linemap(data, spectral_axis, model, mask):
     # The `data` argument should be the spectral axis of the cube given
     # for a particular pixel position in spatial space
-    pass
+    fitter = LevMarLSQFitter()
+    fit_model = fitter(model, 
+                       spectral_axis[mask], 
+                       data[mask])
+
+    new_data = fit_model(spectral_axis)
+
+    return np.sum(new_data[mask])
 
 
-def simple_linemap(spectral_axis, data, mask=None):
-    data = data[mask, :, :]
+def simple_linemap(data, spectral_axis, mask=None):
+    return np.sum(data[mask])
 
-    return np.sum(data)
+
+def cube_slice(data, spectral_axis, mask=None):
+    spectral_axis = data.spectral_axis
+    return data.spectral_slab(spectral_axis[mask][0], spectral_axis[mask][-1])
 
 
 class FittedLinemapOperation(FunctionalOperation):
