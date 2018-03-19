@@ -1,7 +1,11 @@
-from qtpy import QtWidgets
-from qtpy import QtCore
+import os
 
 import pyqtgraph as pg
+from qtpy import QtCore, QtWidgets
+from qtpy.QtWidgets import QDialog
+from qtpy.uic import loadUi
+
+from ..widgets.utils import UI_PATH
 
 
 class LinearRegionItem(pg.LinearRegionItem):
@@ -42,14 +46,28 @@ class LinearRegionItem(pg.LinearRegionItem):
             self.menu = QtWidgets.QMenu()
             self.menu.setTitle("ROI")
             remAct = QtWidgets.QAction("Remove ROI", self.menu)
+            set_bounds = QtWidgets.QAction("Set Bounds", self.menu)
             remAct.triggered.connect(self.removeClicked)
+            set_bounds.triggered.connect(self.set_bounds)
             self.menu.addAction(remAct)
+            self.menu.addAction(set_bounds)
             self.menu.remAct = remAct
         return self.menu
 
     def removeClicked(self):
         ## Send remove event only after we have exited the menu event handler
         QtCore.QTimer.singleShot(0, lambda: self.sigRemoveRequested.emit(self))
+
+    def set_bounds(self):
+        dialog = QDialog()
+        loadUi(os.path.join(UI_PATH, "roi_bounds_dialog.ui"), dialog)
+
+        dialog.min_line_edit.setText("{:g}".format(self.getRegion()[0]))
+        dialog.max_line_edit.setText("{:g}".format(self.getRegion()[-1]))
+
+        if dialog.exec_():
+            self.setRegion([float(dialog.min_line_edit.text()),
+                            float(dialog.max_line_edit.text())])
 
     def mouseClickEvent(self, ev):
         if self.moving and ev.button() == QtCore.Qt.RightButton:
