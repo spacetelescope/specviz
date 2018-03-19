@@ -168,7 +168,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.scene().sigMouseMoved.connect(self.cursor_moved)
         self.button_reset.clicked.connect(self._reset_view)
 
-        self._plot_widget.sigYRangeChanged.connect(self.process_zoom_signal)
+        self._plot_widget.sigRangeChanged.connect(self.process_zoom_signal)
 
     @dispatch.register_listener("changed_dispersion_position")
     def _move_vertical_line(self, pos):
@@ -756,30 +756,32 @@ class PlotSubWindow(UiPlotSubWindow):
     # Returns a new list with marker instances to be plotted.
     # This list is a (shallow) copy of the input list, where
     # objects references are set to None whenever their distance
-    # in X pixels to the next neighbor is smaller than a given
-    # threshold.
+    # in X+Y pixels to the next neighbor is smaller than a given
+    # threshold. Using both X and Y as a distance criterion
+    # ensures that markers displayed at different heights are
+    # not removed from the plot, even when their X coordinate
+    # places them too close to each other.
     def _declutter(self, marker_list):
-        # This algorithm is handling the entire marker list as if
-        # all markers had the same height. This may cause excessive
-        # de-clutter when a densely packed list is merged with a
-        # sparsely packed one and each one is plotted at a different
-        # height. A better algorithm would account for the height of
-        # each marker and de-clutter separately marker sets made by
-        # markers that share the same height.
         threshold = 5
 
         data_range = self._plot_item.viewRange()
         x_pixels = self._plot_item.sceneBoundingRect().width()
+        y_pixels = self._plot_item.sceneBoundingRect().height()
         xmin = data_range[0][0]
         xmax = data_range[0][1]
+        ymin = data_range[1][0]
+        ymax = data_range[1][1]
 
-        # compute X distance in between markers, in screen pixels
+        # compute X and Y distances in between markers, in screen pixels
         x = np.array([marker.x() for marker in marker_list])
-        diff = np.diff(x)
-        diff *= x_pixels / (xmax - xmin)
+        xdist = np.diff(x)
+        xdist *= x_pixels / (xmax - xmin)
+        y = np.array([marker.y() for marker in marker_list])
+        ydist = np.diff(y)
+        ydist *= y_pixels / (ymax - ymin)
 
         # replace cluttered markers with None
-        new_list = (np.where(diff < threshold, None, np.array(marker_list[1:]))).tolist()
+        new_list = (np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))).tolist()
 
         return new_list
 
@@ -814,8 +816,8 @@ class PlotSubWindow(UiPlotSubWindow):
                 return
 
             # Detects the complimentary condition: mouse exited plot and thread still processing.
-            if not is_inside and is_processing:
-                self._zoom_markers_thread.stop_processing()
+            # if not is_inside and is_processing:
+            #     self._zoom_markers_thread.stop_processing()
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
