@@ -17,6 +17,7 @@ import os
 from .utils import UI_PATH
 from .resources import *
 
+from ..core.events import dispatch
 
 class UiTopAxisDialog(QDialog):
     """
@@ -136,6 +137,9 @@ class TopAxisDialog(UiTopAxisDialog):
         self.ref_wave = float(rw_val) if rw_val != '' else self.ref_wave
         rs = str(self.line_edit_redshift.text())
         self.redshift = float(rs) if rs != '' else self.redshift
+
+        # Need to pass redshift up to cubeviz 
+        dispatch.change_redshift.emit(self.redshift)
 
         super(TopAxisDialog, self).accept()
 
