@@ -206,6 +206,10 @@ def buildModelFromFile(fname):
 
     expression = ""
 
+    return build_model_from_dict(in_map)
+
+
+def build_model_from_dict(in_map):
     if MODEL_NAME in in_map:
         # compound model
         if EXPRESSION_NAME in in_map and len(in_map[EXPRESSION_NAME]) > 0:
@@ -219,7 +223,7 @@ def buildModelFromFile(fname):
 
     roi_bounds = in_map.get("roi_bounds", [])
 
-    return model, expression, directory, roi_bounds
+    return model, expression, roi_bounds
 
 
 
@@ -369,9 +373,9 @@ def _writeToFile(out_model_dict, model_directory, parent):
         f.close()
 
 
-def _writeSingleComponentModel(model, model_directory, parent, roi_bounds):
+def _writeSingleComponentModel(model, parent, roi_bounds):
     """
-Handles the case of a spectral model with a single component.
+    Handles the case of a spectral model with a single component.
 
     It's not strictly a compound model, but saving and retrieving
     isolated components as if they were compound models makes for a
@@ -381,9 +385,6 @@ Handles the case of a spectral model with a single component.
     ----------
     model: dict
         The model dictionary to write.
-
-    model_directory: str
-        The path to write to
 
     parent: QtWidget
         The parent widget to make the file dialog belong to.
@@ -395,10 +396,10 @@ Handles the case of a spectral model with a single component.
     out_model_dict[model_name] = model_dict
     out_model_dict["roi_bounds"] = roi_bounds
 
-    _writeToFile(out_model_dict, model_directory, parent)
+    return out_model_dict
 
 
-def _writeCompoundModel(compound_model, model_directory, parent, expression, roi_bounds):
+def _writeCompoundModel(compound_model, parent, expression, roi_bounds):
     """
     Handles the case of a compound model
 
@@ -406,9 +407,6 @@ def _writeCompoundModel(compound_model, model_directory, parent, expression, roi
     ----------
     compound_model: dict
         The model dictionary to write.
-
-    model_directory: str
-        The path to write to
 
     parent: QtWidget
         The parent widget to make the file dialog belong to.
@@ -426,10 +424,10 @@ def _writeCompoundModel(compound_model, model_directory, parent, expression, roi
     out_model_dict[EXPRESSION_NAME] = expression
     out_model_dict["roi_bounds"] = roi_bounds
 
-    _writeToFile(out_model_dict, model_directory, parent)
+    return out_model_dict
 
 
-def saveModelToFile(parent, model, model_directory, expression=None,
+def saveModelToFile(parent, model, model_directory=None, expression=None,
                     roi_bounds=None):
     """
     Saves spectral model to file.
@@ -452,9 +450,14 @@ def saveModelToFile(parent, model, model_directory, expression=None,
         The formula associated with the compound model
     """
     if not hasattr(model, '_format_expression'):
-        _writeSingleComponentModel(model, model_directory, parent, roi_bounds)
+        out_model_dict = _writeSingleComponentModel(model, parent, roi_bounds)
     else:
-        _writeCompoundModel(model, model_directory, parent, expression, roi_bounds)
+        out_model_dict = _writeCompoundModel(model, parent, expression, roi_bounds)
+
+    if model_directory is not None:
+        _writeToFile(out_model_dict, model_directory, parent)
+    else:
+        return out_model_dict
 
 
 #--------------------------------------------------------------------#
