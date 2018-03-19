@@ -19,7 +19,6 @@ class LineLabelsPlotter(object):
         # When porting code to this new class, we kept references
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
-        self.caller = caller
         self._is_selected = caller.is_selected
         self._plot_item = caller.plot_item
         self._linelist_window = caller.linelist_window
@@ -285,28 +284,31 @@ class LineLabelsPlotter(object):
     # not removed from the plot, even when their X coordinate
     # places them too close to each other.
     def _declutter(self, marker_list):
-        threshold = 5
+        if len(marker_list) > 10:
+            threshold = 5
 
-        data_range = self._plot_item.viewRange()
-        x_pixels = self._plot_item.sceneBoundingRect().width()
-        y_pixels = self._plot_item.sceneBoundingRect().height()
-        xmin = data_range[0][0]
-        xmax = data_range[0][1]
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
+            data_range = self._plot_item.viewRange()
+            x_pixels = self._plot_item.sceneBoundingRect().width()
+            y_pixels = self._plot_item.sceneBoundingRect().height()
+            xmin = data_range[0][0]
+            xmax = data_range[0][1]
+            ymin = data_range[1][0]
+            ymax = data_range[1][1]
 
-        # compute X and Y distances in between markers, in screen pixels
-        x = np.array([marker.x() for marker in marker_list])
-        xdist = np.diff(x)
-        xdist *= x_pixels / (xmax - xmin)
-        y = np.array([marker.y() for marker in marker_list])
-        ydist = np.diff(y)
-        ydist *= y_pixels / (ymax - ymin)
+            # compute X and Y distances in between markers, in screen pixels
+            x = np.array([marker.x() for marker in marker_list])
+            xdist = np.diff(x)
+            xdist *= x_pixels / (xmax - xmin)
+            y = np.array([marker.y() for marker in marker_list])
+            ydist = np.diff(y)
+            ydist *= y_pixels / (ymax - ymin)
 
-        # replace cluttered markers with None
-        new_list = (np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))).tolist()
+            # replace cluttered markers with None
+            new_list = (np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))).tolist()
 
-        return new_list
+            return new_list
+        else:
+            return marker_list
 
     @dispatch.register_listener("mouse_enterexit")
     def _handle_mouse_events(self, event_type):
@@ -353,8 +355,7 @@ class ZoomMarkersThread(QThread):
 
     def __init__(self, caller):
         super(ZoomMarkersThread, self).__init__()
-        self.caller = caller
-        self.buffer = self.caller._zoom_event_buffer
+        self.buffer = caller._zoom_event_buffer
         self.is_processing = False
 
     def run(self):
