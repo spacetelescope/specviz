@@ -572,6 +572,19 @@ class ModelFittingPlugin(Plugin):
         return self.get_compound_model(model_dict,
                                        formula=formula), formula
 
+    def get_model_dict(self):
+        model, formula = self._prepare_model_for_save()
+        roi_bounds = self.active_window.get_roi_bounds()
+
+        if model:
+            out_model_dict = yaml_model_io.saveModelToFile(self,
+                                                           model,
+                                                           model_directory=None,
+                                                           expression=formula,
+                                                           roi_bounds=roi_bounds)
+
+            return out_model_dict
+
     def save_model(self):
         model, formula = self._prepare_model_for_save()
         roi_bounds = self.active_window.get_roi_bounds()
@@ -594,20 +607,24 @@ class ModelFittingPlugin(Plugin):
                                         _model_directory,
                                         expression=formula)
 
-    def load_model(self):
-        global _model_directory
-        fname = compat.getopenfilenames(parent=self,
-                                        caption='Read model file',
-                                        basedir=_model_directory,
-                                        filters=yaml_model_io.MODEL_FILE_FILTER)
+    @dispatch.register_listener("load_model_from_dict")
+    def load_model(self, model_dict=None):
+        if model_dict is None:
+            global _model_directory
+            fname = compat.getopenfilenames(parent=self,
+                                            caption='Read model file',
+                                            basedir=_model_directory,
+                                            filters=yaml_model_io.MODEL_FILE_FILTER)
 
-        # File dialog returns a tuple with a list of file names.
-        # We get the first name from the first tuple element.
-        if len(fname[0]) < 1:
-            return
-        fname = fname[0][0]
+            # File dialog returns a tuple with a list of file names.
+            # We get the first name from the first tuple element.
+            if len(fname[0]) < 1:
+                return
+            fname = fname[0][0]
 
-        compound_model, formula, _model_directory, roi_bounds = yaml_model_io.buildModelFromFile(fname)
+            compound_model, formula, roi_bounds = yaml_model_io.buildModelFromFile(fname)
+        else:
+            compound_model, formula, roi_bounds = yaml_model_io.build_model_from_dict(model_dict)
 
         # Put new model in its own sub-layer under current layer.
         current_layer = self.current_layer
@@ -635,29 +652,3 @@ class ModelFittingPlugin(Plugin):
 
         for bound in roi_bounds:
             current_window.add_roi(bounds=bound)
-
-# STYLE = """
-# QTreeWidget::indicator:unchecked {{
-#     image: url({1});
-#     }}
-# QCheckBox::indicator:unchecked:hover {{
-#     image: url({1});
-# }}
-#
-# QCheckBox::indicator:unchecked:pressed {{
-#     image: url({1});
-# }}
-#
-# QTreeWidget::indicator:checked {{
-#     image: url({0});
-# }}
-#
-# QCheckBox::indicator:checked:hover {{
-#     image: url({0});
-# }}
-#
-# QCheckBox::indicator:checked:pressed {{
-#     image: url({0});
-# }}
-# """.format(os.path.join(ICON_PATH, 'lock.svg'),
-#            os.path.join(ICON_PATH, 'unlock.svg'))

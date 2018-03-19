@@ -53,10 +53,12 @@ class FunctionalOperation(Operation):
     kwargs : dict
         Additional keyword arguments to pass to the function
     """
-    def __init__(self, function, args=[], kwargs={}):
+    def __init__(self, function, axis='spectral', keep_shape=True, *args, **kwargs):
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        self.axis = axis
+        self.keep_shape = keep_shape
         
     def __call__(self, flux, spectral_axis=None):
-        return self.function(spectral_axis, flux, *self.args, **self.kwargs)
+        return self.function(flux, spectral_axis, *self.args, **self.kwargs)
