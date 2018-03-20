@@ -130,7 +130,6 @@ class LineLabelsPlotter(object):
         self._zoom_event_buffer = ZoomEventBuffer()
         self._zoom_markers_thread = ZoomMarkersThread(self)
         self._zoom_markers_thread.do_zoom.connect(self._handle_zoom)
-        self._zoom_markers_thread.start()
 
         # Populate the plotted lines pane in the line list window.
         self._linelist_window.displayPlottedLines(merged_linelist)
@@ -359,28 +358,24 @@ class ZoomMarkersThread(QThread):
         self.is_processing = False
 
     def run(self):
-        while(True):
-            if self.is_processing:
+        while(self.is_processing):
 
-                value = self.buffer.get()
-                if value:
-                    self.do_zoom.emit()
+            value = self.buffer.get()
+            if value:
+                self.do_zoom.emit()
 
             # sleep so other parts of the code
             # can run faster. The actual value
             # should be found by trial and error.
-            QThread.sleep(0.8)
+            QThread.sleep(2)
 
-    # Once created, the thread keeps running until destroyed.
-    # We can turn the time-consuming part of the calculation
-    # on and off so other parts of the app retain their full
-    # computational speed when the mouse pointer is outside
-    # the plot window.
     def start_processing(self):
         self.is_processing = True
+        self.start()
 
     def stop_processing(self):
         self.is_processing = False
+        self.buffer.clear()
 
 
 class ZoomEventBuffer(object):
@@ -390,6 +385,11 @@ class ZoomEventBuffer(object):
     def __init__(self):
         self.buffer = []
         self.mutex = QMutex()
+
+    def clear(self):
+        self.mutex.lock()
+        self.buffer = []
+        self.mutex.unlock()
 
     def put(self, value):
         self.mutex.lock()
