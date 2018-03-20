@@ -128,7 +128,7 @@ class LineLabelsPlotter(object):
         # warning, and eventual app crash. We have to manage signals with explicit
         # code within the thread and in here.
         self._zoom_event_buffer = ZoomEventBuffer()
-        self._zoom_markers_thread = ZoomMarkersThread(self)
+        self._zoom_markers_thread = ZoomMarkersThread(self, len(merged_linelist))
         self._zoom_markers_thread.do_zoom.connect(self._handle_zoom)
 
         # Populate the plotted lines pane in the line list window.
@@ -305,6 +305,10 @@ class LineLabelsPlotter(object):
             # replace cluttered markers with None
             new_list = (np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))).tolist()
 
+            # make sure at least one marker shows
+            if new_list.count(None) == len(new_list):
+                new_list[0] = marker_list[0]
+
             return new_list
         else:
             return marker_list
@@ -352,9 +356,10 @@ class ZoomMarkersThread(QThread):
 
     do_zoom = Signal()
 
-    def __init__(self, caller):
+    def __init__(self, caller, npoints):
         super(ZoomMarkersThread, self).__init__()
         self.buffer = caller._zoom_event_buffer
+        self.npoints = npoints
         self.is_processing = False
 
     def run(self):
@@ -367,7 +372,7 @@ class ZoomMarkersThread(QThread):
             # sleep so other parts of the code
             # can run faster. The actual value
             # should be found by trial and error.
-            QThread.sleep(2)
+            QThread.msleep(self.sleep_time())
 
     def start_processing(self):
         self.is_processing = True
@@ -376,6 +381,12 @@ class ZoomMarkersThread(QThread):
     def stop_processing(self):
         self.is_processing = False
         self.buffer.clear()
+
+    def sleep_time(self):
+        # trial and error
+        if self.npoints > 150:
+            return 1000
+        return 250
 
 
 class ZoomEventBuffer(object):
