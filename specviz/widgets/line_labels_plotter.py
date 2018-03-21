@@ -1,6 +1,6 @@
 import numpy as np
 
-from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex
+from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
 from ..core.events import dispatch
 from ..core.annotation import LineIDMarker
@@ -222,6 +222,10 @@ class LineLabelsPlotter(object):
         # when a merged line list is not available yet.
         if hasattr(self, '_merged_linelist'):
 
+            # Experiments with timing
+            # self.Cron = QTime(0,0,0,0)
+            # self.Cron.start()
+
             # update height column in line list based on
             # the new, zoomed coordinates.
             height_array = self._compute_height(self._merged_linelist, self._plot_item)
@@ -265,6 +269,9 @@ class LineLabelsPlotter(object):
                     self._plot_item.addItem(marker)
 
             self._plot_item.update()
+
+            # took = self.Cron.elapsed()
+            # print("took: {0} msec" .format(str(took)))
 
     # compute height to display each marker
     def _compute_height(self, merged_linelist, plot_item):
@@ -383,10 +390,13 @@ class ZoomMarkersThread(QThread):
         self.buffer.clear()
 
     def sleep_time(self):
-        # trial and error
-        if self.npoints > 150:
-            return 1000
-        return 250
+        # trial and error - work in progress
+        if self.npoints > 1000:
+            return 1200
+        elif self.npoints > 150:
+            return 500
+        else:
+            return 250
 
 
 class ZoomEventBuffer(object):
@@ -422,3 +432,22 @@ class ZoomEventBuffer(object):
             value = None
         self.mutex.unlock()
         return value
+
+
+
+# Timing experiments. Must get this on difeerent platforms.
+# This will hopefully help with the sleep_time method.
+
+# OS X 10.10.5
+# 2.4 GHz Intel Core i5
+#
+#   Lines    ms
+#     5      15
+#    50      70
+#   100     150
+#   150     200
+#   200     250
+#   500     550
+#   750     800-1400
+#  1000    1100-1500
+#

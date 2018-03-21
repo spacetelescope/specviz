@@ -40,6 +40,7 @@ ID_COLORS = {
 }
 
 PLOTTED = "Plotted"
+NLINES_WARN = 150
 
 wave_range = (None, None)
 
@@ -456,7 +457,7 @@ class LineListsWindow(UiLinelistsWindow):
                 label = QLabel(str(nlines))
             else:
                 label.setText(str(nlines))
-            color = 'black' if nlines < 2000 else 'red'
+            color = 'black' if nlines < NLINES_WARN else 'red'
             label.setStyleSheet('color:' + color)
 
         return label
@@ -532,7 +533,7 @@ class LineListsWindow(UiLinelistsWindow):
 
         # display total selected rows, with eventual warning.
         self.lines_selected_label.setText(str(count))
-        color = 'black' if count < 100 else 'red'
+        color = 'black' if count < NLINES_WARN else 'red'
         self.lines_selected_label.setStyleSheet('color:'+color)
 
     # these two methods below return a flat rendering of the panes
