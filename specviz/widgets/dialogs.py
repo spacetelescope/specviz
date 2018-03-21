@@ -138,7 +138,7 @@ class TopAxisDialog(UiTopAxisDialog):
         rs = str(self.line_edit_redshift.text())
         self.redshift = float(rs) if rs != '' else self.redshift
 
-        # Need to pass redshift up to cubeviz 
+        # Notify of redshift change
         dispatch.change_redshift.emit(self.redshift)
 
         super(TopAxisDialog, self).accept()
