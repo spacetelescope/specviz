@@ -233,7 +233,6 @@ class LineLabelsPlotter(object):
             # update markers based on what is stored in the
             # marker_list table column.
             marker_list = self._merged_linelist[MARKER_COLUMN]
-            proxy_marker_list = []
             for index in range(len(marker_list)):
                 marker = marker_list[index]
 
@@ -253,31 +252,21 @@ class LineLabelsPlotter(object):
                 # the pyqtgraph TextItem constructor. The total cost of this re-build
                 # approach amounts to about 10-12% of the elapsed time spent in zooming.
 
-                # new_marker = LineIDMarker(marker=marker)
-                # new_marker.setPos(marker.x(), height_array[index])
-                proxy_marker = LineIDMarkerProxy(marker)
-                proxy_marker.x = marker.x()
-                proxy_marker.y = height_array[index]
+                new_marker = LineIDMarker(marker=marker)
+                new_marker.setPos(marker.x(), height_array[index])
 
                 # Replace old marker with new.
-                proxy_marker_list.append(proxy_marker)
+                marker_list[index] = new_marker
 
             # after all markers are created, check their relative
             # positions on screen and disable some to de-clutter
             # the plot.
-            decluttered_list = self._declutter(proxy_marker_list)
+            decluttered_list = self._declutter(marker_list)
 
             # Finally, add the de-cluttered new markers to the plot.
-            for index in range(len(marker_list)):
-                proxy_marker = decluttered_list[index]
-                if proxy_marker:
-
-                    marker = LineIDMarker(marker=proxy_marker.marker)
-                    marker.setPos(proxy_marker.marker.x(), height_array[index])
-
+            for marker in decluttered_list:
+                if marker:
                     self._plot_item.addItem(marker)
-
-                    marker_list[index] = marker
 
             self._plot_item.update()
 
