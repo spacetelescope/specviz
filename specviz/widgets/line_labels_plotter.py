@@ -312,7 +312,12 @@ class LineLabelsPlotter(object):
             ydist *= y_pixels / (ymax - ymin)
 
             # replace cluttered markers with None
-            new_list = (np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))).tolist()
+            new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))
+
+            # replace markers currently outside the wave range with None
+            new_array_2 = np.where(x[1:] < xmin, None, new_array)
+            new_array_3 = np.where(x[1:] > xmax, None, new_array_2)
+            new_list = new_array_3.tolist()
 
             # make sure at least one marker shows
             if new_list.count(None) == len(new_list):
