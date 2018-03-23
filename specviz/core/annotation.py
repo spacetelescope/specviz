@@ -105,3 +105,17 @@ class LineIDMarker(TextItem):
         pen = QPen(QColor(functions.mkColor(self._color)))
         p.setPen(pen)
         p.drawPolygon(polygon)
+
+
+class LineIDMarkerProxy(object):
+
+    def __init__(self, marker, x, y):
+        self.marker = marker
+        self.x = x
+        self.y = y
+
+    def x(self):
+        return self.x
+
+    def y(self):
+        return self.y
