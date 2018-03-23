@@ -3,7 +3,7 @@ import numpy as np
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
 from ..core.events import dispatch
-from ..core.annotation import LineIDMarker
+from ..core.annotation import LineIDMarker, LineIDMarkerProxy
 from ..core.linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
@@ -251,8 +251,10 @@ class LineLabelsPlotter(object):
                 # Profiling experiments showed that almost all the cost is spent inside
                 # the pyqtgraph TextItem constructor. The total cost of this re-build
                 # approach amounts to about 10-12% of the elapsed time spent in zooming.
-                new_marker = LineIDMarker(marker=marker)
-                new_marker.setPos(marker.x(), height_array[index])
+
+                # new_marker = LineIDMarker(marker=marker)
+                # new_marker.setPos(marker.x(), height_array[index])
+                new_marker = LineIDMarkerProxy(marker, marker.x, height_array[index])
 
                 # Replace old marker with new.
                 marker_list[index] = new_marker
@@ -262,10 +264,17 @@ class LineLabelsPlotter(object):
             # the plot.
             decluttered_list = self._declutter(marker_list)
 
-            # Finally, add the de-cluttered new markers to
-            # the plot.
-            for marker in decluttered_list:
-                if marker:
+
+            print("@@@@@@  file line_labels_plotter.py; line 268 - ",  len(decluttered_list), len(marker_list))
+
+            # Finally, add the de-cluttered new markers to the plot.
+            for index in range(len(marker_list)):
+                proxy_marker = decluttered_list[index]
+                if proxy_marker:
+
+                    marker = LineIDMarker(marker=proxy_marker.marker)
+                    marker.setPos(proxy_marker.marker.x(), height_array[index])
+
                     self._plot_item.addItem(marker)
 
             self._plot_item.update()
