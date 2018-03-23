@@ -273,6 +273,8 @@ class LineLabelsPlotter(object):
             # took = self.Cron.elapsed()
             # print("took: {0} msec" .format(str(took)))
 
+            self._zoom_markers_thread.zoom_end.emit()
+
     # compute height to display each marker
     def _compute_height(self, merged_linelist, plot_item):
         data_range = plot_item.viewRange()
@@ -357,17 +359,20 @@ class ZoomMarkersThread(QThread):
     # thread and its signal-slot dependencies. Something in the dispatch
     # code messes up with the timing relationships in the GUI and secondary
     # threads, causing the “Timers cannot be started from another thread”
-    # warning, and eventual app crash. We have to manage a locally-defined
-    # signal instead, explicitly connecting it with its slot in the caller
-    # code
+    # warning, and eventual app crash. We have to manage locally-defined
+    # signals instead, explicitly connecting them with their slots
 
     do_zoom = Signal()
+    zoom_end = Signal()
 
     def __init__(self, caller, npoints):
         super(ZoomMarkersThread, self).__init__()
         self.buffer = caller._zoom_event_buffer
         self.npoints = npoints
         self.is_processing = False
+        self.is_zooming = False
+
+        self.zoom_end.connect(self.zoom_finished)
 
     def run(self):
         while(self.is_processing):
@@ -376,10 +381,17 @@ class ZoomMarkersThread(QThread):
             if value:
                 self.do_zoom.emit()
 
-            # sleep so other parts of the code
-            # can run faster. The actual value
-            # should be found by trial and error.
-            QThread.msleep(self.sleep_time())
+                self.is_zooming = True
+
+                # wait for zoom to finish.
+                while(self.is_zooming):
+                    QThread.msleep(10)
+
+            # one more, to prevent hiccups.
+            QThread.msleep(10)
+
+    def zoom_finished(self):
+        self.is_zooming = False
 
     def start_processing(self):
         self.is_processing = True
@@ -388,15 +400,6 @@ class ZoomMarkersThread(QThread):
     def stop_processing(self):
         self.is_processing = False
         self.buffer.clear()
-
-    def sleep_time(self):
-        # trial and error - work in progress
-        if self.npoints > 1000:
-            return 1200
-        elif self.npoints > 150:
-            return 500
-        else:
-            return 250
 
 
 class ZoomEventBuffer(object):
@@ -432,22 +435,3 @@ class ZoomEventBuffer(object):
             value = None
         self.mutex.unlock()
         return value
-
-
-
-# Timing experiments. Must get this on difeerent platforms.
-# This will hopefully help with the sleep_time method.
-
-# OS X 10.10.5
-# 2.4 GHz Intel Core i5
-#
-#   Lines    ms
-#     5      15
-#    50      70
-#   100     150
-#   150     200
-#   200     250
-#   500     550
-#   750     800-1400
-#  1000    1100-1500
-#
