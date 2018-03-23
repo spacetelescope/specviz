@@ -233,6 +233,7 @@ class LineLabelsPlotter(object):
             # update markers based on what is stored in the
             # marker_list table column.
             marker_list = self._merged_linelist[MARKER_COLUMN]
+            proxy_marker_list = []
             for index in range(len(marker_list)):
                 marker = marker_list[index]
 
@@ -254,18 +255,17 @@ class LineLabelsPlotter(object):
 
                 # new_marker = LineIDMarker(marker=marker)
                 # new_marker.setPos(marker.x(), height_array[index])
-                new_marker = LineIDMarkerProxy(marker, marker.x, height_array[index])
+                proxy_marker = LineIDMarkerProxy(marker)
+                proxy_marker.x = marker.x()
+                proxy_marker.y = height_array[index]
 
                 # Replace old marker with new.
-                marker_list[index] = new_marker
+                proxy_marker_list.append(proxy_marker)
 
             # after all markers are created, check their relative
             # positions on screen and disable some to de-clutter
             # the plot.
-            decluttered_list = self._declutter(marker_list)
-
-
-            print("@@@@@@  file line_labels_plotter.py; line 268 - ",  len(decluttered_list), len(marker_list))
+            decluttered_list = self._declutter(proxy_marker_list)
 
             # Finally, add the de-cluttered new markers to the plot.
             for index in range(len(marker_list)):
@@ -276,6 +276,8 @@ class LineLabelsPlotter(object):
                     marker.setPos(proxy_marker.marker.x(), height_array[index])
 
                     self._plot_item.addItem(marker)
+
+                    marker_list[index] = marker
 
             self._plot_item.update()
 

@@ -67,6 +67,12 @@ class LineIDMarker(TextItem):
     def __str__(self):
         return str(self._text)
 
+    def x(self):
+        return self.x
+
+    def y(self):
+        return self.y
+
     def paint(self, p, *args):
         ''' Overrides the default implementation so as
             to draw a vertical marker.
@@ -109,13 +115,24 @@ class LineIDMarker(TextItem):
 
 class LineIDMarkerProxy(object):
 
-    def __init__(self, marker, x, y):
+    def __init__(self, marker):
         self.marker = marker
-        self.x = x
-        self.y = y
+        self._x = 0
+        self._y = 0
 
+    @property
     def x(self):
-        return self.x
+        return self._x
 
+    @property
     def y(self):
-        return self.y
+        return self._y
+
+    @x.setter
+    def x(self, x):
+        self._x = x
+
+    @y.setter
+    def y(self, y):
+        self._y = y
+
