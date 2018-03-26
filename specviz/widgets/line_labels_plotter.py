@@ -20,7 +20,7 @@ class LineLabelsPlotter(object):
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
         self._is_selected = caller.is_selected
-        self._plot_item = caller.plot_item
+        self._plot_item = caller._plot_item
         self._linelist_window = caller.linelist_window
         self._linelists = caller.linelists
 
