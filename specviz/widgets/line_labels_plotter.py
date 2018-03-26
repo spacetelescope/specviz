@@ -3,7 +3,7 @@ import numpy as np
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
 from ..core.events import dispatch
-from ..core.annotation import LineIDMarker
+from ..core.annotation import LineIDMarker, LineIDMarkerProxy
 from ..core.linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
@@ -23,6 +23,10 @@ class LineLabelsPlotter(object):
         self._plot_item = caller._plot_item
         self._linelist_window = caller._linelist_window
         self._linelists = caller.linelists
+
+        # create a new, empty list that will store and help track down
+        # which markers are actually being displayed at any time.
+        self._markers_on_screen = []
 
         dispatch.setup(self)
 
@@ -169,10 +173,12 @@ class LineLabelsPlotter(object):
         # Profiling experiments showed that almost all the cost is spent inside
         # the pyqtgraph TextItem constructor. The total cost of this re-build
         # approach amounts to about 10-12% of the elapsed time spent in zooming.
+        # This is now being handled by a proxy instantiation mechanism. Profiling
+        # experiments still TBD.
         #
-        # The pinning of the Y coordinate is handled by the handle_zoom
-        # method that in turn relies in the storage of marker instances
-        # row-wise in the line list table.
+        # The pinning of the Y coordinate is handled by the handle_zoom method
+        # that in turn relies in the storage of marker instances row-wise in the
+        # line list table.
         plot_item = self._plot_item
 
         height = self._compute_height(merged_linelist, plot_item)
@@ -185,7 +191,7 @@ class LineLabelsPlotter(object):
 
         # To enable marker removal from plot, markers are stored
         # row-wise so as to match row selections in table views.
-        marker_column = merged_linelist[MARKER_COLUMN]
+        markers = merged_linelist[MARKER_COLUMN]
 
         for row_index in range(len(wave_column)):
 
@@ -197,22 +203,28 @@ class LineLabelsPlotter(object):
                     value = merged_linelist.columns[col_index][row_index]
                     tool_tip += col_name + '=' + str(value) + ', '
 
-            marker = LineIDMarker(text=id_column[row_index],
-                                  plot_item=plot_item,
-                                  tip=tool_tip,
-                                  color=color_column[row_index],
-                                  orientation='vertical')
+            marker = LineIDMarkerProxy(wave_column[row_index],
+                                       height[row_index],
+                                       text=id_column[row_index],
+                                       plot_item=plot_item,
+                                       tip=tool_tip,
+                                       color=color_column[row_index],
+                                       orientation='vertical')
 
-            marker.setPos(wave_column[row_index], height[row_index])
-
-            marker_column[row_index] = marker
+            markers[row_index] = marker
 
         # after all markers are created, check their positions
         # and disable some to de-clutter the plot.
-        new_column = self._declutter(marker_column)
-        for marker in new_column:
-            if marker:
-                self._plot_item.addItem(marker)
+        new_markers = self._declutter(markers)
+
+        # place markers on screen
+        for marker_proxy in new_markers:
+            if marker_proxy:
+                real_marker = LineIDMarker(marker_proxy)
+                real_marker.setPos(real_marker.x0, real_marker.y0)
+
+                self._plot_item.addItem(real_marker)
+                self._markers_on_screen.append(real_marker)
 
         plot_item.update()
 
@@ -230,13 +242,17 @@ class LineLabelsPlotter(object):
             # the new, zoomed coordinates.
             height_array = self._compute_height(self._merged_linelist, self._plot_item)
 
+            # remove markers that are displaying right now
+            for index in range(len(self._markers_on_screen)):
+                marker = self._markers_on_screen[index]
+                self._plot_item.removeItem(marker)
+            self._markers_on_screen = []
+
             # update markers based on what is stored in the
             # marker_list table column.
             marker_list = self._merged_linelist[MARKER_COLUMN]
             for index in range(len(marker_list)):
                 marker = marker_list[index]
-
-                self._plot_item.removeItem(marker)
 
                 # New marker is built with same parameters as older marker that was
                 # just removed, but for the new Y position.
@@ -251,22 +267,26 @@ class LineLabelsPlotter(object):
                 # Profiling experiments showed that almost all the cost is spent inside
                 # the pyqtgraph TextItem constructor. The total cost of this re-build
                 # approach amounts to about 10-12% of the elapsed time spent in zooming.
+                # This is now being handled by a proxy instantiation mechanism. Profiling
+                # experiments still TBD.
 
-                new_marker = LineIDMarker(marker=marker)
-                new_marker.setPos(marker.x(), height_array[index])
+                new_marker = LineIDMarkerProxy(marker.x0, height_array[index], proxy=marker)
 
                 # Replace old marker with new.
                 marker_list[index] = new_marker
 
-            # after all markers are created, check their relative
-            # positions on screen and disable some to de-clutter
-            # the plot.
+            # after all markers are created, check their relative positions
+            # on screen and disable some to de-clutter the plot.
             decluttered_list = self._declutter(marker_list)
 
             # Finally, add the de-cluttered new markers to the plot.
-            for marker in decluttered_list:
-                if marker:
-                    self._plot_item.addItem(marker)
+            for marker_proxy in decluttered_list:
+                if marker_proxy:
+                    real_marker = LineIDMarker(marker_proxy)
+                    real_marker.setPos(real_marker.x0, real_marker.y0)
+
+                    self._plot_item.addItem(real_marker)
+                    self._markers_on_screen.append(real_marker)
 
             self._plot_item.update()
 
@@ -283,14 +303,13 @@ class LineLabelsPlotter(object):
 
         return (ymax - ymin) * merged_linelist.columns[HEIGHT_COLUMN] + ymin
 
-    # Returns a new list with marker instances to be plotted.
-    # This list is a (shallow) copy of the input list, where
-    # objects references are set to None whenever their distance
-    # in X+Y pixels to the next neighbor is smaller than a given
-    # threshold. Using both X and Y as a distance criterion
-    # ensures that markers displayed at different heights are
-    # not removed from the plot, even when their X coordinate
-    # places them too close to each other.
+    # Returns a new list with proxy marker instances to be plotted.
+    # This list is a (shallow) copy of the input list, where object
+    # references are set to None whenever their distance in X+Y pixels
+    # to the next neighbor is smaller than a given threshold. Using both
+    # X and Y as a distance criterion ensures that markers displayed at
+    # different heights are not removed from the plot, even when their
+    # X coordinate places them too close to each other.
     def _declutter(self, marker_list):
         if len(marker_list) > 10:
             threshold = 5
@@ -304,10 +323,10 @@ class LineLabelsPlotter(object):
             ymax = data_range[1][1]
 
             # compute X and Y distances in between markers, in screen pixels
-            x = np.array([marker.x() for marker in marker_list])
+            x = np.array([marker.x0 for marker in marker_list])
             xdist = np.diff(x)
             xdist *= x_pixels / (xmax - xmin)
-            y = np.array([marker.y() for marker in marker_list])
+            y = np.array([marker.y0 for marker in marker_list])
             ydist = np.diff(y)
             ydist *= y_pixels / (ymax - ymin)
 
@@ -347,10 +366,11 @@ class LineLabelsPlotter(object):
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
-            marker_column = self._merged_linelist[MARKER_COLUMN]
-            for index in range(len(marker_column)):
-                self._plot_item.removeItem(marker_column[index])
+            markers = self._markers_on_screen
+            for index in range(len(markers)):
+                self._plot_item.removeItem(markers[index])
             self._plot_item.update()
+            self._markers_on_screen = []
 
     def _destroy_zoom_markers_thread(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
@@ -425,7 +445,7 @@ class ZoomEventBuffer(object):
 
         # Don't let the buffer fill up too much.
         # Keep just the most recent zoom events.
-        while len(self.buffer) > 2:
+        while len(self.buffer) > 5:
             self.buffer.pop()
 
         self.buffer.insert(0, value)

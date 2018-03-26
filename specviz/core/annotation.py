@@ -13,6 +13,49 @@ orientations = {
 }
 
 
+class LineIDMarkerProxy(object):
+    ''' A proxy class that is used in lieu of a real, full-blown Line1DMarker.
+
+        The LineIDMarker constructor calls pyqtgraph's TextItem constructor. Profiling
+        analysis showed that it's an expensive operation to perform. However, it has
+        to be called many times during the course of a zoom operation. This proxy,
+        by avoiding to call the Line1DMarker base class' constructor, speeds up
+        the entire process.
+
+        The idea is that this proxy is used to perform all the de-cluttering and
+        explicit clipping operations that take place before an actual marker can
+        be added to the plot. By postponing the instantiation of full-blown Line1DMarker
+        objects for the very end, only the ones actually showing up on screen are
+        instantiated. This saves an enormous amount of time not only on the constructor
+        phase, but also on the addItem and removeItem calls, which seem to generate in
+        turn an inordinate amount of calls to connect() and disconnect().
+    '''
+    def __init__(self, x0, y0, proxy= None, text=None, plot_item=None, tip="", color=(0,0,0), orientation='horizontal'):
+
+        self.x0 = x0
+        self.y0 = y0
+
+        if proxy:
+            # complete initialization by taking
+            # parameters from another instance.
+            self._text = proxy._text
+            self._plot_item = proxy._plot_item
+            self._tooltip = proxy._tooltip
+            self._color = proxy._color
+            self._orientation = proxy._orientation
+
+        else:
+            # initialize from passed values.
+            self._text = text
+            self._plot_item = plot_item
+            self._tooltip = tip
+            self._color = color
+            self._orientation = orientation
+
+    def __str__(self):
+        return str(self._text)
+
+
 class LineIDMarker(TextItem):
     ''' This class handles the drawing of a modified TextItem that's
         augmented with a linear vertical marker. These items are used
@@ -21,37 +64,28 @@ class LineIDMarker(TextItem):
         Note the convoluted handling of the 'color' parameter. This is
         due to a bug in pyqtgraph's function 'functions.mkColor', which
         bombs when presented with an argument of type Qt.GlobalColor.
+
+        Line1DMarker instances can only be built from instances of the
+        matching Line1DMarkerProxy class, or from instances of itself.
     '''
-    def __init__(self, marker=None, text=None, plot_item=None, tip="", color=(0,0,0), orientation='horizontal'):
+    def __init__(self, marker=None):
 
-        if marker == None:
-            self._text = text
-            self._plot_item = plot_item
-            self._orientation = orientation
-            self._color = color
+        self.x0 = marker.x0
+        self.y0 = marker.y0
 
-            self._anchor = orientations[orientation]['anchor']
-            self._angle = orientations[orientation]['angle']
+        self._text = marker._text
+        self._plot_item = marker._plot_item
+        self._orientation = marker._orientation
+        self._color = marker._color
 
-            super(LineIDMarker, self).__init__(text=text, color=color, anchor=self._anchor, angle=self._angle)
+        self._anchor = orientations[self._orientation]['anchor']
+        self._angle = orientations[self._orientation]['angle']
 
-            self._tooltip = tip
-            self.setToolTip(tip)
+        super(LineIDMarker, self).__init__(text=self._text, color=self._color,
+                                           anchor=self._anchor, angle=self._angle)
 
-        else:
-            self._text = marker._text
-            self._plot_item = marker._plot_item
-            self._orientation = marker._orientation
-            self._color = marker._color
-
-            self._anchor = marker._anchor
-            self._angle = marker._angle
-
-            super(LineIDMarker, self).__init__(text=self._text, color=self._color,
-                                               anchor=self._anchor, angle=self._angle)
-
-            self._tooltip = marker._tooltip
-            self.setToolTip(marker._tooltip)
+        self._tooltip = marker._tooltip
+        self.setToolTip(marker._tooltip)
 
         self.setFlag(self.ItemIsMovable)
 
