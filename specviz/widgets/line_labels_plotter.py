@@ -3,7 +3,7 @@ import numpy as np
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
 from ..core.events import dispatch
-from ..core.annotation import LineIDMarker, LineIDMarkerProxy
+from ..core.annotation import LineIDMarker
 from ..core.linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
@@ -19,9 +19,9 @@ class LineLabelsPlotter(object):
         # When porting code to this new class, we kept references
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
-        self._is_selected = caller.is_selected
+        self._is_selected = caller._is_selected
         self._plot_item = caller._plot_item
-        self._linelist_window = caller.linelist_window
+        self._linelist_window = caller._linelist_window
         self._linelists = caller.linelists
 
         dispatch.setup(self)
