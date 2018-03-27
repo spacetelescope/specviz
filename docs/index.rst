@@ -56,6 +56,7 @@ Using SpecViz
 
    viewer
    model_fitting
+   line_labels
    custom_loaders
 
 
