@@ -40,23 +40,26 @@ class LineLabelsPlotter(object):
 
             self._zoom_event_buffer.put((xmin, xmax))
 
+
 #--------  Slots.
 
     @dispatch.register_listener("on_dismiss_linelists_window")
     def _dismiss_linelists_window(self, *args, **kwargs):
         if self._is_selected and self._linelist_window:
-            self._linelist_window.hide()
-            self._linelist_window = None
 
-            self._destroy_zoom_markers_thread()
+            dispatch.on_erase_linelabels.emit()
+            dispatch.tear_down(self)
+
+            self._linelist_window.close()
+            self._linelist_window = None
 
     @dispatch.register_listener("on_erase_linelabels")
     def _erase_linelabels(self, *args, **kwargs):
         if self._linelist_window and self._is_selected:
-            self._destroy_zoom_markers_thread()
-
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
+
+            self._destroy_zoom_markers_thread()
 
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
@@ -136,11 +139,30 @@ class LineLabelsPlotter(object):
         self._zoom_markers_thread.do_zoom.connect(self._handle_zoom)
 
         # Populate the plotted lines pane in the line list window.
-        self._linelist_window.displayPlottedLines(merged_linelist)
+        if hasattr(self, '_linelist_window') and self._linelist_window:
+            self._linelist_window.displayPlottedLines(merged_linelist)
 
         # The new line list just created becomes the default for
         # use in subsequent operations.
         self._merged_linelist = merged_linelist
+
+    @dispatch.register_listener("mouse_enterexit")
+    def _handle_mouse_events(self, event_type):
+        # Turns time-consuming processing in the zoom thread on/off when
+        # mouse enter/leaves the plot. This enables that other parts of
+        # the app retain their full computational speed when the mouse
+        # pointer is outside the plot window.
+        if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
+            is_processing = self._zoom_markers_thread.is_processing
+
+            # Detects when mouse entered the plot area but the thread is not processing yet.
+            if event_type == QEvent.Enter and not is_processing:
+                self._zoom_markers_thread.start_processing()
+                return
+
+            # Detects the complementary condition: mouse exited plot and thread still processing.
+            if event_type == QEvent.Leave and is_processing:
+                self._zoom_markers_thread.stop_processing()
 
 #--------  Private methods.
 
@@ -367,24 +389,6 @@ class LineLabelsPlotter(object):
             return new_list
         else:
             return marker_list
-
-    @dispatch.register_listener("mouse_enterexit")
-    def _handle_mouse_events(self, event_type):
-        # Turns time-consuming processing in the zoom thread on/off when
-        # mouse enter/leaves the plot. This enables that other parts of
-        # the app retain their full computational speed when the mouse
-        # pointer is outside the plot window.
-        if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
-            is_processing = self._zoom_markers_thread.is_processing
-
-            # Detects when mouse entered the plot area but the thread is not processing yet.
-            if event_type == QEvent.Enter and not is_processing:
-                self._zoom_markers_thread.start_processing()
-                return
-
-            # Detects the complementary condition: mouse exited plot and thread still processing.
-            if event_type == QEvent.Leave and is_processing:
-                self._zoom_markers_thread.stop_processing()
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):

@@ -263,7 +263,7 @@ class LineListsWindow(UiLinelistsWindow):
         # not showing any line list automatically upon startup. In case
         # we need that capability back, just uncomment this line.
 
-        self._buildViews(plot_window)
+        # self._buildViews(plot_window)
 
         #---------------------------------------------------------------
 
@@ -523,9 +523,17 @@ class LineListsWindow(UiLinelistsWindow):
 
     def displayPlottedLines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
-        index_last = self.tabWidget.count() - 1
-        self.tabWidget.removeTab(index_last)
-        self.tabWidget.insertTab(index_last, self._plotted_lines_pane, PLOTTED)
+
+        for index in range(self.tabWidget.count()):
+            tab_text = self.tabWidget.tabText(index)
+            if tab_text == PLOTTED:
+                self.tabWidget.removeTab(index)
+                self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
+                return
+
+        # if no plotted pane yet, create one.
+        index = self.tabWidget.count()
+        self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
     def erasePlottedLines(self):
         index_last = self.tabWidget.count() - 1
@@ -568,6 +576,9 @@ class LineListsWindow(UiLinelistsWindow):
 
     def hide(self):
         self._main_window.hide()
+
+    def close(self):
+        self._main_window.close()
 
 
 class LineListPane(QWidget):

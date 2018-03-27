@@ -546,5 +546,6 @@ class PlotSubWindow(UiPlotSubWindow):
     @dispatch.register_listener("on_dismiss_linelists_window")
     def _dismiss_linelists_window(self, *args, **kwargs):
         if self._is_selected and self._linelist_window:
-            self._linelist_window.hide()
+            self._linelist_window.close()
+            self.line_labels_plotter = None
             self._linelist_window = None
