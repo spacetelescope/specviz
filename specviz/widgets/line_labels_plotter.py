@@ -172,9 +172,10 @@ class LineLabelsPlotter(object):
         #
         # Profiling experiments showed that almost all the cost is spent inside
         # the pyqtgraph TextItem constructor. The total cost of this re-build
-        # approach amounts to about 10-12% of the elapsed time spent in zooming.
+        # approach amounts to about 15-20% of the CPU time spent in zooming.
         # This is now being handled by a proxy instantiation mechanism. Profiling
-        # experiments still TBD.
+        # experiments with the proxy mechanism in place show that the time taken
+        # by the TextItem constructor drops to 4% of total CPU time.
         #
         # The pinning of the Y coordinate is handled by the handle_zoom method
         # that in turn relies in the storage of marker instances row-wise in the
@@ -266,9 +267,10 @@ class LineLabelsPlotter(object):
                 #
                 # Profiling experiments showed that almost all the cost is spent inside
                 # the pyqtgraph TextItem constructor. The total cost of this re-build
-                # approach amounts to about 10-12% of the elapsed time spent in zooming.
+                # approach amounts to about 15-20% of the CPU time spent in zooming.
                 # This is now being handled by a proxy instantiation mechanism. Profiling
-                # experiments still TBD.
+                # experiments with the proxy mechanism in place show that the time taken
+                # by the TextItem constructor drops to 4% of total CPU time.
 
                 new_marker = LineIDMarkerProxy(marker.x0, height_array[index], proxy=marker)
 
@@ -306,41 +308,61 @@ class LineLabelsPlotter(object):
     # Returns a new list with proxy marker instances to be plotted.
     # This list is a (shallow) copy of the input list, where object
     # references are set to None whenever their distance in X+Y pixels
-    # to the next neighbor is smaller than a given threshold. Using both
-    # X and Y as a distance criterion ensures that markers displayed at
-    # different heights are not removed from the plot, even when their
-    # X coordinate places them too close to each other.
+    # to the next neighbor is smaller than a given threshold.
+    #
+    # Using both X and Y as a distance criterion ensures that markers
+    # displayed at different heights are not removed from the plot,
+    # even when their X coordinate places them too close to each other.
+    #
+    # NOTE: However, using the sum of X and Y distances causes a lot more
+    # markers to be displayed when separate data sets are displayed at
+    # different heights on screen. In a way, it defeats the purpose of
+    # de-cluttering. And makes the code run slower: right now, the CPU
+    # bottleneck is in the np.array() constructors the build the X and Y
+    # arrays. Temporarily, we remove the Y array entirely. In case this
+    # needs more work, users will give us feedback eventually.
+    #
+    # With these optimizations in place, about 7% of the CPU time spent
+    # in zooming is due to the _declutter method. Almost all of it is in
+    # line 341 (list comprehension + np.array() constructor).
+
     def _declutter(self, marker_list):
         if len(marker_list) > 10:
             threshold = 5
 
             data_range = self._plot_item.viewRange()
             x_pixels = self._plot_item.sceneBoundingRect().width()
-            y_pixels = self._plot_item.sceneBoundingRect().height()
+            # y_pixels = self._plot_item.sceneBoundingRect().height()
             xmin = data_range[0][0]
             xmax = data_range[0][1]
-            ymin = data_range[1][0]
-            ymax = data_range[1][1]
+            # ymin = data_range[1][0]
+            # ymax = data_range[1][1]
 
             # compute X and Y distances in between markers, in screen pixels
             x = np.array([marker.x0 for marker in marker_list])
             xdist = np.diff(x)
             xdist *= x_pixels / (xmax - xmin)
-            y = np.array([marker.y0 for marker in marker_list])
-            ydist = np.diff(y)
-            ydist *= y_pixels / (ymax - ymin)
+            # y = np.array([marker.y0 for marker in marker_list])
+            # ydist = np.diff(y)
+            # ydist *= y_pixels / (ymax - ymin)
 
             # replace cluttered markers with None
-            new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))
+            # new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))
+            new_array = np.where(xdist < threshold, None, np.array(marker_list[1:]))
 
             # replace markers currently outside the wave range with None
             new_array_2 = np.where(x[1:] < xmin, None, new_array)
             new_array_3 = np.where(x[1:] > xmax, None, new_array_2)
             new_list = new_array_3.tolist()
 
-            # make sure at least one marker shows
-            if new_list.count(None) == len(new_list):
-                new_list[0] = marker_list[0]
+            # make sure at least a few markers show
+            if new_list.count(None) >= len(new_list) - 3:
+                mid = int(len(new_list) / 2)
+                mid_1 = int(max(0, mid - 8))
+                mid_2 = int(min(mid + 8, len(new_list)-1))
+                new_list[mid] = marker_list[mid]
+                new_list[mid_1] = marker_list[mid_1]
+                new_list[mid_2] = marker_list[mid_2]
 
             return new_list
         else:
