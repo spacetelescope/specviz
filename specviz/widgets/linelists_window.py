@@ -623,6 +623,11 @@ class LineListPane(QWidget):
         self.create_set_button.setEnabled(False)
         self.create_set_button.clicked.connect(lambda: self._createSet())
 
+
+# TODO - temporary workaround for row index bug
+        self.create_set_button.setEnabled(True)
+
+
         # 'deselect all' button
         deselect_button = QPushButton(self)
         deselect_button.setObjectName("deselect_button")
@@ -707,21 +712,41 @@ class LineListPane(QWidget):
         # rows, not view rows!
         selected_view_rows = self.table_view.selectionModel().selectedRows()
         selected_model_rows = [self._sort_proxy.mapToSource(x) for x in selected_view_rows]
-        if len(selected_model_rows) > 0:
-            r = [x for x in selected_model_rows]
-            local_list = self.linelist.extract_rows(r)
 
-            # name is used to match lists with table views
-            local_list.name = self.linelist.name
 
-            table_model = LineListTableModel(local_list)
-            pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+# TODO - temporary workaround for row index bug
+        # if len(selected_model_rows) > 0:
+        #     r = [x for x in selected_model_rows]
+        #     local_list = self.linelist.extract_rows(r)
+        #
+        #     # name is used to match lists with table views
+        #     local_list.name = self.linelist.name
+        #
+        #     table_model = LineListTableModel(local_list)
+        #     pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+        #
+        #     pane._sets_tabbed_pane = self._sets_tabbed_pane
+        #     table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+        #     table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+        #
+        #     self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
 
-            pane._sets_tabbed_pane = self._sets_tabbed_pane
-            table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
-            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+        local_list = self.linelist
+        local_list.name = self.linelist.name
 
-            self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
+        table_model = LineListTableModel(local_list)
+        pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+
+        pane._sets_tabbed_pane = self._sets_tabbed_pane
+        table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+        table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+
+        self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
+
+        self.create_set_button.setEnabled(True)
+
+# END - temporary workaround for row index bug
+
 
     def tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
