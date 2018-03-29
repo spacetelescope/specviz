@@ -79,42 +79,41 @@ class LineLabelsPlotter(object):
             # though: it is assumed by that code that self.linelists
             # is a list and not a dict.
             view_name = table_view.model().getName()
-            for k in range(len(self._linelists)):
-                line_list = pane.linelist
-                line_list_name = line_list.name
+            line_list = pane.linelist
+            line_list_name = line_list.name
 
-                if line_list_name == view_name:
-                    # must map between view and underlying model
-                    # because of row sorting.
-                    selected_rows = table_view.selectionModel().selectedRows()
-                    model_selected_rows = []
-                    for sr in selected_rows:
-                        model_row = table_view.model().mapToSource(sr)
-                        model_selected_rows.append(model_row)
+            if line_list_name == view_name:
+                # must map between view and underlying model
+                # because of row sorting.
+                selected_rows = table_view.selectionModel().selectedRows()
+                model_selected_rows = []
+                for sr in selected_rows:
+                    model_row = table_view.model().mapToSource(sr)
+                    model_selected_rows.append(model_row)
 
-                    new_list = line_list.extract_rows(model_selected_rows)
+                new_list = line_list.extract_rows(model_selected_rows)
 
-                    # redshift correction for plotting the specific lines
-                    # defined in this list. Defined by the text content
-                    # and combo box setting.
-                    if pane.redshift_textbox.hasAcceptableInput():
-                        redshift = float(pane.redshift_textbox.text())
-                        z_units = pane.combo_box_z_units.currentText()
-                        new_list.setRedshift(redshift, z_units)
+                # redshift correction for plotting the specific lines
+                # defined in this list. Defined by the text content
+                # and combo box setting.
+                if pane.redshift_textbox.hasAcceptableInput():
+                    redshift = float(pane.redshift_textbox.text())
+                    z_units = pane.combo_box_z_units.currentText()
+                    new_list.setRedshift(redshift, z_units)
 
-                    # color for plotting the specific lines defined in
-                    # this list, is defined by the itemData property.
-                    index = pane.combo_box_color.currentIndex()
-                    color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
-                    new_list.setColor(color)
+                # color for plotting the specific lines defined in
+                # this list, is defined by the itemData property.
+                index = pane.combo_box_color.currentIndex()
+                color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
+                new_list.setColor(color)
 
-                    # height for plotting the specific lines defined in
-                    # this list. Defined by the line edit text.
-                    if pane.height_textbox.hasAcceptableInput():
-                        height = float(pane.height_textbox.text())
-                        new_list.setHeight(height)
+                # height for plotting the specific lines defined in
+                # this list. Defined by the line edit text.
+                if pane.height_textbox.hasAcceptableInput():
+                    height = float(pane.height_textbox.text())
+                    new_list.setHeight(height)
 
-                    linelists_with_selections.append(new_list)
+                linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one.
         merged_linelist = LineList.merge(linelists_with_selections, units)
