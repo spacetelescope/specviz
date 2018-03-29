@@ -80,7 +80,7 @@ class LineLabelsPlotter(object):
             # is a list and not a dict.
             view_name = table_view.model().getName()
             for k in range(len(self._linelists)):
-                line_list = self._linelists[k]
+                line_list = pane.linelist
                 line_list_name = line_list.name
 
                 if line_list_name == view_name:

@@ -49,9 +49,8 @@ the list. Large numbers of lines trigger an alert, in the form of red text.
 
 The two large lists must be handled with care, because if one attempts to read
 or select the entire list, some functionality may be affected adversely and
-become very slow. More on that later. It is recommended that small wavelength
-ranges be used with those lists, in a way that no more than about 2,000 lines
-be read.
+become very slow. It is recommended that small wavelength ranges be used with
+those lists, in a way that no more than about 2,000 lines be read.
 
 
 Line list management
@@ -79,26 +78,28 @@ the currently selected lines. 'Height' is interpreted as the fractional height o
 plot window. 'Redshift' can be interpreted in either 'z' or 'km/s' units, according to
 the corresponding selector.
 
-List copies
------------
-The 'Create set' button builds a copy of the displayed list and adds it to a new tab
-after the 'Original' tab. Successive use of the 'Create set' button allows the creation
-of multiple copies of the Original list.
+List sub-sets
+-------------
+When at least one line is selected in the table, clicking the 'Create set' button causes
+a new list to be built and displayed in a new tab after the 'Original' tab. The 'Original'
+tab always contains the entire original list. Successive use of table row selection
+gestures and the 'Create set' button, allows the creation of multiple sub sets. Sub-sets
+can be created from the 'Original' list, as well as from any other sub-set.
 
-The list copy capability can be combined with the column sorting and multiple row
-selection capabilities, to create lists that can be sorted and selected according to
-specific groups of lines one wants to display with different parameters, such as color,
-height, or redshift.
+Each list sub-set carries its own group of display controls: color, height, and redshift.
+With these, one can customize the appearance of each sub-set on the plot.
+
+The list sub-set capability can be combined with the column sorting and multiple row
+selection capabilities to implement hierarchical sorting.
 
 Say, as an example, one wants to display all the Fe lines in blue color, and all the
-high intensity lines (if intensity is provided by the line list) in red. One can sort
-the original table by species, and select the subgroup of Fe lines. Next, one creates
-a new copy of the list, and sorts the copy by intensity. Then one selects all the high
-intensity lines in the sorted copy. In each set we select all lines, and pick up the
-desired color on each set's color selector.
+high intensity Fe lines (if intensity is provided by the line list) in red. One can sort
+the original table by species, select the subgroup of Fe lines, and create set #1. Next,
+on the #1 set, one sorts by intensity, selects all the high intensity lines, and creates
+set #2. One then de-selects everything in the Original set, and selects everything in sets
+#1 and #2. Finally, in set #1 one picks the blue color, and in set #2 the red color.
+Clicking 'Draw' will then plot everything.
 
-NOTE: a more flexible list copying mechanism that will allow hierarchical sorting is under
-works.
 
 Drawing the line labels
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -108,16 +109,34 @@ that are selected in all tabs at once. Before performing the actual plotting, it
 first erase all line labels left on screen by previous drawings. The 'Erase' button
 performs the same action, with no subsequent drawing.
 
-At the left lower corner of the window, a counter keeps the total of lines selected at
-any time. The counter becomes red as a warning that a large number of lines is selected.
-Plotting a large number of line labels slows down the plot and zoom functionalities.
-The user must be aware that the response may become slow when large numbers of lines
-are selected.
+At the left lower corner of the window, a counter keeps track of the total of lines
+selected at any time. The counter becomes red as a warning that a large number of lines
+is selected. Plotting a large number of line labels slows down the plot and zoom
+functionalities. The user must be aware that the response may become slow when large
+numbers of lines are selected.
 
-Experience has shown that the behavior depends to a certain amount on the particular
+The drawing operation includes a de-cluttering step. This achieves the dual goal of
+making the plot more readable, and faster to zoom/pan/rescale. The de-cluttering
+algorithm trades speed for cleverness, and a side effect of that is that, when plotting
+sets of lines at different heights on screen, some line labels may disappear even though
+they shouldn't. Zooming in will eventually make all line labels visible.
+
+Experience has shown that the perceived speed depends to a certain amount on the particular
 hardware and software platform the application is running on. Typically, a slow laptop
 can handle a couple of hundred lines with no problem. A faster, multi-core desktop can
 be pushed up to perhaps a thousand line labels before performance degrades significantly.
+
+
+Results
+^^^^^^^
+
+The 'Plotted' tab will always contain the lines currently being displayed on the plot.
+The contents of this tab can be output to a ECSV file via the Export button on the top
+menu bar of the line lists window.
+
+The file thus produced can be directly read by SpecViz via de File button (the yellow
+folder icon).
+
 
 
 
