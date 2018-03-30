@@ -348,6 +348,8 @@ class LineListsWindow(UiLinelistsWindow):
             if wave_range[0] and wave_range[1]:
                 self._build_view(line_list, 0, waverange=wave_range)
 
+            self.line_list_selector.setCurrentIndex(0)
+
     def _build_waverange_dialog(self, wave_range, line_list):
 
         dialog = QDialog(parent=self.centralWidget)
@@ -492,7 +494,6 @@ class LineListsWindow(UiLinelistsWindow):
             # connect signals
             table_view.selectionModel().selectionChanged.connect(self._countSelections)
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
-            self.tabWidget.tabCloseRequested.connect(pane.kill_panes)
 
             # now we add this "line set tabbed pane" to the main tabbed
             # pane, with name taken from the list model.
@@ -574,9 +575,6 @@ class LineListsWindow(UiLinelistsWindow):
     def show(self):
         self._main_window.show()
 
-    def hide(self):
-        self._main_window.hide()
-
     def close(self):
         self._main_window.close()
 
@@ -593,16 +591,17 @@ class LineListPane(QWidget):
         self._sort_proxy = sort_proxy
         self._caller = caller
 
+        self._build_GUI(linelist, table_view)
+
+    def _build_GUI(self, linelist, table_view):
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(panel_layout)
-
         # header with line list metadata.
         info = QTextBrowser()
         info.setMaximumHeight(100)
         info.setAutoFillBackground(True)
         info.setStyleSheet("background-color: rgb(230,230,230);")
-
         for comment in linelist.meta['comments']:
             info.append(comment)
 
@@ -619,9 +618,11 @@ class LineListPane(QWidget):
         self.create_set_button.setToolTip("Create new line set from selected lines.")
         self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         hlayout.addWidget(self.create_set_button, 1, 0)
+
         # the create_set button is enabled/disabled by logic elsewhere
         self.create_set_button.setEnabled(False)
         self.create_set_button.clicked.connect(lambda: self._createSet())
+
         # 'deselect all' button
         deselect_button = QPushButton(self)
         deselect_button.setObjectName("deselect_button")
@@ -629,7 +630,7 @@ class LineListPane(QWidget):
         deselect_button.setText(_translate("MainWindow", "Deselect"))
         deselect_button.setToolTip("Un-select everything on this set.")
         deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(deselect_button,1, 1)
+        hlayout.addWidget(deselect_button, 1, 1)
         deselect_button.clicked.connect(lambda: table_view.clearSelection())
 
         # color picker
@@ -672,7 +673,7 @@ class LineListPane(QWidget):
         self.combo_box_z_units.setObjectName("redshift_units")
         self.combo_box_z_units.setToolTip("Redshift units.")
         model = self.combo_box_z_units.model()
-        for uname in ['z','km/s']:
+        for uname in ['z', 'km/s']:
             item = QStandardItem(uname)
             model.appendRow(item)
         hlayout.addWidget(self.combo_box_z_units, 1, 5)
@@ -696,10 +697,6 @@ class LineListPane(QWidget):
         # signal handlers can result in more than one tab being closed
         # when just one closing request is posted.
         self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
-
-    def kill_panes(self, index):
-        # nothing for now
-        pass
 
     def _createSet(self):
         # build list with only the selected rows. These must be model

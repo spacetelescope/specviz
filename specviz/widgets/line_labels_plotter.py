@@ -34,12 +34,8 @@ class LineLabelsPlotter(object):
     def process_zoom_signal(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
-            data_range = self._plot_item.viewRange()
-            xmin = data_range[0][0]
-            xmax = data_range[0][1]
-
-            self._zoom_event_buffer.put((xmin, xmax))
-
+            # for now, any object can be used as a zoom message.
+            self._zoom_event_buffer.put(1)
 
 #--------  Slots.
 
@@ -61,6 +57,7 @@ class LineLabelsPlotter(object):
 
             self._destroy_zoom_markers_thread()
 
+    # Main method for drawing line labels on the plot surface.
     @dispatch.register_listener("on_plot_linelists")
     def _plot_linelists(self, table_views, panes, units, **kwargs):
 
@@ -71,53 +68,50 @@ class LineLabelsPlotter(object):
         # Build new line lists with only the selected rows.
         linelists_with_selections = []
 
+        # Clear the plot surface of any line labels left
+        # behind from previous draw action.
         self._remove_linelabels_from_plot()
 
+        # Loop over every tabbed pane in the line lists window.
         for table_view, pane in zip(table_views, panes):
-            # Find matching line list by its name. This could be made
-            # simpler by the use of a dict. That breaks code elsewhere
-            # though: it is assumed by that code that self.linelists
-            # is a list and not a dict.
-            view_name = table_view.model().getName()
             line_list = pane.linelist
-            line_list_name = line_list.name
 
-            if line_list_name == view_name:
-                # must map between view and underlying model
-                # because of row sorting.
-                selected_rows = table_view.selectionModel().selectedRows()
-                model_selected_rows = []
-                for sr in selected_rows:
-                    model_row = table_view.model().mapToSource(sr)
-                    model_selected_rows.append(model_row)
+            # must map between view and underlying model
+            # because of row sorting.
+            selected_rows = table_view.selectionModel().selectedRows()
+            model_selected_rows = []
+            for sr in selected_rows:
+                model_row = table_view.model().mapToSource(sr)
+                model_selected_rows.append(model_row)
 
-                new_list = line_list.extract_rows(model_selected_rows)
+            new_list = line_list.extract_rows(model_selected_rows)
 
-                # redshift correction for plotting the specific lines
-                # defined in this list. Defined by the text content
-                # and combo box setting.
-                if pane.redshift_textbox.hasAcceptableInput():
-                    redshift = float(pane.redshift_textbox.text())
-                    z_units = pane.combo_box_z_units.currentText()
-                    new_list.setRedshift(redshift, z_units)
+            # redshift correction for plotting the specific lines
+            # defined in this list. Defined by the text content
+            # and combo box setting.
+            if pane.redshift_textbox.hasAcceptableInput():
+                redshift = float(pane.redshift_textbox.text())
+                z_units = pane.combo_box_z_units.currentText()
+                new_list.setRedshift(redshift, z_units)
 
-                # color for plotting the specific lines defined in
-                # this list, is defined by the itemData property.
-                index = pane.combo_box_color.currentIndex()
-                color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
-                new_list.setColor(color)
+            # color for plotting the specific lines defined in
+            # this list, is defined by the itemData property.
+            index = pane.combo_box_color.currentIndex()
+            color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
+            new_list.setColor(color)
 
-                # height for plotting the specific lines defined in
-                # this list. Defined by the line edit text.
-                if pane.height_textbox.hasAcceptableInput():
-                    height = float(pane.height_textbox.text())
-                    new_list.setHeight(height)
+            # height for plotting the specific lines defined in
+            # this list. Defined by the line edit text.
+            if pane.height_textbox.hasAcceptableInput():
+                height = float(pane.height_textbox.text())
+                new_list.setHeight(height)
 
-                linelists_with_selections.append(new_list)
+            linelists_with_selections.append(new_list)
 
         # Merge all line lists into a single one.
         merged_linelist = LineList.merge(linelists_with_selections, units)
 
+        # Finally, plot labels.
         self._go_plot_markers(merged_linelist)
 
         # Zooming the markers is a tricky business. On top of saving some plot
@@ -145,12 +139,12 @@ class LineLabelsPlotter(object):
         # use in subsequent operations.
         self._merged_linelist = merged_linelist
 
+    # Turns time-consuming processing in the zoom thread on/off when
+    # mouse enter/leaves the plot. This enables other parts of the
+    # app to retain their full computational speed when the mouse
+    # pointer is outside the plot window.
     @dispatch.register_listener("mouse_enterexit")
     def _handle_mouse_events(self, event_type):
-        # Turns time-consuming processing in the zoom thread on/off when
-        # mouse enter/leaves the plot. This enables that other parts of
-        # the app retain their full computational speed when the mouse
-        # pointer is outside the plot window.
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
             is_processing = self._zoom_markers_thread.is_processing
 
@@ -225,6 +219,7 @@ class LineLabelsPlotter(object):
                     value = merged_linelist.columns[col_index][row_index]
                     tool_tip += col_name + '=' + str(value) + ', '
 
+            # For now, use proxy markers to speed up processing.
             marker = LineIDMarkerProxy(wave_column[row_index],
                                        height[row_index],
                                        text=id_column[row_index],
@@ -242,6 +237,7 @@ class LineLabelsPlotter(object):
         # place markers on screen
         for marker_proxy in new_markers:
             if marker_proxy:
+                # build eal, full-fledged marker from proxy.
                 real_marker = LineIDMarker(marker_proxy)
                 real_marker.setPos(real_marker.x0, real_marker.y0)
 
@@ -305,6 +301,7 @@ class LineLabelsPlotter(object):
             # Finally, add the de-cluttered new markers to the plot.
             for marker_proxy in decluttered_list:
                 if marker_proxy:
+                    # build real, full-fledged marker from proxy.
                     real_marker = LineIDMarker(marker_proxy)
                     real_marker.setPos(real_marker.x0, real_marker.y0)
 
@@ -336,12 +333,12 @@ class LineLabelsPlotter(object):
     # even when their X coordinate places them too close to each other.
     #
     # NOTE: However, using the sum of X and Y distances causes a lot more
-    # markers to be displayed when separate data sets are displayed at
-    # different heights on screen. In a way, it defeats the purpose of
-    # de-cluttering. And makes the code run slower: right now, the CPU
-    # bottleneck is in the np.array() constructors the build the X and Y
-    # arrays. Temporarily, we remove the Y array entirely. In case this
-    # needs more work, users will give us feedback eventually.
+    # markers to be displayed when separate data sets, both with large number
+    # of lines, are displayed at different heights on screen. In a way, it
+    # defeats the purpose of de-cluttering. And makes the code run slower:
+    # right now, the CPU bottleneck is in the np.array() constructors that
+    # build the X and Y arrays. Temporarily, we remove the Y array entirely.
+    # In case this needs more work, users will give us feedback eventually.
     #
     # With these optimizations in place, about 7% of the CPU time spent
     # in zooming is due to the _declutter method. Almost all of it is in
