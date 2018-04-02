@@ -24,6 +24,8 @@ user-supplied file.
 Currently, the following line lists are supplied within the package
 and available via the drop-down menu:
 
+.. |AA| unicode:: U+0212B
+
 ========================= ========= ========================
 Line list                 Number    Wavelength range
                           of lines
@@ -32,11 +34,11 @@ Atomic-Ionic                   42    0.97  -  3.95 :math:`{\mu}`
 CO                             66    1.56  -  2.51 :math:`{\mu}`
 H-He                          145    0.72  -  3.74 :math:`{\mu}`
 H2                            226    1.09  -  3.99 :math:`{\mu}`
-Common Stellar                 95    1,215 - 10,938 Angstrom
-Common Nubular                 51    3,430 -  7,130 Angstrom
-ILSS                       25,800    2,950 - 13,160 Angstrom
-Reader-Corliss             46,646      16  - 39,985 Angstrom
-SDSS                           48    1,034 -  8,660 Angstrom
+Common Stellar                 95    1,215 - 10,938 |AA|
+Common Nebular                 51    3,430 -  7,130 |AA|
+ILSS                       25,800    2,950 - 13,160 |AA|
+Reader-Corliss             46,646      16  - 39,985 |AA|
+SDSS                           48    1,034 -  8,660 |AA|
 ========================= ========= ========================
 
 Once a line list is selected, a dialog pop-up will ask what is the wavelength
