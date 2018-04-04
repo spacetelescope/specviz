@@ -361,7 +361,10 @@ class PlotSubWindow(UiPlotSubWindow):
         if layer is not None:
             plot = self.get_plot(layer)
 
-            plot.update()
+            if plot is not None:
+                plot.update()
+            else:
+                logging.error("No plot given layer '{}'.".format(layer.name))
 
     def closeEvent(self, event):
 
@@ -373,7 +376,7 @@ class PlotSubWindow(UiPlotSubWindow):
         super(PlotSubWindow, self).closeEvent(event)
 
     @dispatch.register_listener("on_add_layer")
-    def add_plot(self, layer, window=None, style=None):
+    def add_plot(self, layer=None, window=None, style=None, create_item=True):
         if window is not None and window != self:
             return
 
@@ -450,7 +453,8 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
-        dispatch.on_added_layer.emit(layer=layer)
+        if create_item:
+            dispatch.on_added_layer.emit(layer=layer)
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @dispatch.register_listener("on_removed_layer")

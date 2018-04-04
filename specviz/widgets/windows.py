@@ -56,12 +56,12 @@ class MainWindow(QMainWindow):
                 window.showMaximized()
 
     @dispatch.register_listener("on_add_to_window")
-    def add_to_window(self, data=None, window=None, style=None):
+    def add_to_window(self, data=None, layer=None, window=None, style=None):
         # Find any sub windows currently active
         window = window or next((x.widget() for x in self.mdi_area.subWindowList(
             order=self.mdi_area.ActivationHistoryOrder)), None)
 
-        self.add_sub_window(data=data, window=window, style=style)
+        self.add_sub_window(data=data, layer=layer, window=window, style=style)
 
     @dispatch.register_listener("on_add_roi")
     def add_roi(self, bounds=None, *args, **kwargs):

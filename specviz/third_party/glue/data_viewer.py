@@ -20,7 +20,7 @@ from ...analysis.filters import SmoothingOperation
 from ...analysis.operations import FunctionalOperation
 from ...app import App
 from ...core import dispatch
-from ...core.data import Spectrum1DRef
+from ...core.data import Spectrum1DRef, Spectrum1DRefLayer
 from ...interfaces.model_io.yaml_model_io import build_model_from_dict
 from ...widgets.plugin import Plugin
 from ...widgets.utils import ICON_PATH, UI_PATH
@@ -231,17 +231,36 @@ class SpecVizViewer(DataViewer):
                                   wcs=data.wcs,
                                   name=layer.label)
 
+        spec_layer = Spectrum1DRefLayer.from_parent(spec_data)
+
         # Store the relation between the component and the specviz data. If
         # the data exists, first remove the component from specviz and then
         # re-add it.
-        if layer in self._specviz_data_cache:
-            old_spec_data = self._specviz_data_cache[layer]
-            dispatch.on_remove_data.emit(old_spec_data)
+        old_spec_layer = self._specviz_data_cache.get(layer)
 
-        self._specviz_data_cache[layer] = spec_data
+        # if layer in self._specviz_data_cache:
+        #     old_spec_layer = self._specviz_data_cache[layer]
 
-        dispatch.on_add_to_window.emit(data=spec_data,
-                style={'color': layer.style.rgba[:3], 'line_width': 3})
+        #     # Check if there are any children whose parent is this data object
+        #     for spec in self.viewer._instanced_plugins.get('Layer List').all_layers:
+        #         print(spec._parent.name)
+        #         if spec._parent == old_spec_layer:
+        #             print("Changing parent of ", spec.name)
+        #             spec._parent = spec_layer
+
+        #     dispatch.on_remove_layer.emit(old_spec_layer)
+
+        self._specviz_data_cache[layer] = spec_layer
+
+        if old_spec_layer is None:
+            dispatch.on_add_to_window.emit(layer=spec_layer,
+                                           style={'color': layer.style.rgba[:3],
+                                                  'line_width': 3})
+        else:
+            dispatch.replace_layer.emit(old_layer=old_spec_layer,
+                                        new_layer=spec_layer,
+                                        style={'color': layer.style.rgba[:3],
+                                               'line_width': 3})
 
     def _update_combo_boxes(self, data):
         if data not in self._layer_widget:
@@ -453,8 +472,8 @@ def fitted_linemap(data, spectral_axis, model, mask):
     # The `data` argument should be the spectral axis of the cube given
     # for a particular pixel position in spatial space
     fitter = LevMarLSQFitter()
-    fit_model = fitter(model, 
-                       spectral_axis[mask], 
+    fit_model = fitter(model,
+                       spectral_axis[mask],
                        data[mask])
 
     new_data = fit_model(spectral_axis)
