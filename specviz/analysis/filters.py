@@ -6,7 +6,7 @@ import numpy as np
 from .operations import FunctionalOperation
 
 
-def smooth(spectral_axis, data, kernel, *args, **kwargs):
+def smooth(data, spectral_axis, kernel, *args, **kwargs):
     """
     Operates on a spectrum object to return a new, convolved, data set.
 
@@ -39,4 +39,4 @@ def smooth(spectral_axis, data, kernel, *args, **kwargs):
 
 class SmoothingOperation(FunctionalOperation):
     def __init__(self, *args, **kwargs):
-        super(SmoothingOperation, self).__init__(smooth, args, kwargs)
+        super(SmoothingOperation, self).__init__(smooth, args=args, kwargs=kwargs)
