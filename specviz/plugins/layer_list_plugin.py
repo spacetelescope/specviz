@@ -225,7 +225,7 @@ class LayerListPlugin(Plugin):
 
                 if sec_child.data(0, Qt.UserRole) == layer:
                     return sec_child
-        
+
         # Try again but the layer's parent object.
         # TODO this should not be needed.
         for i in range(root.childCount()):
@@ -239,6 +239,18 @@ class LayerListPlugin(Plugin):
 
                 if sec_child.data(0, Qt.UserRole)._parent == layer:
                     return sec_child
+
+    @dispatch.register_listener("replace_layer")
+    def on_replace_layer(self, old_layer=None, new_layer=None, style=None):
+        layer_item = self.get_layer_item(old_layer)
+
+        if layer_item is not None:
+            layer_item.setData(0, Qt.UserRole, new_layer)
+
+            self.active_window.remove_plot(old_layer)
+            self.active_window.add_plot(new_layer, style=style, create_item=False)
+
+            dispatch.on_selected_layer.emit(layer_item=layer_item)
 
     @dispatch.register_listener("on_remove_data")
     def remove_layer_items_with_data(self, data=None):

@@ -88,7 +88,7 @@ class UiPlotSubWindow(QMainWindow):
         # Cursor position
         self.line_edit_cursor_pos = QLabel()
         # self.line_edit_cursor_pos.setReadOnly(True)
-        self.line_edit_cursor_pos.setText("Pos: 0, 0")
+        self.line_edit_cursor_pos.setText("Cursor: 0, 0")
 
         # Line labels
         self._linelist_window = None
@@ -118,7 +118,7 @@ class PlotSubWindow(UiPlotSubWindow):
         self._dynamic_axis = None
         self._plot_widget = None
         self._plot_item = None
-        self._plots_units = None
+        self._plot_units = [None, None, None]
         self._rois = []
         self._measure_rois = []
         self._centroid_roi = None
@@ -198,11 +198,10 @@ class PlotSubWindow(UiPlotSubWindow):
             index = int(mouse_point.x())
 
             if index >= 0 and index < vb.viewRange()[0][1]:
-                self.line_edit_cursor_pos.setText("Pos: {0:4.4g}, "
-                                                  "{1:4.4g}".format(
-                    mouse_point.x(), mouse_point.y())
-                    # flux[index], disp[index])
-                )
+                self.line_edit_cursor_pos.setText(
+                    "Cursor: {:4.4g} [{}], {:4.4g} [{}]".format(
+                    mouse_point.x(), self._plot_units[0],
+                    mouse_point.y(), self._plot_units[1]))
 
     def _reset_view(self):
         view_box = self._plot_item.getViewBox()
@@ -311,16 +310,24 @@ class PlotSubWindow(UiPlotSubWindow):
         for cntr in self._plots:
             cntr.change_units(x, y, z)
 
-        self.set_labels(x_label=x, y_label=y)
-        self._plot_item.enableAutoRange()
-        self._plot_units = [x, y, z]
+        if len(self._plots) > 0:
+            cur_disp_line_pos = Quantity(
+                self._disp_line.value(),
+                self._plot_units[0] or self._plots[0].layer.dispersion_unit)
 
-    def set_labels(self, x_label='', y_label=''):
+            self._plot_units = [self._plots[0].layer.dispersion_unit,
+                                self._plots[0].layer.unit, z]
+            self.set_labels(*self._plot_units)
+            self._plot_item.enableAutoRange()
+
+            # Update vertical line indicated position
+            self._disp_line.setValue(cur_disp_line_pos.to(
+                self._plots[0].layer.dispersion_unit).value)
+
+    def set_labels(self, x=None, y=None, z=None):
         self._plot_item.setLabels(
-            left="Flux [{}]".format(
-                y_label or str(self._plots[0].layer.unit)),
-            bottom="Wavelength [{}]".format(
-                x_label or str(self._plots[0].layer.dispersion_unit)))
+            left="Flux [{}]".format(y),
+            bottom="Wavelength [{}]".format(x))
 
     def set_visibility(self, layer, show_data, show_uncert, show_masked, inactive=None):
         plot = self.get_plot(layer)
@@ -361,7 +368,10 @@ class PlotSubWindow(UiPlotSubWindow):
         if layer is not None:
             plot = self.get_plot(layer)
 
-            plot.update()
+            if plot is not None:
+                plot.update()
+            else:
+                logging.error("No plot given layer '{}'.".format(layer.name))
 
     def closeEvent(self, event):
 
@@ -373,7 +383,7 @@ class PlotSubWindow(UiPlotSubWindow):
         super(PlotSubWindow, self).closeEvent(event)
 
     @dispatch.register_listener("on_add_layer")
-    def add_plot(self, layer, window=None, style=None):
+    def add_plot(self, layer=None, window=None, style=None, create_item=True):
         if window is not None and window != self:
             return
 
@@ -448,9 +458,13 @@ class PlotSubWindow(UiPlotSubWindow):
 
         self.set_active_plot(new_plot.layer)
 
+        # Update plot units
+        self._plot_units = [layer.dispersion_unit, layer.unit, None]
+
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
-        dispatch.on_added_layer.emit(layer=layer)
+        if create_item:
+            dispatch.on_added_layer.emit(layer=layer)
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @dispatch.register_listener("on_removed_layer")
