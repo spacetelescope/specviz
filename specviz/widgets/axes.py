@@ -98,9 +98,12 @@ class DynamicAxisItem(pg.AxisItem):
             return ["{:0.2f}".format(v / (1 + self.redshift) * scale)
                     for v in values]
         elif self.mode == 2:
-            self.setLabel("Pixel", None, None)
-            inds = np.searchsorted(dispersion, values)
+            self.enableAutoSIPrefix(False)
+            self.setLabel("Pixel", units=None)
 
-            return list(inds)
+            inds = np.searchsorted(dispersion, values)
+            values = list(inds)
+
+            return values
 
         return super(DynamicAxisItem, self).tickStrings(values, scale, spacing)
