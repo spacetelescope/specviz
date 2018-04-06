@@ -205,9 +205,9 @@ class SpecVizViewer(DataViewer):
                 mask = None
                 wcs = layer.coords.wcs
 
-            self._spectrum_from_component(layer, component, wcs, mask=mask)
+            self._spectrum_from_component(layer, component, wcs, mask=mask, cid=cid)
 
-    def _spectrum_from_component(self, layer, component, wcs, mask=None):
+    def _spectrum_from_component(self, layer, component, wcs, mask=None, cid=None):
         data = SpectralCube(component.data, wcs)
 
         if mask is not None:
@@ -215,7 +215,7 @@ class SpecVizViewer(DataViewer):
 
         # Update the associated data attribute in the plugin
         self._spec_ops.spectral_data = data
-        self._spec_ops.component_id = layer.id[self._options_widget.file_att]
+        self._spec_ops.component_id = cid
 
         if self._data_operation.currentIndex() == 1:
             spec_data = data.mean((1, 2))
@@ -280,7 +280,7 @@ class SpecVizViewer(DataViewer):
         cid = layer.id[self._options_widget.file_att]
         component = layer.get_component(cid)
 
-        self._spectrum_from_component(layer, component, layer.coords.wcs)
+        self._spectrum_from_component(layer, component, layer.coords.wcs, cid=cid)
 
         return True
 
@@ -312,7 +312,7 @@ class SpecVizViewer(DataViewer):
         component = subset.data.get_component(cid)
 
         self._spectrum_from_component(subset, component,
-                                      subset.data.coords.wcs, mask=mask)
+                                      subset.data.coords.wcs, mask=mask, cid=cid)
 
     def _remove_subset(self, message):
         if message.subset in self._layer_widget:
