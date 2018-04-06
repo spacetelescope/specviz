@@ -153,9 +153,9 @@ class SpectralOperationHandler(QDialog):
         if comp_count > 0:
             component_name = "{} {}".format(component_name, comp_count)
 
-        if len(data.shape) < len(self._data.shape):
-            self._layout.add_overlay(data, component_name)
-        else:
-            self._data.add_component(data, component_name)
+        if len(data.shape) == len(self._data.shape):
+            self._layout.add_overlay(data[0, :, :], component_name, display_now=False)
+
+        self._data.add_component(data, component_name)
 
         super(SpectralOperationHandler, self).accept()

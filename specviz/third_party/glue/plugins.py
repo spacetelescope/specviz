@@ -84,12 +84,12 @@ class SpectralOperationPlugin(Plugin):
             callback=self.apply_to_cube)
 
         self.add_tool_bar_actions(
-            name="Simple Linemap",
-            description='Apply latest function to cube',
+            name="Collapse Cube",
+            description='Collapse the cube over wavelength region',
             icon_path=os.path.join(ICON_PATH, "Export-48.png"),
             category='CubeViz Operations',
             enabled=True,
-            callback=self.create_simple_linemap)
+            callback=lambda: self.layout._open_dialog('Collapse Cube', None))
 
         self.add_tool_bar_actions(
             name="Fitted Linemap",
@@ -98,14 +98,6 @@ class SpectralOperationPlugin(Plugin):
             category='CubeViz Operations',
             enabled=True,
             callback=self.create_fitted_linemap)
-
-        # self.add_tool_bar_actions(
-        #     name="Cube Slice",
-        #     description='Apply latest function to cube',
-        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-        #     category='CubeViz Operations',
-        #     enabled=True,
-        #     callback=self.create_sliced_cube)
 
     @dispatch.register_listener("on_update_model")
     def on_model_updated(self, layer):
@@ -123,12 +115,12 @@ class SpectralOperationPlugin(Plugin):
     def create_simple_linemap(self):
 
         def threadable_function(data, tracker):
-            out = np.empty(shape=data.shape[1:])
+            out = np.empty(shape=data.shape)
             mask = self.active_window.get_roi_mask(layer=self.current_layer)
 
             for x in range(data.shape[1]):
                 for y in range(data.shape[2]):
-                    out[x, y] = np.sum(data[:, x, y][mask])
+                    out[:, x, y] = np.sum(data[:, x, y][mask])
 
                     tracker()
 
@@ -155,7 +147,7 @@ class SpectralOperationPlugin(Plugin):
         def threadable_function(data, tracker):
             from astropy.modeling.fitting import LevMarLSQFitter
 
-            out = np.empty(shape=data.shape[1:])
+            out = np.empty(shape=data.shape)
             mask = self.active_window.get_roi_mask(layer=self.current_layer)
             spectral_axis = data.spectral_axis
             model = self._current_model
@@ -171,7 +163,7 @@ class SpectralOperationPlugin(Plugin):
 
                     new_data = fit_model(spectral_axis[mask])
 
-                    out[x, y] = np.sum(new_data)
+                    out[:, x, y] = np.sum(new_data)
 
                     tracker()
 
@@ -200,16 +192,3 @@ class SpectralOperationPlugin(Plugin):
                                "the data cube."})
 
         spectral_operation.exec_()
-
-    def create_sliced_cube(self):
-        cube_slice_operation = CubeSliceOperation(
-            mask=self.active_window.get_roi_mask(layer=self.current_layer),
-            axis='cube')
-
-        dispatch.apply_operations.emit(
-            stack=[cube_slice_operation])
-
-
-def cube_slice(data, spectral_axis, mask=None):
-    spectral_axis = data.spectral_axis
-    return data.spectral_slab(spectral_axis[mask][0], spectral_axis[mask][-1])
