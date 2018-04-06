@@ -7,11 +7,13 @@ import logging
 
 from ..core.data import Spectrum1DRef, Spectrum1DRefModelLayer
 from ..interfaces.factories import FitterFactory
+from ..core.linelist import LineList
 
 import astropy.io.registry as io_registry
 
 __all__ = [
     'FileLoadThread',
+    'LineListLoadThread',
     'FitModelThread',
 ]
 
@@ -135,6 +137,101 @@ class FileLoadThread(QThread):
             except Exception as e:
                 logging.error("Incompatible loader for selected data: {"
                               "} because {}".format(file_filter, e))
+
+
+class LineListLoadThread(FileLoadThread):
+    """
+    Asynchronously read in a line list.
+
+    Extends functionality in the main file load thread
+    to handle the specifics of a line list.
+
+    Parameters
+    ----------
+    parent: QtWidget
+        The parent widget or None
+
+    Call
+    ----
+    file_name: str
+        Name of the file to read.
+
+    file_filter: str
+        Type of file to read.
+
+    Attributes
+    ----------
+    file_name: str
+        Name of the file to read.
+
+    file_filter: str
+        Type of file to read. If `Auto`, try all known formats.
+
+    Signals
+    -------
+    status(message, timeout)
+        State of the thread
+            message: The status message
+            timeout: Time (msec) to display message
+
+    result(LineList)
+        The line list's data
+    """
+    status = Signal(str, int)
+    result = Signal(LineList)
+
+    def __init__(self, linelist, metadata, parent=None):
+        super(LineListLoadThread, self).__init__(parent)
+        self.file_name = linelist
+        self.metadata = metadata
+
+    def read_file(self, file_name, file_filter):
+        """
+        Directly reads a line list from a file.
+
+        Parameters
+        ----------
+        file_name: str
+            Name of the file to read.
+
+        file_filter: str
+            Type of file to read. If `Auto`, try all known formats.
+
+        Returns
+        -------
+        data: LineList
+            The file's data or None if no known formats are found.
+
+        Notes
+        -----
+        """
+        file_filter = 'Auto (*)' if file_filter is None else file_filter
+
+        # logging.info("Attempting to read file {} with {}.".format(file_name, file_filter))
+        #
+        # if not (file_name and file_filter):
+        #     return
+        #
+        # file_name = str(file_name)
+        # file_ext = os.path.splitext(file_name)[-1]
+        # all_formats = io_registry.get_formats(Spectrum1DRef)['Format']
+        #
+        # if file_filter == 'Auto (*)':
+        #     #-- sort loaders by priorty given in the definition
+        #     all_priority = [getattr(io_registry.get_reader(fmt, Spectrum1DRef), 'priority', 0) for fmt in all_formats]
+        #     all_registry = sorted(zip(all_formats, all_priority), key=lambda item: item[1], reverse=True)
+        #     all_formats = [item[0] for item in all_registry]
+        # else:
+        #     all_formats = [x for x in all_formats if file_filter in x]
+        #
+        # for format in all_formats:
+        #     logging.info("Trying to load with {}".format(format))
+        #     try:
+        #         data = Spectrum1DRef.read(file_name, format=format)
+        #         return data
+        #     except Exception as e:
+        #         logging.error("Incompatible loader for selected data: {"
+        #                       "} because {}".format(file_filter, e))
 
 
 class FitModelThread(QThread):

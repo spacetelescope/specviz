@@ -13,7 +13,8 @@ import astropy.io.registry as io_registry
 
 #-- local
 from ..core.data import Spectrum1DRef
-from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister
+from ..core.linelist import LineList
+from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister, LineListYamlRegister
 
 from ..io.loaders import *
 
@@ -23,21 +24,31 @@ def load_yaml_reader(f_path):
         custom_loader = yaml.load(f)
         custom_loader.set_filter()
 
-    # Figure out which of the two generic loaders to associate
-    # this yaml file with
+    # Figure out which of the loaders to associate this yaml file with
+    #
+    # TODO: note that this code seems to no longer be of any use. We added
+    # handling for the line list loader so the execution can go past this
+    # point. But nothing happens subsequently with those loaders.
     if any(ext in custom_loader.extension for ext in ['fits']):
         loader = FitsYamlRegister(custom_loader)
+    elif any(ext in custom_loader.extension for ext in ['list']):
+        loader = LineListYamlRegister(custom_loader)
     elif any(ext in custom_loader.extension
              for ext in ['txt', 'data']):
         loader = AsciiYamlRegister(custom_loader)
 
     try:
-        io_registry.register_reader(custom_loader.filter,
-                                    Spectrum1DRef,
-                                    loader.reader)
-        io_registry.register_identifier(custom_loader.filter,
+        if 'list' in custom_loader.extension:
+            io_registry.register_reader(custom_loader.filter,
+                                        LineList,
+                                        loader.reader)
+        else:
+            io_registry.register_reader(custom_loader.filter,
                                         Spectrum1DRef,
-                                        loader.identify)
+                                        loader.reader)
+            io_registry.register_identifier(custom_loader.filter,
+                                            Spectrum1DRef,
+                                            loader.identify)
     except io_registry.IORegistryError as e:
         logging.error(e)
 
