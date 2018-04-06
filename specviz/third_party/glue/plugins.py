@@ -84,12 +84,12 @@ class SpectralOperationPlugin(Plugin):
             callback=self.apply_to_cube)
 
         self.add_tool_bar_actions(
-            name="Simple Linemap",
-            description='Apply latest function to cube',
+            name="Collapse Cube",
+            description='Collapse the cube over wavelength region',
             icon_path=os.path.join(ICON_PATH, "Export-48.png"),
             category='CubeViz Operations',
             enabled=True,
-            callback=self.create_simple_linemap)
+            callback=lambda: self.layout._open_dialog('Collapse Cube', None))
 
         self.add_tool_bar_actions(
             name="Fitted Linemap",
