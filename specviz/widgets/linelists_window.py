@@ -5,11 +5,12 @@ import os
 
 from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
-                            QSizePolicy, QToolBar,
-                            QAction, QTableView, QMainWindow,
-                            QAbstractItemView, QLayout, QTextBrowser, QComboBox)
-from qtpy.QtGui import QIcon, QColor, QStandardItem, QLineEdit, QTabBar, \
-                       QDoubleValidator, QHeaderView, QFont, QDialog
+                            QSizePolicy, QToolBar, QLineEdit, QTabBar,
+                            QAction, QTableView, QMainWindow, QHeaderView,
+                            QAbstractItemView, QLayout, QTextBrowser, QComboBox,
+                            QDialog)
+from qtpy.QtGui import QIcon, QColor, QStandardItem, \
+                       QDoubleValidator, QFont
 from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat

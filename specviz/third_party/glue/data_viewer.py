@@ -243,7 +243,8 @@ class SpecVizViewer(DataViewer):
         if old_spec_layer is None:
             dispatch.on_add_to_window.emit(layer=spec_layer,
                                            style={'color': layer.style.rgba[:3],
-                                                  'line_width': 3})
+                                                  'line_width': 3},
+                                            vertical_line=True)
         else:
             dispatch.replace_layer.emit(old_layer=old_spec_layer,
                                         new_layer=spec_layer,
