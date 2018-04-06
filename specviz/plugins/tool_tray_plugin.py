@@ -27,28 +27,28 @@ class ToolTrayPlugin(Plugin):
 
         # ---
         # Selections setup
-        self.add_tool_bar_actions(
-            name="Box ROI",
-            description='Add box ROI',
-            icon_path=os.path.join(ICON_PATH, "Rectangle Stroked-50.png"),
-            category='Selections',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Box ROI",
+        #     description='Add box ROI',
+        #     icon_path=os.path.join(ICON_PATH, "Rectangle Stroked-50.png"),
+        #     category='Selections',
+        #     enabled=False)
 
         # ---
         # Setup interactions buttons
-        self.add_tool_bar_actions(
-            name="Measure",
-            description='Measure tool',
-            icon_path=os.path.join(ICON_PATH, "Ruler-48.png"),
-            category='Interactions',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Measure",
+        #     description='Measure tool',
+        #     icon_path=os.path.join(ICON_PATH, "Ruler-48.png"),
+        #     category='Interactions',
+        #     enabled=False)
 
-        self.add_tool_bar_actions(
-            name="Average",
-            description='Average tool',
-            icon_path=os.path.join(ICON_PATH, "Average Value-48.png"),
-            category='Interactions',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Average",
+        #     description='Average tool',
+        #     icon_path=os.path.join(ICON_PATH, "Average Value-48.png"),
+        #     category='Interactions',
+        #     enabled=False)
 
         self.add_tool_bar_actions(
             name="Slice",
@@ -67,12 +67,12 @@ class ToolTrayPlugin(Plugin):
 
         # ---
         # Setup transformations buttons
-        self.add_tool_bar_actions(
-            name="Log Scale",
-            description='Log scale plot',
-            icon_path=os.path.join(ICON_PATH, "Combo Chart-48.png"),
-            category='Transformations',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Log Scale",
+        #     description='Log scale plot',
+        #     icon_path=os.path.join(ICON_PATH, "Combo Chart-48.png"),
+        #     category='Transformations',
+        #     enabled=False)
 
         # ---
         # Setup plot options

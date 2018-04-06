@@ -12,11 +12,10 @@ from ..widgets.wizard import open_wizard
 from qtpy.uic import loadUi
 
 from ..core.events import dispatch, dispatch
-from ..widgets.utils import ICON_PATH
+from ..widgets.utils import ICON_PATH, UI_PATH
 from ..core.data import Spectrum1DRef
 from ..core.threads import FileLoadThread
 from ..widgets.plugin import Plugin
-from ..widgets.utils import UI_PATH
 
 
 class DataListPlugin(Plugin):

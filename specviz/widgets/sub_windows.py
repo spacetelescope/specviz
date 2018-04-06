@@ -112,7 +112,7 @@ class PlotSubWindow(UiPlotSubWindow):
     """
     Sub window object responsible for displaying and interacting with plots.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, vertical_line=False, *args, **kwargs):
         super(PlotSubWindow, self).__init__(*args, **kwargs)
         self._plots = []
         self._dynamic_axis = None
@@ -153,7 +153,9 @@ class PlotSubWindow(UiPlotSubWindow):
         # Create a single vertical line object that can be used to indicate
         # wavelength position
         self._disp_line = pg.InfiniteLine(movable=True, pen={'color': 'g', 'width': 3})
-        self._plot_item.addItem(self._disp_line)
+
+        if vertical_line:
+            self._plot_item.addItem(self._disp_line)
 
         # When the user moves the dispersion vertical line, send an event
         self._disp_line.sigPositionChanged.connect(lambda:
@@ -317,17 +319,22 @@ class PlotSubWindow(UiPlotSubWindow):
 
             self._plot_units = [self._plots[0].layer.dispersion_unit,
                                 self._plots[0].layer.unit, z]
-            self.set_labels(*self._plot_units)
-            self._plot_item.enableAutoRange()
 
             # Update vertical line indicated position
             self._disp_line.setValue(cur_disp_line_pos.to(
                 self._plots[0].layer.dispersion_unit).value)
 
+        self.set_labels(*self._plot_units)
+        self._plot_item.enableAutoRange()
+        self._plot_item.getAxis('bottom').enableAutoSIPrefix(False)
+        self._plot_item.getAxis('bottom').enableAutoSIPrefix(True)
+
     def set_labels(self, x=None, y=None, z=None):
         self._plot_item.setLabels(
             left="Flux [{}]".format(y),
             bottom="Wavelength [{}]".format(x))
+
+        self.update()
 
     def set_visibility(self, layer, show_data, show_uncert, show_masked, inactive=None):
         plot = self.get_plot(layer)

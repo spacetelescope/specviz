@@ -1,31 +1,22 @@
-import os
 from collections import OrderedDict
 
 import numpy as np
-from astropy.modeling.fitting import LevMarLSQFitter
 from glue.core import message as msg
 from glue.core import Data, Subset
 from glue.core.exceptions import IncompatibleAttribute
-from glue.core.subset_group import GroupedSubset
-from glue.utils import nonpartial
 from glue.viewers.common.qt.data_viewer import DataViewer
-from glue.viewers.common.qt.toolbar import BasicToolbar
 from qtpy.QtCore import QSize, Qt
-from qtpy.QtWidgets import (QComboBox, QDialog, QFormLayout, QTabBar,
-                            QTabWidget, QToolButton, QVBoxLayout, QWidget)
-from qtpy.uic import loadUi
+from qtpy.QtWidgets import (QComboBox, QFormLayout, QTabBar, QTabWidget,
+                            QToolButton, QVBoxLayout, QWidget)
 from spectral_cube import SpectralCube
+import logging
 
-from ...analysis.filters import SmoothingOperation
-from ...analysis.operations import FunctionalOperation
 from ...app import App
 from ...core import dispatch
 from ...core.data import Spectrum1DRef, Spectrum1DRefLayer
-from ...interfaces.model_io.yaml_model_io import build_model_from_dict
-from ...widgets.plugin import Plugin
-from ...widgets.utils import ICON_PATH, UI_PATH
 from .layer_widget import LayerWidget
 from .viewer_options import OptionsWidget
+from .plugins import SpectralOperationPlugin
 
 __all__ = ['SpecVizViewer']
 
@@ -36,9 +27,8 @@ dispatch.register_event("toggle_component_visibility", ["data", "state"])
 class SpecVizViewer(DataViewer):
     LABEL = "SpecViz Viewer"
 
-    def __init__(self, session, parent=None):
+    def __init__(self, session, layout=None, parent=None):
         super(SpecVizViewer, self).__init__(session, parent=parent)
-
         # Connect the dataview to the specviz messaging system
         dispatch.setup(self)
 
@@ -79,6 +69,12 @@ class SpecVizViewer(DataViewer):
                                   'Data List': True},
                           menubar=False)
 
+        # Pass the current session to the spectral operations plugin so it can
+        # be aware of glue data components
+        self._spec_ops = self.viewer._instanced_plugins.get('CubeViz Operations')
+        self._spec_ops.session = session
+        self._spec_ops.layout = layout
+
         # Remove Glue's viewer status bar
         self.statusBar().hide()
 
@@ -91,7 +87,7 @@ class SpecVizViewer(DataViewer):
                 if isinstance(child, QToolButton):
                     child.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
-        # Set the view mode of mdi area to tabbed so that user aren't confused
+        # Set the view mode of mdi area to tabbed so that users aren't confused
         mdi_area = self.viewer.main_window.mdi_area
         mdi_area.setViewMode(mdi_area.TabbedView)
         mdi_area.setDocumentMode(True)
@@ -99,7 +95,7 @@ class SpecVizViewer(DataViewer):
         mdi_area.setTabsClosable(True)
 
         # Hide the tab bar
-        # mdi_area.findChild(QTabBar).hide()
+        mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
         self._layer_list = layer_list.widget() if layer_list is not None else None
@@ -122,9 +118,9 @@ class SpecVizViewer(DataViewer):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(data_op_form)
+        data_op_form.addRow("Collapse Operation", self._data_operation)
         # layout.addWidget(self._layer_widget)
         layout.addWidget(self._options_widget)
-        data_op_form.addRow("Collapse Operation", self._data_operation)
         layout.addWidget(self._layer_list)
 
         self._unified_options.setLayout(layout)
@@ -217,6 +213,10 @@ class SpecVizViewer(DataViewer):
         if mask is not None:
             data = data.with_mask(mask)
 
+        # Update the associated data attribute in the plugin
+        self._spec_ops.spectral_data = data
+        self._spec_ops.component_id = layer.id[self._options_widget.file_att]
+
         if self._data_operation.currentIndex() == 1:
             spec_data = data.mean((1, 2))
         elif self._data_operation.currentIndex() == 2:
@@ -237,18 +237,6 @@ class SpecVizViewer(DataViewer):
         # the data exists, first remove the component from specviz and then
         # re-add it.
         old_spec_layer = self._specviz_data_cache.get(layer)
-
-        # if layer in self._specviz_data_cache:
-        #     old_spec_layer = self._specviz_data_cache[layer]
-
-        #     # Check if there are any children whose parent is this data object
-        #     for spec in self.viewer._instanced_plugins.get('Layer List').all_layers:
-        #         print(spec._parent.name)
-        #         if spec._parent == old_spec_layer:
-        #             print("Changing parent of ", spec.name)
-        #             spec._parent = spec_layer
-
-        #     dispatch.on_remove_layer.emit(old_spec_layer)
 
         self._specviz_data_cache[layer] = spec_layer
 
@@ -284,6 +272,9 @@ class SpecVizViewer(DataViewer):
         if not self._update_combo_boxes(data):
             return
 
+        # Update the spectral operations plugin data attribute
+        self._spec_ops.data = data
+
         layer = data #self._layer_widget.layer
         cid = layer.id[self._options_widget.file_att]
         component = layer.get_component(cid)
@@ -308,7 +299,6 @@ class SpecVizViewer(DataViewer):
         self.add_subset(message.subset)
 
     def _update_subset(self, message):
-
         if not self._update_combo_boxes(message.subset):
             return
 
@@ -370,136 +360,3 @@ class SpecVizViewer(DataViewer):
         spec_data = self._specviz_data_cache.get(data)
 
         dispatch.toggle_layer_visibility.emit(layer=spec_data, state=state)
-
-
-class SpectralOperationPlugin(Plugin):
-    name = "CubeViz Operations"
-    location = "hidden"
-    priority = 0
-
-    def __init__(self, *args, **kwargs):
-        super(SpectralOperationPlugin, self).__init__(*args, **kwargs)
-        self._current_model = None
-
-    def setup_ui(self):
-        self.add_tool_bar_actions(
-            name="Apply to Cube",
-            description='Apply latest function to cube',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='CubeViz Operations',
-            enabled=True,
-            callback=self.apply_to_cube)
-
-        self.add_tool_bar_actions(
-            name="Simple Linemap",
-            description='Apply latest function to cube',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='CubeViz Operations',
-            enabled=True,
-            callback=self.create_simple_linemap)
-
-        self.add_tool_bar_actions(
-            name="Fitted Linemap",
-            description='Apply latest function to cube',
-            icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-            category='CubeViz Operations',
-            enabled=True,
-            callback=self.create_fitted_linemap)
-
-        # self.add_tool_bar_actions(
-        #     name="Cube Slice",
-        #     description='Apply latest function to cube',
-        #     icon_path=os.path.join(ICON_PATH, "Export-48.png"),
-        #     category='CubeViz Operations',
-        #     enabled=True,
-        #     callback=self.create_sliced_cube)
-
-    @dispatch.register_listener("on_update_model")
-    def on_model_updated(self, layer):
-        self._current_model = layer.model
-
-    def setup_connections(self):
-        pass
-
-    def apply_to_cube(self):
-        # Send the operation stack, ensure reverse order so newer operations
-        # are first
-        dispatch.apply_operations.emit(
-            stack=SmoothingOperation.operations()[::-1])
-
-    def create_simple_linemap(self):
-        linemap_operation = SimpleLinemapOperation(
-            keep_shape=True, # Change to False to make this an overlay
-            mask=self.active_window.get_roi_mask(layer=self.current_layer))
-
-        dispatch.apply_operations.emit(
-            stack=[linemap_operation])
-
-    def create_fitted_linemap(self):
-        if self._current_model is None:
-            dialog = QDialog()
-            loadUi(os.path.join(UI_PATH, "no_model_error_dialog.ui"), dialog)
-            dialog.exec_()
-            return
-
-        # Ask user if they'd like to perform the fit interactively.
-        # dialog = QDialog()
-        # loadUi(os.path.join(UI_PATH, "fitted_linemap_dialog.ui"), dialog)
-
-        # if dialog.exec_():
-        #     if dialog.inspect_each_spaxel_check_box.isChecked():
-        #         pass
-        #     else:
-        linemap_operation = FittedLinemapOperation(
-            keep_shape=True, # Change to False to make this an overlay
-            model=self._current_model,
-            mask=self.active_window.get_roi_mask(layer=self.current_layer))
-
-        dispatch.apply_operations.emit(
-            stack=[linemap_operation])
-
-    def create_sliced_cube(self):
-        cube_slice_operation = CubeSliceOperation(
-            mask=self.active_window.get_roi_mask(layer=self.current_layer),
-            axis='cube')
-
-        dispatch.apply_operations.emit(
-            stack=[cube_slice_operation])
-
-
-
-def fitted_linemap(data, spectral_axis, model, mask):
-    # The `data` argument should be the spectral axis of the cube given
-    # for a particular pixel position in spatial space
-    fitter = LevMarLSQFitter()
-    fit_model = fitter(model,
-                       spectral_axis[mask],
-                       data[mask])
-
-    new_data = fit_model(spectral_axis)
-
-    return np.sum(new_data[mask])
-
-
-def simple_linemap(data, spectral_axis, mask=None):
-    return np.sum(data[mask])
-
-
-def cube_slice(data, spectral_axis, mask=None):
-    spectral_axis = data.spectral_axis
-    return data.spectral_slab(spectral_axis[mask][0], spectral_axis[mask][-1])
-
-
-class FittedLinemapOperation(FunctionalOperation):
-    def __init__(self, *args, **kwargs):
-        super(FittedLinemapOperation, self).__init__(fitted_linemap, *args, **kwargs)
-
-
-class SimpleLinemapOperation(FunctionalOperation):
-    def __init__(self, *args, **kwargs):
-        super(SimpleLinemapOperation, self).__init__(simple_linemap, *args, **kwargs)
-
-
-class CubeSliceOperation(FunctionalOperation):
-    def __init__(self, *args, **kwargs):
-        super(CubeSliceOperation, self).__init__(cube_slice, *args, **kwargs)
