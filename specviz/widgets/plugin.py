@@ -105,7 +105,7 @@ class Plugin(QDockWidget):
 
         if menu is not None:
             tool_button = QToolButton()
-            tool_button.setPopupMode(QToolButton.MenuButtonPopup)
+            tool_button.setPopupMode(QToolButton.InstantPopup)
 
             menu_widget = self._dict_to_menu(menu)
 
