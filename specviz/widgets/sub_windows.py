@@ -16,15 +16,16 @@ from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
 from qtpy.QtCore import QEvent, Qt
 
 from ..core.events import dispatch
-from ..core.linelist import ingest, LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from ..core.plots import LinePlot
-from ..core.annotation import LineIDMarker
 from .axes import DynamicAxisItem
 from .region_items import LinearRegionItem
 from .dialogs import ResampleDialog
 from ..analysis.utils import resample
 
 from .linelists_window import LineListsWindow
+from ..core.linelist import ingest
+from .line_labels_plotter import LineLabelsPlotter
 
 
 pg.setConfigOption('background', 'w')
@@ -102,10 +103,25 @@ class UiPlotSubWindow(QMainWindow):
 
         self.vertical_layout.addLayout(self.horizontal_layout)
 
-        self.main_widget = QWidget(self)
+        self.main_widget = EnterExitQWidget(self)
         self.main_widget.setLayout(self.vertical_layout)
 
         self.setCentralWidget(self.main_widget)
+
+
+class EnterExitQWidget(QWidget):
+    """
+    Subclasses QWidget in order to trap mouse enter/exit events
+    and send them to registered listeners.
+    """
+    def __init__(self, *args, **kwargs):
+        super(QWidget, self).__init__(*args, **kwargs)
+
+    def enterEvent(self, event):
+        dispatch.mouse_enterexit.emit(event_type=event.type())
+
+    def leaveEvent(self, event):
+        dispatch.mouse_enterexit.emit(event_type=event.type())
 
 
 class PlotSubWindow(UiPlotSubWindow):
@@ -527,93 +543,6 @@ class PlotSubWindow(UiPlotSubWindow):
 
         self.linelists = ingest(self.waverange)
 
-    @dispatch.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, **kwargs):
-
-        if not self._is_selected:
-            return
-
-        # Get a list of the selected indices in each line list.
-        # Build new line lists with only the selected rows.
-
-        linelists_with_selections = []
-
-        for table_view in table_views:
-            # Find matching line list by its name. This could be made
-            # simpler by the use of a dict. That breaks code elsewhere
-            # though: it is assumed by that code that self.linelists
-            # is a list and not a dict.
-            view_name = table_view.model().getName()
-            for k in range(len(self.linelists)):
-                line_list = self.linelists[k]
-                line_list_name = line_list.name
-
-                if line_list_name == view_name:
-                    # must map between view and underlying model
-                    # because of row sorting.
-                    selected_rows = table_view.selectionModel().selectedRows()
-                    model_selected_rows = []
-                    for sr in selected_rows:
-                        model_row = table_view.model().mapToSource(sr)
-                        model_selected_rows.append(model_row)
-
-                    new_list = line_list.extract_rows(model_selected_rows)
-
-                    linelists_with_selections.append(new_list)
-
-        # Merge all line lists into a single one. This might
-        # change in the future to enable customized plotting
-        # for each line list.
-        merged_linelist = LineList.merge(linelists_with_selections)
-
-        # Code below is plotting all markers at a fixed height in
-        # the screen coordinate system. Still TBD how to do this in
-        # the generic case. Maybe derive heights from curve data
-        # instead? Make the markers follow the curve ups and downs?
-        #
-        # Ideally we would like to have the marker's X coordinate
-        # pinned down to the plot surface in data value, and the Y
-        # coordinate pinned down in screen value. This would make
-        # the markers to stay at the same height in the window even
-        # when the plot is zoomed. This kind of functionality doesn't
-        # seem to be possible under pyqtgraph though. This requires
-        # more investigation.
-
-        plot_item = self._plot_item
-
-        # curve = plot_item.curves[0]
-
-        data_range = plot_item.vb.viewRange()
-        ymin = data_range[1][0]
-        ymax = data_range[1][1]
-        height = (ymax - ymin) * 0.75 + ymin
-
-        # column names are defined in the YAML files.
-        wave_column = merged_linelist.columns[WAVELENGTH_COLUMN]
-        id_column = merged_linelist.columns[ID_COLUMN]
-
-        for i in range(len(wave_column)):
-            marker = LineIDMarker(id_column[i], plot_item, orientation='vertical')
-
-            marker.setPos(wave_column[i], height)
-
-            plot_item.addItem(marker)
-            self._line_labels.append(marker)
-
-        plot_item.update()
-
-    @dispatch.register_listener("on_erase_linelabels")
-    def erase_linelabels(self, *args, **kwargs):
-        if self._is_selected:
-            for marker in self._line_labels:
-                self._plot_item.removeItem(marker)
-            self._plot_item.update()
-
-    # The 3 handlers below, and their associated signals, implement
-    # the logic that defines the show/hide/dismiss behavior of the
-    # line list window. It remains to be seen if it is what users
-    # actually want.
-
     @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):
         self._is_selected = window == self
@@ -629,10 +558,15 @@ class PlotSubWindow(UiPlotSubWindow):
         if self._is_selected:
             if self._linelist_window is None:
                 self._linelist_window = LineListsWindow(self)
+                self.line_labels_plotter = LineLabelsPlotter(self)
+
+                self._plot_widget.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
+
             self._linelist_window.show()
 
     @dispatch.register_listener("on_dismiss_linelists_window")
     def _dismiss_linelists_window(self, *args, **kwargs):
         if self._is_selected and self._linelist_window:
-            self._linelist_window.hide()
+            self._linelist_window.close()
+            self.line_labels_plotter = None
             self._linelist_window = None

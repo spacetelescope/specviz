@@ -1,27 +1,92 @@
 """
-Emission/Absorption Line list utilities
+
+Line list utilities
+
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import os
 import glob
+import yaml
 
 import numpy as np
 
+from astropy.io import ascii
 from astropy.table import Table, vstack
+from astropy import constants
+
 
 __all__ = [
-    'LineList',
+    'get_from_file',
+    'get_from_cache',
     'ingest',
+    'populate_linelists_cache',
+    'descriptions',
+    'LineList',
 ]
 
+# yaml specs
 FORMAT = 'line_list'
 COLUMN_NAME = 'name'
 COLUMN_START = 'start'
 COLUMN_END = 'end'
 WAVELENGTH_COLUMN = 'Wavelength'
-ID_COLUMN = 'Line ID'
+ERROR_COLUMN = 'Error'
+ID_COLUMN = 'Species'
 UNITS_COLUMN = 'units'
+TOOLTIP_COLUMN = 'tooltip'
+
+# plotting helpers
+REDSHIFTED_WAVELENGTH_COLUMN = 'z_wavelength'
+COLOR_COLUMN = 'color'
+HEIGHT_COLUMN = 'height'
+MARKER_COLUMN = 'marker'
+DEFAULT_HEIGHT = 0.75
+
+# columns to remove when exporting the plotted lines
+columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN, MARKER_COLUMN]
+
+_linelists_cache = []
+
+
+def get_from_file(linelist_path, filename):
+
+    if filename.endswith('.yaml'):
+        loader = yaml.load(open(filename, 'r'))
+        linelist_fullname = linelist_path + os.path.sep + loader.filename
+
+        return LineList.read_list(linelist_fullname, loader)
+
+    elif filename.endswith('.ecsv'):
+        table = Table.read(filename, format='ascii.ecsv')
+
+        linelist = LineList(table, name=os.path.split(filename)[1])
+        _linelists_cache.append(linelist)
+
+        return linelist
+
+    else:
+        return None
+
+
+# This should be called at the appropriate time when starting the
+# app, so the lists are cached for speedier access later on.
+def populate_linelists_cache():
+    # we could benefit from a threaded approach here. But I couldn't
+    # see the benefits, since the reading of even the largest line
+    # list files takes a fraction of a second at most.
+    linelist_path = os.path.dirname(os.path.abspath(__file__))
+    linelist_path +=  '/../data/linelists/'
+    yaml_paths = glob.glob(linelist_path + '*.yaml')
+
+    for yaml_filename in yaml_paths:
+        linelist = get_from_file(linelist_path, yaml_filename)
+        _linelists_cache.append(linelist)
+
+
+def get_from_cache(index):
+    return _linelists_cache[index]
+
 
 def ingest(range):
     """
@@ -39,32 +104,39 @@ def ingest(range):
     -------
     [LineList, ...]
         The list of linelists found.
-
-    Notes
-    -----
-    Lets skip the file dialog business. For now, we look
-    for line lists and their accompanying YAML files in
-    one single place. We also restrict our search for
-    ascii line lists whose file names end in .txt
     """
-    linelist_path = os.path.dirname(os.path.abspath(__file__))
-    dir_path = linelist_path + '/../data/linelists/'
-    yaml_paths = glob.glob(dir_path + '*.yaml')
-    linelists = []
+    result = []
+    for linelist in _linelists_cache:
+        ll = linelist.extract_range(range)
 
-    for yaml_path in yaml_paths:
-        # this should get improved as when we decide how to
-        # implement support for user-supplied line lists,
-        # as well as support for other formats besides ascii.
-        linelist_path = yaml_path.replace('.yaml', '.txt')
-        filter = linelist_path.split(os.sep)[-1].split('.')[0] + ' (*.txt *.dat)'
+        result.append(ll)
 
-        linelist = LineList.read(linelist_path, format="ascii.tab")
-        linelist = linelist.extract_range(range)
+    return result
 
-        linelists.append(linelist)
 
-    return linelists
+def descriptions():
+    """
+    Returns a python list with strings containing a description of each line list.
+
+    Returns
+    -------
+    list
+        The list of strings.
+    """
+    result = []
+    for linelist in _linelists_cache:
+
+        desc = linelist.name
+        nlines = len(linelist[WAVELENGTH_COLUMN])
+        w1 = linelist.wmin
+        w2 = linelist.wmax
+        units = linelist[WAVELENGTH_COLUMN].unit
+
+        description = '{:15}  ({:>d},  [ {:.2f} - {:.2f} ] {})'.format(desc, nlines, w1, w2, units)
+
+        result.append(description)
+
+    return result
 
 
 # Inheriting from QTable somehow makes this class incompatible
@@ -86,7 +158,7 @@ class LineList(Table):
         If true, a masked table is used.
     """
 
-    def __init__(self, table=None, name=None, masked=None):
+    def __init__(self, table=None, tooltips=None, name=None, masked=None):
         Table.__init__(self, data=table, masked=masked)
 
         self.name = name
@@ -99,8 +171,74 @@ class LineList(Table):
 
         self._table = table
 
+        # each list has associated color, height, and redshift attributes
+        self.color = None
+        self.height = DEFAULT_HEIGHT
+        self.redshift = 0.
+        self. z_units = 'z'
+
+        if len(table[WAVELENGTH_COLUMN].data):
+            self.wmin = table[WAVELENGTH_COLUMN].data.min()
+            self.wmax = table[WAVELENGTH_COLUMN].data.max()
+        else:
+            self.wmin = self.wmax = None
+
+        # A line list (but not the underlying table) can have
+        # tool tips associated to each column.
+        self.tooltips = tooltips
+
+    @property
+    def table(self):
+        return self._table
+
     @classmethod
-    def merge(cls, lists):
+    def read_list(cls, filename, yaml_loader):
+        names_list = []
+        start_list = []
+        end_list = []
+        units_list = []
+        tooltips_list = []
+        for k in range(len((yaml_loader.columns))):
+            name = yaml_loader.columns[k][COLUMN_NAME]
+            names_list.append(name)
+
+            start = yaml_loader.columns[k][COLUMN_START]
+            end = yaml_loader.columns[k][COLUMN_END]
+            start_list.append(start)
+            end_list.append(end)
+
+            units = ''
+            if UNITS_COLUMN in yaml_loader.columns[k]:
+                units = yaml_loader.columns[k][UNITS_COLUMN]
+            units_list.append(units)
+
+            tooltip = ''
+            if TOOLTIP_COLUMN in yaml_loader.columns[k]:
+                tooltip = yaml_loader.columns[k][TOOLTIP_COLUMN]
+            tooltips_list.append(tooltip)
+
+        tab = ascii.read(filename, format = yaml_loader.format,
+                         names = names_list,
+                         col_starts = start_list,
+                         col_ends = end_list)
+
+        for k, colname in enumerate(tab.columns):
+            tab[colname].unit = units_list[k]
+
+            # some line lists have a 'Reference' column that is
+            # wrongly read as type int. Must be str instead,
+            # otherwise an error is raised when merging.
+            if colname in ['Reference']:
+                tab[colname] = tab[colname].astype(str)
+
+        # The table name (for e.g. display purposes)
+        # is taken from the 'name' element in the
+        # YAML file descriptor.
+
+        return cls(tab, tooltips=tooltips_list, name=yaml_loader.name)
+
+    @classmethod
+    def merge(cls, lists, target_units):
         """
         Executes a 'vstack' of all input lists, and
         then sorts the result by the wavelength column.
@@ -109,18 +247,43 @@ class LineList(Table):
         ----------
         lists: [LineList, ...]
             list of LineList instances
+        target_units: Units
+            units to which all lines from all tables
+            must be converted to.
 
         Returns
         -------
         LineList
             merged line list
         """
-        # Note that vstack operates on Table instances but
-        # not on LineList instances. So we first extract the
-        # raw Table instances.
         tables = []
         for linelist in lists:
-            tables.append(linelist._table)
+
+            # Note that vstack operates on Table instances but
+            # not on LineList instances. So we refer directly
+            # to the raw Table instances.
+
+            internal_table = linelist._table
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
+
+            # add columns to hold color and height attributes
+            color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
+            internal_table[COLOR_COLUMN] = color_array
+            height_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.height)
+            internal_table[HEIGHT_COLUMN] = height_array
+
+            # add column to hold redshifted wavelength
+            f =  1. + linelist.redshift
+            if linelist.z_units == 'km/s':
+                f = 1. + linelist.redshift / constants.c.value * 1000.
+            z_wavelength = internal_table[WAVELENGTH_COLUMN] * f
+            internal_table[REDSHIFTED_WAVELENGTH_COLUMN] = z_wavelength
+
+            # add column to hold plot markers
+            marker_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), None)
+            internal_table[MARKER_COLUMN] = marker_array
+
+            tables.append(internal_table)
 
         merged_table = vstack(tables)
 
@@ -132,12 +295,19 @@ class LineList(Table):
         """
         Builds a LineList instance out of self, with
         the subset of lines that fall within the
-        wavelength range defined by 'wmin' and 'wmax'
+        wavelength range defined by 'wmin' and 'wmax'.
+
+        REMOVED FOR NOW: The actual range is somewhat
+        wider, to allow for radial velocity and redshift
+        effects. The actual handling of this must wait
+        until we get more detailed specs for the redshift
+        functionality.
 
         Parameters
         ----------
-        wrange: (float, float)
-            minimum and maximum wavelength of the wavelength range
+        wrange: (Quantity, Quantity)
+            minimum and maximum wavelength of the data
+            (spectrum) wavelength range
 
         Returns
         -------
@@ -153,12 +323,29 @@ class LineList(Table):
         # units the wavelength range is expressed in.
         new_wavelengths = wavelengths.to(wmin.unit)
 
+        # add some leeway at the short and long end points.
+        # For now, we extend both ends by 10%. This might
+        # be enough at the short end, but it remains to be
+        # seen how this plays out when we add redshift
+        # functionality to the app.
+        #
+        # REMOVING THIS FOR NOW.
+        # wmin = wmin.value - wmin.value * 0.1
+        # wmax = wmax.value + wmax.value * 0.1
+        wmin = wmin.value
+        wmax = wmax.value
+
         # 'indices' points to rows with wavelength values
         # that lie outside the wavelength range.
-        indices_to_remove = np.where((new_wavelengths.value < wmin.value) |
-                                     (new_wavelengths.value > wmax.value))
+        indices_to_remove = np.where((new_wavelengths.value < wmin) |
+                                     (new_wavelengths.value > wmax))
 
-        return self._remove_lines(indices_to_remove)
+        result = self._remove_lines(indices_to_remove)
+
+        # new instance inherits the name from parent.
+        result.name = self.name
+
+        return result
 
     def extract_rows(self, indices):
         """
@@ -208,6 +395,16 @@ class LineList(Table):
 
         table.remove_rows(indices_to_remove)
 
-        result = LineList(table, self.name)
+        result = LineList(table, tooltips=self.tooltips, name=self.name)
 
         return result
+
+    def setRedshift(self, redshift, z_units):
+        self.redshift = redshift
+        self.z_units = z_units
+
+    def setColor(self, color):
+        self.color = color
+
+    def setHeight(self, height):
+        self.height = height

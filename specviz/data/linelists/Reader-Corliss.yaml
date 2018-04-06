@@ -1,6 +1,7 @@
 --- !CustomLoader
 name: Reader-Corliss
-extension: [txt, dat]
+extension: [list]
+filename: 'Reader-Corliss.list'
 type: 'line_list'
 format: 'fixed_width_no_header'
 columns:
@@ -9,7 +10,7 @@ columns:
     start: 17
     end: 26
     units: 'Angstrom'
-  - name: 'Line ID'
+  - name: 'Species'
     index: 1
     start: 30
     end: 35

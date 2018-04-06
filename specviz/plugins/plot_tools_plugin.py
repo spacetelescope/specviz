@@ -149,11 +149,11 @@ class PlotToolsPlugin(Plugin):
             self.button_axis_change.setEnabled(True)
             self.button_unit_change.setEnabled(True)
             self.button_add_roi.setEnabled(True)
-            # self.button_line_labels.setEnabled(True)
+            self.button_line_labels.setEnabled(True)
             self.button_plot_settings.setEnabled(True)
         else:
             self.button_axis_change.setEnabled(False)
             self.button_unit_change.setEnabled(False)
             self.button_add_roi.setEnabled(False)
-            # self.button_line_labels.setEnabled(False)
+            self.button_line_labels.setEnabled(False)
             self.button_plot_settings.setEnabled(False)

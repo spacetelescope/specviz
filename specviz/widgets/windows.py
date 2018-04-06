@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
     def update_message(self, message, timeout=0):
         self.status_bar.showMessage(message, timeout)
 
+    def closeEvent(self, event):
+        dispatch.on_dismiss_linelists_window.emit()
+
 
 class MdiArea(QMdiArea):
     def __init__(self, *args, **kwargs):
