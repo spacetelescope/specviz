@@ -362,7 +362,7 @@ class UiSmoothingDialog(QDialog):
         self.line_edit_stddev = QLineEdit(self.group_box)
 
         self.group_box.setTitle("Parameters")
-        self.label_stddev.setText("Standard Deviation")
+        self.label_stddev.setText("Standard Deviation (pixels)")
 
         self.layout_horizontal_2 = QHBoxLayout(self.group_box)
         self.layout_horizontal_2.addWidget(self.label_stddev)
