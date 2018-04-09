@@ -43,7 +43,7 @@ class LinePlot(object):
     """
     def __init__(self, layer, plot=None, visible=True, style='line',
                  pen=None, err_pen=None, mask_pen=None, color=(0, 0, 0),
-                 line_width=1):
+                 line_width=3):
         self._layer = layer
         self.style = style
         self._plot = plot
