@@ -98,7 +98,7 @@ class SpecVizViewer(DataViewer):
         mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
-        self._layer_list = layer_list.widget() if layer_list is not None else None
+        self._layer_list = layer_list if layer_list is not None else None
 
         model_fitting = self.viewer._instanced_plugins.get('Model Fitting')
         self._model_fitting = model_fitting.widget() if model_fitting is not None else None
@@ -121,7 +121,7 @@ class SpecVizViewer(DataViewer):
         data_op_form.addRow("Collapse Operation", self._data_operation)
         # layout.addWidget(self._layer_widget)
         layout.addWidget(self._options_widget)
-        layout.addWidget(self._layer_list)
+        layout.addWidget(self._layer_list.widget())
 
         self._unified_options.setLayout(layout)
 
