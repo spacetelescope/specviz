@@ -259,7 +259,7 @@ class Spectrum1DRefLayer(Spectrum1DRef):
 
         return self.mask.astype(bool) | ~self.layer_mask.astype(bool)
 
-    def set_units(self, disp_unit, data_unit):
+    def set_units(self, disp_unit=None, data_unit=None):
         """
         Set the dispersion and flux units
 
@@ -271,44 +271,48 @@ class Spectrum1DRefLayer(Spectrum1DRef):
         data_unit: `~astropy.units`
             The flux units.
         """
-        if disp_unit is not None and \
-                (self.dispersion_unit.is_unity() or
+        if disp_unit is not None:
+            if (self.dispersion_unit.is_unity() or
                 self.dispersion_unit.is_equivalent(disp_unit,
                                                    equivalencies=spectral())):
 
-            if self.dispersion_unit.is_unity():
+                if self.dispersion_unit.is_unity():
+                    self.dispersion_unit = disp_unit
+
+                self._dispersion = self.masked_dispersion.data.to(
+                    disp_unit, equivalencies=spectral()).value
+
+                # Finally, change the unit
                 self.dispersion_unit = disp_unit
+            else:
+                logging.warning("Dispersion units are not compatible: [{}] and [{}].".format(self.dispersion_unit, disp_unit))
+                return False
 
-            self._dispersion = self.masked_dispersion.data.to(
-                disp_unit, equivalencies=spectral()).value
-
-            # Finally, change the unit
-            self.dispersion_unit = disp_unit
-        else:
-            logging.warning("Disperion units are not compatible.")
-
-        if data_unit is not None and \
-                (self.unit.is_unity() or
+        if data_unit is not None:
+            if (self.unit.is_unity() or
                 self.unit.is_equivalent(data_unit,
                                         equivalencies=spectral_density(
                                             self.masked_dispersion.data))):
-            if self.unit.is_unity():
+                if self.unit.is_unity():
+                    self._unit = data_unit
+
+                self._data = self.masked_data.data.to(
+                    data_unit, equivalencies=spectral_density(
+                        self.masked_dispersion.data)).value
+
+                if self._uncertainty is not None:
+                    self._uncertainty = self._uncertainty.__class__(
+                        self.raw_uncertainty.data.to(
+                            data_unit, equivalencies=spectral_density(
+                                self.masked_dispersion.data)).value)
+
+                # Finally, change the unit
                 self._unit = data_unit
+            else:
+                logging.warning("Data units are not compatible: [{}] and [{}].".format(self.unit, data_unit))
+                return False
 
-            self._data = self.masked_data.data.to(
-                data_unit, equivalencies=spectral_density(
-                    self.masked_dispersion.data)).value
-
-            if self._uncertainty is not None:
-                self._uncertainty = self._uncertainty.__class__(
-                    self.raw_uncertainty.data.to(
-                        data_unit, equivalencies=spectral_density(
-                            self.masked_dispersion.data)).value)
-
-            # Finally, change the unit
-            self._unit = data_unit
-        else:
-            logging.warning("Data units are not compatible.")
+        return True
 
     @classmethod
     def _evaluate(cls, layers, formula):
