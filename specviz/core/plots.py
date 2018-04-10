@@ -134,7 +134,7 @@ class LinePlot(object):
 
     def change_units(self, x, y=None, z=None):
         """
-        Change the displayed units. Note that if I an axis is defined as unit-
+        Change the displayed units. Note that if an axis is defined as unit-
         less, providing a new unit will defined that axis as being that unit.
 
         Parameters
@@ -148,42 +148,13 @@ class LinePlot(object):
         z: `~astropy.units`
             The new units for the multi-spectral dimension.
         """
-        is_convert_success = [True, True, True]
-
-        if x is not None:
-            x = Unit(x)
-        else:
-            x = Unit(self._layer.dispersion_unit)
-        
-        if y is not None:
-            y = Unit(y)
-        else:
-            y = Unit(self._layer.unit)
-
-        logging.info("Changing units from {} and {} to {} and {}.".format(
-            self._layer.unit, self._layer.dispersion_unit, x, y
-        ))
-
-        if not self._layer.dispersion_unit.is_unity() and \
-            not self._layer.dispersion_unit.is_equivalent(x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units from [{}] to"
-                          " [{}].".format(self._layer.dispersion_unit, x))
-            x = None
-            is_convert_success[0] = False
-
-        if not self._layer.unit.is_unity() and \
-            not self._layer.unit.is_equivalent(
-                y, equivalencies=spectral_density(self.layer.masked_dispersion)):
-            logging.error("Failed to convert y-axis plot units from [{}] to "
-                          "[{}].".format(self._layer.unit, y))
-            y = self._layer.unit
-            is_convert_success[1] = False
+        x = Unit(x or self._layer.dispersion_unit or '')
+        y = Unit(y or self._layer.unit or '')
 
         self._layer.set_units(x, y)
+
         self._plot_units = (x, y, z)
         self.update()
-
-        return is_convert_success
 
     def set_plot_visibility(self, show=None, inactive=None):
         """
@@ -226,7 +197,7 @@ class LinePlot(object):
     def set_mask_visibility(self, show=None):
         """
         Show masked data
-        
+
         Parameters
         ----------
         show: bool
