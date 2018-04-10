@@ -457,15 +457,10 @@ class PlotSubWindow(UiPlotSubWindow):
             layer, **(style or {'color': next(self._available_colors)}))
 
         if len(self._plots) == 0:
-            is_convert_success = self.change_units(
-                new_plot.layer.dispersion_unit, new_plot.layer.unit)
+            self.change_units(new_plot.layer.dispersion_unit, new_plot.layer.unit)
         else:
-            is_convert_success = new_plot.change_units(*self._plot_units)
-
-            if not is_convert_success[0] or not is_convert_success[1]:
-                logging.error("Unable to convert {} axis units of '{}' to current plot"
-                              " units.".format('x' if not is_convert_success[0] else 'y',
-                                               new_plot.layer.name))
+            if not new_plot.layer.set_units(*self._plot_units[:2]):
+                logging.error("Unable to convert data layer units to plot units.")
 
                 dispatch.on_remove_layer.emit(layer=layer)
                 return
@@ -486,8 +481,10 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
+
         if create_item:
             dispatch.on_added_layer.emit(layer=layer)
+
         dispatch.on_added_plot.emit(plot=new_plot, window=window)
 
     @dispatch.register_listener("on_removed_layer")
