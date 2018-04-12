@@ -12,7 +12,7 @@ UNIT_FIXES = {
 }
 
 
-def _parse_unit(unit):
+def parse_unit(unit):
     unit = UNIT_FIXES.get(unit, unit)
     unit = u.Unit(unit, parse_strict='silent')
     return unit
@@ -47,7 +47,7 @@ def parse_fits(filename):
             if isinstance(hdu, (fits.PrimaryHDU, fits.ImageHDU)):
 
                 if 'BUNIT' in hdu.header:
-                    unit = _parse_unit(hdu.header['BUNIT'])
+                    unit = parse_unit(hdu.header['BUNIT'])
                 else:
                     unit = None
 
@@ -65,7 +65,7 @@ def parse_fits(filename):
                     if column.unit is None:
                         unit = None
                     else:
-                        unit = _parse_unit(column.unit)
+                        unit = parse_unit(column.unit)
 
                     data = hdu.data[column.name]
 
