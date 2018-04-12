@@ -1,7 +1,6 @@
 import os
 
 from astropy.table import Table
-from astropy.units import Unit
 
 from ...interfaces import data_loader
 from ...core.data import Spectrum1DRef
@@ -41,6 +40,6 @@ def ecsv_spectrum_loader(file_name, **kwargs):
 
     return Spectrum1DRef.from_array(data=table['Intensity'],
                                     dispersion=table['Wavelength'],
-                                    dispersion_unit=Unit('Angstrom'),
                                     unit=table['Intensity'].unit,
+                                    dispersion_unit=table['Wavelength'].unit,
                                     meta=table.meta)
