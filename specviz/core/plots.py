@@ -82,6 +82,8 @@ class LinePlot(object):
                            'mask_pen_on': _mask_pen,
                            'mask_pen_off': pg.mkPen(None)}
 
+        self._current_pen = self._pen_stash['pen_on']
+
         self.set_plot_visibility(True)
         self.set_error_visibility(True)
         self.set_mask_visibility(False)
@@ -134,7 +136,7 @@ class LinePlot(object):
 
     def change_units(self, x, y=None, z=None):
         """
-        Change the displayed units. Note that if I an axis is defined as unit-
+        Change the displayed units. Note that if an axis is defined as unit-
         less, providing a new unit will defined that axis as being that unit.
 
         Parameters
@@ -148,42 +150,11 @@ class LinePlot(object):
         z: `~astropy.units`
             The new units for the multi-spectral dimension.
         """
-        is_convert_success = [True, True, True]
-
-        if x is not None:
-            x = Unit(x)
-        else:
-            x = Unit(self._layer.dispersion_unit)
-        
-        if y is not None:
-            y = Unit(y)
-        else:
-            y = Unit(self._layer.unit)
-
-        logging.info("Changing units from {} and {} to {} and {}.".format(
-            self._layer.unit, self._layer.dispersion_unit, x, y
-        ))
-
-        if not self._layer.dispersion_unit.is_unity() and \
-            not self._layer.dispersion_unit.is_equivalent(x, equivalencies=spectral()):
-            logging.error("Failed to convert x-axis plot units from [{}] to"
-                          " [{}].".format(self._layer.dispersion_unit, x))
-            x = None
-            is_convert_success[0] = False
-
-        if not self._layer.unit.is_unity() and \
-            not self._layer.unit.is_equivalent(
-                y, equivalencies=spectral_density(self.layer.masked_dispersion)):
-            logging.error("Failed to convert y-axis plot units from [{}] to "
-                          "[{}].".format(self._layer.unit, y))
-            y = self._layer.unit
-            is_convert_success[1] = False
+        x = Unit(x or self._layer.dispersion_unit or '')
+        y = Unit(y or self._layer.unit or '')
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
-        self.update()
-
-        return is_convert_success
 
     def set_plot_visibility(self, show=None, inactive=None):
         """
@@ -200,13 +171,15 @@ class LinePlot(object):
         """
         if show is not None:
             if show:
-                self._plot.setPen(self._pen_stash['pen_on'])
+                self._current_pen = self._pen_stash['pen_on']
             else:
-                self._plot.setPen(self._pen_stash['pen_off'])
+                self._current_pen = self._pen_stash['pen_off']
 
         if inactive is not None:
             if inactive:
-                self._plot.setPen(self._pen_stash['pen_inactive'])
+                self._current_pen = self._pen_stash['pen_inactive']
+
+        self._plot.setPen(self._current_pen)
 
     def set_error_visibility(self, show=None):
         """
@@ -226,7 +199,7 @@ class LinePlot(object):
     def set_mask_visibility(self, show=None):
         """
         Show masked data
-        
+
         Parameters
         ----------
         show: bool
@@ -254,7 +227,7 @@ class LinePlot(object):
 
     @property
     def pen(self):
-        return self._pen_stash['pen_on']
+        return self._current_pen
 
     @pen.setter
     def pen(self, pen):
@@ -268,10 +241,12 @@ class LinePlot(object):
 
         if self._plot.opts['pen'] == self._pen_stash['pen_on']:
             self._pen_stash['pen_on'] = pg.mkPen(pen, width=self.line_width)
-            self._plot.setPen(self._pen_stash['pen_on'])
+            self._current_pen = self._pen_stash['pen_on']
         elif self._plot.opts['pen'] == self._pen_stash['pen_inactive']:
             self._pen_stash['pen_inactive'] = _inactive_pen
-            self._plot.setPen(self._pen_stash['pen_inactive'])
+            self._current_pen = self._pen_stash['pen_inactive']
+
+        self._plot.setPen(self._current_pen)
 
     @property
     def error_pen(self):
@@ -338,7 +313,6 @@ class LinePlot(object):
             disp = self.layer.unmasked_dispersion.compressed().value
             data = self.layer.unmasked_data.compressed().value
             uncert = self.layer.unmasked_raw_uncertainty.compressed().value
-
         else:
             disp = self.layer.masked_dispersion.compressed().value
             data = self.layer.masked_data.compressed().value
@@ -361,6 +335,7 @@ class LinePlot(object):
         if self.error is not None:
             self.error.setData(x=disp[:-1] if self.mode == 'histogram' else disp,
                                y=data, height=uncert)
+
         if self.mask is not None:
             mask = self.layer.mask
             x = self.layer.masked_dispersion.data.value[mask]

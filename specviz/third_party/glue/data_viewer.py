@@ -81,7 +81,7 @@ class SpecVizViewer(DataViewer):
         # Make the main toolbar smaller to fit better inside Glue
         for tb in self.viewer._all_tool_bars.values():
             tb['widget'].setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-            tb['widget'].setIconSize(QSize(24, 24))
+            tb['widget'].setIconSize(QSize(20, 20))
 
             for child in tb['widget'].children():
                 if isinstance(child, QToolButton):
@@ -98,7 +98,7 @@ class SpecVizViewer(DataViewer):
         mdi_area.findChild(QTabBar).hide()
 
         layer_list = self.viewer._instanced_plugins.get('Layer List')
-        self._layer_list = layer_list.widget() if layer_list is not None else None
+        self._layer_list = layer_list if layer_list is not None else None
 
         model_fitting = self.viewer._instanced_plugins.get('Model Fitting')
         self._model_fitting = model_fitting.widget() if model_fitting is not None else None
@@ -121,7 +121,7 @@ class SpecVizViewer(DataViewer):
         data_op_form.addRow("Collapse Operation", self._data_operation)
         # layout.addWidget(self._layer_widget)
         layout.addWidget(self._options_widget)
-        layout.addWidget(self._layer_list)
+        layout.addWidget(self._layer_list.widget())
 
         self._unified_options.setLayout(layout)
 
@@ -314,6 +314,13 @@ class SpecVizViewer(DataViewer):
         self._spectrum_from_component(subset, component,
                                       subset.data.coords.wcs, mask=mask, cid=cid)
 
+        # Hide the median of the spectrum if there are other subsets (regions)
+        # defined.  If there are no other subsets (regions) then we will
+        # show the cube again.
+        if len(self._specviz_data_cache) > 1:
+            key = list(self._specviz_data_cache.keys())[0]
+            self.on_toggle_component_visibility(data=key, state=False)
+
     def _remove_subset(self, message):
         if message.subset in self._layer_widget:
             self._layer_widget.remove_layer(message.subset)
@@ -321,7 +328,14 @@ class SpecVizViewer(DataViewer):
         subset = message.subset
 
         spec_data = self._specviz_data_cache.pop(subset)
-        dispatch.on_remove_data.emit(spec_data)
+        dispatch.on_remove_layer.emit(spec_data)
+
+        # Hide the median of the spectrum if there are other subsets (regions)
+        # defined.  If there are no other subsets (regions) then we will
+        # show the cube again.
+        if len(self._specviz_data_cache) == 1:
+            key = list(self._specviz_data_cache.keys())[0]
+            self.on_toggle_component_visibility(data=key, state=True)
 
     # When the selected layer is changed, we need to update the combo box with
     # the attributes from which the filename attribute can be selected. The
@@ -344,6 +358,6 @@ class SpecVizViewer(DataViewer):
         """
         Hide a display specviz spectrum provided a glue layer component.
         """
-        spec_data = self._specviz_data_cache.get(data)
+        spec_layer = self._specviz_data_cache.get(data)
 
-        dispatch.toggle_layer_visibility.emit(layer=spec_data, state=state)
+        dispatch.toggle_layer_visibility.emit(layer=spec_layer, state=state)

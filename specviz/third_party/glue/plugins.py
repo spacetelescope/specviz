@@ -152,6 +152,15 @@ class SpectralOperationPlugin(Plugin):
             spectral_axis = data.spectral_axis
             model = self._current_model
 
+            # TODO: this is a temporary solution to handle the astropy 3.0.1
+            # regression concerning compound models and units
+            class ModelWrapper(model.__class__):
+                @property
+                def _supports_unit_fitting(self):
+                    return True
+
+            model = ModelWrapper()
+
             for x in range(data.shape[1]):
                 for y in range(data.shape[2]):
                     flux = data[:, x, y]
