@@ -78,8 +78,7 @@ class PlotToolsPlugin(Plugin):
                 ('Line width', OrderedDict([
                     ('1', lambda: self._set_plot_style(line_width=1)),
                     ('2', lambda: self._set_plot_style(line_width=2)),
-                    ('3', lambda: self._set_plot_style(line_width=3)),
-                    ('4', lambda: self._set_plot_style(line_width=4))
+                    ('3', lambda: self._set_plot_style(line_width=3))
                 ])),
                 ('Show Errors', ['checkable', lambda x: self._toggle_errors(x)])
             ])
