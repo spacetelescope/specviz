@@ -29,6 +29,7 @@ from ..interfaces.loaders import load_yaml_reader
 from ..widgets.utils import UI_PATH
 
 from ..utils.parse_fits import simplify_arrays, parse_fits
+from ..utils.parse_ecsv import parse_ecsv
 
 
 def represent_dict_order(self, data):
@@ -479,6 +480,30 @@ class BaseImportWizard(QDialog):
         with open(filename, 'w') as f:
             f.write(string)
 
+# --------- Helper methods for subclasses ------------
+
+    def yaml_dispersion(self, yaml_dict):
+        yaml_dict['dispersion'] = {
+            'hdu': self.helper_disp.hdu_index,
+            'col': self.helper_disp.component_name,
+            'unit': self.helper_disp.unit
+        }
+
+    def yaml_data(self, yaml_dict):
+        yaml_dict['data'] = {
+            'hdu': self.helper_data.hdu_index,
+            'col': self.helper_data.component_name,
+            'unit': self.helper_data.unit
+        }
+
+    def yaml_uncertainty(self, yaml_dict):
+        if self.ui.bool_uncertainties.isChecked():
+            yaml_dict['uncertainty'] = {
+                'hdu': self.helper_unce.hdu_index,
+                'col': self.helper_unce.component_name,
+                'type': self.ui.combo_uncertainty_type.currentData()
+            }
+
 
 class FITSImportWizard(BaseImportWizard):
     dataset_label = 'HDU'
@@ -488,34 +513,24 @@ class FITSImportWizard(BaseImportWizard):
         Convert the current configuration to a dictionary that can then be
         serialized to YAML
         """
-
         yaml_dict = OrderedDict()
         yaml_dict['name'] = name or self.ui.loader_name.text()
         yaml_dict['extension'] = ['fits']
+
         if self.helper_disp.component_name.startswith('WCS::'):
             yaml_dict['wcs'] = {
                 'hdu': self.helper_disp.hdu_index,
             }
         else:
-            yaml_dict['dispersion'] = {
-                'hdu': self.helper_disp.hdu_index,
-                'col': self.helper_disp.component_name,
-                'unit': self.helper_disp.unit
-            }
+            self.yaml_dispersion(yaml_dict)
             yaml_dict['wcs'] = {
-                'hdu': self.helper_disp.hdu_index
+                'hdu': self.helper_disp.hdu_index,
             }
-        yaml_dict['data'] = {
-            'hdu': self.helper_data.hdu_index,
-            'col': self.helper_data.component_name,
-            'unit': self.helper_data.unit
-        }
-        if self.ui.bool_uncertainties.isChecked():
-            yaml_dict['uncertainty'] = {
-                'hdu': self.helper_unce.hdu_index,
-                'col': self.helper_unce.component_name,
-                'type': self.ui.combo_uncertainty_type.currentData()
-            }
+
+        self.yaml_data(yaml_dict)
+
+        self.yaml_uncertainty(yaml_dict)
+
         if self.ui.bool_mask.isChecked():
             yaml_dict['mask'] = OrderedDict()
             yaml_dict['mask']['hdu'] = self.helper_mask.hdu_index
@@ -529,19 +544,45 @@ class FITSImportWizard(BaseImportWizard):
         return yaml_dict
 
 
+class ECSVImportWizard(BaseImportWizard):
+    dataset_label = 'Table'
+
+    def as_yaml_dict(self, name=None):
+        """
+        Convert the current configuration to a dictionary that can then be
+        serialized to YAML
+        """
+        yaml_dict = OrderedDict()
+        yaml_dict['name'] = name or self.ui.loader_name.text()
+        yaml_dict['extension'] = ['ecsv']
+
+        self.yaml_dispersion(yaml_dict)
+
+        self.yaml_data(yaml_dict)
+
+        self.yaml_uncertainty(yaml_dict)
+
+        yaml_dict['meta'] = {'author': 'Wizard'}
+
+        return yaml_dict
+
+
 def open_wizard():
 
     # NOTE: for now we only deal with FITS files, but this is where we would need
     # to add different filters.
 
-    filters = ["FITS (*.fits)"]
+    filters = ["FITS and ECSV (*.fits *.ecsv)"]
     filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 
     if filename == '':
         return
 
-    if file_filter == 'FITS (*.fits)':
+    if filename.lower().endswith('fits'):
         dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
+        val = dialog.exec_()
+    elif filename.lower().endswith('ecsv'):
+        dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
         val = dialog.exec_()
     else:
         raise NotImplementedError(file_filter)

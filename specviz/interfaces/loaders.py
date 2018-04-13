@@ -14,7 +14,7 @@ import astropy.io.registry as io_registry
 #-- local
 from ..core.data import Spectrum1DRef
 from ..core.linelist import LineList
-from ..io.yaml_loader import FitsYamlRegister, AsciiYamlRegister, LineListYamlRegister
+from ..io.yaml_loader import FitsYamlRegister, EcsvYamlRegister, AsciiYamlRegister, LineListYamlRegister
 
 from ..io.loaders import *
 
@@ -24,17 +24,13 @@ def load_yaml_reader(f_path):
         custom_loader = yaml.load(f)
         custom_loader.set_filter()
 
-    # Figure out which of the loaders to associate this yaml file with
-    #
-    # TODO: note that this code seems to no longer be of any use. We added
-    # handling for the line list loader so the execution can go past this
-    # point. But nothing happens subsequently with those loaders.
     if any(ext in custom_loader.extension for ext in ['fits']):
         loader = FitsYamlRegister(custom_loader)
     elif any(ext in custom_loader.extension for ext in ['list']):
         loader = LineListYamlRegister(custom_loader)
-    elif any(ext in custom_loader.extension
-             for ext in ['txt', 'data']):
+    elif any(ext in custom_loader.extension for ext in ['ecsv']):
+        loader = EcsvYamlRegister(custom_loader)
+    elif any(ext in custom_loader.extension for ext in ['txt', 'data']):
         loader = AsciiYamlRegister(custom_loader)
 
     try:

@@ -21,6 +21,7 @@ from ..core.linelist import LineList
 
 __all__ = [
     'AsciiYamlRegister',
+    'EcsvYamlRegister',
     'FitsYamlRegister',
     'LineListYamlRegister',
     'YamlRegister',
@@ -345,7 +346,7 @@ class AsciiYamlRegister(YamlRegister):
         tab = ascii.read(filename, **kwargs)
         cols = tab.colnames
 
-        meta = self._reference.meta
+        meta = c.meta
         meta['header'] = {}
 
         # Only loads KEY=VAL comment entries into header
@@ -416,6 +417,25 @@ class AsciiYamlRegister(YamlRegister):
                     uncertainty=uncertainty, mask=mask, wcs=wcs,
                     unit=unit, dispersion_unit=disp_unit, meta=meta)
 
+
+class EcsvYamlRegister(YamlRegister):
+    """
+    Defines the generation of `Spectrum1DRef` objects by parsing
+    ECSV files with information from YAML files.
+
+    """
+    def reader(self, filename, **kwargs):
+
+        table = Table.read(filename, format='ascii.ecsv')
+
+        flux_name = self._reference.data['col']
+        dispersion_name = self._reference.dispersion['col']
+
+        return Spectrum1DRef.from_array(data=table[flux_name],
+                                        dispersion=table[dispersion_name],
+                                        unit=table[flux_name].unit,
+                                        dispersion_unit=table[dispersion_name].unit,
+                                        meta=self._reference.meta)
 
 
 class LineListYamlRegister(YamlRegister):
