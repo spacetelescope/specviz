@@ -1,19 +1,19 @@
 import numpy as np
+
+from astropy.io import ascii
 from astropy.table import Table
 
 from . import parse_fits
 
 
-def parse_ecsv(filename):
+def _parse(filename, table):
 
     # Here we adopt the same data structures used in the handling
     # of FITS files, replacing the HDUs by datasets. An ECSV table
     # will typically contain only one dataset.
+
     parsed_datasets = {}
-
-    table = Table.read(filename, format='ascii.ecsv')
-
-    parsed_dataset = {}
+    dataset = {}
 
     for column_name in table.columns:
 
@@ -28,13 +28,27 @@ def parse_ecsv(filename):
         if isinstance(data, np.chararray):
             continue
 
-        parsed_dataset[column_name] = {'data': data.flatten(),
-                                       'ndim': data.ndim,
-                                       'shape': data.shape,
-                                       'unit': unit,
-                                       'index': 0}
+        dataset[column_name] = {'data': data.flatten(),
+                                'ndim': data.ndim,
+                                'shape': data.shape,
+                                'unit': unit,
+                                'index': 0}
 
-    parsed_datasets[filename] = parsed_dataset
+    parsed_datasets[filename] = dataset
 
     return parsed_datasets
+
+
+def parse_ecsv(filename):
+
+    table = Table.read(filename, format='ascii.ecsv')
+
+    return _parse(filename, table)
+
+
+def parse_ascii(filename):
+
+    table = ascii.read(filename)
+
+    return _parse(filename, table)
 

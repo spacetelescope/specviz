@@ -29,7 +29,7 @@ from ..interfaces.loaders import load_yaml_reader
 from ..widgets.utils import UI_PATH
 
 from ..utils.parse_fits import simplify_arrays, parse_fits
-from ..utils.parse_ecsv import parse_ecsv
+from ..utils.parse_ecsv import parse_ecsv, parse_ascii
 
 
 def represent_dict_order(self, data):
@@ -567,12 +567,35 @@ class ECSVImportWizard(BaseImportWizard):
         return yaml_dict
 
 
+class ASCIIImportWizard(BaseImportWizard):
+    dataset_label = 'Table'
+
+    def as_yaml_dict(self, name=None):
+        """
+        Convert the current configuration to a dictionary that can then be
+        serialized to YAML
+        """
+        yaml_dict = OrderedDict()
+        yaml_dict['name'] = name or self.ui.loader_name.text()
+        yaml_dict['extension'] = ['dat']
+
+        self.yaml_dispersion(yaml_dict)
+
+        self.yaml_data(yaml_dict)
+
+        self.yaml_uncertainty(yaml_dict)
+
+        yaml_dict['meta'] = {'author': 'Wizard'}
+
+        return yaml_dict
+
+
 def open_wizard():
 
     # NOTE: for now we only deal with FITS files, but this is where we would need
     # to add different filters.
 
-    filters = ["FITS and ECSV (*.fits *.ecsv)"]
+    filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt)"]
     filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 
     if filename == '':
@@ -583,6 +606,9 @@ def open_wizard():
         val = dialog.exec_()
     elif filename.lower().endswith('ecsv'):
         dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
+        val = dialog.exec_()
+    elif filename.lower().endswith('dat') or filename.lower().endswith('txt'):
+        dialog = ASCIIImportWizard(simplify_arrays(parse_ascii(filename)))
         val = dialog.exec_()
     else:
         raise NotImplementedError(file_filter)
