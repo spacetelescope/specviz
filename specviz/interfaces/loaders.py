@@ -26,10 +26,13 @@ def load_yaml_reader(f_path):
 
     if any(ext in custom_loader.extension for ext in ['fits']):
         loader = FitsYamlRegister(custom_loader)
+
     elif any(ext in custom_loader.extension for ext in ['list']):
         loader = LineListYamlRegister(custom_loader)
+
     elif any(ext in custom_loader.extension for ext in ['ecsv']):
         loader = EcsvYamlRegister(custom_loader)
+
     elif any(ext in custom_loader.extension for ext in ['txt', 'dat']):
         loader = AsciiYamlRegister(custom_loader)
 
