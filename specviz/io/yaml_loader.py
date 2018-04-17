@@ -335,6 +335,9 @@ class FitsYamlRegister(YamlRegister):
                     dispersion_unit=disp_unit, meta=meta)
 
 
+
+#TODO  I wonder if this is still needed.
+
 # class AsciiYamlRegister(YamlRegister):
 #     """
 #     Defines the generation of `Spectrum1DRef` objects by parsing ASCII
@@ -426,7 +429,7 @@ class AsciiYamlRegister(YamlRegister):
     """
     def reader(self, filename, **kwargs):
 
-        table = ascii.read(filename)
+        table = self.get_table(filename)
 
         flux_name = self._reference.data['col']
         dispersion_name = self._reference.dispersion['col']
@@ -437,25 +440,18 @@ class AsciiYamlRegister(YamlRegister):
                                         dispersion_unit=table[dispersion_name].unit,
                                         meta=self._reference.meta)
 
+    def get_table(self, filename):
+        return ascii.read(filename)
 
-class EcsvYamlRegister(YamlRegister):
+
+class EcsvYamlRegister(AsciiYamlRegister):
     """
     Defines the generation of `Spectrum1DRef` objects by parsing
     ECSV files with information from YAML files.
 
     """
-    def reader(self, filename, **kwargs):
-
-        table = Table.read(filename, format='ascii.ecsv')
-
-        flux_name = self._reference.data['col']
-        dispersion_name = self._reference.dispersion['col']
-
-        return Spectrum1DRef.from_array(data=table[flux_name],
-                                        dispersion=table[dispersion_name],
-                                        unit=table[flux_name].unit,
-                                        dispersion_unit=table[dispersion_name].unit,
-                                        meta=self._reference.meta)
+    def get_table(self, filename):
+        return Table.read(filename, format='ascii.ecsv')
 
 
 class LineListYamlRegister(YamlRegister):

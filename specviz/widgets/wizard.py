@@ -544,40 +544,16 @@ class FITSImportWizard(BaseImportWizard):
         return yaml_dict
 
 
-class ECSVImportWizard(BaseImportWizard):
-    dataset_label = 'Table'
-
-    def as_yaml_dict(self, name=None):
-        """
-        Convert the current configuration to a dictionary that can then be
-        serialized to YAML
-        """
-        yaml_dict = OrderedDict()
-        yaml_dict['name'] = name or self.ui.loader_name.text()
-        yaml_dict['extension'] = ['ecsv']
-
-        self.yaml_dispersion(yaml_dict)
-
-        self.yaml_data(yaml_dict)
-
-        self.yaml_uncertainty(yaml_dict)
-
-        yaml_dict['meta'] = {'author': 'Wizard'}
-
-        return yaml_dict
-
-
 class ASCIIImportWizard(BaseImportWizard):
     dataset_label = 'Table'
 
     def as_yaml_dict(self, name=None):
         """
-        Convert the current configuration to a dictionary that can then be
-        serialized to YAML
+        Convert the current configuration to a dictionary
+        that can then be serialized to YAML
         """
         yaml_dict = OrderedDict()
         yaml_dict['name'] = name or self.ui.loader_name.text()
-        yaml_dict['extension'] = ['dat']
 
         self.yaml_dispersion(yaml_dict)
 
@@ -587,13 +563,21 @@ class ASCIIImportWizard(BaseImportWizard):
 
         yaml_dict['meta'] = {'author': 'Wizard'}
 
+        self.add_extension(yaml_dict)
+
         return yaml_dict
+
+    def add_extension(self, yaml_dict):
+        yaml_dict['extension'] = ['dat']
+
+
+class ECSVImportWizard(ASCIIImportWizard):
+
+    def add_extension(self, yaml_dict):
+        yaml_dict['extension'] = ['ecsv']
 
 
 def open_wizard():
-
-    # NOTE: for now we only deal with FITS files, but this is where we would need
-    # to add different filters.
 
     filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt)"]
     filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
@@ -603,15 +587,17 @@ def open_wizard():
 
     if filename.lower().endswith('fits'):
         dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
-        val = dialog.exec_()
+
     elif filename.lower().endswith('ecsv'):
         dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
-        val = dialog.exec_()
+
     elif filename.lower().endswith('dat') or filename.lower().endswith('txt'):
         dialog = ASCIIImportWizard(simplify_arrays(parse_ascii(filename)))
-        val = dialog.exec_()
+
     else:
         raise NotImplementedError(file_filter)
+
+    val = dialog.exec_()
 
     if val == 0:
         return
