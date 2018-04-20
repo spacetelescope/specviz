@@ -12,7 +12,7 @@ from itertools import cycle
 from astropy.units import Quantity
 
 from qtpy.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
-                            QLineEdit, QPushButton, QWidget)
+                            QLineEdit, QPushButton, QWidget, QErrorMessage)
 from qtpy.QtCore import QEvent, Qt
 
 from ..core.events import dispatch
@@ -539,6 +539,13 @@ class PlotSubWindow(UiPlotSubWindow):
         self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
+
+        if len(self.linelists) == 0:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage('Units conversion not possible. '
+                                     'Or, no line lists in internal library '
+                                     'match wavelength range.')
+            error_dialog.exec_()
 
     @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):

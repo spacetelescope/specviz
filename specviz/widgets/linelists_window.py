@@ -8,7 +8,7 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QSizePolicy, QToolBar, QLineEdit, QTabBar,
                             QAction, QTableView, QMainWindow, QHeaderView,
                             QAbstractItemView, QLayout, QTextBrowser, QComboBox,
-                            QDialog)
+                            QDialog, QErrorMessage)
 from qtpy.QtGui import QIcon, QColor, QStandardItem, \
                        QDoubleValidator, QFont
 from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
@@ -16,6 +16,7 @@ from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
 from qtpy import compat
 
 from astropy.units import Quantity
+from astropy.units.core import UnitConversionError
 from astropy.io import ascii
 
 from ..core.events import dispatch
@@ -344,12 +345,18 @@ class LineListsWindow(UiLinelistsWindow):
         if index > 0:
             line_list = linelist.get_from_cache(index-1)
 
-            self._get_waverange_from_dialog(line_list)
-            global wave_range
-            if wave_range[0] and wave_range[1]:
-                self._build_view(line_list, 0, waverange=wave_range)
+            try:
+                self._get_waverange_from_dialog(line_list)
+                global wave_range
+                if wave_range[0] and wave_range[1]:
+                    self._build_view(line_list, 0, waverange=wave_range)
 
-            self.line_list_selector.setCurrentIndex(0)
+                self.line_list_selector.setCurrentIndex(0)
+
+            except UnitConversionError as err:
+                error_dialog = QErrorMessage()
+                error_dialog.showMessage('Units conversion not possible.')
+                error_dialog.exec_()
 
     def _build_waverange_dialog(self, wave_range, line_list):
 

@@ -335,98 +335,101 @@ class FitsYamlRegister(YamlRegister):
                     dispersion_unit=disp_unit, meta=meta)
 
 
+
+#TODO  I wonder if this is still needed.
+
+# class AsciiYamlRegister(YamlRegister):
+#     """
+#     Defines the generation of `Spectrum1DRef` objects by parsing ASCII
+#     files with information from YAML files.
+#     """
+#     def reader(self, filename, **kwargs):
+#         """Like :func:`fits_reader` but for ASCII file."""
+#         name = os.path.basename(filename.rstrip(os.sep)).rsplit('.', 1)[0]
+#         tab = ascii.read(filename, **kwargs)
+#         cols = tab.colnames
+#
+#         meta = c.meta
+#         meta['header'] = {}
+#
+#         # Only loads KEY=VAL comment entries into header
+#         if 'comments' in tab.meta:
+#             for s in tab.meta['comments']:
+#                 if '=' not in s:
+#                     continue
+#                 s2 = s.split('=')
+#                 meta['header'][s2[0]] = s2[1]
+#
+#         wcs = None
+#         wave = tab[cols[self._reference.dispersion['col']]]
+#         dispersion = wave.data
+#         flux = tab[cols[self._reference.data['col']]]
+#         data = flux.data
+#         uncertainty = np.zeros(data.shape)
+#         uncertainty_type = 'std'
+#
+#         if flux.unit is None:
+#             unit = u.Unit(self._reference.data.get('unit', default_fluxunit))
+#         else:
+#             unit = flux.unit
+#
+#         if wave.unit is None:
+#             disp_unit = u.Unit(self._reference.dispersion.get('unit', default_waveunit))
+#         else:
+#             disp_unit = wave.unit
+#
+#         # Since there's no WCS, include the dispersion unit in the meta data
+#         meta['header']['cunit'] = [disp_unit.to_string(), unit.to_string()]
+#
+#         # 0/False = good data (unlike Layers)
+#         mask = np.zeros(data.shape, dtype=np.bool)
+#
+#         if hasattr(self._reference, 'uncertainty') and self._reference.uncertainty.get('col') is not None:
+#             try:
+#                 uncertainty = tab[cols[self._reference.uncertainty['col']]].data
+#             except IndexError:
+#                 pass  # Input has no uncertainty column
+#             else:
+#                 uncertainty_type = self._reference.uncertainty.get('type', 'std')
+#
+#         # This is dictated by the type of the uncertainty.
+#         uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
+#
+#         if hasattr(self._reference, 'mask') and self._reference.mask.get('col') is not None:
+#             try:
+#                 mask = tab[cols[self._reference.mask['col']]].data.astype(np.bool)
+#                 meta['bitmask'] = mask.astype(np.int)
+#
+#                 if self._reference.mask.get('definition') is not None:
+#                     if self._reference.mask.get('definition') == 'sdss':
+#                         mask_def = ascii.read(
+#                             os.path.join(os.path.dirname(__file__),
+#                                          '..', 'data', 'mask_definitions',
+#                                          'sdss.ecsv'))
+#                         meta['mask_def'] = mask_def
+#                     elif self._reference.mask.get('definition') == 'jwst':
+#                         mask_def = ascii.read(
+#                             os.path.join(os.path.dirname(__file__),
+#                                          '..', 'data', 'mask_definitions',
+#                                          'jwst.ecsv'))
+#                         meta['mask_def'] = mask_def
+#             except IndexError:
+#                 pass  # Input has no mask column
+#
+#         return Spectrum1DRef(name=str(name), data=data, dispersion=dispersion,
+#                     uncertainty=uncertainty, mask=mask, wcs=wcs,
+#                     unit=unit, dispersion_unit=disp_unit, meta=meta)
+
+
 class AsciiYamlRegister(YamlRegister):
     """
-    Defines the generation of `Spectrum1DRef` objects by parsing ASCII
-    files with information from YAML files.
-    """
-    def reader(self, filename, **kwargs):
-        """Like :func:`fits_reader` but for ASCII file."""
-        name = os.path.basename(filename.rstrip(os.sep)).rsplit('.', 1)[0]
-        tab = ascii.read(filename, **kwargs)
-        cols = tab.colnames
-
-        meta = c.meta
-        meta['header'] = {}
-
-        # Only loads KEY=VAL comment entries into header
-        if 'comments' in tab.meta:
-            for s in tab.meta['comments']:
-                if '=' not in s:
-                    continue
-                s2 = s.split('=')
-                meta['header'][s2[0]] = s2[1]
-
-        wcs = None
-        wave = tab[cols[self._reference.dispersion['col']]]
-        dispersion = wave.data
-        flux = tab[cols[self._reference.data['col']]]
-        data = flux.data
-        uncertainty = np.zeros(data.shape)
-        uncertainty_type = 'std'
-
-        if flux.unit is None:
-            unit = u.Unit(self._reference.data.get('unit', default_fluxunit))
-        else:
-            unit = flux.unit
-
-        if wave.unit is None:
-            disp_unit = u.Unit(self._reference.dispersion.get('unit', default_waveunit))
-        else:
-            disp_unit = wave.unit
-
-        # Since there's no WCS, include the dispersion unit in the meta data
-        meta['header']['cunit'] = [disp_unit.to_string(), unit.to_string()]
-
-        # 0/False = good data (unlike Layers)
-        mask = np.zeros(data.shape, dtype=np.bool)
-
-        if hasattr(self._reference, 'uncertainty') and self._reference.uncertainty.get('col') is not None:
-            try:
-                uncertainty = tab[cols[self._reference.uncertainty['col']]].data
-            except IndexError:
-                pass  # Input has no uncertainty column
-            else:
-                uncertainty_type = self._reference.uncertainty.get('type', 'std')
-
-        # This is dictated by the type of the uncertainty.
-        uncertainty = _set_uncertainty(uncertainty, uncertainty_type)
-
-        if hasattr(self._reference, 'mask') and self._reference.mask.get('col') is not None:
-            try:
-                mask = tab[cols[self._reference.mask['col']]].data.astype(np.bool)
-                meta['bitmask'] = mask.astype(np.int)
-
-                if self._reference.mask.get('definition') is not None:
-                    if self._reference.mask.get('definition') == 'sdss':
-                        mask_def = ascii.read(
-                            os.path.join(os.path.dirname(__file__),
-                                         '..', 'data', 'mask_definitions',
-                                         'sdss.ecsv'))
-                        meta['mask_def'] = mask_def
-                    elif self._reference.mask.get('definition') == 'jwst':
-                        mask_def = ascii.read(
-                            os.path.join(os.path.dirname(__file__),
-                                         '..', 'data', 'mask_definitions',
-                                         'jwst.ecsv'))
-                        meta['mask_def'] = mask_def
-            except IndexError:
-                pass  # Input has no mask column
-
-        return Spectrum1DRef(name=str(name), data=data, dispersion=dispersion,
-                    uncertainty=uncertainty, mask=mask, wcs=wcs,
-                    unit=unit, dispersion_unit=disp_unit, meta=meta)
-
-
-class EcsvYamlRegister(YamlRegister):
-    """
     Defines the generation of `Spectrum1DRef` objects by parsing
-    ECSV files with information from YAML files.
+    ASCII files with information from YAML files.
 
     """
     def reader(self, filename, **kwargs):
 
-        table = Table.read(filename, format='ascii.ecsv')
+        table = self.get_table(filename)
 
         flux_name = self._reference.data['col']
         dispersion_name = self._reference.dispersion['col']
@@ -436,6 +439,19 @@ class EcsvYamlRegister(YamlRegister):
                                         unit=table[flux_name].unit,
                                         dispersion_unit=table[dispersion_name].unit,
                                         meta=self._reference.meta)
+
+    def get_table(self, filename):
+        return ascii.read(filename)
+
+
+class EcsvYamlRegister(AsciiYamlRegister):
+    """
+    Defines the generation of `Spectrum1DRef` objects by parsing
+    ECSV files with information from YAML files.
+
+    """
+    def get_table(self, filename):
+        return Table.read(filename, format='ascii.ecsv')
 
 
 class LineListYamlRegister(YamlRegister):
