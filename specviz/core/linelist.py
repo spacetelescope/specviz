@@ -14,6 +14,7 @@ import numpy as np
 from astropy.io import ascii
 from astropy.table import Table, vstack
 from astropy import constants
+from astropy.units.core import UnitConversionError
 
 
 __all__ = [
@@ -107,9 +108,11 @@ def ingest(range):
     """
     result = []
     for linelist in _linelists_cache:
-        ll = linelist.extract_range(range)
-
-        result.append(ll)
+        try:
+            ll = linelist.extract_range(range)
+            result.append(ll)
+        except UnitConversionError as err:
+            pass
 
     return result
 
