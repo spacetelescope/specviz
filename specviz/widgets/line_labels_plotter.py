@@ -19,7 +19,7 @@ class LineLabelsPlotter(object):
         # When porting code to this new class, we kept references
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
-        self._is_selected = caller._is_selected
+        self._caller = caller
         self._plot_item = caller._plot_item
         self._linelist_window = caller._linelist_window
         self._linelists = caller.linelists
@@ -40,18 +40,24 @@ class LineLabelsPlotter(object):
 #--------  Slots.
 
     @dispatch.register_listener("on_dismiss_linelists_window")
-    def _dismiss_linelists_window(self, *args, **kwargs):
-        if self._is_selected and self._linelist_window:
+    def _dismiss_linelists_window(self, close, **kwargs):
+        if self._caller._is_selected and self._linelist_window:
+            if close:
+                dispatch.on_erase_linelabels.emit(caller=self._caller)
+                dispatch.tear_down(self)
 
-            dispatch.on_erase_linelabels.emit()
-            dispatch.tear_down(self)
-
-            self._linelist_window.close()
-            self._linelist_window = None
+                self._linelist_window.close()
+                self._linelist_window = None
+            else:
+                self._linelist_window.hide()
 
     @dispatch.register_listener("on_erase_linelabels")
-    def _erase_linelabels(self, *args, **kwargs):
-        if self._linelist_window and self._is_selected:
+    def _erase_linelabels(self, caller, *args, **kwargs):
+
+        if caller != self._caller:
+            return
+
+        if self._linelist_window and self._caller._is_selected:
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
 
@@ -59,9 +65,9 @@ class LineLabelsPlotter(object):
 
     # Main method for drawing line labels on the plot surface.
     @dispatch.register_listener("on_plot_linelists")
-    def _plot_linelists(self, table_views, panes, units, **kwargs):
+    def _plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
-        if not self._is_selected:
+        if caller != self._caller or not self._caller._is_selected:
             return
 
         # Get a list of the selected indices in each line list.

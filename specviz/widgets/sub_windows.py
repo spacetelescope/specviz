@@ -400,7 +400,7 @@ class PlotSubWindow(UiPlotSubWindow):
 
         # before tearing down event handlers, need to close
         # any line lists window that might be still open.
-        dispatch.on_dismiss_linelists_window.emit()
+        dispatch.on_dismiss_linelists_window.emit(close=True)
 
         dispatch.tear_down(self)
         super(PlotSubWindow, self).closeEvent(event)
@@ -569,8 +569,11 @@ class PlotSubWindow(UiPlotSubWindow):
             self._linelist_window.show()
 
     @dispatch.register_listener("on_dismiss_linelists_window")
-    def _dismiss_linelists_window(self, *args, **kwargs):
+    def _dismiss_linelists_window(self, close, **kwargs):
         if self._is_selected and self._linelist_window:
-            self._linelist_window.close()
-            self.line_labels_plotter = None
-            self._linelist_window = None
+            if close:
+                self._linelist_window.close()
+                self.line_labels_plotter = None
+                self._linelist_window = None
+            else:
+                self._linelist_window.hide()
