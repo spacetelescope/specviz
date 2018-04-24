@@ -79,9 +79,9 @@ class GaussianAbsorptionInitializer(object):
         sum_f = np.sum(flux[1:] * delta_w)
         amplitude = (sum_c - sum_f) / (sigma * np.sqrt( 2 * np.pi))
 
-        instance.amplitude = amplitude
-        instance.mean = centroid
-        instance.stddev = sigma
+        instance.amplitude = amplitude.value
+        instance.mean = centroid.value
+        instance.stddev = sigma.value
 
     def _initialize_linear(self, w, f):
 

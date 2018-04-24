@@ -65,7 +65,7 @@ class ModelFactory(Factory):
         'Voigt': models.Voigt1D,
         'Box': models.Box1D,
         'Spline': Spline1D,
-        # 'BlackBody': BlackBody,
+        'BlackBody': BlackBody,
 
         # polynomials have to be handled separately. Their calling sequence
         # is incompatible with the Fittable1DModel interface, and they run
