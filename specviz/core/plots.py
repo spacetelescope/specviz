@@ -143,10 +143,8 @@ class LinePlot(object):
         ----------
         x: `~astropy.units`
             The new units for the dispersion
-
         y: `~astropy.units`
             The new units for the flux
-
         z: `~astropy.units`
             The new units for the multi-spectral dimension.
         """
@@ -155,6 +153,7 @@ class LinePlot(object):
 
         self._layer.set_units(x, y)
         self._plot_units = (x, y, z)
+        self.update()
 
     def set_plot_visibility(self, show=None, inactive=None):
         """
