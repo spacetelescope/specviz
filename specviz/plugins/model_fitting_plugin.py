@@ -91,6 +91,9 @@ class ModelFittingPlugin(Plugin):
         self.contents.button_remove_model.clicked.connect(
             lambda: self.remove_model_item())
 
+        self.contents.button_remove_model.clicked.connect(
+            self.toggle_buttons)
+
         # When editing the formula is finished, send event
         self.contents.line_edit_model_arithmetic.editingFinished.connect(
             lambda: self.update_model_formula())
