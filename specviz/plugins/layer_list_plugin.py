@@ -113,7 +113,10 @@ class LayerListPlugin(Plugin):
         path, format = compat.getsavefilename(filters=all_filters)
 
         if path and format:
-            data.write(path, format=format)
+            try:
+                data.write(path, format=format)
+            except Exception as e:
+                logging.error(e)
 
     def _copy_model(self):
         layer_item = self.current_layer_item
@@ -228,17 +231,17 @@ class LayerListPlugin(Plugin):
 
         # Try again but the layer's parent object.
         # TODO this should not be needed.
-        for i in range(root.childCount()):
-            child = root.child(i)
+        # for i in range(root.childCount()):
+        #     child = root.child(i)
 
-            if child.data(0, Qt.UserRole)._parent == layer:
-                return child
+        #     if child.data(0, Qt.UserRole)._parent == layer:
+        #         return child
 
-            for j in range(child.childCount()):
-                sec_child = child.child(j)
+        #     for j in range(child.childCount()):
+        #         sec_child = child.child(j)
 
-                if sec_child.data(0, Qt.UserRole)._parent == layer:
-                    return sec_child
+        #         if sec_child.data(0, Qt.UserRole)._parent == layer:
+        #             return sec_child
 
     @dispatch.register_listener("replace_layer")
     def on_replace_layer(self, old_layer=None, new_layer=None, style=None):
@@ -268,6 +271,8 @@ class LayerListPlugin(Plugin):
 
         root = self.contents.tree_widget_layer_list.invisibleRootItem()
 
+        layers = [x for x in self.all_layers if x._parent == layer]
+
         for i in range(root.childCount()):
             child = root.child(i)
 
@@ -283,6 +288,9 @@ class LayerListPlugin(Plugin):
                     break
 
         dispatch.on_removed_layer.emit(layer=layer, window=self.active_window)
+
+        for orphan in layers:
+            self.remove_layer_item(layer=orphan)
 
     def add_layer(self, layer=None, layer_mask=None, window=None, from_roi=True):
         """
