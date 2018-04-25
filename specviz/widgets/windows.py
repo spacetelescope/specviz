@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         self.status_bar.showMessage(message, timeout)
 
     def closeEvent(self, event):
-        dispatch.on_dismiss_linelists_window.emit()
+        dispatch.on_dismiss_linelists_window.emit(close=True)
 
 
 class MdiArea(QMdiArea):

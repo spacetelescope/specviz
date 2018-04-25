@@ -59,7 +59,7 @@ class _Linear1DInitializer(object):
         y_mean = np.mean(y)
 
         instance.slope.value = 0.0
-        instance.intercept.value = y_mean
+        instance.intercept.value = y_mean.value
 
         return instance
 
