@@ -45,6 +45,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QToolButton" name="button_layer_arithmetic">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Perform arithmetic on layers</string>
        </property>
@@ -65,6 +68,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="button_change_color">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Change layer color in current plot</string>
        </property>
@@ -85,6 +91,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="button_export">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Export current layer to a file</string>
        </property>
@@ -118,6 +127,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="button_copy_model">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Copy the models of the current layer</string>
        </property>
@@ -138,6 +150,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="button_apply_model">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Paste copied models onto current layer</string>
        </property>
@@ -158,6 +173,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="button_remove_layer">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="toolTip">
         <string>Delete selected layer</string>
        </property>

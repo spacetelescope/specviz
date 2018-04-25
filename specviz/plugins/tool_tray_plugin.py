@@ -50,12 +50,12 @@ class ToolTrayPlugin(Plugin):
         #     category='Interactions',
         #     enabled=False)
 
-        self.add_tool_bar_actions(
-            name="Slice",
-            description='Slice tool',
-            icon_path=os.path.join(ICON_PATH, "Split Horizontal-48.png"),
-            category='Interactions',
-            enabled=False)
+        # self.add_tool_bar_actions(
+        #     name="Slice",
+        #     description='Slice tool',
+        #     icon_path=os.path.join(ICON_PATH, "Split Horizontal-48.png"),
+        #     category='Interactions',
+        #     enabled=False)
 
         self.button_smooth = self.add_tool_bar_actions(
             name="Smooth",
