@@ -41,7 +41,7 @@ def simple_generic_writer(data, file_name, **kwargs):
     tbhdu = fits.BinTableHDU.from_columns(cols)
 
     # Create header
-    prihdu = fits.PrimaryHDU(header=data.meta.get('header', data.wcs.to_header()))
+    prihdu = fits.PrimaryHDU(header=data.meta.get('header', data.wcs.to_header() if data.wcs is not None else None))
 
     # Compose
     thdulist = fits.HDUList([prihdu, tbhdu])
