@@ -325,20 +325,22 @@ class PlotSubWindow(UiPlotSubWindow):
 
     @dispatch.register_listener("changed_units")
     def change_units(self, x=None, y=None, z=None):
-        for cntr in self._plots:
-            cntr.change_units(x, y, z)
-
         if len(self._plots) > 0:
-            cur_disp_line_pos = Quantity(
-                self._disp_line.value(),
-                self._plot_units[0] or self._plots[0].layer.dispersion_unit)
+            for cntr in self._plots:
+                cntr.change_units(x, y, z)
 
             self._plot_units = [self._plots[0].layer.dispersion_unit,
                                 self._plots[0].layer.unit, z]
 
+            cur_disp_line_pos = Quantity(
+                self._disp_line.value(),
+                self._plot_units[0] or self._plots[0].layer.dispersion_unit)
+
             # Update vertical line indicated position
             self._disp_line.setValue(cur_disp_line_pos.to(
                 self._plots[0].layer.dispersion_unit).value)
+        else:
+            self._plot_units = [x, y, z]
 
         self.set_labels(*self._plot_units)
         self._plot_item.enableAutoRange()
@@ -456,14 +458,15 @@ class PlotSubWindow(UiPlotSubWindow):
         new_plot = LinePlot.from_layer(
             layer, **(style or {'color': next(self._available_colors)}))
 
-        if len(self._plots) == 0:
-            self.change_units(new_plot.layer.dispersion_unit, new_plot.layer.unit)
-        else:
+        if len(self._plots) > 0:
             if not new_plot.layer.set_units(*self._plot_units[:2]):
                 logging.error("Unable to convert data layer units to plot units.")
 
                 dispatch.on_remove_layer.emit(layer=layer)
                 return
+        else:
+            # Update plot units
+            self.change_units(new_plot.layer.dispersion_unit, new_plot.layer.unit)
 
         if new_plot.error is not None:
             self._plot_item.addItem(new_plot.error)
@@ -475,9 +478,6 @@ class PlotSubWindow(UiPlotSubWindow):
         self._plot_item.addItem(new_plot.plot)
 
         self.set_active_plot(new_plot.layer)
-
-        # Update plot units
-        self._plot_units = [layer.dispersion_unit, layer.unit, None]
 
         # Make sure the dynamic axis object has access to a layer
         self._dynamic_axis._layer = self._plots[0].layer
