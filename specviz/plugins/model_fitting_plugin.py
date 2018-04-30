@@ -112,7 +112,7 @@ class ModelFittingPlugin(Plugin):
             self.save_model)
 
         self.contents.button_load_model.clicked.connect(
-            self.load_model)
+            lambda: self.load_model())
 
         self.contents.button_export_model.clicked.connect(
             self.export_model)
@@ -553,9 +553,11 @@ class ModelFittingPlugin(Plugin):
         if root.childCount() > 0:
             self.contents.group_box_fitting.setEnabled(True)
             self.contents.button_save_model.setEnabled(True)
+            self.contents.button_export_model.setEnabled(True)
         else:
             self.contents.group_box_fitting.setEnabled(False)
             self.contents.button_save_model.setEnabled(False)
+            self.contents.button_export_model.setEnabled(True)
 
     @dispatch.register_listener("on_selected_layer")
     def toggle_io(self, layer_item, *args, **kwargs):
