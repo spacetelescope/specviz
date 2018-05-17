@@ -223,7 +223,8 @@ class LineList(Table):
         tab = ascii.read(filename, format = yaml_loader.format,
                          names = names_list,
                          col_starts = start_list,
-                         col_ends = end_list)
+                         col_ends = end_list,
+                         encoding='utf-8')
 
         for k, colname in enumerate(tab.columns):
             tab[colname].unit = units_list[k]
