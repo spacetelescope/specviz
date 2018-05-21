@@ -1,4 +1,4 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
+import os
 
-# This sub-module is destined for common non-package specific utility
-# functions.
+
+UI_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "ui"))
