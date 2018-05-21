@@ -1,0 +1,16 @@
+Documentation
+=============
+
+This is the documentation for specviz.
+An gui-based interactive analysis tool for one dimensional astronomical data
+using Python.
+
+.. toctree::
+  :maxdepth: 2
+
+  specviz/index.rst
+
+.. note:: The layout of this directory is simply a suggestion.  To follow
+          traditional practice, do *not* edit this page, but instead place
+          all documentation for the package inside ``specviz/``.
+          You can follow this practice or choose your own layout.
