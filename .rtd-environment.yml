@@ -1,8 +1,0 @@
-name: specviz
-
-channels:
-    - astropy
-
-dependencies:
-    - astropy
-    - pyqt
