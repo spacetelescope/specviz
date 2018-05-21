@@ -3,7 +3,6 @@ import sys
 from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 
-from .client import launch as client_launch
 from .widgets.main_window import MainWindow
 from .core.hub import Hub
 
