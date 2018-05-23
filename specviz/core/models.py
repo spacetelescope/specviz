@@ -1,7 +1,13 @@
+import uuid
+
 import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import QAbstractListModel, QModelIndex, Qt, QVariant, Slot
+from qtpy.QtCore import (QAbstractListModel, QModelIndex, Qt, QVariant, Slot,
+                         QCoreApplication)
 from qtpy.QtGui import QColor, QIcon, QPixmap
+
+from specutils import Spectrum1D
+import astropy.units as u
 
 from .items import DataItem
 
@@ -10,17 +16,25 @@ class DataListModel(QAbstractListModel):
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
+        spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
+                           spectral_axis=np.arange(100) * u.AA)
+
         self._items = [
-            DataItem(identifier="1", name="My data {}".format(np.random.randint(0, 100)), color="cyan", parent=self),
-            DataItem(identifier="2", name="My data {}".format(np.random.randint(0, 100)), color="blue", visible=False, parent=self),
-            DataItem(identifier="3", name="My data {}".format(np.random.randint(0, 100)), color="red", parent=self),
-            DataItem(identifier="4", name="My data {}".format(np.random.randint(0, 100)), color="green", parent=self),
+            DataItem(name='MyData 1', identifier=uuid.uuid4(), data=spec1,
+                     color='#336699')
         ]
 
-        # The data model needs to listen for add data events
-        # self._hub = Hub()
-        # self._hub.subscribe(AddDataMessage, self.add_data, self)
-        # self._hub.subscribe(AddPlotDataMessage, self.add_data, self)
+        # Cache a reference to the event hub
+        # self._hub = QCoreApplication.instance().hub
+
+        self.setup_connections()
+
+    def setup_connections(self):
+        pass
+
+    @property
+    def items(self):
+        return self._items
 
     def flags(self, index):
         flags = super(DataListModel, self).flags(index)
@@ -43,18 +57,20 @@ class DataListModel(QAbstractListModel):
             icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
                             color=item.color)
             return icon
+        elif role == Qt.EditRole:
+            pass
 
         return QVariant()
 
-    def insertRow(self, row, parent=QModelIndex(), **kwargs):
+    def insertRow(self, row, data, parent=QModelIndex(), **kwargs):
         self.beginInsertRows(parent, row, row + 1)
-        self._items.insert(row, DataItem(name="New data item", color="black"))
+        self._items.insert(row, data)
         self.endInsertRows()
 
-    def insertRows(self, row, count, parent=QModelIndex(), **kwargs):
+    def insertRows(self, row, count, data, parent=QModelIndex(), **kwargs):
         self.beginInsertRows(parent, row, row + count - 1)
         for i in count:
-            self._items.insert(row + i, DataItem(name="New data item", color="black"))
+            self._items.insert(row + i, data[i])
         self.endInsertRows()
 
     @Slot(int)
@@ -72,13 +88,11 @@ class DataListModel(QAbstractListModel):
 
         return True
 
-    def setData(self, index, value, *args, **kwargs):
+    def setData(self, index, value, role=Qt.EditRole, *args, **kwargs):
         if not index.isValid():
             return False
 
-        if not 0 <= index.row() < self.rowCount():
-            self._items.append(value)
-        else:
-            self._items[index.row()] = value
+        if role == Qt.EditRole:
+            self._items[index.row()].name = value
 
         return True

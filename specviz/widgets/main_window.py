@@ -1,11 +1,14 @@
 import os
 
-from qtpy.QtWidgets import QMainWindow, QSizePolicy, QWidget, QApplication, QActionGroup
+from qtpy.QtWidgets import (QMainWindow, QSizePolicy, QWidget, QApplication,
+                            QActionGroup)
+from qtpy.QtCore import QCoreApplication
 from qtpy.uic import loadUi
 
 from .workspace import Workspace
 from ..utils import UI_PATH
 from . import resources
+from ..core.hub import Hub
 
 __all__ = ['MainWindow']
 
@@ -57,12 +60,19 @@ class MainWindow(UiMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
 
+        # Add a hub object to this application. Attaching it here means
+        # we can have a central hub for every application instance.
+        self._hub = Hub()
+
         # Setup connections
         self.setup_connections()
 
     def setup_connections(self):
+        # Connect menu bar actions
+        # self.menu_bar.
+
         # Primary toolbar actions
-        self.new_workspace_action.triggered.connect(lambda: MainWindow().show())
+        self.new_workspace_action.triggered.connect(lambda: MainWindow(self.parent()).show())
         self.new_plot_action.triggered.connect(self._on_new_plot)
         self.load_data_action.triggered.connect(self._on_load_data)
 
