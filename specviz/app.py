@@ -7,13 +7,9 @@ from .widgets.main_window import MainWindow
 from .core.hub import Hub
 
 
-def start(server_ip=None, client_ip=None):
+def start():
     # Start the application
     app = QApplication(sys.argv)
-
-    # Add a hub object to this application. Attaching it here means
-    # we can have a central hub for every application instance.
-    app.hub = Hub()
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
