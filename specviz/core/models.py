@@ -3,13 +3,13 @@ import uuid
 import numpy as np
 import qtawesome as qta
 from qtpy.QtCore import (QAbstractListModel, QModelIndex, Qt, QVariant, Slot,
-                         QCoreApplication)
+                         QCoreApplication, QSortFilterProxyModel)
 from qtpy.QtGui import QColor, QIcon, QPixmap
 
 from specutils import Spectrum1D
 import astropy.units as u
 
-from .items import DataItem
+from .items import DataItem, PlotDataItem
 
 
 class DataListModel(QAbstractListModel):
@@ -54,8 +54,8 @@ class DataListModel(QAbstractListModel):
         if role == Qt.DisplayRole:
             return item.name
         elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
-                            color=item.color)
+            icon = qta.icon('fa.eye-slash',
+                            color='black')
             return icon
         elif role == Qt.EditRole:
             pass
@@ -96,3 +96,29 @@ class DataListModel(QAbstractListModel):
             self._items[index.row()].name = value
 
         return True
+
+
+class PlotProxyModel(QSortFilterProxyModel):
+    def __init__(self, source, *args, **kwargs):
+        super(PlotProxyModel, self).__init__(*args, **kwargs)
+
+        self.setSourceModel(source)
+
+        self._items = [PlotDataItem(item) for item in self.sourceModel().items]
+
+    def data(self, index, role=None):
+        if not index.isValid():
+            return
+
+        item = self._items[index.row()]
+
+        if role == Qt.DisplayRole:
+            return item._data_item.name
+        elif role == Qt.DecorationRole:
+            icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
+                            color=item.color)
+            return icon
+        elif role == Qt.EditRole:
+            pass
+
+        return QVariant()

@@ -1,15 +1,12 @@
 import numpy as np
-from qtpy.QtCore import QObject, Property, Signal, Slot
+import pyqtgraph as pg
+from qtpy.QtCore import Property, QObject, Signal, Slot
 
 from astropy.units import spectral, spectral_density
 
 
 class DataItem(QObject):
     name_changed = Signal(str)
-    data_unit_changed = Signal(str)
-    spectral_axis_unit_changed = Signal(str)
-    color_changed = Signal(str)
-    visibility_changed = Signal(bool)
 
     def __init__(self, name, identifier, data, unit=None,
                  spectral_axis_unit=None, color=None, visible=True, *args,
@@ -19,14 +16,6 @@ class DataItem(QObject):
         self._name = name
         self._identifier = identifier
         self._data = data
-        self._data_unit = unit or self._data.unit.to_string()
-        self._spectral_axis_unit = (spectral_axis_unit or
-                                    self._data.wcs.spectral_axis_unit.to_string())
-        self._color = color or '#000000'
-        self._visible = visible
-
-        # Set the attributes of this plot data item
-        
 
     @property
     def identifier(self):
@@ -43,14 +32,38 @@ class DataItem(QObject):
 
     @Property(list)
     def flux(self):
-        return self._data.flux.to(self.data_unit,
-                                  equivalencies=spectral_density(
-                                      self.spectral_axis)).value
+        return self._data.flux
 
     @Property(list)
     def spectral_axis(self):
-        return self._data.spectral_axis.to(self.spectral_axis_unit,
-                                           equivalencies=spectral()).value
+        return self._data.spectral_axis
+
+
+class PlotDataItem(pg.PlotDataItem):
+    data_unit_changed = Signal(str)
+    spectral_axis_unit_changed = Signal(str)
+    color_changed = Signal(str)
+    visibility_changed = Signal(bool)
+
+    def __init__(self, data_item, *args, **kwargs):
+        super(PlotDataItem, self).__init__(*args, **kwargs)
+
+        self._data_item = data_item
+        self._data_unit = self._data_item.flux.unit.to_string()
+        self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
+        self._color = '#000000'
+        self._visible = False
+
+        # Set data
+        self.set_data()
+        self.setPen(color=self.color)
+
+        # Connect slots to data item signals
+        self.data_unit_changed.connect(self.set_data)
+        self.spectral_axis_unit_changed.connect(self.set_data)
+
+        # Connect to color signals
+        self.color_changed.connect(lambda c: self.setPen(color=c))
 
     @Property(str, notify=data_unit_changed)
     def data_unit(self):
@@ -70,6 +83,17 @@ class DataItem(QObject):
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)
 
+    @Property(list)
+    def flux(self):
+        return self._data_item.flux.to(self.data_unit,
+                                       equivalencies=spectral_density(
+                                           self.spectral_axis)).value
+
+    @property
+    def spectral_axis(self):
+        return self._data_item.spectral_axis.to(self.spectral_axis_unit,
+                                                equivalencies=spectral()).value
+
     @Property(str, notify=color_changed)
     def color(self):
         return self._color
@@ -87,3 +111,10 @@ class DataItem(QObject):
     def visible(self, value):
         self._visible = value
         self.visibility_changed.emit(self._visible)
+
+    def update_data(self):
+        # Replot data
+        self.setData(self.spectral_axis, self.flux)
+
+    def set_data(self):
+        self.setData(self.spectral_axis, self.flux)

@@ -1,12 +1,9 @@
-from qtpy.QtWidgets import QWidget
-from qtpy.QtCore import Signal, Slot
+# from qtpy.QtWidgets import QObject
+from qtpy.QtCore import Signal, Slot, QObject
 
 
-class Hub(QWidget):
+class Hub(QObject):
     plot_added = Signal()
     plot_removed = Signal()
     data_added = Signal()
     data_removed = Signal()
-
-    def __init__(self, *args, **kwargs):
-        super(Hub, self).__init__(*args, **kwargs)

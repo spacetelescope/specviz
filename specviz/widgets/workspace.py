@@ -3,7 +3,7 @@ import os
 from qtpy.QtWidgets import QWidget, QTabBar
 from qtpy.uic import loadUi
 
-from ..core.models import DataListModel
+from ..core.models import DataListModel, PlotProxyModel
 from .plotting import PlotWindow
 
 from ..utils import UI_PATH
@@ -19,7 +19,6 @@ class Workspace(QWidget):
 
         # Define a new data list model for this workspace
         self._model = DataListModel()
-        self.list_view.setModel(self._model)
 
         # Don't expand mdiarea tabs
         self.mdi_area.findChild(QTabBar).setExpanding(True)
@@ -38,6 +37,7 @@ class Workspace(QWidget):
 
     def add_plot_window(self):
         plot_window = PlotWindow(parent=self)
+        self.list_view.setModel(plot_window.plot_widget.proxy_model)
         plot_window.setWindowTitle(plot_window._plot_widget.name)
         self.mdi_area.addSubWindow(plot_window)
         plot_window.showMaximized()

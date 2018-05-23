@@ -4,9 +4,10 @@ import pyqtgraph as pg
 import qtawesome as qta
 
 from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, QObject, Property
 from qtpy.uic import loadUi
 
+from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
 
 
@@ -53,6 +54,10 @@ class PlotWindow(QMdiSubWindow):
 
         self.setup_connections()
 
+    @property
+    def plot_widget(self):
+        return self._plot_widget
+
     def setup_connections(self):
         def change_color():
             model = self._model
@@ -79,12 +84,7 @@ class PlotWidget(pg.PlotWidget):
         self._spectral_axis_unit = None
 
         # Cache a reference to the model object that's attached to the parent
-        self._model = model
-
-        # Plot current data items that exist in the model
-        for item in self._model.items:
-            plot_data_item = PlotDataItem(item)
-            self.addItem(plot_data_item)
+        self._proxy_model = PlotProxyModel(model)
 
         self.setup_connections()
 
@@ -92,17 +92,27 @@ class PlotWidget(pg.PlotWidget):
     def name(self):
         return self._name
 
+    @property
+    def proxy_model(self):
+        return self._proxy_model
+
+    @property
+    def data_unit(self):
+        return self._data_unit
+
+    @property
+    def spectral_axis_unit(self):
+        return self._spectral_axis_unit
+
     def setup_connections(self):
         # Listen for model events to add/remove items from the plot
-        self._model.rowsInserted.connect(self.add_plot)
-        self._model.rowsAboutToBeRemoved.connect(self.remove_plot)
+        self._proxy_model.rowsInserted.connect(self.add_plot)
+        self._proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
 
     def add_plot(self, index, first, last):
         # Retrieve the data item from the model
-        data_item = self._model.data(index)
+        plot_data_item = self._proxy_model.data(index)
 
-        # Create new plot data item and add it to this plot
-        plot_data_item = PlotDataItem(data_item)
         self.addItem(plot_data_item)
 
         # Emit a plot added signal
@@ -110,10 +120,7 @@ class PlotWidget(pg.PlotWidget):
 
     def remove_plot(self, index, first, last):
         # Retrieve the data item from the model
-        data_item = self._model.data(index)
-
-        # Find the plot data item associated with this data item
-        plot_data_item = next((x for x in self.items), None)
+        plot_data_item = self._proxy_model.data(index)
 
         if plot_data_item is not None:
             # Remove plot data item from this plot
@@ -121,31 +128,3 @@ class PlotWidget(pg.PlotWidget):
 
             # Emit a plot added signal
             self.plot_removed.emit()
-
-
-class PlotDataItem(pg.PlotDataItem):
-    data_unit_changed = Signal(str)
-    spectral_axis_unit_changed = Signal(str)
-
-    def __init__(self, data_item, *args, **kwargs):
-        super(PlotDataItem, self).__init__(*args, **kwargs)
-
-        self._data_item = data_item
-
-        # Set data
-        self.set_data()
-        self.setPen(color=self._data_item.color)
-
-        # Connect slots to data item signals
-        self._data_item.flux_unit_changed.connect(self.set_data)
-        self._data_item.spectral_axis_unit_changed.connect(self.set_data)
-
-        # Connect to color signals
-        self._data_item.color_changed.connect(lambda c: self.setPen(color=c))
-
-    def update_data(self):
-        # Replot data
-        self.setData(self._data_item.spectral_axis, self._data_item.flux)
-
-    def set_data(self):
-        self.setData(self._data_item.spectral_axis, self._data_item.flux)
