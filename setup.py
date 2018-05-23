@@ -142,4 +142,4 @@ setup(name=PACKAGENAME,
       entry_points=entry_points,
       python_requires='>={}'.format(__minimum_python_version__),
       **package_info
-)
+      )
