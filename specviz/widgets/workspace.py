@@ -4,7 +4,7 @@ from qtpy.QtWidgets import QWidget, QTabBar
 from qtpy.uic import loadUi
 
 from ..core.models import DataListModel
-from .plot_window import PlotWindow
+from .plotting import PlotWindow
 
 from ..utils import UI_PATH
 
@@ -37,7 +37,7 @@ class Workspace(QWidget):
         return self.mdi_area.currentSubWindow()
 
     def add_plot_window(self):
-        plot_window = PlotWindow()
-        plot_window.setWindowTitle(plot_window.name)
+        plot_window = PlotWindow(parent=self)
+        plot_window.setWindowTitle(plot_window._plot_widget.name)
         self.mdi_area.addSubWindow(plot_window)
         plot_window.showMaximized()
