@@ -35,14 +35,14 @@ env:
         - PIP_DEPENDENCIES=''
         - EVENT_TYPE='pull_request push'
 
-        
+
         # List other runtime dependencies for the package that are available as
         # conda packages here.
         - CONDA_DEPENDENCIES=''
-        
+
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        # - PIP_DEPENDENCIES=''
+        - PIP_DEPENDENCIES='astropy pyqt pyqtgraph qtawesome qtpy git+https://github.com/astropy/specutils'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
