@@ -4,7 +4,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from astropy import units as u
 
-from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog
+from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
 from qtpy.uic import loadUi
 
 from ..utils import UI_PATH
@@ -52,9 +52,9 @@ class UiPlotWindow(QMdiSubWindow):
                      color_active='orange'))
 
         self._main_window.change_unit_action.setIcon(
-            qta.icon('fa.download',
+            qta.icon('fa.exchange',
                      active='fa.legal',
-                     color='blue',
+                     color='black',
                      color_active='orange'))
 
     def setup_connections(self):
@@ -83,19 +83,41 @@ class UnitChangeDialog(QDialog):
     def __init__(self, *args, **kwargs):
         super(UnitChangeDialog, self).__init__(*args, **kwargs)
 
+        # Load the ui dialog
         self.ui = loadUi(os.path.join(UI_PATH, "unit_change_dialog.ui"), self)
 
+        # Load Units to be used in combobox
         self._units = [u.m, u.cm, u.mm, u.um, u.nm, u.AA]
         self._units_titles = list(u.long_names[0].title() for u in self._units) + ["Custom"]
-        self.ui.comboBox_2.addItems(self._units_titles)
+        self.current_units = self._units_titles[0]
 
-        self.ui.comboBox_2.currentTextChanged.connect(self.current_text_changed)
+        self.setup_ui()
+        self.setup_connections()
 
-        self.ui.lineEdit.hide()
+    def setup_ui(self):
+        """Setup the PyQt UI for this dialog."""
+        self.ui.comboBox_units.addItems(self._units_titles)
+        self.ui.line_custom.hide()
+        self.ui.label_convert.setText("Convert Units from {} to: ".format(self.current_units))
 
-    def current_text_changed(self):
-        print(self.ui.comboBox_2.currentText())
-        if self.ui.comboBox_2.currentText() == "Custom":
-            self.ui.lineEdit.show()
+    def setup_connections(self):
+        """Setup signal/slot connections for this dialog."""
+        self.ui.comboBox_units.currentTextChanged.connect(self.on_combobox_change)
+        self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.on_accepted)
+        self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.on_canceled)
+
+    def on_combobox_change(self):
+        """Called when the text of the unit combo box has changed."""
+        if self.ui.comboBox_units.currentText() == "Custom":
+            self.ui.line_custom.show()
         else:
-            self.ui.lineEdit.hide()
+            self.ui.line_custom.hide()
+
+    def on_accepted(self):
+        """Called when the user clicks the "Ok" button of the dialog."""
+        self.current_units = self.ui.comboBox_units.currentText()
+        self.close()
+
+    def on_canceled(self):
+        """Called when the user clicks the "Cancel" button of the dialog."""
+        self.close()
