@@ -12,7 +12,7 @@ from ..utils import UI_PATH
 
 
 class PlotWindow(QMdiSubWindow):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
 
         # The central widget of the sub window will be a main window so that it
@@ -23,8 +23,8 @@ class PlotWindow(QMdiSubWindow):
         loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._main_window)
 
         # The central widget of the main window widget will be the plot
-        self._model = self.parent().model
-        self._plot_widget = PlotWidget(model=self.parent().model)
+        self._model = model
+        self._plot_widget = PlotWidget(model=self._model)
         self._main_window.setCentralWidget(self._plot_widget)
 
         # Add the qtawesome icons to the plot-specific actions
