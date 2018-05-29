@@ -115,7 +115,10 @@ class UnitChangeDialog(QDialog):
 
     def on_accepted(self):
         """Called when the user clicks the "Ok" button of the dialog."""
-        self.current_units = self.ui.comboBox_units.currentText()
+        if self.ui.comboBox_units.currentText() == "Custom":
+            self.current_units = self.line_custom.text()
+        else:
+            self.current_units = self.ui.comboBox_units.currentText()
         self.close()
 
     def on_canceled(self):
