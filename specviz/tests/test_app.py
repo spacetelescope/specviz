@@ -10,4 +10,4 @@ def test_start_main_window(qtbot):
     window = UiMainWindow()
     window.show()
 
-    assert "Untitled Workspace" in window.title
+    assert "Untitled Workspace" in window.windowTitle()
