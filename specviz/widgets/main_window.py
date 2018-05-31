@@ -1,14 +1,14 @@
 import os
 
-from qtpy.QtWidgets import (QMainWindow, QSizePolicy, QWidget, QApplication,
-                            QActionGroup)
 from qtpy.QtCore import QCoreApplication, QEvent, Signal
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
+                            QSizePolicy, QWidget)
 from qtpy.uic import loadUi
 
-from .workspace import Workspace
-from ..utils import UI_PATH
 from . import resources
 from ..core.hub import Hub
+from ..utils import UI_PATH
+from .workspace import Workspace
 
 __all__ = ['MainWindow']
 
@@ -65,17 +65,16 @@ class MainWindow(UiMainWindow):
         # Setup connections
         self.setup_connections()
 
-        # Attach a hub instance to this window
-        self._hub = Hub(self)
-
     @property
-    def hub(self):
-        return self._hub
+    def workspace(self):
+        """
+        """
+        return self._workspace
 
     def setup_connections(self):
         self.new_workspace_action.triggered.connect(QApplication.instance().add_workspace)
-        self.new_plot_action.triggered.connect(self._on_new_plot)
-        self.load_data_action.triggered.connect(self._on_load_data)
+        self.new_plot_action.triggered.connect(self.workspace._on_new_plot)
+        self.load_data_action.triggered.connect(self.workspace._on_load_data)
 
         # Plugin toolbar actions
         self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
@@ -93,12 +92,6 @@ class MainWindow(UiMainWindow):
 
         return super(MainWindow, self).event(e)
 
-    def _on_new_plot(self):
-        self._workspace.add_plot_window()
-
-    def _on_load_data(self):
-        pass
-
     def _on_toggle_plugin_dock(self):
         if self._plugin_action_group.checkedAction():
             self.plugin_dock.show()
@@ -113,8 +106,7 @@ class MainWindow(UiMainWindow):
             for act in self._plugin_action_group.actions():
                 act.setChecked(False)
 
-    @property
-    def workspace(self):
-        """
-        """
-        return self._workspace
+    def _on_plugin_dock_visbility_changed(self, visible):
+        if not visible:
+            for act in self._plugin_action_group.actions():
+                act.setChecked(False)
