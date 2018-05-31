@@ -1,13 +1,16 @@
 import os
 
-from qtpy.QtWidgets import QWidget, QTabBar
-from qtpy.uic import loadUi
+from astropy.io import registry as io_registry
+from qtpy import compat
 from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QTabBar, QWidget, QAction, QColorDialog
+from qtpy.uic import loadUi
+
+from specutils import Spectrum1D
 
 from ..core.models import DataListModel, PlotProxyModel
-from .plotting import PlotWindow
-
 from ..utils import UI_PATH
+from .plotting import PlotWindow
 
 
 class Workspace(QWidget):
@@ -24,6 +27,19 @@ class Workspace(QWidget):
         # Don't expand mdiarea tabs
         self.mdi_area.findChild(QTabBar).setExpanding(True)
 
+        # Add an initially empty plot
+        self.add_plot_window()
+
+        # Setup listview context menu
+        self._toggle_visibility_action = QAction("Visible", parent=self)
+        self._toggle_visibility_action.setCheckable(True)
+        self._change_color_action = QAction("Change Color", parent=self)
+
+        self.list_view.addAction(self._change_color_action)
+        self.list_view.addAction(self._toggle_visibility_action)
+
+        self.setup_connections()
+
     @property
     def name(self):
         return self._name
@@ -38,7 +54,14 @@ class Workspace(QWidget):
 
     @property
     def current_plot_window(self):
-        return self.mdi_area.currentSubWindow()
+        return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
+
+    def setup_connections(self):
+        # When the current subwindow changes, mount that subwindow's proxy model
+        self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
+
+        self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
+        self._change_color_action.triggered.connect(self._on_changed_color)
 
     def add_plot_window(self):
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
@@ -49,3 +72,42 @@ class Workspace(QWidget):
 
         self.mdi_area.addSubWindow(plot_window)
         plot_window.showMaximized()
+
+    def _on_sub_window_activated(self, window):
+        if window is not None:
+            self.list_view.setModel(window.proxy_model)
+
+    def _on_toggle_visibility(self, state):
+        idx = self.list_view.currentIndex()
+        item = self.proxy_model.data(idx, role=Qt.UserRole)
+
+        item.visible = state
+
+        self.proxy_model.dataChanged.emit(idx, idx)
+
+    def _on_changed_color(self, color):
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            idx = self.list_view.currentIndex()
+            item = self.proxy_model.data(idx, role=Qt.UserRole)
+
+            item.color = color.name()
+
+            self.proxy_model.dataChanged.emit(idx, idx)
+
+    def _on_new_plot(self):
+        self.add_plot_window()
+
+    def _on_load_data(self):
+        filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]
+
+        file_path, fmt = compat.getopenfilename(parent=self,
+                                                caption="Load spectral data file",
+                                                filters=";;".join(filters))
+
+        spec = Spectrum1D.read(file_path, format=fmt.split()[0])
+
+        name = file_path.split('/')[-1].split('.')[0]
+        print("loading ", name)
+        self.model.add_data(spec, name=name)
