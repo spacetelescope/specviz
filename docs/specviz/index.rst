@@ -8,3 +8,4 @@ Reference/API
 =============
 
 .. automodapi:: specviz
+   :skip: ConfigParser
