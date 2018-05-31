@@ -4,7 +4,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 
 from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction
-from qtpy.QtCore import Signal, QObject, Property
+from qtpy.QtCore import Signal, QObject, Property, QModelIndex
 from qtpy.uic import loadUi
 
 from ..core.models import PlotProxyModel
@@ -12,6 +12,9 @@ from ..utils import UI_PATH
 
 
 class PlotWindow(QMdiSubWindow):
+    """
+    Displayed plotting subwindow availabel in the `QMdiArea`.
+    """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
 
@@ -52,20 +55,16 @@ class PlotWindow(QMdiSubWindow):
                      color='black',
                      color_active='orange'))
 
-        self.setup_connections()
-
     @property
     def plot_widget(self):
         return self._plot_widget
 
-    def setup_connections(self):
-        def change_color():
-            model = self._model
-            data_item = model.items[0]
-            print("Changing color on", data_item.name)
-            data_item.color = '#000000'
+    @property
+    def proxy_model(self):
+        return self.plot_widget.proxy_model
 
-        self._main_window.plot_options_action.triggered.connect(change_color)
+    def setup_connections(self):
+        pass
 
 
 class PlotWidget(pg.PlotWidget):
@@ -76,6 +75,11 @@ class PlotWidget(pg.PlotWidget):
         super(PlotWidget, self).__init__(*args, **kwargs)
 
         self._name = name or "Untitled Plot"
+        self._plot_item = self.getPlotItem()
+
+        # Define labels for axes
+        self._plot_item.setLabel('bottom', text='Wavelength')
+        self._plot_item.setLabel('left', text='Flux')
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -85,6 +89,10 @@ class PlotWidget(pg.PlotWidget):
 
         # Cache a reference to the model object that's attached to the parent
         self._proxy_model = PlotProxyModel(model)
+
+        # Initialize all plots
+        for i in range(len(self._proxy_model.sourceModel().items)):
+            self.add_plot(self._proxy_model.index(i, 0), initialize=i == 0)
 
         self.setup_connections()
 
@@ -109,16 +117,27 @@ class PlotWidget(pg.PlotWidget):
         self._proxy_model.rowsInserted.connect(self.add_plot)
         self._proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
 
-    def add_plot(self, index, first, last):
+    def add_plot(self, index, first=None, last=None, initialize=False):
         # Retrieve the data item from the model
-        plot_data_item = self._proxy_model.data(index)
+        plot_data_item = self._proxy_model.item_from_index(index)
+
+        if self.data_unit is not None:
+            plot_data_item.data_unit = self.data_unit
+            plot_data_item.spectral_axis_unit = self.spectral_axis_unit
 
         self.addItem(plot_data_item)
+
+        if initialize:
+            self._data_unit = plot_data_item.data_unit
+            self._spectral_axis_unit = plot_data_item.spectral_axis_unit
+
+            self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
+            self._plot_item.setLabel('left', units=self.data_unit)
 
         # Emit a plot added signal
         self.plot_added.emit()
 
-    def remove_plot(self, index, first, last):
+    def remove_plot(self, index, first=None, last=None):
         # Retrieve the data item from the model
         plot_data_item = self._proxy_model.data(index)
 
