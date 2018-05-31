@@ -1,0 +1,6 @@
+[
+  "specviz/tests/test_unit_conversion_gui.py::test_custom_units_correct",
+  "specviz/tests/test_unit_conversion_gui.py::test_custom_units_incorrect",
+  "specviz/tests/test_unit_conversion_gui.py::test_accept_works_correctly",
+  "specviz/tests/test_unit_conversion_gui.py::test_cancel_works_correctly"
+]

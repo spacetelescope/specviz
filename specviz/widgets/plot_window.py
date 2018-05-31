@@ -157,11 +157,18 @@ class UnitChangeDialog(QDialog):
             except Exception as e:
                 log.warning("DID NOT CHANGE UNITS. {}".format(e))
                 self.close()
+                return False
+            # If there are no units, just close the dialog and return False
+            if self.ui.line_custom.text() in ["", " "]:
+                log.warning("No custom units entered, units did not change")
+                self.close()
+                return False
 
             self.current_units = self.line_custom.text()
         else:
             self.current_units = self.ui.comboBox_units.currentText()
         self.close()
+        return True
 
     def on_canceled(self):
         """Called when the user clicks the "Cancel" button of the dialog."""
