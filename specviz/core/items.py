@@ -58,12 +58,16 @@ class PlotDataItem(pg.PlotDataItem):
         self.set_data()
         self.setPen(color=self.color)
 
+        if not self.visible:
+            self.setPen(None)
+
         # Connect slots to data item signals
         self.data_unit_changed.connect(self.set_data)
         self.spectral_axis_unit_changed.connect(self.set_data)
 
         # Connect to color signals
-        self.color_changed.connect(lambda c: self.setPen(color=c))
+        self.color_changed.connect(lambda c: self.setPen(color=c) if self.visible else None)
+        self.visibility_changed.connect(lambda s: self.setPen(None) if not s else self.setPen(self.color))
 
     @Property(str, notify=data_unit_changed)
     def data_unit(self):
