@@ -20,7 +20,9 @@ class DataListModel(QAbstractListModel):
                            spectral_axis=np.arange(100) * u.AA)
 
         self._items = [
-            DataItem(name='MyData 1', identifier=uuid.uuid4(), data=spec1,
+            DataItem(name='MyData 1',
+                     identifier=uuid.uuid4(),
+                     data=spec1,
                      color='#336699')
         ]
 
@@ -35,6 +37,16 @@ class DataListModel(QAbstractListModel):
     @property
     def items(self):
         return self._items
+
+    def add_data(self, spectrum, name="Unnamed Spectrum"):
+        """
+        Adds a new spectrum object to the model as a data item.
+        """
+        data_item = DataItem(name=name,
+                             identifier=uuid.uuid4(),
+                             data=spectrum)
+
+        self.insertRow(len(self.items), data_item)
 
     def flags(self, index):
         flags = super(DataListModel, self).flags(index)
@@ -63,7 +75,7 @@ class DataListModel(QAbstractListModel):
         return QVariant()
 
     def insertRow(self, row, data, parent=QModelIndex(), **kwargs):
-        self.beginInsertRows(parent, row, row + 1)
+        self.beginInsertRows(parent, row, row)
         self._items.insert(row, data)
         self.endInsertRows()
 
@@ -83,7 +95,7 @@ class DataListModel(QAbstractListModel):
 
     def removeRows(self, p_int, p_int_1, parent=QModelIndex(), *args, **kwargs):
         self.beginRemoveRows(parent, p_int, p_int_1)
-        del self._items[p_int:p_int_1 + 1]
+        del self._items[p_int:p_int_1]
         self.endRemoveRows()
 
         return True
@@ -93,24 +105,37 @@ class DataListModel(QAbstractListModel):
             return False
 
         if role == Qt.EditRole:
-            self._items[index.row()].name = value
+            if value != "":
+                self._items[index.row()].name = value
 
         return True
 
 
 class PlotProxyModel(QSortFilterProxyModel):
-    def __init__(self, source, *args, **kwargs):
+    def __init__(self, source=None, *args, **kwargs):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
         self.setSourceModel(source)
 
-        self._items = [PlotDataItem(item) for item in self.sourceModel().items]
+        self._items = {}
+
+    def setup_connections(self):
+        pass
+
+    def item_from_index(self, index):
+        index = self.mapToSource(index)
+        data_item = self.sourceModel().items[index.row()]
+
+        self._items.setdefault(data_item, PlotDataItem(data_item))
+        item = self._items.get(data_item)
+
+        return item
 
     def data(self, index, role=None):
         if not index.isValid():
             return
 
-        item = self._items[index.row()]
+        item = self.item_from_index(index)
 
         if role == Qt.DisplayRole:
             return item._data_item.name
@@ -118,7 +143,7 @@ class PlotProxyModel(QSortFilterProxyModel):
             icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
                             color=item.color)
             return icon
-        elif role == Qt.EditRole:
-            pass
+        elif role == Qt.UserRole:
+            return item
 
         return QVariant()

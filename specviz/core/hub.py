@@ -1,6 +1,9 @@
 from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Signal, Slot, QObject
 
+from specutils import Spectrum1D
+from astropy.io import registry as io_registry
+
 
 class Hub(QObject):
     """
@@ -31,3 +34,9 @@ class Hub(QObject):
         Retrieve the currently active window.
         """
         return self._current_window
+
+    def load_data(self, path):
+        pass
+
+    def data_loader_formats(self):
+        return io_registry.get_formats(Spectrum1D)['Format']
