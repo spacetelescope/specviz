@@ -1,6 +1,6 @@
 from qtpy.QtCore import Qt
 
-from specviz.widgets.main_window import UiMainWindow
+from ..widgets.main_window import UiMainWindow
 
 
 def test_start_main_window(qtbot):
