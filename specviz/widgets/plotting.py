@@ -1,14 +1,17 @@
 import os
+from itertools import cycle
+
 import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
-
-from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction
-from qtpy.QtCore import Signal, QObject, Property, QModelIndex
+from qtpy.QtCore import Property, QModelIndex, QObject, Qt, Signal
+from qtpy.QtWidgets import QAction, QListWidget, QMainWindow, QMdiSubWindow
 from qtpy.uic import loadUi
 
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
+
+flatui = ["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 
 class PlotWindow(QMdiSubWindow):
@@ -68,14 +71,42 @@ class PlotWindow(QMdiSubWindow):
 
 
 class PlotWidget(pg.PlotWidget):
+    """
+    The Qt widget housing all aspects of a single plot window. This includes
+    axes, plot data items, labels, etc.
+
+    Upon initialization of a new plot widget, items from the
+    :class:`~specviz.core.models.DataListModel` are added to the plot. The
+    first item that is added defines the units for the entire plot. Subsequent
+    data items will attempt to have their units converted.
+
+    Parameters
+    ----------
+    name : str
+        The name of this particular plot window.
+    model : :class:`~specviz.core.models.DataListModel`
+        The core model for this specviz instance. This will be referenced
+        through a proxy model when used for plotting.
+    visible : bool, optional
+        This overrides the individual plot data item visibility on
+        initialization of the plot widget.
+
+    Signals
+    -------
+    plot_added : None
+        Fired when a plot data item has been added to the plot widget.
+    plot_removed : None
+        Fired when a plot data item has been removed from the plot widget.
+    """
     plot_added = Signal()
     plot_removed = Signal()
 
-    def __init__(self, name=None, model=None, *args, **kwargs):
+    def __init__(self, name=None, model=None, visible=False, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
-
         self._name = name or "Untitled Plot"
         self._plot_item = self.getPlotItem()
+        self._visible = visible
+        self._color_map = cycle(flatui)
 
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='Wavelength')
@@ -91,10 +122,14 @@ class PlotWidget(pg.PlotWidget):
         self._proxy_model = PlotProxyModel(model)
 
         # Initialize all plots
-        for i in range(len(self._proxy_model.sourceModel().items)):
-            self.add_plot(self._proxy_model.index(i, 0), initialize=i == 0)
+        for i in range(len(self.proxy_model.sourceModel().items)):
+            self.add_plot(self.proxy_model.index(i, 0),
+                          visible=self._visible,
+                          initialize=i == 0)
 
-        self.setup_connections()
+        # Listen for model events to add/remove items from the plot
+        self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
+        self.proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
 
     @property
     def name(self):
@@ -112,14 +147,19 @@ class PlotWidget(pg.PlotWidget):
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
 
-    def setup_connections(self):
-        # Listen for model events to add/remove items from the plot
-        self._proxy_model.rowsInserted.connect(self.add_plot)
-        self._proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
+    def _check_unit_compatibility(self, index, first=None, last=None):
+        plot_data_item = self._proxy_model.item_from_index(index)
 
-    def add_plot(self, index, first=None, last=None, initialize=False):
+        if self._data_unit is not None and \
+            not plot_data_item.is_data_unit_compatible(self._data_unit):
+            plot_data_item.setEnabled(False)
+
+    def add_plot(self, index, first=None, last=None, visible=True,
+                 initialize=False):
         # Retrieve the data item from the model
         plot_data_item = self._proxy_model.item_from_index(index)
+        plot_data_item.visible = self._visible and visible
+        plot_data_item.color = next(self._color_map)
 
         if self.data_unit is not None:
             plot_data_item.data_unit = self.data_unit
@@ -137,9 +177,23 @@ class PlotWidget(pg.PlotWidget):
         # Emit a plot added signal
         self.plot_added.emit()
 
-    def remove_plot(self, index, first=None, last=None):
-        # Retrieve the data item from the model
-        plot_data_item = self._proxy_model.data(index)
+    def remove_plot(self, index, start=None, end=None):
+        """
+        Removes a plot data item given an index in the current plot sub
+        window's proxy model.
+
+        Parameters
+        ----------
+        index : :class:`~qtpy.QtCore.QModelIndex`
+            The index in the model of the data item associated with this plot.
+        start : int
+            The starting index in the model item list.
+        end : int
+            The ending index in the model item list.
+        """
+        # Retrieve the data item from the proxy model
+        plot_data_item = self.proxy_model.item_from_index(
+            self.proxy_model.index(start, 0))
 
         if plot_data_item is not None:
             # Remove plot data item from this plot

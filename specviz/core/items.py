@@ -1,8 +1,9 @@
 import numpy as np
 import pyqtgraph as pg
-from qtpy.QtCore import Property, QObject, Signal, Slot
-
 from astropy.units import spectral, spectral_density
+from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
+from qtpy.QtCore import Property, QObject, Signal, Slot
+from qtpy.QtGui import QColor
 
 
 class DataItem(QObject):
@@ -45,14 +46,14 @@ class PlotDataItem(pg.PlotDataItem):
     color_changed = Signal(str)
     visibility_changed = Signal(bool)
 
-    def __init__(self, data_item, *args, **kwargs):
+    def __init__(self, data_item, color='#000000', *args, **kwargs):
         super(PlotDataItem, self).__init__(*args, **kwargs)
 
         self._data_item = data_item
         self._data_unit = self._data_item.flux.unit.to_string()
         self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
-        self._color = '#000000'
-        self._visible = False
+        self._color = color
+        self._visible = True
 
         # Set data
         self.set_data()
@@ -77,6 +78,14 @@ class PlotDataItem(pg.PlotDataItem):
     def data_unit(self, value):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
+
+    def is_data_unit_compatible(self, unit):
+        return self._data_item.flux.unit.is_equivalent(
+            unit, equivalencies=spectral_density(self.spectral_axis))
+
+    def is_spectral_axis_unit_compatible(self, unit):
+        return self._data_item.spectral_axis.unit.is_equivalent(
+            unit, equivalencies=spectral())
 
     @Property(str, notify=spectral_axis_unit_changed)
     def spectral_axis_unit(self):
