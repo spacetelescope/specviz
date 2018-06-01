@@ -165,9 +165,10 @@ class UnitChangeDialog(QDialog):
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
         self.ui.comboBox_units.addItems(self._units_titles)
+        self.ui.label_convert.setText("Convert Units from {} to: ".format(self.current_units))
+
         self.ui.line_custom.hide()
         self.ui.label_valid_units.hide()
-        self.ui.label_convert.setText("Convert Units from {} to: ".format(self.current_units))
 
     def setup_connections(self):
         """Setup signal/slot connections for this dialog."""
@@ -179,29 +180,37 @@ class UnitChangeDialog(QDialog):
 
     def on_combobox_change(self):
         """Called when the text of the unit combo box has changed."""
+        # If 'Custom', show validation label and line for entering units
         if self.ui.comboBox_units.currentText() == "Custom":
             self.ui.line_custom.show()
-
             self.ui.label_valid_units.show()
             self.ui.label_valid_units.setText("Enter custom units")
             self.ui.label_valid_units.setStyleSheet('color: green')
+
         else:
             self.ui.line_custom.hide()
             self.ui.label_valid_units.hide()
 
     def on_line_custom_change(self):
         """Called when the text of the custom units textbox has changed."""
+        # If Unit enter line is empty
         if self.ui.line_custom.text() in ["", " "]:
             self.ui.label_valid_units.setText("Enter custom units")
             self.ui.label_valid_units.setStyleSheet('color: green')
+
+            # Does not allow user to enter multiple spaces as valid unit
+            if self.ui.line_custom.text() == " ":
+                self.ui.line_custom.setText("")
             return
 
+        # Try to enter the custom units
         try:
             u.Unit(self.ui.line_custom.text())
             self.ui.label_valid_units.setStyleSheet('color: green')
             self.ui.label_valid_units.setText("{} is Valid".format(self.ui.line_custom.text()))
 
         except Exception as e:
+            # Take error message, break it up, and take the suggestions part
             log.debug(e)
             err = str(e)
             if "Did you mean " in err:
@@ -215,12 +224,15 @@ class UnitChangeDialog(QDialog):
     def on_accepted(self):
         """Called when the user clicks the "Ok" button of the dialog."""
         if self.ui.comboBox_units.currentText() == "Custom":
+            
+            # Try to enter the custom units
             try:
                 u.Unit(self.ui.line_custom.text())
             except Exception as e:
                 log.warning("DID NOT CHANGE UNITS. {}".format(e))
                 self.close()
                 return False
+
             # If there are no units, just close the dialog and return False
             if self.ui.line_custom.text() in ["", " "]:
                 log.warning("No custom units entered, units did not change")
