@@ -45,6 +45,11 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew_Workspace"/>
+    <addaction name="actionOpen_Workspace"/>
+    <addaction name="actionSave_Workspace"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_Data"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -302,6 +307,26 @@
    </property>
    <property name="toolTip">
     <string>Show/hide the mask editor</string>
+   </property>
+  </action>
+  <action name="actionNew_Workspace">
+   <property name="text">
+    <string>New Workspace</string>
+   </property>
+  </action>
+  <action name="actionOpen_Workspace">
+   <property name="text">
+    <string>Open Workspace</string>
+   </property>
+  </action>
+  <action name="actionSave_Workspace">
+   <property name="text">
+    <string>Save Workspace</string>
+   </property>
+  </action>
+  <action name="actionLoad_Data">
+   <property name="text">
+    <string>Load Data</string>
    </property>
   </action>
  </widget>

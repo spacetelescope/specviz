@@ -1,0 +1,5 @@
+{
+  "astropy_helpers/astropy_helpers/tests/test_openmp_helpers.py::test_add_openmp_flags_if_available": true,
+  "astropy_helpers/astropy_helpers/tests/test_setup_helpers.py::test_build_docs[deprecated]": true,
+  "astropy_helpers/astropy_helpers/tests/test_setup_helpers.py::test_cython_autoextensions": true
+}

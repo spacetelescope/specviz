@@ -65,6 +65,7 @@
    <addaction name="rectangular_region_action"/>
    <addaction name="plot_options_action"/>
    <addaction name="export_plot_action"/>
+   <addaction name="change_unit_action"/>
   </widget>
   <action name="linear_region_action">
    <property name="text">
@@ -96,6 +97,14 @@
    </property>
    <property name="toolTip">
     <string>Export the currently display plot</string>
+   </property>
+  </action>
+  <action name="change_unit_action">
+   <property name="text">
+    <string>Convert Units</string>
+   </property>
+   <property name="toolTip">
+    <string>Convert units</string>
    </property>
   </action>
  </widget>
