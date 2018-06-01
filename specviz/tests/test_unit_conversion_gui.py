@@ -56,4 +56,4 @@ def test_cancel_works_correctly(qtbot):
     assert uc.ui.comboBox_units.currentText() == uc._units_titles[3]
 
     qtbot.mouseClick(uc.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
-    assert  uc.current_units == old_units
+    assert uc.current_units == old_units
