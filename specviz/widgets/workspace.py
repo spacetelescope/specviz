@@ -14,6 +14,11 @@ from .plotting import PlotWindow
 
 
 class Workspace(QWidget):
+    """
+    A widget representing the primary interaction area for a given workspace.
+    This includes the :class:`~qtpy.QtWidgets.QListView`, and the
+    :class:`~qtpy.QtWigets.QMdiArea` widgets, and associated model information.
+    """
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
         self._name = "Untitled Workspace"
@@ -38,14 +43,24 @@ class Workspace(QWidget):
         self.list_view.addAction(self._change_color_action)
         self.list_view.addAction(self._toggle_visibility_action)
 
-        self.setup_connections()
+        # When the current subwindow changes, mount that subwindow's proxy model
+        self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
+
+        self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
+        self._change_color_action.triggered.connect(self._on_changed_color)
 
     @property
     def name(self):
+        """The name of this workspace."""
         return self._name
 
     @property
     def model(self):
+        """
+        The data model for this workspace.
+
+        .. note:: there is always at most one model per workspace.
+        """
         return self._model
 
     @property
@@ -56,14 +71,10 @@ class Workspace(QWidget):
     def current_plot_window(self):
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
 
-    def setup_connections(self):
-        # When the current subwindow changes, mount that subwindow's proxy model
-        self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
-
-        self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
-        self._change_color_action.triggered.connect(self._on_changed_color)
-
     def add_plot_window(self):
+        """
+        Creates a new plot widget sub window and adds it to the workspace.
+        """
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
         self.list_view.setModel(plot_window.plot_widget.proxy_model)
 
@@ -106,8 +117,17 @@ class Workspace(QWidget):
                                                 caption="Load spectral data file",
                                                 filters=";;".join(filters))
 
+        if not file_path:
+            return
+
         spec = Spectrum1D.read(file_path, format=fmt.split()[0])
 
         name = file_path.split('/')[-1].split('.')[0]
-        print("loading ", name)
+
         self.model.add_data(spec, name=name)
+
+    def _on_delete_data(self):
+        proxy_idx = self.list_view.currentIndex()
+        model_idx = self.proxy_model.mapToSource(proxy_idx)
+
+        self.model.removeRow(model_idx.row())
