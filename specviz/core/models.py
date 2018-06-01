@@ -13,6 +13,9 @@ from .items import DataItem, PlotDataItem
 
 
 class DataListModel(QAbstractListModel):
+    """
+    Base model for all data loaded into specviz.
+    """
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
@@ -20,14 +23,22 @@ class DataListModel(QAbstractListModel):
                            spectral_axis=np.arange(100) * u.AA)
 
         self._items = [
-            DataItem(name='MyData 1',
-                     identifier=uuid.uuid4(),
-                     data=spec1,
-                     color='#336699')
+            # DataItem(name='MyData 1',
+            #          identifier=uuid.uuid4(),
+            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
+            #                spectral_axis=np.arange(100) * u.AA),
+            #          color='#336699'),
+            # DataItem(name='MyData 2',
+            #          identifier=uuid.uuid4(),
+            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
+            #                spectral_axis=np.arange(100) * u.AA),
+            #          color='#336699'),
+            # DataItem(name='MyData 3',
+            #          identifier=uuid.uuid4(),
+            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
+            #                spectral_axis=np.arange(100) * u.AA),
+            #          color='#336699')
         ]
-
-        # Cache a reference to the event hub
-        # self._hub = QCoreApplication.instance().hub
 
         self.setup_connections()
 
@@ -36,11 +47,22 @@ class DataListModel(QAbstractListModel):
 
     @property
     def items(self):
+        """
+        The maintained list of :class:`~specviz.core.items.DataItem`s for this model.
+        """
         return self._items
 
     def add_data(self, spectrum, name="Unnamed Spectrum"):
         """
         Adds a new spectrum object to the model as a data item.
+
+        Parameters
+        ----------
+        spectrum : :class:`~specutils.Spectrum1D`
+            The spectrum object that will be wrapped as a
+            :class:`~specviz.core.items.DataItem` and added to the model.
+        name : str, optional
+            Define the display string to be shown in the `ListView`.
         """
         data_item = DataItem(name=name,
                              identifier=uuid.uuid4(),
@@ -49,15 +71,21 @@ class DataListModel(QAbstractListModel):
         self.insertRow(len(self.items), data_item)
 
     def flags(self, index):
+        """Qt interaction flags for each `ListView` item."""
         flags = super(DataListModel, self).flags(index)
         flags |= Qt.ItemIsEditable | Qt.ItemIsEnabled
 
         return flags
 
     def rowCount(self, parent=QModelIndex(), **kwargs):
+        """Returns the number of items in the model."""
         return len(self._items)
 
     def data(self, index, role=None):
+        """
+        Returns information about an item in the model depending on the
+        provided role.
+        """
         if not index.isValid():
             return
 
@@ -69,8 +97,8 @@ class DataListModel(QAbstractListModel):
             icon = qta.icon('fa.eye-slash',
                             color='black')
             return icon
-        elif role == Qt.EditRole:
-            pass
+        elif role == Qt.UserRole:
+            return item
 
         return QVariant()
 
@@ -85,7 +113,6 @@ class DataListModel(QAbstractListModel):
             self._items.insert(row + i, data[i])
         self.endInsertRows()
 
-    @Slot(int)
     def removeRow(self, p_int, parent=QModelIndex(), *args, **kwargs):
         self.beginRemoveRows(parent, p_int, p_int)
         self._items.pop(p_int)
