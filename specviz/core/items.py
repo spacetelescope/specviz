@@ -2,42 +2,43 @@ import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
 from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-from qtpy.QtCore import Property, QObject, Signal, Slot
-from qtpy.QtGui import QColor
+from qtpy.QtCore import Qt, Property, QObject, Signal, Slot
+from qtpy.QtGui import QColor, QStandardItem
 
 
-class DataItem(QObject):
-    name_changed = Signal(str)
+class DataItem(QStandardItem):
+    NameRole = Qt.UserRole + 1
+    IdRole = Qt.UserRole + 2
+    DataRole = Qt.UserRole + 3
 
     def __init__(self, name, identifier, data, unit=None,
-                 spectral_axis_unit=None, color=None, visible=True, *args,
-                 **kwargs):
+                 spectral_axis_unit=None, *args, **kwargs):
         super(DataItem, self).__init__(*args, **kwargs)
 
-        self._name = name
-        self._identifier = identifier
-        self._data = data
+        self.setData(name, self.NameRole)
+        self.setData(identifier, self.IdRole)
+        self.setData(data, self.DataRole)
+        self.setCheckable(True)
 
     @property
     def identifier(self):
-        return self._identifier
+        return self.data(self.DataRole)
 
-    @Property(str, notify=name_changed)
+    @Property(str)
     def name(self):
-        return self._name
+        return self.data(self.NameRole)
 
     @name.setter
     def name(self, value):
-        self._name = value
-        self.name_changed.emit(self._name)
+        self.setData(value, self.DataRole)
 
     @Property(list)
     def flux(self):
-        return self._data.flux
+        return self.data(self.DataRole).flux
 
     @Property(list)
     def spectral_axis(self):
-        return self._data.spectral_axis
+        return self.data(self.DataRole).spectral_axis
 
 
 class PlotDataItem(pg.PlotDataItem):
