@@ -63,9 +63,7 @@
        <enum>Qt::ActionsContextMenu</enum>
       </property>
       <property name="styleSheet">
-       <string notr="true">
-
-QTreeView::item {
+       <string notr="true">QTreeView::item {
 	height: 36px;
 }</string>
       </property>
@@ -134,6 +132,8 @@ QTreeView::item {
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

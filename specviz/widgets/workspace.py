@@ -11,6 +11,7 @@ from specutils import Spectrum1D
 from ..core.models import DataListModel, PlotProxyModel
 from ..utils import UI_PATH
 from .plotting import PlotWindow
+from . import resources
 
 
 class Workspace(QWidget):
