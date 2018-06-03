@@ -119,13 +119,13 @@ class PlotWidget(pg.PlotWidget):
         self._spectral_axis_unit = None
 
         # Cache a reference to the model object that's attached to the parent
-        self._proxy_model = PlotProxyModel(model)
+        self._proxy_model = model #PlotProxyModel(model)
 
         # Initialize all plots
-        for i in range(len(self.proxy_model.sourceModel().items)):
-            self.add_plot(self.proxy_model.index(i, 0),
-                          visible=self._visible,
-                          initialize=i == 0)
+        # for i in range(len(self.proxy_model.sourceModel().items)):
+        #     self.add_plot(self.proxy_model.index(i, 0),
+        #                   visible=self._visible,
+        #                   initialize=i == 0)
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
