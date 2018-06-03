@@ -2,9 +2,9 @@ import uuid
 
 import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import (QAbstractListModel, QModelIndex, Qt, QVariant, Slot,
+from qtpy.QtCore import (QModelIndex, Qt, QVariant, Slot,
                          QCoreApplication, QSortFilterProxyModel)
-from qtpy.QtGui import QColor, QIcon, QPixmap
+from qtpy.QtGui import QColor, QIcon, QPixmap, QStandardItemModel
 
 from specutils import Spectrum1D
 import astropy.units as u
@@ -12,7 +12,7 @@ import astropy.units as u
 from .items import DataItem, PlotDataItem
 
 
-class DataListModel(QAbstractListModel):
+class DataListModel(QStandardItemModel):
     """
     Base model for all data loaded into specviz.
     """
@@ -22,66 +22,27 @@ class DataListModel(QAbstractListModel):
         spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                            spectral_axis=np.arange(100) * u.AA)
 
-        self._items = [
-            # DataItem(name='MyData 1',
-            #          identifier=uuid.uuid4(),
-            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
-            #                spectral_axis=np.arange(100) * u.AA),
-            #          color='#336699'),
-            # DataItem(name='MyData 2',
-            #          identifier=uuid.uuid4(),
-            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
-            #                spectral_axis=np.arange(100) * u.AA),
-            #          color='#336699'),
-            # DataItem(name='MyData 3',
-            #          identifier=uuid.uuid4(),
-            #          data=Spectrum1D(flux=np.random.sample(100) * u.Jy,
-            #                spectral_axis=np.arange(100) * u.AA),
-            #          color='#336699')
-        ]
+        data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
+
+        self.appendRow(data_item)
 
         self.setup_connections()
 
     def setup_connections(self):
         pass
 
-    @property
-    def items(self):
-        """
-        The maintained list of :class:`~specviz.core.items.DataItem`s for this model.
-        """
-        return self._items
+    # def flags(self, index):
+    #     """Qt interaction flags for each `ListView` item."""
+    #     flags = super(DataListModel, self).flags(index)
+    #     flags |= Qt.ItemIsUserCheckable
 
-    def add_data(self, spectrum, name="Unnamed Spectrum"):
-        """
-        Adds a new spectrum object to the model as a data item.
+    #     return flags
 
-        Parameters
-        ----------
-        spectrum : :class:`~specutils.Spectrum1D`
-            The spectrum object that will be wrapped as a
-            :class:`~specviz.core.items.DataItem` and added to the model.
-        name : str, optional
-            Define the display string to be shown in the `ListView`.
-        """
-        data_item = DataItem(name=name,
-                             identifier=uuid.uuid4(),
-                             data=spectrum)
+    # def rowCount(self, parent=QModelIndex(), **kwargs):
+    #     """Returns the number of items in the model."""
+    #     return len(self._items)
 
-        self.insertRow(len(self.items), data_item)
-
-    def flags(self, index):
-        """Qt interaction flags for each `ListView` item."""
-        flags = super(DataListModel, self).flags(index)
-        flags |= Qt.ItemIsEditable | Qt.ItemIsEnabled
-
-        return flags
-
-    def rowCount(self, parent=QModelIndex(), **kwargs):
-        """Returns the number of items in the model."""
-        return len(self._items)
-
-    def data(self, index, role=None):
+    def data(self, index, role=None, *args, **kwargs):
         """
         Returns information about an item in the model depending on the
         provided role.
@@ -89,51 +50,28 @@ class DataListModel(QAbstractListModel):
         if not index.isValid():
             return
 
-        item = self._items[index.row()]
+        item = self.itemFromIndex(index)
 
         if role == Qt.DisplayRole:
-            return item.name
+            return item.data(Qt.UserRole + 1)
         elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye-slash',
-                            color='black')
+            icon = qta.icon('fa.ellipsis-v',
+                            color='black',)
             return icon
-        elif role == Qt.UserRole:
-            return item
+        elif role == Qt.UserRole + 3:
+            return item.data(Qt.UserRole + 3)
 
-        return QVariant()
-
-    def insertRow(self, row, data, parent=QModelIndex(), **kwargs):
-        self.beginInsertRows(parent, row, row)
-        self._items.insert(row, data)
-        self.endInsertRows()
-
-    def insertRows(self, row, count, data, parent=QModelIndex(), **kwargs):
-        self.beginInsertRows(parent, row, row + count - 1)
-        for i in count:
-            self._items.insert(row + i, data[i])
-        self.endInsertRows()
-
-    def removeRow(self, p_int, parent=QModelIndex(), *args, **kwargs):
-        self.beginRemoveRows(parent, p_int, p_int)
-        self._items.pop(p_int)
-        self.endRemoveRows()
-
-        return True
-
-    def removeRows(self, p_int, p_int_1, parent=QModelIndex(), *args, **kwargs):
-        self.beginRemoveRows(parent, p_int, p_int_1)
-        del self._items[p_int:p_int_1]
-        self.endRemoveRows()
-
-        return True
+        return super(DataListModel, self).data(index, role, *args, **kwargs)
 
     def setData(self, index, value, role=Qt.EditRole, *args, **kwargs):
         if not index.isValid():
             return False
 
+        item = self.itemFromIndex(index)
+
         if role == Qt.EditRole:
             if value != "":
-                self._items[index.row()].name = value
+                item.setData(value, role=Qt.UserRole + 1)
 
         return True
 
