@@ -1,5 +1,4 @@
 import os
-from itertools import cycle
 
 import numpy as np
 import pyqtgraph as pg
@@ -10,8 +9,6 @@ from qtpy.uic import loadUi
 
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
-
-flatui = ["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 
 class PlotWindow(QMdiSubWindow):
@@ -101,12 +98,11 @@ class PlotWidget(pg.PlotWidget):
     plot_added = Signal()
     plot_removed = Signal()
 
-    def __init__(self, name=None, model=None, visible=False, *args, **kwargs):
+    def __init__(self, name=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
         self._name = name or "Untitled Plot"
         self._plot_item = self.getPlotItem()
         self._visible = visible
-        self._color_map = cycle(flatui)
 
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='Wavelength')
@@ -119,17 +115,12 @@ class PlotWidget(pg.PlotWidget):
         self._spectral_axis_unit = None
 
         # Cache a reference to the model object that's attached to the parent
-        self._proxy_model = model #PlotProxyModel(model)
-
-        # Initialize all plots
-        # for i in range(len(self.proxy_model.sourceModel().items)):
-        #     self.add_plot(self.proxy_model.index(i, 0),
-        #                   visible=self._visible,
-        #                   initialize=i == 0)
+        self._proxy_model = PlotProxyModel(model)
 
         # Listen for model events to add/remove items from the plot
-        self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
+        # self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
+        self.proxy_model.sourceModel().itemChanged.connect(self.on_item_changed)
 
     @property
     def name(self):
@@ -147,8 +138,22 @@ class PlotWidget(pg.PlotWidget):
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
 
+    def on_item_changed(self, item):
+        """
+        Called when the user clicks the item's checkbox.
+        """
+        source_index = self.proxy_model.sourceModel().indexFromItem(item)
+        proxy_index = self.proxy_model.mapFromSource(source_index)
+
+        if item.checkState() == Qt.Checked:
+            self.add_plot(proxy_index,
+                          visible=True,
+                          initialize=len(self.listDataItems()) == 0)
+        else:
+            self.remove_plot(proxy_index)
+
     def _check_unit_compatibility(self, index, first=None, last=None):
-        plot_data_item = self._proxy_model.item_from_index(index)
+        plot_data_item = self.proxy_model.item_from_index(index)
 
         if self._data_unit is not None and \
             not plot_data_item.is_data_unit_compatible(self._data_unit):
@@ -159,7 +164,6 @@ class PlotWidget(pg.PlotWidget):
         # Retrieve the data item from the model
         plot_data_item = self._proxy_model.item_from_index(index)
         plot_data_item.visible = self._visible and visible
-        plot_data_item.color = next(self._color_map)
 
         if self.data_unit is not None:
             plot_data_item.data_unit = self.data_unit
@@ -192,12 +196,19 @@ class PlotWidget(pg.PlotWidget):
             The ending index in the model item list.
         """
         # Retrieve the data item from the proxy model
-        plot_data_item = self.proxy_model.item_from_index(
-            self.proxy_model.index(start, 0))
+        plot_data_item = self.proxy_model.item_from_index(index)
 
         if plot_data_item is not None:
             # Remove plot data item from this plot
             self.removeItem(plot_data_item)
+
+            # If there are no current plots, reset unit information for plot
+            if len(self.listDataItems()) == 0:
+                self._data_unit = None
+                self._spectral_axis_unit = None
+
+                self._plot_item.setLabel('bottom', units="")
+                self._plot_item.setLabel('left', units="")
 
             # Emit a plot added signal
             self.plot_removed.emit()
