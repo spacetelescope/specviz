@@ -1,9 +1,14 @@
+from itertools import cycle
+
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
 from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-from qtpy.QtCore import Qt, Property, QObject, Signal, Slot
+from qtpy.QtCore import Property, QObject, Qt, Signal, Slot
 from qtpy.QtGui import QColor, QStandardItem
+
+flatui = ["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e",
+          "#2ecc71"]
 
 
 class DataItem(QStandardItem):
@@ -18,6 +23,7 @@ class DataItem(QStandardItem):
         self.setData(name, self.NameRole)
         self.setData(identifier, self.IdRole)
         self.setData(data, self.DataRole)
+
         self.setCheckable(True)
 
     @property
@@ -47,13 +53,14 @@ class PlotDataItem(pg.PlotDataItem):
     color_changed = Signal(str)
     visibility_changed = Signal(bool)
 
-    def __init__(self, data_item, color='#000000', *args, **kwargs):
+    def __init__(self, data_item, color=None, *args, **kwargs):
         super(PlotDataItem, self).__init__(*args, **kwargs)
 
         self._data_item = data_item
         self._data_unit = self._data_item.flux.unit.to_string()
         self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
-        self._color = color
+        self._color_map = cycle(flatui)
+        self._color = color or next(self._color_map)
         self._visible = True
 
         # Set data
@@ -70,6 +77,10 @@ class PlotDataItem(pg.PlotDataItem):
         # Connect to color signals
         self.color_changed.connect(lambda c: self.setPen(color=c) if self.visible else None)
         self.visibility_changed.connect(lambda s: self.setPen(None) if not s else self.setPen(self.color))
+
+    @property
+    def data_item(self):
+        return self._data_item
 
     @Property(str, notify=data_unit_changed)
     def data_unit(self):
