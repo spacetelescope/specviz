@@ -1,13 +1,13 @@
 import uuid
 
+import astropy.units as u
 import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import (QModelIndex, Qt, QVariant, Slot,
-                         QCoreApplication, QSortFilterProxyModel)
+from qtpy.QtCore import (QCoreApplication, QModelIndex, QSortFilterProxyModel,
+                         Qt, QVariant, Slot)
 from qtpy.QtGui import QColor, QIcon, QPixmap, QStandardItemModel
 
 from specutils import Spectrum1D
-import astropy.units as u
 
 from .items import DataItem, PlotDataItem
 
@@ -26,23 +26,20 @@ class DataListModel(QStandardItemModel):
 
         self.appendRow(data_item)
 
-        self.setup_connections()
-
-    def setup_connections(self):
-        pass
+    def add_data(self, spec, name):
+        """
+        """
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
+        self.appendRow(data_item)
 
     # def flags(self, index):
     #     """Qt interaction flags for each `ListView` item."""
     #     flags = super(DataListModel, self).flags(index)
-    #     flags |= Qt.ItemIsUserCheckable
+    #     flags = Qt.ItemFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
 
     #     return flags
 
-    # def rowCount(self, parent=QModelIndex(), **kwargs):
-    #     """Returns the number of items in the model."""
-    #     return len(self._items)
-
-    def data(self, index, role=None, *args, **kwargs):
+    def data(self, index, role=Qt.DisplayRole):
         """
         Returns information about an item in the model depending on the
         provided role.
@@ -53,17 +50,15 @@ class DataListModel(QStandardItemModel):
         item = self.itemFromIndex(index)
 
         if role == Qt.DisplayRole:
-            return item.data(Qt.UserRole + 1)
-        elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.ellipsis-v',
-                            color='black',)
-            return icon
-        elif role == Qt.UserRole + 3:
-            return item.data(Qt.UserRole + 3)
+            return item.data(item.NameRole)
+        elif role == item.DataRole:
+            return item.data(item.DataRole)
+        elif role == Qt.UserRole:
+            return item
 
-        return super(DataListModel, self).data(index, role, *args, **kwargs)
+        return super(DataListModel, self).data(index, role)
 
-    def setData(self, index, value, role=Qt.EditRole, *args, **kwargs):
+    def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
             return False
 
@@ -73,7 +68,7 @@ class DataListModel(QStandardItemModel):
             if value != "":
                 item.setData(value, role=Qt.UserRole + 1)
 
-        return True
+        return super(DataListModel, self).setData(index, value, role)
 
 
 class PlotProxyModel(QSortFilterProxyModel):
@@ -84,19 +79,16 @@ class PlotProxyModel(QSortFilterProxyModel):
 
         self._items = {}
 
-    def setup_connections(self):
-        pass
-
     def item_from_index(self, index):
         index = self.mapToSource(index)
-        data_item = self.sourceModel().items[index.row()]
+        data_item = self.sourceModel().data(index, role=Qt.UserRole)
 
-        self._items.setdefault(data_item, PlotDataItem(data_item))
-        item = self._items.get(data_item)
+        self._items.setdefault(data_item.identifier, PlotDataItem(data_item))
+        item = self._items.get(data_item.identifier)
 
         return item
 
-    def data(self, index, role=None):
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return
 
@@ -111,4 +103,4 @@ class PlotProxyModel(QSortFilterProxyModel):
         elif role == Qt.UserRole:
             return item
 
-        return QVariant()
+        return super(PlotProxyModel, self).data(index, role)
