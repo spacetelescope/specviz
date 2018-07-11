@@ -11,6 +11,7 @@ from specutils import Spectrum1D
 from ..core.models import DataListModel, PlotProxyModel
 from ..utils import UI_PATH
 from .plotting import PlotWindow
+from ..core.delegates import DataItemDelegate
 from . import resources
 
 
@@ -30,6 +31,9 @@ class Workspace(QWidget):
         # Define a new data list model for this workspace
         self._model = DataListModel()
 
+        # Set the styled item delegate on the model
+        # self.list_view.setItemDelegate(DataItemDelegate(self))
+
         # Don't expand mdiarea tabs
         self.mdi_area.findChild(QTabBar).setExpanding(True)
 
@@ -47,6 +51,7 @@ class Workspace(QWidget):
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
+        # Connect signals
         self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
         self._change_color_action.triggered.connect(self._on_changed_color)
 
@@ -92,7 +97,6 @@ class Workspace(QWidget):
     def _on_toggle_visibility(self, state):
         idx = self.list_view.currentIndex()
         item = self.proxy_model.data(idx, role=Qt.UserRole)
-
         item.visible = state
 
         self.proxy_model.dataChanged.emit(idx, idx)
