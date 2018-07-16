@@ -1,3 +1,4 @@
+from pytestqt import qtbot
 
 
 def test_start_main_window(qtbot):
