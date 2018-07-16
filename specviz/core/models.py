@@ -19,13 +19,6 @@ class DataListModel(QStandardItemModel):
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
-        spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
-                           spectral_axis=np.arange(100) * u.AA)
-
-        data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
-
-        self.appendRow(data_item)
-
     def add_data(self, spec, name):
         """
         """
@@ -35,7 +28,8 @@ class DataListModel(QStandardItemModel):
     # def flags(self, index):
     #     """Qt interaction flags for each `ListView` item."""
     #     flags = super(DataListModel, self).flags(index)
-    #     flags = Qt.ItemFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+    #     flags = Qt.ItemFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable |
+    #                          Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
 
     #     return flags
 
@@ -83,7 +77,9 @@ class PlotProxyModel(QSortFilterProxyModel):
         index = self.mapToSource(index)
         data_item = self.sourceModel().data(index, role=Qt.UserRole)
 
-        self._items.setdefault(data_item.identifier, PlotDataItem(data_item))
+        if data_item.identifier not in self._items:
+            self._items[data_item.identifier] = PlotDataItem(data_item)
+
         item = self._items.get(data_item.identifier)
 
         return item
@@ -102,5 +98,21 @@ class PlotProxyModel(QSortFilterProxyModel):
             return icon
         elif role == Qt.UserRole:
             return item
+        elif role == Qt.CheckStateRole:
+            item.data_item.setCheckState(Qt.Checked if item.visible else ~Qt.Checked)
 
         return super(PlotProxyModel, self).data(index, role)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid():
+            return
+
+        item = self.item_from_index(index)
+
+        if role == Qt.CheckStateRole:
+            item.visible = value > 0
+
+            value = Qt.Checked if item.visible else ~Qt.Checked
+            item.data_item.setCheckState(value)
+
+        return super(PlotProxyModel, self).setData(index, value, role)
