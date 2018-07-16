@@ -61,7 +61,7 @@ class PlotDataItem(pg.PlotDataItem):
         self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
         self._color_map = cycle(flatui)
         self._color = color or next(self._color_map)
-        self._visible = True
+        self._visible = False
 
         # Set data
         self.set_data()
@@ -91,12 +91,28 @@ class PlotDataItem(pg.PlotDataItem):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
 
+    def are_units_compatible(self, spectral_axis_unit, data_unit):
+        return self.is_data_unit_compatible(data_unit) and \
+            self.is_spectral_axis_unit_compatible(spectral_axis_unit)
+
     def is_data_unit_compatible(self, unit):
-        return self._data_item.flux.unit.is_equivalent(
+        if unit is None or self._data_item.flux.unit.is_equivalent(
+            unit, equivalencies=spectral_density(self.spectral_axis)):
+            print("Data units as compatible")
+        else:
+            print("Data units are not compatible")
+
+        return unit is not None and self._data_item.flux.unit.is_equivalent(
             unit, equivalencies=spectral_density(self.spectral_axis))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        return self._data_item.spectral_axis.unit.is_equivalent(
+        if unit is None or self._data_item.spectral_axis.unit.is_equivalent(
+            unit, equivalencies=spectral()):
+            print("Spectral axis units as compatible")
+        else:
+            print("Spectral axis units are not compatible")
+
+        return unit is not None and self._data_item.spectral_axis.unit.is_equivalent(
             unit, equivalencies=spectral())
 
     @Property(str, notify=spectral_axis_unit_changed)
@@ -107,6 +123,10 @@ class PlotDataItem(pg.PlotDataItem):
     def spectral_axis_unit(self, value):
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)
+
+    def reset_units(self):
+        self.data_unit = self.data_item.flux.unit.to_string()
+        self.spectral_axis_unit = self.data_item.spectral_axis.unit.to_string()
 
     @Property(list)
     def flux(self):
