@@ -3,7 +3,7 @@ import os
 from astropy.io import registry as io_registry
 from qtpy import compat
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QTabBar, QWidget, QAction, QColorDialog
+from qtpy.QtWidgets import QTabBar, QWidget, QAction, QColorDialog, QPushButton, QTabWidget
 from qtpy.uic import loadUi
 
 from specutils import Spectrum1D
@@ -37,9 +37,6 @@ class Workspace(QWidget):
         # Don't expand mdiarea tabs
         self.mdi_area.findChild(QTabBar).setExpanding(True)
 
-        # Add an initially empty plot
-        self.add_plot_window()
-
         # Setup listview context menu
         self._toggle_visibility_action = QAction("Visible", parent=self)
         self._toggle_visibility_action.setCheckable(True)
@@ -54,6 +51,10 @@ class Workspace(QWidget):
         # Connect signals
         self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
         self._change_color_action.triggered.connect(self._on_changed_color)
+
+        # Add an initially empty plot
+        self.add_plot_window()
+        # self.mdi_area.findChild(QTabWidget).setCornerWidget(QPushButton())
 
     @property
     def name(self):
@@ -84,15 +85,32 @@ class Workspace(QWidget):
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
         self.list_view.setModel(plot_window.plot_widget.proxy_model)
 
-        plot_window.setWindowTitle(plot_window._plot_widget.name)
+        plot_window.setWindowTitle(plot_window._plot_widget.title)
         plot_window.setAttribute(Qt.WA_DeleteOnClose)
 
         self.mdi_area.addSubWindow(plot_window)
         plot_window.showMaximized()
 
+        self.mdi_area.subWindowActivated.emit(plot_window)
+
     def _on_sub_window_activated(self, window):
-        if window is not None:
-            self.list_view.setModel(window.proxy_model)
+        if window is None:
+            return
+
+        self.list_view.setModel(window.proxy_model)
+
+        # Disconnect all plot widgets from the core model's item changed event
+        for sub_window in self.mdi_area.subWindowList():
+            try:
+                self._model.itemChanged.disconnect(sub_window.plot_widget.on_item_changed)
+            except TypeError:
+                pass
+
+        # Connect the current window's plot widget to the item changed event
+        self.model.itemChanged.connect(window.plot_widget.on_item_changed)
+
+        # Re-evaluate plot unit compatibilities
+        # window.plot_widget.check_plot_compatibility()
 
     def _on_toggle_visibility(self, state):
         idx = self.list_view.currentIndex()
@@ -134,5 +152,10 @@ class Workspace(QWidget):
     def _on_delete_data(self):
         proxy_idx = self.list_view.currentIndex()
         model_idx = self.proxy_model.mapToSource(proxy_idx)
+
+        # Ensure that the plots get removed from all plot windows
+        for sub_window in self.mdi_area.subWindowList():
+            proxy_idx = sub_window.proxy_model.mapFromSource(model_idx)
+            sub_window.plot_widget.remove_plot(proxy_idx)
 
         self.model.removeRow(model_idx.row())
