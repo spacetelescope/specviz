@@ -79,17 +79,8 @@ class MainWindow(QMainWindow):
             self.workspace._on_delete_data)
 
         # Setup plugin toolbar action actions
-        self._plugin_action_group.triggered.connect(
-            self._on_toggle_plugin_dock)
-        self.model_editor_toggle.triggered.connect(
-            lambda: self._on_toggle_plugin("Model Editor"))
-        self.statistics_toggle.triggered.connect(
-            lambda: self._on_toggle_plugin("Statistics"))
-        self.mask_editor_toggle.triggered.connect(
-            lambda: self._on_toggle_plugin("Mask Editor"))
-
-        self.plugin_dock.visibilityChanged.connect(
-            self._on_plugin_dock_visbility_changed)
+        self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
+        self._last_toggled_action = None
 
     @property
     def workspace(self):
@@ -105,25 +96,21 @@ class MainWindow(QMainWindow):
 
         return super(MainWindow, self).event(e)
 
-    def _on_toggle_plugin_dock(self):
+    def _on_toggle_plugin_dock(self, action):
         """
         Show/hide the plugin dock depending on the state of the plugin
         action group.
         """
-        if self._plugin_action_group.checkedAction():
+        # if self._plugin_action_group.checkedAction():
+        #     self.plugin_dock.show()
+        # else:
+        #     self.plugin_dock.hide()
+        print("HERE1")
+        if action != self._last_toggled_action:
             self.plugin_dock.show()
+            self.plugin_dock.setWindowTitle(action.text())
+            self._last_toggled_action = action
         else:
+            action.setChecked(False)
             self.plugin_dock.hide()
-
-    def _on_toggle_plugin(self, name):
-        self.plugin_dock.setWindowTitle(name)
-
-    def _on_plugin_dock_visbility_changed(self, visible):
-        if not visible:
-            for act in self._plugin_action_group.actions():
-                act.setChecked(False)
-
-    def _on_plugin_dock_visbility_changed(self, visible):
-        if not visible:
-            for act in self._plugin_action_group.actions():
-                act.setChecked(False)
+            self._last_toggled_action = None
