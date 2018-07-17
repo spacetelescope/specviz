@@ -33,20 +33,16 @@ class MainWindow(QMainWindow):
 
         # Add spacers to the main tool bar
         spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
+        spacer.setFixedSize(self.tool_bar.iconSize() * 2)
         self.tool_bar.insertWidget(self.load_data_action, spacer)
 
         spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
+        spacer.setFixedSize(self.tool_bar.iconSize() * 2)
         self.tool_bar.insertWidget(self.new_plot_action, spacer)
 
         spacer = QWidget()
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(3)
+        size_policy.setHorizontalStretch(1)
         spacer.setSizePolicy(size_policy)
         self.tool_bar.addWidget(spacer)
 
