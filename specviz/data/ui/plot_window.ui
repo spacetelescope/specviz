@@ -45,8 +45,8 @@
    </property>
    <property name="iconSize">
     <size>
-     <width>18</width>
-     <height>18</height>
+     <width>20</width>
+     <height>20</height>
     </size>
    </property>
    <property name="toolButtonStyle">
@@ -62,7 +62,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="linear_region_action"/>
-   <addaction name="rectangular_region_action"/>
+   <addaction name="remove_region_action"/>
    <addaction name="plot_options_action"/>
    <addaction name="export_plot_action"/>
   </widget>
@@ -96,6 +96,14 @@
    </property>
    <property name="toolTip">
     <string>Export the currently display plot</string>
+   </property>
+  </action>
+  <action name="remove_region_action">
+   <property name="text">
+    <string>Remove Region</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove selected region</string>
    </property>
   </action>
  </widget>

@@ -4,7 +4,7 @@ import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Property, QModelIndex, QObject, Qt, Signal, QEvent
-from qtpy.QtWidgets import QAction, QListWidget, QMainWindow, QMdiSubWindow
+from qtpy.QtWidgets import QAction, QListWidget, QMainWindow, QMdiSubWindow, QMenu, QWidget, QSizePolicy
 from qtpy.uic import loadUi
 
 from ..core.models import PlotProxyModel
@@ -14,7 +14,7 @@ from ..utils import UI_PATH
 
 class PlotWindow(QMdiSubWindow):
     """
-    Displayed plotting subwindow availabel in the `QMdiArea`.
+    Displayed plotting subwindow available in the `QMdiArea`.
     """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
@@ -24,25 +24,41 @@ class PlotWindow(QMdiSubWindow):
         self._main_window = QMainWindow()
         self.setWidget(self._main_window)
 
+        # Store all available rois on this plot
+        self._rois = []
+
         loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._main_window)
 
         # The central widget of the main window widget will be the plot
         self._model = model
+
         self._plot_widget = PlotWidget(model=self._model)
+        self._plot_widget.plotItem.setMenuEnabled(False)
         self._main_window.setCentralWidget(self._plot_widget)
+
+        self._plot_options_menu = QMenu(self)
+        self._change_line_color = QAction("Line Color", self)
+        self._plot_options_menu.addAction(self._change_line_color)
+
+        self._main_window.plot_options_action.setMenu(self._plot_options_menu)
 
         # Add the qtawesome icons to the plot-specific actions
         self._main_window.linear_region_action.setIcon(
             qta.icon('fa.compress',
-                     active='fa.legal',
                      color='black',
                      color_active='orange'))
 
-        self._main_window.rectangular_region_action.setIcon(
-            qta.icon('fa.square',
-                     active='fa.legal',
-                     color='black',
-                     color_active='orange'))
+        self._main_window.remove_region_action.setIcon(
+            qta.icon('fa.compress', 'fa.trash',
+                      options=[{'scale_factor': 1},
+                               {'color': 'red', 'scale_factor': 0.75,
+                                'offset': (0.25, 0.25)}]))
+
+        # self._main_window.rectangular_region_action.setIcon(
+        #     qta.icon('fa.square',
+        #              active='fa.legal',
+        #              color='black',
+        #              color_active='orange'))
 
         self._main_window.plot_options_action.setIcon(
             qta.icon('fa.line-chart',
@@ -55,6 +71,17 @@ class PlotWindow(QMdiSubWindow):
                      active='fa.legal',
                      color='black',
                      color_active='orange'))
+
+        spacer = QWidget()
+        spacer.setFixedSize(self._main_window.tool_bar.iconSize() * 2)
+        self._main_window.tool_bar.insertWidget(
+            self._main_window.plot_options_action, spacer)
+
+        spacer = QWidget()
+        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        size_policy.setHorizontalStretch(1)
+        spacer.setSizePolicy(size_policy)
+        self._main_window.tool_bar.addWidget(spacer)
 
     @property
     def plot_widget(self):

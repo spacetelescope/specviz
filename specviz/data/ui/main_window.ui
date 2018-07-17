@@ -155,14 +155,14 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>42</height>
+     <height>62</height>
     </size>
    </property>
    <property name="features">
     <set>QDockWidget::NoDockWidgetFeatures</set>
    </property>
    <property name="allowedAreas">
-    <set>Qt::RightDockWidgetArea</set>
+    <set>Qt::NoDockWidgetArea</set>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>

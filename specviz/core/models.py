@@ -40,9 +40,8 @@ class DataListModel(QStandardItemModel):
     # def flags(self, index):
     #     """Qt interaction flags for each `ListView` item."""
     #     flags = super(DataListModel, self).flags(index)
-    #     flags = Qt.ItemFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable |
-    #                          Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-
+    #     flags |= Qt.ItemFlags(~Qt.ItemIsDragEnabled | ~Qt.ItemIsDropEnabled)
+    #
     #     return flags
 
     def data(self, index, role=Qt.DisplayRole):
