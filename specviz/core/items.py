@@ -7,8 +7,8 @@ from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 from qtpy.QtCore import Property, QObject, Qt, Signal, Slot
 from qtpy.QtGui import QColor, QStandardItem
 
-flatui = ["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e",
-          "#2ecc71"]
+flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
+                "#34495e", "#2ecc71"])
 
 
 class DataItem(QStandardItem):
@@ -59,8 +59,7 @@ class PlotDataItem(pg.PlotDataItem):
         self._data_item = data_item
         self._data_unit = self._data_item.flux.unit.to_string()
         self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
-        self._color_map = cycle(flatui)
-        self._color = color or next(self._color_map)
+        self._color = color or next(flatui)
         self._visible = False
 
         # Set data
@@ -75,8 +74,10 @@ class PlotDataItem(pg.PlotDataItem):
         self.spectral_axis_unit_changed.connect(self.set_data)
 
         # Connect to color signals
-        self.color_changed.connect(lambda c: self.setPen(color=c) if self.visible else None)
-        self.visibility_changed.connect(lambda s: self.setPen(None) if not s else self.setPen(self.color))
+        self.color_changed.connect(lambda c: self.setPen(color=c)
+                                   if self.visible else None)
+        self.visibility_changed.connect(lambda s: self.setPen(None)
+                                        if not s else self.setPen(self.color))
 
     @property
     def data_item(self):
@@ -97,7 +98,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def is_data_unit_compatible(self, unit):
         if unit is None or self._data_item.flux.unit.is_equivalent(
-            unit, equivalencies=spectral_density(self.spectral_axis)):
+                unit, equivalencies=spectral_density(self.spectral_axis)):
             print("Data units as compatible")
         else:
             print("Data units are not compatible")
@@ -107,7 +108,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def is_spectral_axis_unit_compatible(self, unit):
         if unit is None or self._data_item.spectral_axis.unit.is_equivalent(
-            unit, equivalencies=spectral()):
+                unit, equivalencies=spectral()):
             print("Spectral axis units as compatible")
         else:
             print("Spectral axis units are not compatible")
