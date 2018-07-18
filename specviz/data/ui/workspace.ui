@@ -14,6 +14,9 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -43,7 +46,7 @@
      <property name="handleWidth">
       <number>1</number>
      </property>
-     <widget class="QTreeView" name="list_view">
+     <widget class="QListView" name="list_view">
       <property name="sizePolicy">
        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -57,12 +60,13 @@
        </size>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::ClickFocus</enum>
+      </property>
+      <property name="contextMenuPolicy">
+       <enum>Qt::ActionsContextMenu</enum>
       </property>
       <property name="styleSheet">
-       <string notr="true">
-
-QTreeView::item {
+       <string notr="true">QListView::item {
 	height: 36px;
 }</string>
       </property>
@@ -75,20 +79,23 @@ QTreeView::item {
       <property name="lineWidth">
        <number>1</number>
       </property>
-      <property name="indentation">
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::NoDragDrop</enum>
+      </property>
+      <property name="movement">
+       <enum>QListView::Free</enum>
+      </property>
+      <property name="spacing">
        <number>0</number>
       </property>
-      <property name="itemsExpandable">
+      <property name="selectionRectVisible">
        <bool>false</bool>
-      </property>
-      <property name="animated">
-       <bool>true</bool>
-      </property>
-      <property name="headerHidden">
-       <bool>true</bool>
       </property>
      </widget>
      <widget class="QMdiArea" name="mdi_area">
+      <property name="lineWidth">
+       <number>0</number>
+      </property>
       <property name="background">
        <brush brushstyle="NoBrush">
         <color alpha="255">
@@ -111,7 +118,7 @@ QTreeView::item {
        <bool>false</bool>
       </property>
       <property name="tabShape">
-       <enum>QTabWidget::Triangular</enum>
+       <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="tabPosition">
        <enum>QTabWidget::North</enum>
@@ -131,6 +138,8 @@ QTreeView::item {
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

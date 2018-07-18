@@ -1,116 +1,105 @@
 import uuid
 
+import astropy.units as u
 import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import (QAbstractListModel, QModelIndex, Qt, QVariant, Slot,
-                         QCoreApplication, QSortFilterProxyModel)
-from qtpy.QtGui import QColor, QIcon, QPixmap
+from qtpy.QtCore import (QCoreApplication, QModelIndex, QSortFilterProxyModel,
+                         Qt, QVariant, Slot)
+from qtpy.QtGui import QColor, QIcon, QPixmap, QStandardItemModel
 
 from specutils import Spectrum1D
-import astropy.units as u
 
 from .items import DataItem, PlotDataItem
 
 
-class DataListModel(QAbstractListModel):
+class DataListModel(QStandardItemModel):
+    """
+    Base model for all data loaded into specviz.
+    """
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
         spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                            spectral_axis=np.arange(100) * u.AA)
 
-        self._items = [
-            DataItem(name='MyData 1', identifier=uuid.uuid4(), data=spec1,
-                     color='#336699')
-        ]
+        spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
+                           spectral_axis=np.arange(100) * u.Hz)
 
-        # Cache a reference to the event hub
-        # self._hub = QCoreApplication.instance().hub
+        data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
+        data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
 
-        self.setup_connections()
+        self.appendRow(data_item)
+        self.appendRow(data_item2)
 
-    def setup_connections(self):
-        pass
+    def add_data(self, spec, name):
+        """
+        """
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
+        self.appendRow(data_item)
 
-    @property
-    def items(self):
-        return self._items
+    # def flags(self, index):
+    #     """Qt interaction flags for each `ListView` item."""
+    #     flags = super(DataListModel, self).flags(index)
+    #     flags |= Qt.ItemFlags(~Qt.ItemIsDragEnabled | ~Qt.ItemIsDropEnabled)
+    #
+    #     return flags
 
-    def flags(self, index):
-        flags = super(DataListModel, self).flags(index)
-        flags |= Qt.ItemIsEditable | Qt.ItemIsEnabled
-
-        return flags
-
-    def rowCount(self, parent=QModelIndex(), **kwargs):
-        return len(self._items)
-
-    def data(self, index, role=None):
+    def data(self, index, role=Qt.DisplayRole):
+        """
+        Returns information about an item in the model depending on the
+        provided role.
+        """
         if not index.isValid():
             return
 
-        item = self._items[index.row()]
+        item = self.itemFromIndex(index)
 
         if role == Qt.DisplayRole:
-            return item.name
-        elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye-slash',
-                            color='black')
-            return icon
-        elif role == Qt.EditRole:
-            pass
+            return item.data(item.NameRole)
+        elif role == item.DataRole:
+            return item.data(item.DataRole)
+        elif role == Qt.UserRole:
+            return item
 
-        return QVariant()
+        return super(DataListModel, self).data(index, role)
 
-    def insertRow(self, row, data, parent=QModelIndex(), **kwargs):
-        self.beginInsertRows(parent, row, row + 1)
-        self._items.insert(row, data)
-        self.endInsertRows()
-
-    def insertRows(self, row, count, data, parent=QModelIndex(), **kwargs):
-        self.beginInsertRows(parent, row, row + count - 1)
-        for i in count:
-            self._items.insert(row + i, data[i])
-        self.endInsertRows()
-
-    @Slot(int)
-    def removeRow(self, p_int, parent=QModelIndex(), *args, **kwargs):
-        self.beginRemoveRows(parent, p_int, p_int)
-        self._items.pop(p_int)
-        self.endRemoveRows()
-
-        return True
-
-    def removeRows(self, p_int, p_int_1, parent=QModelIndex(), *args, **kwargs):
-        self.beginRemoveRows(parent, p_int, p_int_1)
-        del self._items[p_int:p_int_1 + 1]
-        self.endRemoveRows()
-
-        return True
-
-    def setData(self, index, value, role=Qt.EditRole, *args, **kwargs):
+    def setData(self, index, value, role=Qt.EditRole):
         if not index.isValid():
             return False
 
-        if role == Qt.EditRole:
-            self._items[index.row()].name = value
+        item = self.itemFromIndex(index)
 
-        return True
+        if role == Qt.EditRole:
+            if value != "":
+                item.setData(value, role=Qt.UserRole + 1)
+
+        return super(DataListModel, self).setData(index, value, role)
 
 
 class PlotProxyModel(QSortFilterProxyModel):
-    def __init__(self, source, *args, **kwargs):
+    def __init__(self, source=None, *args, **kwargs):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
         self.setSourceModel(source)
 
-        self._items = [PlotDataItem(item) for item in self.sourceModel().items]
+        self._items = {}
 
-    def data(self, index, role=None):
+    def item_from_index(self, index):
+        index = self.mapToSource(index)
+        data_item = self.sourceModel().data(index, role=Qt.UserRole)
+
+        if data_item.identifier not in self._items:
+            self._items[data_item.identifier] = PlotDataItem(data_item)
+
+        item = self._items.get(data_item.identifier)
+
+        return item
+
+    def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
             return
 
-        item = self._items[index.row()]
+        item = self.item_from_index(index)
 
         if role == Qt.DisplayRole:
             return item._data_item.name
@@ -118,7 +107,23 @@ class PlotProxyModel(QSortFilterProxyModel):
             icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
                             color=item.color)
             return icon
-        elif role == Qt.EditRole:
-            pass
+        elif role == Qt.UserRole:
+            return item
+        elif role == Qt.CheckStateRole:
+            item.data_item.setCheckState(Qt.Checked if item.visible else ~Qt.Checked)
 
-        return QVariant()
+        return super(PlotProxyModel, self).data(index, role)
+
+    def setData(self, index, value, role=Qt.EditRole):
+        if not index.isValid():
+            return
+
+        item = self.item_from_index(index)
+
+        if role == Qt.CheckStateRole:
+            item.visible = value > 0
+
+            value = Qt.Checked if item.visible else ~Qt.Checked
+            item.data_item.setCheckState(value)
+
+        return super(PlotProxyModel, self).setData(index, value, role)

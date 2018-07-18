@@ -1,5 +1,5 @@
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QStyledItemDelegate
+from qtpy.QtWidgets import QStyledItemDelegate, QPushButton
 
 
 class DataItemDelegate(QStyledItemDelegate):
@@ -12,9 +12,17 @@ class DataItemDelegate(QStyledItemDelegate):
 
         return flags
 
-    # def paint(self, painter, option, index):
-    #     item_var = index.data(Qt.DisplayRole)
-    #     item_str = item_var.toPyObject()
-    #
-    #     opts = QStyleOptionProgressV2()
-    #     opts.rect = option.rect
+    def createEditor(self, parent, option, index):
+        editor = QPushButton("O", parent)
+
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = 10
+        editor.setValue(value)
+
+    def setModelData(self, edit, model, index):
+        pass
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)

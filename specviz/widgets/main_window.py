@@ -1,41 +1,48 @@
 import os
 
-from qtpy.QtWidgets import (QMainWindow, QSizePolicy, QWidget, QApplication,
-                            QActionGroup)
 from qtpy.QtCore import QCoreApplication, QEvent, Signal
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
+                            QSizePolicy, QWidget)
 from qtpy.uic import loadUi
 
-from .workspace import Workspace
-from ..utils import UI_PATH
 from . import resources
 from ..core.hub import Hub
+from ..utils import UI_PATH
+from .workspace import Workspace
 
 __all__ = ['MainWindow']
 
 
-class UiMainWindow(QMainWindow):
+class MainWindow(QMainWindow):
+    """
+    Main window object for SpecViz. This represents a single "Workspace", and
+    multiple main windows can exist in a single SpecViz session.
+
+    Signals
+    -------
+    window_activated : :class:`~qtpy.QtWidgets.QMainWindow`
+        Fired when a particular `QMainWindow` is activated.
+    """
+    window_activated = Signal(QMainWindow)
+
     def __init__(self, *args, **kwargs):
-        super(UiMainWindow, self).__init__(*args, **kwargs)
+        super(MainWindow, self).__init__(*args, **kwargs)
 
         # Load the ui file and attached it to this instance
         loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
 
         # Add spacers to the main tool bar
         spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
+        spacer.setFixedSize(self.tool_bar.iconSize() * 2)
         self.tool_bar.insertWidget(self.load_data_action, spacer)
 
         spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
+        spacer.setFixedSize(self.tool_bar.iconSize() * 2)
         self.tool_bar.insertWidget(self.new_plot_action, spacer)
 
         spacer = QWidget()
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(3)
+        size_policy.setHorizontalStretch(1)
         spacer.setSizePolicy(size_policy)
         self.tool_bar.addWidget(spacer)
 
@@ -55,37 +62,29 @@ class UiMainWindow(QMainWindow):
         # Update title
         self.setWindowTitle(self._workspace.name + " — SpecViz")
 
+        # Setup workspace action connections
+        self.new_workspace_action.triggered.connect(
+            QApplication.instance().add_workspace)
+        self.new_plot_action.triggered.connect(
+            self.workspace._on_new_plot)
 
-class MainWindow(UiMainWindow):
-    window_activated = Signal(QMainWindow)
+        # Setup data action connections
+        self.load_data_action.triggered.connect(
+            self.workspace._on_load_data)
+        self.delete_data_action.triggered.connect(
+            self.workspace._on_delete_data)
 
-    def __init__(self, *args, **kwargs):
-        super(MainWindow, self).__init__(*args, **kwargs)
-
-        # Setup connections
-        self.setup_connections()
-
-        # Attach a hub instance to this window
-        self._hub = Hub(self)
+        # Setup plugin toolbar action actions
+        self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
+        self._last_toggled_action = None
 
     @property
-    def hub(self):
-        return self._hub
-
-    def setup_connections(self):
-        self.new_workspace_action.triggered.connect(QApplication.instance().add_workspace)
-        self.new_plot_action.triggered.connect(self._on_new_plot)
-        self.load_data_action.triggered.connect(self._on_load_data)
-
-        # Plugin toolbar actions
-        self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
-        self.model_editor_toggle.triggered.connect(lambda: self._on_toggle_plugin("Model Editor"))
-        self.statistics_toggle.triggered.connect(lambda: self._on_toggle_plugin("Statistics"))
-        self.mask_editor_toggle.triggered.connect(lambda: self._on_toggle_plugin("Mask Editor"))
-
-        self.plugin_dock.visibilityChanged.connect(self._on_plugin_dock_visbility_changed)
+    def workspace(self):
+        """Return the workspace widget within this `QMainWindow`."""
+        return self._workspace
 
     def event(self, e):
+        """Scrap window events."""
         # When this window is in focus and selected, tell the application that
         # it's the active window
         if e.type() == QEvent.WindowActivate:
@@ -93,28 +92,21 @@ class MainWindow(UiMainWindow):
 
         return super(MainWindow, self).event(e)
 
-    def _on_new_plot(self):
-        self._workspace.add_plot_window()
-
-    def _on_load_data(self):
-        pass
-
-    def _on_toggle_plugin_dock(self):
-        if self._plugin_action_group.checkedAction():
+    def _on_toggle_plugin_dock(self, action):
+        """
+        Show/hide the plugin dock depending on the state of the plugin
+        action group.
+        """
+        # if self._plugin_action_group.checkedAction():
+        #     self.plugin_dock.show()
+        # else:
+        #     self.plugin_dock.hide()
+        print("HERE1")
+        if action != self._last_toggled_action:
             self.plugin_dock.show()
+            self.plugin_dock.setWindowTitle(action.text())
+            self._last_toggled_action = action
         else:
+            action.setChecked(False)
             self.plugin_dock.hide()
-
-    def _on_toggle_plugin(self, name):
-        self.plugin_dock.setWindowTitle(name)
-
-    def _on_plugin_dock_visbility_changed(self, visible):
-        if not visible:
-            for act in self._plugin_action_group.actions():
-                act.setChecked(False)
-
-    @property
-    def workspace(self):
-        """
-        """
-        return self._workspace
+            self._last_toggled_action = None
