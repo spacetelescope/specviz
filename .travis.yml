@@ -36,14 +36,13 @@ env:
         - EVENT_TYPE='pull_request push'
 
 
-        # For this package-template, we include examples of Cython modules,
-        # so Cython is required for testing. If your package does not include
-        # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='pyqt'
+        # List other runtime dependencies for the package that are available as
+        # conda packages here.
+        - CONDA_DEPENDENCIES=''
 
         # List other runtime dependencies for the package that are available as
         # pip packages here.
-        - PIP_DEPENDENCIES='scipy specutils<=0.2.2 six pyyaml pyqtgraph qtpy py_expression_eval sphinx_rtd_theme sphinx_automodapi'
+        - PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy git+https://github.com/astropy/specutils sphinx-astropy pytest-astropy pytest-qt'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -58,10 +57,9 @@ env:
 
     matrix:
         # Make sure that egg_info works without dependencies
-        - PYTHON_VERSION=2.7 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=3.4 SETUP_CMD='egg_info'
         - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
         - PYTHON_VERSION=3.6 SETUP_CMD='egg_info'
+
 
 matrix:
 
@@ -80,14 +78,12 @@ matrix:
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - os: linux
-          env: SETUP_CMD='build_docs -w' SPHINX_VERSION='<1.6'
+          env: SETUP_CMD='build_docs -w'
 
         # Now try Astropy dev with the latest Python and LTS with Python 2.7 and 3.x.
         - os: linux
           env: ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts
         - os: linux
           env: ASTROPY_VERSION=lts
 
@@ -97,9 +93,7 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.9
-        - os: linux
-          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.10
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
         - os: linux
           env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
         - os: linux

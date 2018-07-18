@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SpecViz</string>
+  </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>false</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menu_bar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1280</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Workspace"/>
+    <addaction name="actionOpen_Workspace"/>
+    <addaction name="actionSave_Workspace"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_Data"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="tool_bar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>24</width>
+     <height>24</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="new_workspace_action"/>
+   <addaction name="open_workspace_action"/>
+   <addaction name="save_workspace_action"/>
+   <addaction name="load_data_action"/>
+   <addaction name="delete_data_action"/>
+   <addaction name="export_data_action"/>
+   <addaction name="new_plot_action"/>
+   <addaction name="operations_action"/>
+   <addaction name="arithmetic_action"/>
+  </widget>
+  <widget class="QToolBar" name="plugin_tool_bar">
+   <property name="windowTitle">
+    <string>toolBar_2</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QToolBar {
+	background: rgb(245, 245, 245);
+	border: none;
+	border-left: 1px solid rgb(179, 179, 179);
+	padding: 5px;
+	spacing: 8px;
+}</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>24</width>
+     <height>24</height>
+    </size>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>RightToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="model_editor_toggle"/>
+   <addaction name="statistics_toggle"/>
+   <addaction name="mask_editor_toggle"/>
+  </widget>
+  <widget class="QDockWidget" name="plugin_dock">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>200</width>
+     <height>62</height>
+    </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::NoDockWidgetFeatures</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::NoDockWidgetArea</set>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents"/>
+  </widget>
+  <action name="new_workspace_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/015-new.svg</normaloff>:/icons/015-new.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new workspace</string>
+   </property>
+  </action>
+  <action name="open_workspace_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/folder.svg</normaloff>:/icons/folder.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a previously saved workspace</string>
+   </property>
+  </action>
+  <action name="save_workspace_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/014-save.svg</normaloff>:/icons/014-save.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save current workspace</string>
+   </property>
+  </action>
+  <action name="model_editor_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/012-file.svg</normaloff>:/icons/012-file.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Toggle Model Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the model editor interface</string>
+   </property>
+  </action>
+  <action name="load_data_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/folder-2.svg</normaloff>:/icons/folder-2.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Load Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Load a data set into the current workspace</string>
+   </property>
+  </action>
+  <action name="export_data_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/inbox.svg</normaloff>:/icons/inbox.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Export Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Export selected data from workspace</string>
+   </property>
+  </action>
+  <action name="new_plot_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/048-line-chart.svg</normaloff>:/icons/048-line-chart.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New Plot</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new plot in the workspace</string>
+   </property>
+  </action>
+  <action name="operations_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/005-stats.svg</normaloff>:/icons/005-stats.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Operations</string>
+   </property>
+   <property name="toolTip">
+    <string>Operations to be applied to data</string>
+   </property>
+  </action>
+  <action name="arithmetic_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/014-calculator.svg</normaloff>:/icons/014-calculator.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Arithmetic</string>
+   </property>
+   <property name="toolTip">
+    <string>Perform arithmetic between data</string>
+   </property>
+  </action>
+  <action name="statistics_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/015-compass-1.svg</normaloff>:/icons/015-compass-1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Statistics</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the data statistics</string>
+   </property>
+  </action>
+  <action name="mask_editor_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/050-mask.svg</normaloff>:/icons/050-mask.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mask Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the mask editor</string>
+   </property>
+  </action>
+  <action name="actionNew_Workspace">
+   <property name="text">
+    <string>New Workspace</string>
+   </property>
+  </action>
+  <action name="actionOpen_Workspace">
+   <property name="text">
+    <string>Open Workspace</string>
+   </property>
+  </action>
+  <action name="actionSave_Workspace">
+   <property name="text">
+    <string>Save Workspace</string>
+   </property>
+  </action>
+  <action name="actionLoad_Data">
+   <property name="text">
+    <string>Load Data</string>
+   </property>
+  </action>
+  <action name="delete_data_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/delete-1.svg</normaloff>:/icons/delete-1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Delete Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete the selected data item</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
