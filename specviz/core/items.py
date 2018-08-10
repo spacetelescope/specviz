@@ -97,22 +97,10 @@ class PlotDataItem(pg.PlotDataItem):
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
-        if unit is None or self._data_item.flux.unit.is_equivalent(
-                unit, equivalencies=spectral_density(self.spectral_axis)):
-            print("Data units as compatible")
-        else:
-            print("Data units are not compatible")
-
         return unit is not None and self._data_item.flux.unit.is_equivalent(
             unit, equivalencies=spectral_density(self.spectral_axis))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        if unit is None or self._data_item.spectral_axis.unit.is_equivalent(
-                unit, equivalencies=spectral()):
-            print("Spectral axis units as compatible")
-        else:
-            print("Spectral axis units are not compatible")
-
         return unit is not None and self._data_item.spectral_axis.unit.is_equivalent(
             unit, equivalencies=spectral())
 
