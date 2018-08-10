@@ -28,7 +28,7 @@ class DataItem(QStandardItem):
 
     @property
     def identifier(self):
-        return self.data(self.DataRole)
+        return self.data(self.IdRole)
 
     @Property(str)
     def name(self):
@@ -36,7 +36,7 @@ class DataItem(QStandardItem):
 
     @name.setter
     def name(self, value):
-        self.setData(value, self.DataRole)
+        self.setData(value, self.NameRole)
 
     @Property(list)
     def flux(self):
