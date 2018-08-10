@@ -113,8 +113,9 @@ class PlotWindow(QMdiSubWindow):
         self._main_window.change_unit_action.triggered.connect(self._on_change_unit)
 
     def _on_change_unit(self):
-        unit_change = UnitChangeDialog()
+        unit_change = UnitChangeDialog(self._plot_widget)
         unit_change.exec_()
+
     @property
     def proxy_model(self):
         return self.plot_widget.proxy_model
@@ -189,6 +190,9 @@ class PlotWidget(pg.PlotWidget):
     def data_unit(self):
         return self._data_unit
 
+    def set_data_unit(self, data_unit):
+        self._data_unit = data_unit
+
     @property
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
@@ -253,16 +257,19 @@ class PlotWidget(pg.PlotWidget):
         else:
             plot_data_item.reset_units()
 
+        print("plot_data_item: ", plot_data_item.data_unit)
+
         self.addItem(plot_data_item)
 
         if initialize:
-            self._data_unit = plot_data_item.data_unit
-            self._spectral_axis_unit = plot_data_item.spectral_axis_unit
-
-            self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
-            self._plot_item.setLabel('left', units=self.data_unit)
-
-            self.autoRange()
+            self.set_units(plot_data_item.data_unit, plot_data_item.spectral_axis_unit)
+            # self._data_unit = plot_data_item.data_unit
+            # self._spectral_axis_unit = plot_data_item.spectral_axis_unit
+            #
+            # self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
+            # self._plot_item.setLabel('left', units=self.data_unit)
+            #
+            # self.autoRange()
 
         # Emit a plot added signal
         self.plot_added.emit(plot_data_item)
@@ -305,24 +312,53 @@ class PlotWidget(pg.PlotWidget):
                 self.autoRange()
 
             # Emit a plot added signal
-            self.plot_removed.emit()
+            # self.plot_removed.emit()
             self.plot_removed.emit(plot_data_item)
 
+    def set_units(self, data_unit, spectral_axis_unit):
+        self._data_unit = data_unit
+        self._spectral_axis_unit = spectral_axis_unit
+
+        self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
+        self._plot_item.setLabel('left', units=self.data_unit)
+
+        self.autoRange()
 
 class UnitChangeDialog(QDialog):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, plot_widget, *args, **kwargs):
         super(UnitChangeDialog, self).__init__(*args, **kwargs)
 
         # Load the ui dialog
         self.ui = loadUi(os.path.join(UI_PATH, "unit_change_dialog.ui"), self)
 
-        # Load Units to be used in combobox
+        # Load Units to be used in combobox (plus a Custom option)
         self._units = [u.m, u.cm, u.mm, u.um, u.nm, u.AA]
-        self._units_titles = list(u.long_names[0].title() for u in self._units) + ["Custom"]
+        self._units_titles = list(unit.long_names[0].title() for unit in self._units) + ["Custom"]
         self.current_units = self._units_titles[0]
+        self.plot_widget = plot_widget
+
+        if self.plot_widget.data_unit:
+            print("plot_widget", self.plot_widget.data_unit, u.Unit(self.plot_widget.data_unit))
+            try:
+                self.current_units = u.Unit(self.plot_widget.data_unit).long_names[0].title()
+            except Exception as e:
+                log.error(e)
+                self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+        else:
+            self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         self.setup_ui()
         self.setup_connections()
+
+        """
+        Check if data_units exist, if not make ok button not enabled.
+        Make sure data_units are valid units, if not, log error and ok not enabled
+        Add units to combobox
+        change current_units to those units
+        
+        once unit is changed, emit signal to plot_widget
+        """
+
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
@@ -402,8 +438,16 @@ class UnitChangeDialog(QDialog):
                 return False
 
             self.current_units = self.line_custom.text()
+            # TODO: emit signal to plot_widget.data_unit when units are changed
+            # self.plot_widget.set_data_unit(u.Unit(self.current_units))
+            self.plot_widget.set_units(u.Unit(self.current_units), u.Unit(self.current_units))
+
         else:
             self.current_units = self.ui.comboBox_units.currentText()
+            # TODO: emit signal to plot_widget.data_unit when units are changed
+            current_unit_in_u = self._units[self._units_titles.index(self.current_units)]
+            self.plot_widget.set_units(current_unit_in_u, current_unit_in_u)
+
         self.close()
         return True
 
