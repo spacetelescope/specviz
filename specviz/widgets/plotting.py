@@ -24,9 +24,6 @@ class PlotWindow(QMdiSubWindow):
         self._main_window = QMainWindow()
         self.setWidget(self._main_window)
 
-        # Store all available rois on this plot
-        self._rois = []
-
         loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._main_window)
 
         # The central widget of the main window widget will be the plot
@@ -83,6 +80,12 @@ class PlotWindow(QMdiSubWindow):
         spacer.setSizePolicy(size_policy)
         self._main_window.tool_bar.addWidget(spacer)
 
+        # Setup connections
+        self._main_window.linear_region_action.triggered.connect(
+            self.plot_widget._on_add_linear_region)
+        self._main_window.remove_region_action.triggered.connect(
+            self.plot_widget._on_remove_linear_region)
+
     @property
     def plot_widget(self):
         return self._plot_widget
@@ -130,8 +133,16 @@ class PlotWidget(pg.PlotWidget):
         self._visible = visible
 
         # Define labels for axes
-        self._plot_item.setLabel('bottom', text='Wavelength')
-        self._plot_item.setLabel('left', text='Flux')
+        self._plot_item.setLabel('bottom', text='')
+        self._plot_item.setLabel('left', text='')
+
+        # Store current select region
+        self._selected_region = None
+
+        # Setup select region labels
+        self._region_text_item = pg.TextItem(color="k")
+        self.addItem(self._region_text_item)
+        self._region_text_item.setParentItem(self.getViewBox())
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -141,6 +152,9 @@ class PlotWidget(pg.PlotWidget):
 
         # Cache a reference to the model object that's attached to the parent
         self._proxy_model = PlotProxyModel(model)
+
+        # Set default axes ranges
+        self.setRange(xRange=(0, 1), yRange=(0, 1))
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
@@ -172,12 +186,21 @@ class PlotWidget(pg.PlotWidget):
         source_index = self.proxy_model.sourceModel().indexFromItem(item)
         proxy_index = self.proxy_model.mapFromSource(source_index)
 
-        if item.checkState() == Qt.Checked:
+        plot_data_item = self.proxy_model.item_from_index(proxy_index)
+
+        if plot_data_item.visible:
+            if plot_data_item not in self.listDataItems():
+                logging.info("Adding plot %s", item.name)
             self.add_plot(proxy_index,
                           visible=True,
                           initialize=len(self.listDataItems()) == 0)
         else:
+            if plot_data_item in self.listDataItems():
+                logging.info("Removing plot %s", item.name)
             self.remove_plot(proxy_index)
+
+        # Re-evaluate plot unit compatibilities
+        # self.check_plot_compatibility()
 
     def check_plot_compatibility(self):
         for i in range(self.proxy_model.sourceModel().rowCount()):
@@ -211,11 +234,6 @@ class PlotWidget(pg.PlotWidget):
                  initialize=False):
         # Retrieve the data item from the model
         plot_data_item = self._proxy_model.item_from_index(index)
-
-        # Don't add a new data item if this one already exists
-        if plot_data_item in self.listDataItems():
-            return
-
         plot_data_item.visible = self._visible and visible
 
         if plot_data_item.are_units_compatible(self.spectral_axis_unit,
