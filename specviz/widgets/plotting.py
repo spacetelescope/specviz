@@ -1,15 +1,19 @@
+import logging
 import os
 
+import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
-from qtpy.QtCore import Property, QModelIndex, QObject, Qt, Signal, QEvent
-from qtpy.QtWidgets import QAction, QListWidget, QMainWindow, QMdiSubWindow, QMenu, QWidget, QSizePolicy
+from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
+from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow,
+                            QMenu, QSizePolicy, QWidget)
 from qtpy.uic import loadUi
 
-from ..core.models import PlotProxyModel
 from ..core.items import PlotDataItem
+from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
+from .custom import LinearRegionItem
 
 
 class PlotWindow(QMdiSubWindow):
@@ -249,8 +253,25 @@ class PlotWidget(pg.PlotWidget):
             self._data_unit = plot_data_item.data_unit
             self._spectral_axis_unit = plot_data_item.spectral_axis_unit
 
-            self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
-            self._plot_item.setLabel('left', units=self.data_unit)
+            # Deal with dispersion units
+            dispersion_unit = u.Unit(self.spectral_axis_unit or "")
+
+            if dispersion_unit.physical_type == 'length':
+                self._plot_item.setLabel('bottom', "Wavelength", units=self.spectral_axis_unit)
+            elif dispersion_unit.physical_type == 'frequency':
+                self._plot_item.setLabel('bottom', "Frequency", units=self.spectral_axis_unit)
+            elif dispersion_unit.physical_type == 'energy':
+                self._plot_item.setLabel('bottom', "Energy", units=self.spectral_axis_unit)
+            else:
+                self._plot_item.setLabel('bottom', "Dispersion", units=self.spectral_axis_unit)
+
+            # Deal with data units
+            data_unit = u.Unit(self.data_unit or "")
+
+            if data_unit.physical_type == 'spectral flux density':
+                self._plot_item.setLabel('left', "Flux Density", units=self.data_unit)
+            else:
+                self._plot_item.setLabel('left', "Flux", units=self.data_unit)
 
             self.autoRange()
 
@@ -286,8 +307,8 @@ class PlotWidget(pg.PlotWidget):
                 self._data_unit = None
                 self._spectral_axis_unit = None
 
-                self._plot_item.setLabel('bottom', units="")
-                self._plot_item.setLabel('left', units="")
+                self._plot_item.setLabel('bottom', "", units="")
+                self._plot_item.setLabel('left', "", units="")
 
                 # Reset the plot axes
                 self.setRange(xRange=(0, 1), yRange=(0, 1))
@@ -296,3 +317,53 @@ class PlotWidget(pg.PlotWidget):
 
             # Emit a plot added signal
             self.plot_removed.emit(plot_data_item)
+
+    def _on_region_changed(self):
+        # When the currently select region is changed, update the displayed
+        # minimum and maximum values
+        self._region_text_item.setText(
+            "Region: ({:0.5g}, {:0.5g})".format(
+                *(self._selected_region.getRegion() * u.Unit(self.spectral_axis_unit or ""))
+                ))
+
+    def _on_add_linear_region(self):
+        """
+        Create a new region and add it to the plot widget.
+        """
+        disp_axis = self.getAxis('bottom')
+        mid_point = disp_axis.range[0] + (disp_axis.range[1] - disp_axis.range[0]) * 0.5
+        region = LinearRegionItem(values=(disp_axis.range[0] + mid_point * 0.75,
+                                          disp_axis.range[1] - mid_point * 0.75))
+
+        def _on_region_updated(new_region):
+            # If the most recently selected region is already the currently
+            # selected region, ignore and return
+            if new_region == self._selected_region:
+                return
+
+            # De-select previous region
+            if self._selected_region is not None:
+                self._selected_region._on_region_selected(False)
+
+            new_region._on_region_selected(True)
+
+            # Listen to region move events
+            new_region.sigRegionChanged.connect(
+                self._on_region_changed)
+            new_region.selected.connect(
+                self._on_region_changed)
+
+            # Set the region as the currently selected region
+            self._selected_region = new_region
+
+        # When this region is selected, update the stored pointer to the
+        # current region and the displayed region bounds
+        region.selected.connect(lambda: _on_region_updated(region))
+        region.selected.emit(True)
+
+        self.addItem(region)
+
+    def _on_remove_linear_region(self):
+        self.removeItem(self._selected_region)
+        self._selected_region = None
+        self._region_text_item.setText("")
