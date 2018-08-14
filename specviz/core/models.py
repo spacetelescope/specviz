@@ -37,13 +37,6 @@ class DataListModel(QStandardItemModel):
         data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
         self.appendRow(data_item)
 
-    # def flags(self, index):
-    #     """Qt interaction flags for each `ListView` item."""
-    #     flags = super(DataListModel, self).flags(index)
-    #     flags |= Qt.ItemFlags(~Qt.ItemIsDragEnabled | ~Qt.ItemIsDropEnabled)
-    #
-    #     return flags
-
     def data(self, index, role=Qt.DisplayRole):
         """
         Returns information about an item in the model depending on the
@@ -110,7 +103,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         elif role == Qt.UserRole:
             return item
         elif role == Qt.CheckStateRole:
-            item.data_item.setCheckState(Qt.Checked if item.visible else ~Qt.Checked)
+            return Qt.Checked if item.visible else ~Qt.Checked
 
         return super(PlotProxyModel, self).data(index, role)
 
@@ -123,7 +116,9 @@ class PlotProxyModel(QSortFilterProxyModel):
         if role == Qt.CheckStateRole:
             item.visible = value > 0
 
-            value = Qt.Checked if item.visible else ~Qt.Checked
-            item.data_item.setCheckState(value)
+            self.dataChanged.emit(index, index)
+            self.sourceModel().itemChanged.emit(item.data_item)
+
+            return True
 
         return super(PlotProxyModel, self).setData(index, value, role)
