@@ -324,6 +324,7 @@ class PlotWidget(pg.PlotWidget):
 
         self.autoRange()
 
+
 class UnitChangeDialog(QDialog):
     def __init__(self, plot_widget, *args, **kwargs):
         super(UnitChangeDialog, self).__init__(*args, **kwargs)
