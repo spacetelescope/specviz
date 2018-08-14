@@ -1,4 +1,5 @@
 import os
+import logging
 
 from astropy.io import registry as io_registry
 from qtpy import compat
@@ -76,7 +77,20 @@ class Workspace(QWidget):
 
     @property
     def current_plot_window(self):
+        """
+        Get the current active plot window tab.
+        """
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
+
+    @property
+    def current_data_item(self):
+        """
+        Get the currently selected :class:`~specviz.core.items.PlotDataItem`.
+        """
+        idx = self.list_view.currentIndex()
+        item = self.proxy_model.data(idx, role=Qt.UserRole)
+
+        return item
 
     def add_plot_window(self):
         """
@@ -97,20 +111,21 @@ class Workspace(QWidget):
         if window is None:
             return
 
-        self.list_view.setModel(window.proxy_model)
-
         # Disconnect all plot widgets from the core model's item changed event
         for sub_window in self.mdi_area.subWindowList():
             try:
-                self._model.itemChanged.disconnect(sub_window.plot_widget.on_item_changed)
+                self._model.itemChanged.disconnect(
+                    sub_window.plot_widget.on_item_changed)
             except TypeError:
                 pass
+
+        self.list_view.setModel(window.proxy_model)
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)
 
         # Re-evaluate plot unit compatibilities
-        # window.plot_widget.check_plot_compatibility()
+        window.plot_widget.check_plot_compatibility()
 
     def _on_toggle_visibility(self, state):
         idx = self.list_view.currentIndex()
