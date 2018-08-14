@@ -195,13 +195,13 @@ class PlotWidget(pg.PlotWidget):
         if plot_data_item.visible:
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
-            self.add_plot(proxy_index,
-                          visible=True,
-                          initialize=len(self.listDataItems()) == 0)
+                self.add_plot(proxy_index,
+                              visible=True,
+                              initialize=len(self.listDataItems()) == 0)
         else:
             if plot_data_item in self.listDataItems():
                 logging.info("Removing plot %s", item.name)
-            self.remove_plot(proxy_index)
+                self.remove_plot(proxy_index)
 
         # Re-evaluate plot unit compatibilities
         # self.check_plot_compatibility()
