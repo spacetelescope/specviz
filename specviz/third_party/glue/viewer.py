@@ -12,6 +12,8 @@ class SpecvizViewer(BaseViewer, BaseQtViewerWidget):
     # don't want any of the layer artist/state infrastructure normally used
     # for data viewers.
 
+    LABEL = 'Specviz'
+
     def __init__(self, session, parent=None):
         """
         :type session: :class:`~glue.core.Session`
