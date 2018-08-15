@@ -4,6 +4,7 @@ from qtpy.QtCore import QCoreApplication, QEvent, Signal
 from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
                             QSizePolicy, QWidget)
 from qtpy.uic import loadUi
+import qtawesome as qta
 
 from . import resources
 from ..core.hub import Hub
@@ -30,6 +31,17 @@ class MainWindow(QMainWindow):
 
         # Load the ui file and attached it to this instance
         loadUi(os.path.join(UI_PATH, "main_window.ui"), self)
+
+        # Load editor ui files
+        self._model_editor = QWidget()
+        loadUi(os.path.join(UI_PATH, "model_editor.ui"), self._model_editor)
+        self._model_editor.add_model_button.setIcon(
+            qta.icon('fa.plus'))
+        self._model_editor.remove_model_button.setIcon(
+            qta.icon('fa.minus'))
+
+        self._statistics = QWidget()
+        loadUi(os.path.join(UI_PATH, "statistics.ui"), self._statistics)
 
         # Add spacers to the main tool bar
         spacer = QWidget()
@@ -78,6 +90,14 @@ class MainWindow(QMainWindow):
         self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
         self._last_toggled_action = None
 
+        # Attach individual loading of editors to their actions
+        self.model_editor_toggle.triggered.connect(
+            lambda: self._on_editor_triggered(self.model_editor_toggle.objectName()))
+        self.statistics_toggle.triggered.connect(
+            lambda: self._on_editor_triggered(self.statistics_toggle.objectName()))
+        self.mask_editor_toggle.triggered.connect(
+            lambda: self._on_editor_triggered(self.mask_editor_toggle.objectName()))
+
     @property
     def workspace(self):
         """Return the workspace widget within this `QMainWindow`."""
@@ -97,11 +117,6 @@ class MainWindow(QMainWindow):
         Show/hide the plugin dock depending on the state of the plugin
         action group.
         """
-        # if self._plugin_action_group.checkedAction():
-        #     self.plugin_dock.show()
-        # else:
-        #     self.plugin_dock.hide()
-        print("HERE1")
         if action != self._last_toggled_action:
             self.plugin_dock.show()
             self.plugin_dock.setWindowTitle(action.text())
@@ -110,3 +125,11 @@ class MainWindow(QMainWindow):
             action.setChecked(False)
             self.plugin_dock.hide()
             self._last_toggled_action = None
+
+    def _on_editor_triggered(self, object_name):
+        if object_name == 'model_editor_toggle':
+            self.plugin_dock.setWidget(self._model_editor)
+        if object_name == 'statistics_toggle':
+            self.plugin_dock.setWidget(self._statistics)
+        # else:
+        #     self.plugin_dock.setWidget(None)
