@@ -138,6 +138,7 @@ class PlotWindow(QMdiSubWindow):
         self._main_window.change_unit_action.triggered.connect(self._on_change_unit)
 
     def _on_change_unit(self):
+        # print(self.current_item, self._plot_widget)
         unit_change = UnitChangeDialog(self._plot_widget)
         unit_change.exec_()
 
