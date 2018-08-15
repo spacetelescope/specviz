@@ -1,19 +1,21 @@
-import os
 import logging
+import os
 
 from astropy.io import registry as io_registry
 from qtpy import compat
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QTabBar, QWidget, QAction, QColorDialog, QPushButton, QTabWidget
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtWidgets import (QAction, QPushButton,
+                            QTabBar, QTabWidget, QWidget)
 from qtpy.uic import loadUi
 
 from specutils import Spectrum1D
 
+from . import resources
+from ..core.delegates import DataItemDelegate
+from ..core.items import PlotDataItem
 from ..core.models import DataListModel, PlotProxyModel
 from ..utils import UI_PATH
 from .plotting import PlotWindow
-from ..core.delegates import DataItemDelegate
-from . import resources
 
 
 class Workspace(QWidget):
@@ -22,6 +24,8 @@ class Workspace(QWidget):
     This includes the :class:`~qtpy.QtWidgets.QListView`, and the
     :class:`~qtpy.QtWigets.QMdiArea` widgets, and associated model information.
     """
+    current_item_changed = Signal(PlotDataItem)
+
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
         self._name = "Untitled Workspace"
@@ -38,24 +42,11 @@ class Workspace(QWidget):
         # Don't expand mdiarea tabs
         self.mdi_area.findChild(QTabBar).setExpanding(True)
 
-        # Setup listview context menu
-        self._toggle_visibility_action = QAction("Visible", parent=self)
-        self._toggle_visibility_action.setCheckable(True)
-        self._change_color_action = QAction("Change Color", parent=self)
-
-        self.list_view.addAction(self._change_color_action)
-        self.list_view.addAction(self._toggle_visibility_action)
-
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
-        # Connect signals
-        self._toggle_visibility_action.triggered.connect(self._on_toggle_visibility)
-        self._change_color_action.triggered.connect(self._on_changed_color)
-
         # Add an initially empty plot
         self.add_plot_window()
-        # self.mdi_area.findChild(QTabWidget).setCornerWidget(QPushButton())
 
     @property
     def name(self):
@@ -83,7 +74,7 @@ class Workspace(QWidget):
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
 
     @property
-    def current_data_item(self):
+    def current_item(self):
         """
         Get the currently selected :class:`~specviz.core.items.PlotDataItem`.
         """
@@ -106,6 +97,9 @@ class Workspace(QWidget):
         plot_window.showMaximized()
 
         self.mdi_area.subWindowActivated.emit(plot_window)
+
+        # Subscribe this new plot window to list view item selection events
+        self.list_view.selectionModel().currentChanged.connect(plot_window._on_current_item_changed)
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -134,21 +128,20 @@ class Workspace(QWidget):
 
         self.proxy_model.dataChanged.emit(idx, idx)
 
-    def _on_changed_color(self, color):
-        color = QColorDialog.getColor()
-
-        if color.isValid():
-            idx = self.list_view.currentIndex()
-            item = self.proxy_model.data(idx, role=Qt.UserRole)
-
-            item.color = color.name()
-
-            self.proxy_model.dataChanged.emit(idx, idx)
-
     def _on_new_plot(self):
+        """
+        Listens for UI input and creates a new
+        :class:`~specviz.widgets.plotting.PlotWindow`.
+        """
         self.add_plot_window()
 
     def _on_load_data(self):
+        """
+        When the user loads a data file, this method is triggered. It provides
+        a file open dialog and from the dialog attempts to create a new
+        :class:`~specutils.Spectrum1D` object and thereafter adds it to the
+        data model.
+        """
         filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]
 
         file_path, fmt = compat.getopenfilename(parent=self,
@@ -165,6 +158,11 @@ class Workspace(QWidget):
         self.model.add_data(spec, name=name)
 
     def _on_delete_data(self):
+        """
+        Listens for data deletion events from the
+        :class:`~specviz.widgets.main_window.MainWindow` and deletes the
+        corresponding data item from the model.
+        """
         proxy_idx = self.list_view.currentIndex()
         model_idx = self.proxy_model.mapToSource(proxy_idx)
 
