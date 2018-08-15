@@ -41,6 +41,9 @@
      <height>22</height>
     </rect>
    </property>
+   <property name="accessibleName">
+    <string/>
+   </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
@@ -77,7 +80,7 @@
     <bool>true</bool>
    </property>
    <property name="windowTitle">
-    <string>toolBar</string>
+    <string>Main Tool Bar</string>
    </property>
    <property name="styleSheet">
     <string notr="true"/>
@@ -115,7 +118,7 @@
   </widget>
   <widget class="QToolBar" name="plugin_tool_bar">
    <property name="windowTitle">
-    <string>toolBar_2</string>
+    <string>Plugin Tool Bar</string>
    </property>
    <property name="styleSheet">
     <string notr="true">QToolBar {

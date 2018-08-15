@@ -8,7 +8,8 @@ import qtawesome as qta
 
 from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
 from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow,
-                            QMenu, QSizePolicy, QWidget, QDialog, QDialogButtonBox)
+                            QMenu, QSizePolicy, QWidget, QDialog, QDialogButtonBox,
+                            QToolButton, QWidgetAction, QColorDialog, QMessageBox)
 from qtpy.uic import loadUi
 
 from ..core.items import PlotDataItem
@@ -37,16 +38,28 @@ class PlotWindow(QMdiSubWindow):
 
         # The central widget of the main window widget will be the plot
         self._model = model
+        self._current_item_index = None
 
         self._plot_widget = PlotWidget(model=self._model)
         self._plot_widget.plotItem.setMenuEnabled(False)
+
         self._main_window.setCentralWidget(self._plot_widget)
 
-        self._plot_options_menu = QMenu(self)
-        self._change_line_color = QAction("Line Color", self)
-        self._plot_options_menu.addAction(self._change_line_color)
+        self._plot_options_button = QToolButton(self._main_window)
+        self._plot_options_button.setText("Plot Options")
+        self._plot_options_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self._plot_options_button.setPopupMode(QToolButton.InstantPopup)
 
-        self._main_window.plot_options_action.setMenu(self._plot_options_menu)
+        self._plot_options_menu = QMenu(self._main_window)
+        self._plot_options_button.setMenu(self._plot_options_menu)
+
+        self._change_color_action = QAction("Line Color")
+        self._plot_options_menu.addAction(self._change_color_action)
+
+        self._plot_options_button_action = QWidgetAction(self._main_window)
+        self._plot_options_button_action.setDefaultWidget(self._plot_options_button)
+
+        self._main_window.tool_bar.insertAction(self._main_window.export_plot_action, self._plot_options_button_action)
 
         # Add the qtawesome icons to the plot-specific actions
         self._main_window.linear_region_action.setIcon(
@@ -66,7 +79,7 @@ class PlotWindow(QMdiSubWindow):
         #              color='black',
         #              color_active='orange'))
 
-        self._main_window.plot_options_action.setIcon(
+        self._plot_options_button.setIcon(
             qta.icon('fa.line-chart',
                      active='fa.legal',
                      color='black',
@@ -88,7 +101,7 @@ class PlotWindow(QMdiSubWindow):
         spacer = QWidget()
         spacer.setFixedSize(self._main_window.tool_bar.iconSize() * 2)
         self._main_window.tool_bar.insertWidget(
-            self._main_window.plot_options_action, spacer)
+            self._plot_options_button_action, spacer)
 
         spacer = QWidget()
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -96,11 +109,19 @@ class PlotWindow(QMdiSubWindow):
         spacer.setSizePolicy(size_policy)
         self._main_window.tool_bar.addWidget(spacer)
 
+        # Listen for item selection events
+        # self._model.
+
         # Setup connections
         self._main_window.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
         self._main_window.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
+        self._change_color_action.triggered.connect(self._on_change_color)
+
+    @property
+    def current_item(self):
+        return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
@@ -123,6 +144,35 @@ class PlotWindow(QMdiSubWindow):
     @property
     def proxy_model(self):
         return self.plot_widget.proxy_model
+
+    def _on_current_item_changed(self, current_idx, prev_idx):
+        self._current_item_index = current_idx
+
+    def _on_change_color(self):
+        """
+        Listens for color changed events in plot windows, gets the currently
+        selected item in the data list view, and changes the stored color
+        value.
+        """
+        # If there is no currently selected rows, raise an error
+        if self.current_item is None:
+            message_box = QMessageBox()
+            message_box.setText("No item selected, cannot change color.")
+            message_box.setIcon(QMessageBox.Warning)
+            message_box.setInformativeText(
+                "There is currently no item selected. Please select an item "
+                "before changing its plot color.")
+
+            message_box.exec()
+            return
+
+        color = QColorDialog.getColor()
+
+        if color.isValid():
+            self.current_item.color = color.name()
+
+        self.proxy_model.dataChanged.emit(self._current_item_index,
+                                          self._current_item_index)
 
 
 class PlotWidget(pg.PlotWidget):
