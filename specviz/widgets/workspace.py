@@ -145,8 +145,8 @@ class Workspace(QWidget):
 
             self.proxy_model.dataChanged.emit(idx, idx)
 
-    def _on_new_plot(self):
-        self.add_plot_window()
+    def _on_new_plot(self, workspace):
+        self.add_plot_window(workspace)
 
     def _on_load_data(self):
         filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]

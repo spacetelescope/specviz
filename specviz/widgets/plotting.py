@@ -433,7 +433,7 @@ class UnitChangeDialog(QDialog):
         self.current_units = self._units_titles[0]
         self.plot_widget = plot_widget
 
-        if self.plot_widget.data_unit:
+        if self.plot_widget and self.plot_widget.data_unit:
             print("plot_widget", self.plot_widget.data_unit, u.Unit(self.plot_widget.data_unit))
             try:
                 self.current_units = u.Unit(self.plot_widget.data_unit).long_names[0].title()
@@ -454,7 +454,6 @@ class UnitChangeDialog(QDialog):
         
         once unit is changed, emit signal to plot_widget
         """
-
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
@@ -535,14 +534,22 @@ class UnitChangeDialog(QDialog):
 
             self.current_units = self.line_custom.text()
             # TODO: emit signal to plot_widget.data_unit when units are changed
-            # self.plot_widget.set_data_unit(u.Unit(self.current_units))
+            self.plot_widget.set_data_unit(u.Unit(self.current_units))
             self.plot_widget.set_units(u.Unit(self.current_units), u.Unit(self.current_units))
+            # if self.plot_widget.is_data_unit_compatible(u.Unit(self.current_units)):
+            #     self.plot_widget.data_unit = u.Unit(self.current_units)
+            # if self.plot_widget.is_spectral_axis_unit_compatible(u.Unit(self.current_units)):
+            #     self.plot_widget.spectral_axis_unit = u.Unit(self.current_units)
 
         else:
             self.current_units = self.ui.comboBox_units.currentText()
             # TODO: emit signal to plot_widget.data_unit when units are changed
             current_unit_in_u = self._units[self._units_titles.index(self.current_units)]
             self.plot_widget.set_units(current_unit_in_u, current_unit_in_u)
+            # if self.plot_widget.is_data_unit_compatible(u.Unit(current_unit_in_u)):
+            #     self.plot_widget.data_unit = u.Unit(current_unit_in_u)
+            # if self.plot_widget.is_spectral_axis_unit_compatible(u.Unit(current_unit_in_u)):
+            #     self.plot_widget.spectral_axis_unit = u.Unit(current_unit_in_u)
 
         self.close()
         return True
