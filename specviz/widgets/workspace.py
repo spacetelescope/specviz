@@ -73,6 +73,9 @@ class Workspace(QWidget):
         """
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
 
+    def remove_current_window(self):
+        self.mdi_area.removeSubWindow(self.current_plot_window)
+
     @property
     def current_item(self):
         """
