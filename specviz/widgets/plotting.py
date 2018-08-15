@@ -232,6 +232,26 @@ class PlotWidget(pg.PlotWidget):
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
 
+    @data_unit.setter
+    def data_unit(self, value):
+        for plot_data_item in self.listDataItems():
+            if plot_data_item.is_data_unit_compatible(value):
+                plot_data_item.data_unit = value
+            else:
+                plot_data_item.visible = False
+
+        self.initialize_plot(data_unit=value)
+
+    @spectral_axis_unit.setter
+    def spectral_axis_unit(self, value):
+        for plot_data_item in self.listDataItems():
+            if plot_data_item.is_spectral_axis_unit_compatible(value):
+                plot_data_item.spectral_axis_unit = value
+            else:
+                plot_data_item.visible = False
+
+        self.initialize_plot(spectral_axis_unit=value)
+
     def on_item_changed(self, item):
         """
         Called when the user clicks the item's checkbox.
@@ -299,33 +319,37 @@ class PlotWidget(pg.PlotWidget):
         self.addItem(plot_data_item)
 
         if initialize:
-            self._data_unit = plot_data_item.data_unit
-            self._spectral_axis_unit = plot_data_item.spectral_axis_unit
-
-            # Deal with dispersion units
-            dispersion_unit = u.Unit(self.spectral_axis_unit or "")
-
-            if dispersion_unit.physical_type == 'length':
-                self._plot_item.setLabel('bottom', "Wavelength", units=self.spectral_axis_unit)
-            elif dispersion_unit.physical_type == 'frequency':
-                self._plot_item.setLabel('bottom', "Frequency", units=self.spectral_axis_unit)
-            elif dispersion_unit.physical_type == 'energy':
-                self._plot_item.setLabel('bottom', "Energy", units=self.spectral_axis_unit)
-            else:
-                self._plot_item.setLabel('bottom', "Dispersion", units=self.spectral_axis_unit)
-
-            # Deal with data units
-            data_unit = u.Unit(self.data_unit or "")
-
-            if data_unit.physical_type == 'spectral flux density':
-                self._plot_item.setLabel('left', "Flux Density", units=self.data_unit)
-            else:
-                self._plot_item.setLabel('left', "Flux", units=self.data_unit)
-
-            self.autoRange()
+            self.initialize_plot(plot_data_item.data_unit,
+                                 plot_data_item.spectral_axis_unit)
 
         # Emit a plot added signal
         self.plot_added.emit(plot_data_item)
+
+    def initialize_plot(self, data_unit=None, spectral_axis_unit=None):
+        self._data_unit = data_unit or self._data_unit
+        self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
+
+        # Deal with dispersion units
+        dispersion_unit = u.Unit(self.spectral_axis_unit or "")
+
+        if dispersion_unit.physical_type == 'length':
+            self._plot_item.setLabel('bottom', "Wavelength", units=dispersion_unit)
+        elif dispersion_unit.physical_type == 'frequency':
+            self._plot_item.setLabel('bottom', "Frequency", units=dispersion_unit)
+        elif dispersion_unit.physical_type == 'energy':
+            self._plot_item.setLabel('bottom', "Energy", units=dispersion_unit)
+        else:
+            self._plot_item.setLabel('bottom', "Dispersion", units=dispersion_unit)
+
+        # Deal with data units
+        data_unit = u.Unit(self.data_unit or "")
+
+        if data_unit.physical_type == 'spectral flux density':
+            self._plot_item.setLabel('left', "Flux Density", units=data_unit)
+        else:
+            self._plot_item.setLabel('left', "Flux", units=data_unit)
+
+        self.autoRange()
 
     def remove_plot(self, index, start=None, end=None):
         """
