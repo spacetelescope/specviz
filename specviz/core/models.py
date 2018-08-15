@@ -31,11 +31,19 @@ class DataListModel(QStandardItemModel):
         self.appendRow(data_item)
         self.appendRow(data_item2)
 
+    def items(self):
+        """
+        Retrieves all the :class:`~specviz.core.items.DataItem`s in this model.
+        """
+        return [self.item(idx) for idx in range(self.rowCount())]
+
     def add_data(self, spec, name):
         """
         """
         data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
         self.appendRow(data_item)
+
+        return data_item
 
     def data(self, index, role=Qt.DisplayRole):
         """
