@@ -68,6 +68,9 @@ class DataListModel(QStandardItemModel):
 
         return super(DataListModel, self).setData(index, value, role)
 
+    def data_list(self):
+        return [self.item(i) for i in range(self.rowCount())]
+
 
 class PlotProxyModel(QSortFilterProxyModel):
     def __init__(self, source=None, *args, **kwargs):
