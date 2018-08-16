@@ -1,8 +1,9 @@
-import sys
 import logging
+import sys
 
+import click
+from qtpy.QtCore import QObject, Qt, Signal
 from qtpy.QtWidgets import QApplication, QMainWindow
-from qtpy.QtCore import Qt, QObject, Signal
 
 from .widgets.main_window import MainWindow
 
@@ -13,11 +14,20 @@ class Application(QApplication):
     """
     current_window_changed = Signal(QMainWindow)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, file_path=None, file_loader=None, embeded=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
-
         # Cache a reference to the currently active window
         self._current_window = None
+
+        # Create a default workspace
+        self.add_workspace()
+
+        # Set embed mode state
+        self.current_window.set_embeded(embeded)
+
+        # If a file path has been given, automatically add data
+        if file_path is not None:
+            self.current_window.workspace.load_data(file_path, file_loader)
 
     def add_workspace(self):
         """
@@ -48,11 +58,13 @@ class Application(QApplication):
 
         logging.info("Setting active workspace to '%s'", window.workspace.name)
 
-
-def start():
+# @click.command
+# @click.option('--file', type=click.Path(exists=True))
+# @click.option('--loader', type=str)
+# @click.option('--embed', is_flag=True)
+def start(file_path=None, loader=None, embed=None):
     # Start the application
-    app = Application(sys.argv)
-    app.add_workspace()
+    app = Application(sys.argv, file_path=file_path, file_loader=loader, embeded=embed)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
