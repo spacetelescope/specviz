@@ -191,8 +191,8 @@ class SmoothingThread(QThread):
         Smoothing function from `~specutils.manipulation.smoothing`.
     parent : `~specviz.widgets.smoothing.SmoothingDialog`
 
-    Signal Slots
-    ------------
+    Signals
+    -------
     finished : Signal
         Notifies parent UI that smoothing is complete and is used to
         communicate the resulting data.
