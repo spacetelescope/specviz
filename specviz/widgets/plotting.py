@@ -6,7 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
-from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow,
+from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow, QDialog,
                             QToolButton, QSizePolicy, QWidget, QMenu, QWidgetAction, QColorDialog, QMessageBox)
 from qtpy.uic import loadUi
 
@@ -25,10 +25,10 @@ class PlotWindow(QMdiSubWindow):
 
         # The central widget of the sub window will be a main window so that it
         # can support having tab bars
-        self._main_window = QMainWindow()
-        self.setWidget(self._main_window)
+        self._central_widget = QMainWindow()
+        self.setWidget(self._central_widget)
 
-        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._main_window)
+        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._central_widget)
 
         # The central widget of the main window widget will be the plot
         self._model = model
@@ -37,31 +37,27 @@ class PlotWindow(QMdiSubWindow):
         self._plot_widget = PlotWidget(model=self._model)
         self._plot_widget.plotItem.setMenuEnabled(False)
 
-        self._main_window.setCentralWidget(self._plot_widget)
+        self._central_widget.setCentralWidget(self._plot_widget)
 
-        self._plot_options_button = QToolButton(self._main_window)
-        self._plot_options_button.setText("Plot Options")
-        self._plot_options_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self._plot_options_button.setPopupMode(QToolButton.InstantPopup)
+        # Add a menu to the plot options action
+        _plot_options_button = self._central_widget.tool_bar.widgetForAction(
+            self._central_widget.plot_options_action)
+        _plot_options_button.setPopupMode(QToolButton.InstantPopup)
 
-        self._plot_options_menu = QMenu(self._main_window)
-        self._plot_options_button.setMenu(self._plot_options_menu)
+        self._plot_options_menu = QMenu(self._central_widget)
+        _plot_options_button.setMenu(self._plot_options_menu)
 
+        # Add the line color action
         self._change_color_action = QAction("Line Color")
         self._plot_options_menu.addAction(self._change_color_action)
 
-        self._plot_options_button_action = QWidgetAction(self._main_window)
-        self._plot_options_button_action.setDefaultWidget(self._plot_options_button)
-
-        self._main_window.tool_bar.insertAction(self._main_window.export_plot_action, self._plot_options_button_action)
-
         # Add the qtawesome icons to the plot-specific actions
-        self._main_window.linear_region_action.setIcon(
+        self._central_widget.linear_region_action.setIcon(
             qta.icon('fa.compress',
                      color='black',
                      color_active='orange'))
 
-        self._main_window.remove_region_action.setIcon(
+        self._central_widget.remove_region_action.setIcon(
             qta.icon('fa.compress', 'fa.trash',
                       options=[{'scale_factor': 1},
                                {'color': 'red', 'scale_factor': 0.75,
@@ -73,36 +69,33 @@ class PlotWindow(QMdiSubWindow):
         #              color='black',
         #              color_active='orange'))
 
-        self._plot_options_button.setIcon(
+        self._central_widget.plot_options_action.setIcon(
             qta.icon('fa.line-chart',
                      active='fa.legal',
                      color='black',
                      color_active='orange'))
 
-        self._main_window.export_plot_action.setIcon(
+        self._central_widget.export_plot_action.setIcon(
             qta.icon('fa.download',
                      active='fa.legal',
                      color='black',
                      color_active='orange'))
 
         spacer = QWidget()
-        spacer.setFixedSize(self._main_window.tool_bar.iconSize() * 2)
-        self._main_window.tool_bar.insertWidget(
-            self._plot_options_button_action, spacer)
+        spacer.setFixedSize(self._central_widget.tool_bar.iconSize() * 2)
+        self._central_widget.tool_bar.insertWidget(
+            self._central_widget.plot_options_action, spacer)
 
         spacer = QWidget()
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(1)
         spacer.setSizePolicy(size_policy)
-        self._main_window.tool_bar.addWidget(spacer)
-
-        # Listen for item selection events
-        # self._model.
+        self._central_widget.tool_bar.addWidget(spacer)
 
         # Setup connections
-        self._main_window.linear_region_action.triggered.connect(
+        self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
-        self._main_window.remove_region_action.triggered.connect(
+        self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
         self._change_color_action.triggered.connect(self._on_change_color)
 
@@ -145,6 +138,8 @@ class PlotWindow(QMdiSubWindow):
         if color.isValid():
             self.current_item.color = color.name()
 
+        # Emit a data change signal so that the list view can upate the
+        # displayed color value for the model item
         self.proxy_model.dataChanged.emit(self._current_item_index,
                                           self._current_item_index)
 
@@ -212,7 +207,8 @@ class PlotWidget(pg.PlotWidget):
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
-        self.proxy_model.rowsAboutToBeRemoved.connect(lambda idx: self.remove_plot(index=idx))
+        self.proxy_model.rowsAboutToBeRemoved.connect(
+            lambda idx: self.remove_plot(index=idx))
 
         self.plot_added.connect(self.check_plot_compatibility)
         self.plot_removed.connect(self.check_plot_compatibility)
@@ -238,20 +234,36 @@ class PlotWidget(pg.PlotWidget):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_data_unit_compatible(value):
                 plot_data_item.data_unit = value
-            else:
-                plot_data_item.visible = False
 
-        self.initialize_plot(data_unit=value)
+                # Re-initialize plot to update the displayed values and
+                # adjust ranges of the displayed axes
+                self.initialize_plot(spectral_axis_unit=value)
+            else:
+                # Technically, this should not occur, but in the unforseen
+                # case that it does, remove the plot and log an error
+                self.remove_plot(item=plot_data_item)
+                logging.error("Removing plot '%s' due to incompatible units "
+                              "('%s' and '%s').",
+                              plot_data_item.data_item.name,
+                              plot_data_item.spectral_axis_unit, value)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_spectral_axis_unit_compatible(value):
                 plot_data_item.spectral_axis_unit = value
-            else:
-                plot_data_item.visible = False
 
-        self.initialize_plot(spectral_axis_unit=value)
+                # Re-initialize plot to update the displayed values and
+                # adjust ranges of the displayed axes
+                self.initialize_plot(spectral_axis_unit=value)
+            else:
+                # Technically, this should not occur, but in the unforseen
+                # case that it does, remove the plot and log an error
+                self.remove_plot(item=plot_data_item)
+                logging.error("Removing plot '%s' due to incompatible units "
+                              "('%s' and '%s').",
+                              plot_data_item.data_item.name,
+                              plot_data_item.spectral_axis_unit, value)
 
     def on_item_changed(self, item):
         """
@@ -374,6 +386,10 @@ class PlotWidget(pg.PlotWidget):
             item = self.proxy_model.item_from_index(index)
 
         if item is not None:
+            # Since we've removed the plot, ensure that its visibility state
+            # had been changed as well
+            item.visible = False
+
             # Remove plot data item from this plot
             self.removeItem(item)
 
@@ -398,7 +414,8 @@ class PlotWidget(pg.PlotWidget):
         # minimum and maximum values
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(
-                *(self._selected_region.getRegion() * u.Unit(self.spectral_axis_unit or ""))
+                *(self._selected_region.getRegion() *
+                  u.Unit(self.spectral_axis_unit or ""))
                 ))
 
     def _on_add_linear_region(self):
@@ -437,6 +454,9 @@ class PlotWidget(pg.PlotWidget):
         region.selected.emit(True)
 
         self.addItem(region)
+
+        # Display the bounds in the upper-left hand corner of the plot
+        self._on_region_changed()
 
     def _on_remove_linear_region(self):
         self.removeItem(self._selected_region)

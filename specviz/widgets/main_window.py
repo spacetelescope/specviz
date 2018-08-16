@@ -104,7 +104,8 @@ class MainWindow(QMainWindow):
         return self._workspace
 
     def set_embeded(self, embed):
-        # If embeded, toggle the display of the tool bar, plugin bar, and list view
+        # If embeded, toggle the display of the tool bar, plugin bar,
+        # and list view
         if embed:
             self.menu_bar.hide()
             self.workspace.list_view.hide()
