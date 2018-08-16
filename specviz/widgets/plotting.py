@@ -108,7 +108,8 @@ class PlotWindow(QMdiSubWindow):
 
     @property
     def current_item(self):
-        return self.proxy_model.item_from_index(self._current_item_index)
+        if self._current_item_index is not None:
+            return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
@@ -211,7 +212,7 @@ class PlotWidget(pg.PlotWidget):
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
-        self.proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
+        self.proxy_model.rowsAboutToBeRemoved.connect(lambda idx: self.remove_plot(index=idx))
 
         self.plot_added.connect(self.check_plot_compatibility)
         self.plot_removed.connect(self.check_plot_compatibility)
@@ -264,13 +265,13 @@ class PlotWidget(pg.PlotWidget):
         if plot_data_item.visible:
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
-                self.add_plot(proxy_index,
+                self.add_plot(item=plot_data_item,
                               visible=True,
                               initialize=len(self.listDataItems()) == 0)
         else:
             if plot_data_item in self.listDataItems():
                 logging.info("Removing plot %s", item.name)
-                self.remove_plot(proxy_index)
+                self.remove_plot(item=plot_data_item)
 
         # Re-evaluate plot unit compatibilities
         # self.check_plot_compatibility()
@@ -303,27 +304,27 @@ class PlotWidget(pg.PlotWidget):
                                                    self.data_unit):
             plot_data_item.setEnabled(False)
 
-    def add_plot(self, index, first=None, last=None, visible=True,
-                 initialize=False):
-        # Retrieve the data item from the model
-        plot_data_item = self._proxy_model.item_from_index(index)
-        plot_data_item.visible = self._visible and visible
+    def add_plot(self, item=None, index=None, visible=True, initialize=False):
+        if item is None:
+            # Retrieve the data item from the model
+            item = self._proxy_model.item_from_index(index)
+            item.visible = self._visible and visible
 
-        if plot_data_item.are_units_compatible(self.spectral_axis_unit,
+        if item.are_units_compatible(self.spectral_axis_unit,
                                                self.data_unit):
-            plot_data_item.data_unit = self.data_unit
-            plot_data_item.spectral_axis_unit = self.spectral_axis_unit
+            item.data_unit = self.data_unit
+            item.spectral_axis_unit = self.spectral_axis_unit
         else:
-            plot_data_item.reset_units()
+            item.reset_units()
 
-        self.addItem(plot_data_item)
+        self.addItem(item)
 
         if initialize:
-            self.initialize_plot(plot_data_item.data_unit,
-                                 plot_data_item.spectral_axis_unit)
+            self.initialize_plot(item.data_unit,
+                                 item.spectral_axis_unit)
 
         # Emit a plot added signal
-        self.plot_added.emit(plot_data_item)
+        self.plot_added.emit(item)
 
     def initialize_plot(self, data_unit=None, spectral_axis_unit=None):
         self._data_unit = data_unit or self._data_unit
@@ -351,7 +352,7 @@ class PlotWidget(pg.PlotWidget):
 
         self.autoRange()
 
-    def remove_plot(self, index, start=None, end=None):
+    def remove_plot(self, item=None, index=None, start=None, end=None):
         """
         Removes a plot data item given an index in the current plot sub
         window's proxy model.
@@ -365,15 +366,16 @@ class PlotWidget(pg.PlotWidget):
         end : int
             The ending index in the model item list.
         """
-        if not index.isValid():
-            return
+        if item is None:
+            if not index.isValid():
+                return
 
-        # Retrieve the data item from the proxy model
-        plot_data_item = self.proxy_model.item_from_index(index)
+            # Retrieve the data item from the proxy model
+            item = self.proxy_model.item_from_index(index)
 
-        if plot_data_item is not None:
+        if item is not None:
             # Remove plot data item from this plot
-            self.removeItem(plot_data_item)
+            self.removeItem(item)
 
             # If there are no current plots, reset unit information for plot
             if len(self.listDataItems()) == 0:
@@ -389,7 +391,7 @@ class PlotWidget(pg.PlotWidget):
                 self.autoRange()
 
             # Emit a plot added signal
-            self.plot_removed.emit(plot_data_item)
+            self.plot_removed.emit(item)
 
     def _on_region_changed(self):
         # When the currently select region is changed, update the displayed
