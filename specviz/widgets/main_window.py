@@ -2,7 +2,7 @@ import os
 
 from qtpy.QtCore import QCoreApplication, QEvent, Signal
 from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
-                            QSizePolicy, QWidget)
+                            QSizePolicy, QWidget, QTabBar)
 from qtpy.uic import loadUi
 import qtawesome as qta
 
@@ -104,18 +104,22 @@ class MainWindow(QMainWindow):
         return self._workspace
 
     def set_embeded(self, embed):
-        # If embeded, toggle the display of the tool bar, plugin bar,
-        # and list view
+        """
+        Toggles the visibility of certain parts of the ui to make it more
+        amenable to being embeded in other applications.
+        """
         if embed:
             self.menu_bar.hide()
             self.workspace.list_view.hide()
             self.tool_bar.hide()
             self.plugin_tool_bar.hide()
+            self.workspace.mdi_area.findChild(QTabBar).hide()
         else:
             self.menu_bar.show()
             self.workspace.list_view.show()
             self.tool_bar.show()
             self.plugin_tool_bar.show()
+            self.workspace.mdi_area.findChild(QTabBar).show()
 
     def event(self, e):
         """Scrap window events."""
@@ -145,5 +149,3 @@ class MainWindow(QMainWindow):
             self.plugin_dock.setWidget(self._model_editor)
         if object_name == 'statistics_toggle':
             self.plugin_dock.setWidget(self._statistics)
-        # else:
-        #     self.plugin_dock.setWidget(None)

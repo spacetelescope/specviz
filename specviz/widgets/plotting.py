@@ -316,7 +316,21 @@ class PlotWidget(pg.PlotWidget):
                                                    self.data_unit):
             plot_data_item.setEnabled(False)
 
-    def add_plot(self, item=None, index=None, visible=True, initialize=False):
+    def add_plot(self, item=None, index=None, initialize=False):
+        """
+        Adds a plot data item given an index in the current plot sub
+        window's proxy model, or if given the item explicitly.
+
+        Parameters
+        ----------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The item in the proxy model to add to this plot.
+        index : :class:`~qtpy.QtCore.QModelIndex`
+            The index in the model of the data item associated with this plot.
+        initialize : bool
+            Whether the plot should re-evaluate axis labels and re-configure
+            axis bounds.
+        """
         if item is None:
             # Retrieve the data item from the model
             item = self._proxy_model.item_from_index(index)
@@ -339,6 +353,18 @@ class PlotWidget(pg.PlotWidget):
         self.plot_added.emit(item)
 
     def initialize_plot(self, data_unit=None, spectral_axis_unit=None):
+        """
+        Routine to re-configure the display settings of the plot to fit the
+        plotted data and re-assess the physical type and unit information of
+        the data.
+
+        Parameters
+        ----------
+        data_unit : str or :class:`~astropy.units.Unit`
+            The data unit used for the display of the y axis.
+        spectral_axis_unit : str or :class:`~astropy.units.Unit`
+            The spectral axis unit used for the display of the x axis.
+        """
         self._data_unit = data_unit or self._data_unit
         self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
 
@@ -371,6 +397,8 @@ class PlotWidget(pg.PlotWidget):
 
         Parameters
         ----------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The item in the proxy model to remove from this plot.
         index : :class:`~qtpy.QtCore.QModelIndex`
             The index in the model of the data item associated with this plot.
         start : int
@@ -378,7 +406,7 @@ class PlotWidget(pg.PlotWidget):
         end : int
             The ending index in the model item list.
         """
-        if item is None:
+        if item is None and index is not None:
             if not index.isValid():
                 return
 
@@ -410,22 +438,35 @@ class PlotWidget(pg.PlotWidget):
             self.plot_removed.emit(item)
 
     def _on_region_changed(self):
-        # When the currently select region is changed, update the displayed
-        # minimum and maximum values
+        """
+        Updates the displayed minimum and maximum values when the currently
+        selected region is changed.
+        """
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(
                 *(self._selected_region.getRegion() *
                   u.Unit(self.spectral_axis_unit or ""))
                 ))
 
-    def _on_add_linear_region(self):
+    def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """
-        Create a new region and add it to the plot widget.
+        Create a new region and add it to the plot widget. If no bounds are
+        given, region is placed around the middle 50 percent of the displayed
+        spectral axis.
+
+        Parameters
+        ----------
+        min_bound : float
+            Placement of the left edge of the region in axis units.
+        max_bound : float
+            Placement of the right edge of the region in axis units.
         """
         disp_axis = self.getAxis('bottom')
-        mid_point = disp_axis.range[0] + (disp_axis.range[1] - disp_axis.range[0]) * 0.5
-        region = LinearRegionItem(values=(disp_axis.range[0] + mid_point * 0.75,
-                                          disp_axis.range[1] - mid_point * 0.75))
+        mid_point = disp_axis.range[0] + (disp_axis.range[1] -
+                                          disp_axis.range[0]) * 0.5
+        region = LinearRegionItem(
+            values=(min_bound or disp_axis.range[0] + mid_point * 0.75,
+                    max_bound or disp_axis.range[1] - mid_point * 0.75))
 
         def _on_region_updated(new_region):
             # If the most recently selected region is already the currently
@@ -459,6 +500,7 @@ class PlotWidget(pg.PlotWidget):
         self._on_region_changed()
 
     def _on_remove_linear_region(self):
+        """Remove the selected linear region from the plot."""
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")

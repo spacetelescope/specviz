@@ -82,7 +82,6 @@ class PlotProxyModel(QSortFilterProxyModel):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
         self.setSourceModel(source)
-
         self._items = {}
 
     def item_from_index(self, index):
