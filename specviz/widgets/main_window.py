@@ -103,6 +103,19 @@ class MainWindow(QMainWindow):
         """Return the workspace widget within this `QMainWindow`."""
         return self._workspace
 
+    def set_embeded(self, embed):
+        # If embeded, toggle the display of the tool bar, plugin bar, and list view
+        if embed:
+            self.menu_bar.hide()
+            self.workspace.list_view.hide()
+            self.tool_bar.hide()
+            self.plugin_tool_bar.hide()
+        else:
+            self.menu_bar.show()
+            self.workspace.list_view.show()
+            self.tool_bar.show()
+            self.plugin_tool_bar.show()
+
     def event(self, e):
         """Scrap window events."""
         # When this window is in focus and selected, tell the application that
