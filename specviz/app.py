@@ -58,13 +58,15 @@ class Application(QApplication):
 
         logging.info("Setting active workspace to '%s'", window.workspace.name)
 
-# @click.command
-# @click.option('--file', type=click.Path(exists=True))
-# @click.option('--loader', type=str)
-# @click.option('--embed', is_flag=True)
+
+@click.command()
+@click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
+@click.option('--loader', '-L', type=str, help="Use specified loader when opening the provided file.")
+@click.option('--embed', '-E', is_flag=True, help="Only display a single plot window. Useful when embedding in other applications.")
 def start(file_path=None, loader=None, embed=None):
-    # Start the application
-    app = Application(sys.argv, file_path=file_path, file_loader=loader, embeded=embed)
+    # Start the application, passing in arguments
+    app = Application(sys.argv, file_path=file_path, file_loader=loader,
+                      embeded=embed)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
