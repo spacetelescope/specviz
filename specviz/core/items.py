@@ -97,12 +97,16 @@ class PlotDataItem(pg.PlotDataItem):
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
-        return unit is not None and self._data_item.flux.unit.is_equivalent(
-            unit, equivalencies=spectral_density(self.spectral_axis))
+        return (self.data_item.flux.unit == "" or
+                unit is not None and
+                self.data_item.flux.unit.is_equivalent(
+                    unit, equivalencies=spectral_density(self.spectral_axis)))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        return unit is not None and self._data_item.spectral_axis.unit.is_equivalent(
-            unit, equivalencies=spectral())
+        return (self.data_item.spectral_axis.unit == "" or
+                unit is not None and
+                self.data_item.spectral_axis.unit.is_equivalent(
+                    unit, equivalencies=spectral()))
 
     @Property(str, notify=spectral_axis_unit_changed)
     def spectral_axis_unit(self):

@@ -278,7 +278,6 @@ class PlotWidget(pg.PlotWidget):
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
                 self.add_plot(item=plot_data_item,
-                              visible=True,
                               initialize=len(self.listDataItems()) == 0)
         else:
             if plot_data_item in self.listDataItems():
