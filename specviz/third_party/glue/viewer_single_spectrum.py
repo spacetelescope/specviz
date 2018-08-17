@@ -8,8 +8,8 @@
 import os
 
 import uuid
-import numpy as np
-from qtpy.QtWidgets import QWidget
+
+from qtpy.QtWidgets import QWidget, QMessageBox
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
 
@@ -169,7 +169,21 @@ class SpecvizSingleDataViewer(DataViewer):
         self.specviz_window = MainWindow()
         self.setCentralWidget(self.specviz_window)
         # FIXME: the following shouldn't be needed
-        self.specviz_window.workspace._model._items.clear()
+        self.specviz_window.workspace._model.clear()
+
+    def add_data(self, data):
+        if not is_glue_data_1d_spectrum(data):
+            QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
+                                 buttons=QMessageBox.Ok)
+            return False
+        return super(SpecvizSingleDataViewer, self).add_data(data)
+
+    def add_subset(self, subset):
+        if not is_glue_data_1d_spectrum(subset):
+            QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
+                                 buttons=QMessageBox.Ok)
+            return False
+        return super(SpecvizSingleDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.specviz_window, self.state, layer=layer, layer_state=layer_state)
