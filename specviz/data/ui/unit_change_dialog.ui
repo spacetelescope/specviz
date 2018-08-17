@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>458</width>
-    <height>245</height>
+    <width>460</width>
+    <height>309</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <x>30</x>
      <y>20</y>
      <width>401</width>
-     <height>201</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -29,14 +29,14 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QLabel" name="label_convert">
+       <widget class="QLabel" name="label_convert_spectral">
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Convert Units from &lt;span style=&quot; font-weight:600;&quot;&gt;Meters&lt;/span&gt; to: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Convert X axis units from &lt;span style=&quot; font-weight:600;&quot;&gt;Meters&lt;/span&gt; to: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox_units">
+       <widget class="QComboBox" name="comboBox_spectral">
         <property name="frame">
          <bool>false</bool>
         </property>
@@ -47,7 +47,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QLabel" name="label_valid_units">
+       <widget class="QLabel" name="label_valid_spectral">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -59,18 +59,18 @@
         </property>
         <property name="font">
          <font>
-          <pointsize>14</pointsize>
+          <pointsize>15</pointsize>
           <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
         <property name="text">
-         <string>Something</string>
+         <string>X axis custom</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="line_custom">
+       <widget class="QLineEdit" name="line_custom_spectral">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -84,6 +84,47 @@
        <enum>Qt::Horizontal</enum>
       </property>
      </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QLabel" name="label_convert_units">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Convert Y axis units from &lt;span style=&quot; font-weight:600;&quot;&gt;Meters&lt;/span&gt; to: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox_units"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QLabel" name="label_valid_units">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>15</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Y axis custom</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="line_custom_units"/>
+      </item>
+     </layout>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
