@@ -11,7 +11,7 @@ import qtawesome as qta
 
 from . import resources
 from ..core.hub import Hub
-from ..utils import UI_PATH, SVG_PATH
+from ..utils import UI_PATH
 from ..utils.qt_utils import dict_to_menu
 from .workspace import Workspace
 
@@ -91,19 +91,13 @@ class MainWindow(QMainWindow):
             self.workspace._on_delete_data)
 
         # Setup operations menu
-        self.operations_tool = QToolButton(self)
-        self.operations_tool.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.operations_tool.setPopupMode(QToolButton.InstantPopup)
-        self.operations_tool.setText("Operations")
-        path = os.path.join(SVG_PATH, "005-stats.svg")
-        self.operations_tool.setIcon(QIcon(QPixmap(path)))
+        operations_button = self.tool_bar.widgetForAction(self.operations_action)
+        operations_button.setPopupMode(QToolButton.InstantPopup)
 
         operations_menu = dict_to_menu(self, OrderedDict([
             ('Smoothing', self.workspace._on_smoothing)
         ]))
-        self.operations_tool.setMenu(operations_menu)
-
-        self.tool_bar.insertWidget(self.arithmetic_action, self.operations_tool)
+        operations_button.setMenu(operations_menu)
 
         # Setup plugin toolbar action actions
         self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
