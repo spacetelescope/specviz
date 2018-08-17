@@ -79,8 +79,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self._workspace.name + " — SpecViz")
 
         # Setup workspace action connections
-        self.new_workspace_action.triggered.connect(
-            QApplication.instance().add_workspace)
+
+        # We need to be careful here as if Specviz is embedded in another
+        # Qt application, the QApplication instance won't have the add_workspace
+        # method
+        from ..app import Application
+        app = QApplication.instance()
+        if isinstance(app, Application):
+            self.new_workspace_action.triggered.connect(app.add_workspace)
+
         self.new_plot_action.triggered.connect(
             self.workspace._on_new_plot)
 
