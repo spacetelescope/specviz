@@ -156,7 +156,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def update_data(self):
         # Replot data
-        self.setData(self.spectral_axis, self.flux)
+        self.setData(self.spectral_axis, self.flux, connect="finite")
 
     def set_data(self):
-        self.setData(self.spectral_axis, self.flux)
+        self.setData(self.spectral_axis, self.flux, connect="finite")
