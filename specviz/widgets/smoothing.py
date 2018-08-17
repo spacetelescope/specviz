@@ -6,6 +6,7 @@ from qtpy.uic import loadUi
 
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
+from ..core.items import PlotDataItem
 from ..utils import UI_PATH
 
 KERNEL_REGISTRY = {
@@ -79,7 +80,19 @@ class SmoothingDialog(QDialog):
 
         self._on_data_change(0)
         self._on_kernel_change(0)
+
+        self.set_to_current_selection()
         self.show()
+
+    def set_to_current_selection(self):
+        """Sets Data selection to currently active data"""
+        current_item = self.workspace.current_item
+        if current_item is not None:
+            if isinstance(current_item, PlotDataItem):
+                current_item = current_item.data_item
+        if current_item is not None and current_item in self.model_items:
+            index = self.model_items.index(current_item)
+            self.data_combo.setCurrentIndex(index)
 
     def _on_kernel_change(self, index):
         """Callback for kernel combo index change"""
@@ -112,7 +125,6 @@ class SmoothingDialog(QDialog):
         -------
         bool: True if no errors
         """
-        print("is_size_valid")
         success = True
         try:
             size = float(self.size_input.text())
