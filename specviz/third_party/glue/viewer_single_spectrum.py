@@ -1,15 +1,20 @@
+# This is a data viewer for individual spectra - that is, the glue Data object
+# should be 1-dimensional and have a spectral axis. For more information about
+# how this viewer is written, see the following documentation page:
+#
+# Writing a custom viewer for glue with Qt
+# http://docs.glueviz.org/en/latest/customizing_guide/qt_viewer.html
+
 import os
 
 import uuid
 import numpy as np
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QCheckBox
+from qtpy.QtWidgets import QWidget
 
-from glue.config import qt_client
 from glue.core.data_combo_helper import ComponentIDComboHelper
 
-from glue.external.echo import CallbackProperty, SelectionCallbackProperty
-from glue.external.echo.qt import (connect_checkable_button,
-                                   autoconnect_callbacks_to_qt)
+from glue.external.echo import SelectionCallbackProperty
+from glue.external.echo.qt import autoconnect_callbacks_to_qt
 
 from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.state import ViewerState, LayerState
@@ -62,7 +67,7 @@ class SpecvizSingleLayerArtist(LayerArtist):
     def _on_zorder_change(self, value=None):
         self.redraw()
 
-    def clear(self):
+    def remove(self):
 
         # FIXME: simplify the following by implementing DataListModel.remove_data
         # and making it able to take e.g. data name.
@@ -74,8 +79,8 @@ class SpecvizSingleLayerArtist(LayerArtist):
                 data_model.removeRow(i)
                 return
 
-    def remove(self):
-        pass
+    def clear(self):
+        self.remove()
 
     def redraw(self):
         pass
@@ -164,7 +169,7 @@ class SpecvizSingleDataViewer(DataViewer):
         self.specviz_window = MainWindow()
         self.setCentralWidget(self.specviz_window)
         # FIXME: the following shouldn't be needed
-        self.specviz_window.workspace._model.clear()
+        self.specviz_window.workspace._model._items.clear()
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.specviz_window, self.state, layer=layer, layer_state=layer_state)
