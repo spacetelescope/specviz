@@ -16,6 +16,7 @@ from ..core.items import PlotDataItem
 from ..core.models import DataListModel, PlotProxyModel
 from ..utils import UI_PATH
 from .plotting import PlotWindow
+from .smoothing import SmoothingDialog
 
 
 class Workspace(QWidget):
@@ -175,3 +176,7 @@ class Workspace(QWidget):
             sub_window.plot_widget.remove_plot(proxy_idx)
 
         self.model.removeRow(model_idx.row())
+
+    def _on_smoothing(self):
+        """Launches smoothing UI"""
+        return SmoothingDialog(self, parent=self.parent())

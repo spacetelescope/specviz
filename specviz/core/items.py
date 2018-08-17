@@ -46,6 +46,10 @@ class DataItem(QStandardItem):
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
 
+    @property
+    def spectrum(self):
+        return self.data(self.DataRole)
+
 
 class PlotDataItem(pg.PlotDataItem):
     data_unit_changed = Signal(str)
