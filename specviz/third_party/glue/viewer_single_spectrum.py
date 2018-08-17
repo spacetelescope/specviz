@@ -57,8 +57,19 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
 
         self.state.add_callback('visible', self.update)
-        self.state.add_callback('zorder', self.update)
+
+        # FIXME: at the moment the zorder is ignored, and we need to figure out
+        # how to programmatically change this in specviz
+
+        # self.state.add_callback('zorder', self.update)
         self._viewer_state.add_callback('y_att', self.update)
+
+        # FIXME: at the moment changing the color causes the data to be removed
+        # from and added back to Specviz - obviously we need to do this more
+        # efficiently
+        self.state.add_callback('color', self.update)
+        self.state.add_callback('alpha', self.update)
+
         self.uuid = str(uuid.uuid4())
 
     def _on_visible_change(self, value=None):
@@ -123,6 +134,8 @@ class SpecvizSingleLayerArtist(LayerArtist):
             self.disable('Not a 1D spectrum')
             return
 
+        # FIXME: need to determine how to toggle the visibility of data in specviz
+
         self.enable()
 
         if self.plot_data_item is not None:
@@ -151,8 +164,15 @@ class SpecvizSingleViewerStateWidget(QWidget):
 class SpecvizSingleLayerStateWidget(QWidget):
 
     def __init__(self, layer_artist):
+
         super(SpecvizSingleLayerStateWidget, self).__init__()
-        self.layer_state = layer_artist.state
+
+        self.ui = load_ui('layer_state.ui', self,
+                          directory=os.path.dirname(__file__))
+
+        connect_kwargs = {'alpha': dict(value_range=(0, 1))}
+
+        autoconnect_callbacks_to_qt(layer_artist.state, self.ui, connect_kwargs)
 
 
 class SpecvizSingleDataViewer(DataViewer):
