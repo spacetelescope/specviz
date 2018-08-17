@@ -51,7 +51,7 @@ class DataItem(QStandardItem):
         Updates the stored :class:`~specutils.Spectrum1D` data values.
         """
         self.setData(data, self.DataRole)
-        
+
     @property
     def spectrum(self):
         return self.data(self.DataRole)
