@@ -63,6 +63,10 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.redraw()
 
     def clear(self):
+
+        # FIXME: simplify the following by implementing DataListModel.remove_data
+        # and making it able to take e.g. data name.
+
         data_model = self.specviz_window.workspace._model
         for i in range(data_model.rowCount()):
             item = data_model.item(i)
@@ -79,7 +83,7 @@ class SpecvizSingleLayerArtist(LayerArtist):
     @property
     def proxy_index(self):
 
-        # FIXME: this definitely needs to be simplified!
+        # FIXME: this and plot_data_item definitely needs to be simplified!
 
         data_model = self.specviz_window.workspace._model
         for i in range(data_model.rowCount()):
