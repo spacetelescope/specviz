@@ -1,14 +1,18 @@
 import os
+from collections import OrderedDict
 
-from qtpy.QtCore import QCoreApplication, QEvent, Signal
-from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
-                            QSizePolicy, QWidget, QTabBar)
+from qtpy.QtCore import QCoreApplication, QEvent, Signal, Qt
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QTabBar,
+                            QSizePolicy, QWidget, QMenu, QAction, QToolButton)
 from qtpy.uic import loadUi
+from qtpy.QtGui import QIcon, QPixmap
+from qtpy.QtSvg import QSvgRenderer
 import qtawesome as qta
 
 from . import resources
 from ..core.hub import Hub
 from ..utils import UI_PATH
+from ..utils.qt_utils import dict_to_menu
 from .workspace import Workspace
 
 __all__ = ['MainWindow']
@@ -85,6 +89,15 @@ class MainWindow(QMainWindow):
             self.workspace._on_load_data)
         self.delete_data_action.triggered.connect(
             self.workspace._on_delete_data)
+
+        # Setup operations menu
+        operations_button = self.tool_bar.widgetForAction(self.operations_action)
+        operations_button.setPopupMode(QToolButton.InstantPopup)
+
+        operations_menu = dict_to_menu(self, OrderedDict([
+            ('Smoothing', self.workspace._on_smoothing)
+        ]))
+        operations_button.setMenu(operations_menu)
 
         # Setup plugin toolbar action actions
         self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
