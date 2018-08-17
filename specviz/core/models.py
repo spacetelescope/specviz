@@ -31,6 +31,7 @@ class DataListModel(QStandardItemModel):
         self.appendRow(data_item)
         self.appendRow(data_item2)
 
+    @property
     def items(self):
         """
         Retrieves all the :class:`~specviz.core.items.DataItem`s in this model.
@@ -44,6 +45,20 @@ class DataListModel(QStandardItemModel):
         self.appendRow(data_item)
 
         return data_item
+
+    def remove_data(self, identifier):
+        """
+        Removes data given the data item's UUID.
+
+        Parameters
+        ----------
+        identifier : :class:`~uuid.UUID`
+        """
+        idx, item = next(((i, x) for i, x in enumerate(self.items)
+                          if x.identifier == identifier))
+
+        if item is not None:
+            self.removeRow(idx)
 
     def data(self, index, role=Qt.DisplayRole):
         """
