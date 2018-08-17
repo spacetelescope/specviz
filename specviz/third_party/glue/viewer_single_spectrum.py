@@ -13,7 +13,7 @@ from qtpy.QtWidgets import QWidget, QMessageBox
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
 
-from glue.external.echo import SelectionCallbackProperty
+from glue.external.echo import CallbackProperty, SelectionCallbackProperty, keep_in_sync
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
 
 from glue.viewers.common.layer_artist import LayerArtist
@@ -42,7 +42,19 @@ class SpecvizSingleViewerState(ViewerState):
 
 
 class SpecvizSingleLayerState(LayerState):
-    pass
+
+    color = CallbackProperty(docstring='The color used to display the data')
+    alpha = CallbackProperty(docstring='The transparency used to display the data')
+
+    def __init__(self, viewer_state=None, **kwargs):
+
+        super(SpecvizSingleLayerState, self).__init__(viewer_state=viewer_state, **kwargs)
+
+        self.color = self.layer.style.color
+        self.alpha = self.layer.style.alpha
+
+        self._sync_color = keep_in_sync(self, 'color', self.layer.style, 'color')
+        self._sync_alpha = keep_in_sync(self, 'alpha', self.layer.style, 'alpha')
 
 
 class SpecvizSingleLayerArtist(LayerArtist):
