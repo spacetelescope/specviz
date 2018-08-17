@@ -18,7 +18,16 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
    </layout>
@@ -101,8 +110,10 @@
    <addaction name="open_workspace_action"/>
    <addaction name="save_workspace_action"/>
    <addaction name="load_data_action"/>
+   <addaction name="delete_data_action"/>
    <addaction name="export_data_action"/>
    <addaction name="new_plot_action"/>
+   <addaction name="operations_action"/>
    <addaction name="arithmetic_action"/>
   </widget>
   <widget class="QToolBar" name="plugin_tool_bar">
@@ -252,6 +263,18 @@
    </property>
    <property name="toolTip">
     <string>Create a new plot in the workspace</string>
+   </property>
+  </action>
+  <action name="operations_action">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/icons/005-stats.svg</normaloff>:/icons/005-stats.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Operations</string>
+   </property>
+   <property name="toolTip">
+    <string>Operations to be applied to data</string>
    </property>
   </action>
   <action name="arithmetic_action">
