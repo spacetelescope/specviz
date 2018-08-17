@@ -138,11 +138,6 @@ class PlotWindow(QMdiSubWindow):
         if color.isValid():
             self.current_item.color = color.name()
 
-        # Emit a data change signal so that the list view can upate the
-        # displayed color value for the model item
-        self.proxy_model.dataChanged.emit(self._current_item_index,
-                                          self._current_item_index)
-
 
 class PlotWidget(pg.PlotWidget):
     """

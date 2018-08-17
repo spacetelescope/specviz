@@ -91,6 +91,7 @@ class PlotDataItem(pg.PlotDataItem):
     def data_unit(self, value):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
+        self.data_item.emitDataChanged()
 
     def are_units_compatible(self, spectral_axis_unit, data_unit):
         return self.is_data_unit_compatible(data_unit) and \
@@ -116,6 +117,7 @@ class PlotDataItem(pg.PlotDataItem):
     def spectral_axis_unit(self, value):
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)
+        self.data_item.emitDataChanged()
 
     def reset_units(self):
         self.data_unit = self.data_item.flux.unit.to_string()
@@ -140,6 +142,7 @@ class PlotDataItem(pg.PlotDataItem):
     def color(self, value):
         self._color = value
         self.color_changed.emit(self._color)
+        self.data_item.emitDataChanged()
 
     @Property(bool, notify=visibility_changed)
     def visible(self):
@@ -149,6 +152,7 @@ class PlotDataItem(pg.PlotDataItem):
     def visible(self, value):
         self._visible = value
         self.visibility_changed.emit(self._visible)
+        self.data_item.emitDataChanged()
 
     def update_data(self):
         # Replot data
