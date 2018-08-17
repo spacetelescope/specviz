@@ -46,6 +46,12 @@ class DataItem(QStandardItem):
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
 
+    def set_data(self, data):
+        """
+        Updates the stored :class:`~specutils.Spectrum1D` data values.
+        """
+        self.setData(data, self.DataRole)
+
 
 class PlotDataItem(pg.PlotDataItem):
     data_unit_changed = Signal(str)
@@ -91,7 +97,6 @@ class PlotDataItem(pg.PlotDataItem):
     def data_unit(self, value):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
-        self.data_item.emitDataChanged()
 
     def are_units_compatible(self, spectral_axis_unit, data_unit):
         return self.is_data_unit_compatible(data_unit) and \
@@ -117,7 +122,6 @@ class PlotDataItem(pg.PlotDataItem):
     def spectral_axis_unit(self, value):
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)
-        self.data_item.emitDataChanged()
 
     def reset_units(self):
         self.data_unit = self.data_item.flux.unit.to_string()
@@ -152,7 +156,6 @@ class PlotDataItem(pg.PlotDataItem):
     def visible(self, value):
         self._visible = value
         self.visibility_changed.emit(self._visible)
-        self.data_item.emitDataChanged()
 
     def update_data(self):
         # Replot data
