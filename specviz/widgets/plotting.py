@@ -273,6 +273,7 @@ class PlotWidget(pg.PlotWidget):
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
                 self.add_plot(item=plot_data_item,
+                              visible=True,
                               initialize=len(self.listDataItems()) == 0)
         else:
             if plot_data_item in self.listDataItems():
@@ -310,7 +311,7 @@ class PlotWidget(pg.PlotWidget):
                                                    self.data_unit):
             plot_data_item.setEnabled(False)
 
-    def add_plot(self, item=None, index=None, initialize=False):
+    def add_plot(self, item=None, index=None, visible=True, initialize=False):
         """
         Adds a plot data item given an index in the current plot sub
         window's proxy model, or if given the item explicitly.
@@ -321,6 +322,8 @@ class PlotWidget(pg.PlotWidget):
             The item in the proxy model to add to this plot.
         index : :class:`~qtpy.QtCore.QModelIndex`
             The index in the model of the data item associated with this plot.
+        visible : bool
+            Sets the initial visibility state of this plot item.
         initialize : bool
             Whether the plot should re-evaluate axis labels and re-configure
             axis bounds.
@@ -328,7 +331,7 @@ class PlotWidget(pg.PlotWidget):
         if item is None:
             # Retrieve the data item from the model
             item = self._proxy_model.item_from_index(index)
-            item.visible = self._visible and visible
+            item.visible = self._visible
 
         if item.are_units_compatible(self.spectral_axis_unit,
                                                self.data_unit):

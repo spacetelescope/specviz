@@ -53,12 +53,15 @@ class DataListModel(QStandardItemModel):
         Parameters
         ----------
         identifier : :class:`~uuid.UUID`
+            Assigned id of the :class:`~specviz.core.items.DataItem` object.
         """
-        idx, item = next(((i, x) for i, x in enumerate(self.items)
-                          if x.identifier == identifier))
+        item = self.item_from_id(identifier)
 
         if item is not None:
-            self.removeRow(idx)
+            self.removeRow(item.index().row())
+
+    def item_from_id(self, identifier):
+        return next((x for x in self.items if x.identifier == identifier))
 
     def data(self, index, role=Qt.DisplayRole):
         """
@@ -106,6 +109,12 @@ class PlotProxyModel(QSortFilterProxyModel):
         if data_item.identifier not in self._items:
             self._items[data_item.identifier] = PlotDataItem(data_item)
 
+        item = self._items.get(data_item.identifier)
+
+        return item
+
+    def item_from_id(self, identifier):
+        data_item = self.sourceModel().item_from_id(identifier)
         item = self._items.get(data_item.identifier)
 
         return item
