@@ -146,16 +146,17 @@ class SpecvizSingleLayerArtist(LayerArtist):
             self.disable('Not a 1D spectrum')
             return
 
-        # FIXME: need to determine how to toggle the visibility of data in specviz
-
         self.enable()
 
-        if self.plot_data_item is not None:
-            self.clear()
-
         spectrum = glue_data_to_spectrum1d(self.state.layer, self._viewer_state.y_att)
-        self.specviz_window.workspace.model.add_data(spectrum, name=self.uuid)
-        self.plot_widget.add_plot(self.proxy_index, visible=True, initialize=True)
+
+        if self.plot_data_item is None:
+            self.specviz_window.workspace.model.add_data(spectrum, name=self.uuid)
+            self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
+        else:
+            self.plot_data_item.data_item.set_data(spectrum)
+
+        self.plot_data_item.visible = self.state.visible
 
         self.plot_data_item.color = self.state.layer.style.color
 
