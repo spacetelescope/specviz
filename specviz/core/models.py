@@ -31,11 +31,37 @@ class DataListModel(QStandardItemModel):
         self.appendRow(data_item)
         self.appendRow(data_item2)
 
+    @property
+    def items(self):
+        """
+        Retrieves all the :class:`~specviz.core.items.DataItem`s in this model.
+        """
+        return [self.item(idx) for idx in range(self.rowCount())]
+
     def add_data(self, spec, name):
         """
         """
         data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
         self.appendRow(data_item)
+
+        return data_item
+
+    def remove_data(self, identifier):
+        """
+        Removes data given the data item's UUID.
+
+        Parameters
+        ----------
+        identifier : :class:`~uuid.UUID`
+            Assigned id of the :class:`~specviz.core.items.DataItem` object.
+        """
+        item = self.item_from_id(identifier)
+
+        if item is not None:
+            self.removeRow(item.index().row())
+
+    def item_from_id(self, identifier):
+        return next((x for x in self.items if x.identifier == identifier))
 
     def data(self, index, role=Qt.DisplayRole):
         """
@@ -77,7 +103,6 @@ class PlotProxyModel(QSortFilterProxyModel):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
         self.setSourceModel(source)
-
         self._items = {}
 
     def item_from_index(self, index):
@@ -87,6 +112,12 @@ class PlotProxyModel(QSortFilterProxyModel):
         if data_item.identifier not in self._items:
             self._items[data_item.identifier] = PlotDataItem(data_item)
 
+        item = self._items.get(data_item.identifier)
+
+        return item
+
+    def item_from_id(self, identifier):
+        data_item = self.sourceModel().item_from_id(identifier)
         item = self._items.get(data_item.identifier)
 
         return item

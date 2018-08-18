@@ -46,6 +46,12 @@ class DataItem(QStandardItem):
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
 
+    def set_data(self, data):
+        """
+        Updates the stored :class:`~specutils.Spectrum1D` data values.
+        """
+        self.setData(data, self.DataRole)
+
     @property
     def spectrum(self):
         return self.data(self.DataRole)
@@ -101,12 +107,16 @@ class PlotDataItem(pg.PlotDataItem):
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
-        return unit is not None and self._data_item.flux.unit.is_equivalent(
-            unit, equivalencies=spectral_density(self.spectral_axis))
+        return (self.data_item.flux.unit == "" or
+                unit is not None and
+                self.data_item.flux.unit.is_equivalent(
+                    unit, equivalencies=spectral_density(self.spectral_axis)))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        return unit is not None and self._data_item.spectral_axis.unit.is_equivalent(
-            unit, equivalencies=spectral())
+        return (self.data_item.spectral_axis.unit == "" or
+                unit is not None and
+                self.data_item.spectral_axis.unit.is_equivalent(
+                    unit, equivalencies=spectral()))
 
     @Property(str, notify=spectral_axis_unit_changed)
     def spectral_axis_unit(self):
@@ -140,6 +150,7 @@ class PlotDataItem(pg.PlotDataItem):
     def color(self, value):
         self._color = value
         self.color_changed.emit(self._color)
+        self.data_item.emitDataChanged()
 
     @Property(bool, notify=visibility_changed)
     def visible(self):
@@ -152,7 +163,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def update_data(self):
         # Replot data
-        self.setData(self.spectral_axis, self.flux)
+        self.setData(self.spectral_axis, self.flux, connect="finite")
 
     def set_data(self):
-        self.setData(self.spectral_axis, self.flux)
+        self.setData(self.spectral_axis, self.flux, connect="finite")

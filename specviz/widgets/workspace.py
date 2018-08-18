@@ -155,11 +155,38 @@ class Workspace(QWidget):
         if not file_path:
             return
 
-        spec = Spectrum1D.read(file_path, format=fmt.split()[0])
+        self.load_data(file_path, file_loader=fmt.split()[0])
 
+    def load_data(self, file_path, file_loader, display=False):
+        """
+        Load spectral data given file path and loader.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to location of the spectrum file.
+        file_loader : str
+            Format specified for the astropy io interface.
+        display : bool
+            Automatically add the loaded spectral data to the plot.
+
+        Returns
+        -------
+        : :class:`~specviz.core.items.DataItem`
+            The `DataItem` instance that has been added to the internal model.
+        """
+        spec = Spectrum1D.read(file_path, format=file_loader)
         name = file_path.split('/')[-1].split('.')[0]
+        data_item = self.model.add_data(spec, name=name)
 
-        self.model.add_data(spec, name=name)
+        # print(self.proxy_model._items.keys())
+
+        # if display:
+        #     idx = data_item.index()
+        #     plot_item = self.proxy_model.item_from_index(idx)
+        #     plot_item.visible = True
+
+        return data_item
 
     def _on_delete_data(self):
         """
@@ -173,7 +200,7 @@ class Workspace(QWidget):
         # Ensure that the plots get removed from all plot windows
         for sub_window in self.mdi_area.subWindowList():
             proxy_idx = sub_window.proxy_model.mapFromSource(model_idx)
-            sub_window.plot_widget.remove_plot(proxy_idx)
+            sub_window.plot_widget.remove_plot(index=proxy_idx)
 
         self.model.removeRow(model_idx.row())
 
