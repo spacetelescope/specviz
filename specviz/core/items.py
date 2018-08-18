@@ -166,6 +166,15 @@ class PlotDataItem(pg.PlotDataItem):
         self.width_changed.emit(self._width)
         self.data_item.emitDataChanged()
 
+    @property
+    def zorder(self):
+        return self.zValue()
+
+    @zorder.setter
+    def zorder(self, value):
+        self.setZValue(value)
+        self.data_item.emitDataChanged()
+
     @Property(bool, notify=visibility_changed)
     def visible(self):
         return self._visible
