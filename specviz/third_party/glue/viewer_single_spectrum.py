@@ -45,6 +45,7 @@ class SpecvizSingleLayerState(LayerState):
 
     color = CallbackProperty(docstring='The color used to display the data')
     alpha = CallbackProperty(docstring='The transparency used to display the data')
+    linewidth = CallbackProperty(1, docstring='The width of the line for the data')
 
     def __init__(self, viewer_state=None, **kwargs):
 
@@ -68,7 +69,6 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.specviz_window = specviz_window
         self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
 
-        self.state.add_callback('visible', self.update)
 
         # FIXME: at the moment the zorder is ignored, and we need to figure out
         # how to programmatically change this in specviz
@@ -79,8 +79,10 @@ class SpecvizSingleLayerArtist(LayerArtist):
         # FIXME: at the moment changing the color causes the data to be removed
         # from and added back to Specviz - obviously we need to do this more
         # efficiently
-        self.state.add_callback('color', self.update)
-        self.state.add_callback('alpha', self.update)
+        self.state.add_callback('visible', self.update_visual)
+        self.state.add_callback('color', self.update_visual)
+        self.state.add_callback('alpha', self.update_visual)
+        self.state.add_callback('linewidth', self.update_visual)
 
         self.uuid = str(uuid.uuid4())
 
@@ -140,6 +142,12 @@ class SpecvizSingleLayerArtist(LayerArtist):
         else:
             return self.specviz_window.workspace.proxy_model.item_from_index(proxy_index)
 
+    def update_visual(self, *args, **kwargs):
+        self.plot_data_item.visible = self.state.visible
+        self.plot_data_item.zorder = self.state.zorder
+        self.plot_data_item.width = self.state.linewidth
+        self.plot_data_item.color = self.state.layer.style.color
+
     def update(self, *args, **kwargs):
 
         if not is_glue_data_1d_spectrum(self.state.layer):
@@ -156,9 +164,7 @@ class SpecvizSingleLayerArtist(LayerArtist):
         else:
             self.plot_data_item.data_item.set_data(spectrum)
 
-        self.plot_data_item.visible = self.state.visible
-
-        self.plot_data_item.color = self.state.layer.style.color
+        self.update_visual()
 
 
 class SpecvizSingleViewerStateWidget(QWidget):
