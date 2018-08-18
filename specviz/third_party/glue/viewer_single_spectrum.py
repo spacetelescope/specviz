@@ -201,6 +201,7 @@ class SpecvizSingleDataViewer(DataViewer):
         super(SpecvizSingleDataViewer, self).__init__(*args, **kwargs)
         self.specviz_window = MainWindow()
         self.setCentralWidget(self.specviz_window)
+        self.specviz_window.set_embeded(True)
         # FIXME: the following shouldn't be needed
         self.specviz_window.workspace._model.clear()
 
