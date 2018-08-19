@@ -7,10 +7,10 @@ from glue.core import Data
 from glue.core.component import Component
 from glue.core.coordinates import WCSCoordinates
 
-from ..viewer_single_spectrum import SpecvizSingleDataViewer
+from ..viewer import SpecvizDataViewer
 
 
-class TestSpecvizSingleDataViewer(object):
+class TestSpecvizDataViewer(object):
 
     def setup_method(self, method):
 
@@ -48,20 +48,20 @@ class TestSpecvizSingleDataViewer(object):
         self.data_collection.append(self.data_3d)
 
     def test_init_viewer(self):
-        self.app.new_data_viewer(SpecvizSingleDataViewer)
+        self.app.new_data_viewer(SpecvizDataViewer)
 
     def test_add_data_1d(self):
-        viewer = self.app.new_data_viewer(SpecvizSingleDataViewer)
+        viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_1d)
         assert viewer.layers[0].plot_data_item.visible
 
     def test_add_data_3d(self):
-        viewer = self.app.new_data_viewer(SpecvizSingleDataViewer)
+        viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_3d)
         assert viewer.layers[0].plot_data_item.visible
 
     def test_define_subset(self):
-        viewer = self.app.new_data_viewer(SpecvizSingleDataViewer)
+        viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_3d)
         self.data_collection.new_subset_group(subset_state=self.data_3d.id['x'] > 0, label='Subset')
         assert viewer.layers[0].plot_data_item.visible

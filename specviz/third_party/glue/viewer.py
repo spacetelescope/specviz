@@ -26,7 +26,7 @@ from glue.utils.qt import load_ui
 from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
 from ...widgets.main_window import MainWindow
 
-__all__ = ['SpecvizSingleDataViewer']
+__all__ = ['SpecvizDataViewer']
 
 FUNCTIONS = OrderedDict([('maximum', 'Maximum'),
                          ('minimum', 'Minimum'),
@@ -35,10 +35,10 @@ FUNCTIONS = OrderedDict([('maximum', 'Maximum'),
                          ('sum', 'Sum')])
 
 
-class SpecvizSingleViewerState(ViewerState):
+class SpecvizViewerState(ViewerState):
     pass
 
-class SpecvizSingleLayerState(LayerState):
+class SpecvizLayerState(LayerState):
 
     color = CallbackProperty(docstring='The color used to display the data')
     alpha = CallbackProperty(docstring='The transparency used to display the data')
@@ -49,7 +49,7 @@ class SpecvizSingleLayerState(LayerState):
 
     def __init__(self, viewer_state=None, **kwargs):
 
-        super(SpecvizSingleLayerState, self).__init__(viewer_state=viewer_state, **kwargs)
+        super(SpecvizLayerState, self).__init__(viewer_state=viewer_state, **kwargs)
 
         self.color = self.layer.style.color
         self.alpha = self.layer.style.alpha
@@ -61,8 +61,8 @@ class SpecvizSingleLayerState(LayerState):
         self.add_callback('layer', self._on_layer_change)
         self._on_layer_change()
 
-        SpecvizSingleLayerState.statistic.set_choices(self, list(FUNCTIONS))
-        SpecvizSingleLayerState.statistic.set_display_func(self, FUNCTIONS.get)
+        SpecvizLayerState.statistic.set_choices(self, list(FUNCTIONS))
+        SpecvizLayerState.statistic.set_display_func(self, FUNCTIONS.get)
 
     def _on_layer_change(self, *args):
         if self.layer is None:
@@ -71,13 +71,13 @@ class SpecvizSingleLayerState(LayerState):
             self._att_helper.set_multiple_data([self.layer])
 
 
-class SpecvizSingleLayerArtist(LayerArtist):
+class SpecvizLayerArtist(LayerArtist):
 
-    _layer_state_cls = SpecvizSingleLayerState
+    _layer_state_cls = SpecvizLayerState
 
     def __init__(self, specviz_window, *args, **kwargs):
 
-        super(SpecvizSingleLayerArtist, self).__init__(*args, **kwargs)
+        super(SpecvizLayerArtist, self).__init__(*args, **kwargs)
 
         self.specviz_window = specviz_window
         self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
@@ -153,11 +153,11 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.update_visual()
 
 
-class SpecvizSingleViewerStateWidget(QWidget):
+class SpecvizViewerStateWidget(QWidget):
 
     def __init__(self, viewer_state=None, session=None):
 
-        super(SpecvizSingleViewerStateWidget, self).__init__()
+        super(SpecvizViewerStateWidget, self).__init__()
 
         self.ui = load_ui('viewer_state.ui', self,
                           directory=os.path.dirname(__file__))
@@ -166,11 +166,11 @@ class SpecvizSingleViewerStateWidget(QWidget):
         autoconnect_callbacks_to_qt(self.viewer_state, self.ui)
 
 
-class SpecvizSingleLayerStateWidget(QWidget):
+class SpecvizLayerStateWidget(QWidget):
 
     def __init__(self, layer_artist):
 
-        super(SpecvizSingleLayerStateWidget, self).__init__()
+        super(SpecvizLayerStateWidget, self).__init__()
 
         self.ui = load_ui('layer_state.ui', self,
                           directory=os.path.dirname(__file__))
@@ -180,18 +180,18 @@ class SpecvizSingleLayerStateWidget(QWidget):
         autoconnect_callbacks_to_qt(layer_artist.state, self.ui, connect_kwargs)
 
 
-class SpecvizSingleDataViewer(DataViewer):
+class SpecvizDataViewer(DataViewer):
 
     LABEL = 'Specviz viewer (single spectrum)'
-    _state_cls = SpecvizSingleViewerState
-    _options_cls = SpecvizSingleViewerStateWidget
-    _layer_style_widget_cls = SpecvizSingleLayerStateWidget
-    _data_artist_cls = SpecvizSingleLayerArtist
-    _subset_artist_cls = SpecvizSingleLayerArtist
+    _state_cls = SpecvizViewerState
+    _options_cls = SpecvizViewerStateWidget
+    _layer_style_widget_cls = SpecvizLayerStateWidget
+    _data_artist_cls = SpecvizLayerArtist
+    _subset_artist_cls = SpecvizLayerArtist
 
     def __init__(self, *args, **kwargs):
 
-        super(SpecvizSingleDataViewer, self).__init__(*args, **kwargs)
+        super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
         self.specviz_window = MainWindow()
@@ -211,14 +211,14 @@ class SpecvizSingleDataViewer(DataViewer):
             QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
             return False
-        return super(SpecvizSingleDataViewer, self).add_data(data)
+        return super(SpecvizDataViewer, self).add_data(data)
 
     def add_subset(self, subset):
         if not glue_data_has_spectral_axis(subset):
             QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
             return False
-        return super(SpecvizSingleDataViewer, self).add_subset(subset)
+        return super(SpecvizDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.specviz_window, self.state, layer=layer, layer_state=layer_state)
