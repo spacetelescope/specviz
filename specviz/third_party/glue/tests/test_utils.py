@@ -8,7 +8,7 @@ from glue.core import Data
 from glue.core.component import Component
 from glue.core.coordinates import WCSCoordinates
 
-from ..utils import is_glue_data_1d_spectrum, glue_data_to_spectrum1d
+from ..utils import glue_data_has_spectral_axis, glue_data_to_spectrum1d
 
 
 def test_conversion_utils():
@@ -26,8 +26,8 @@ def test_conversion_utils():
 
     data2 = Data(label='not spectrum')
 
-    assert is_glue_data_1d_spectrum(data1)
-    assert not is_glue_data_1d_spectrum(data2)
+    assert glue_data_has_spectral_axis(data1)
+    assert not glue_data_has_spectral_axis(data2)
 
     spec = glue_data_to_spectrum1d(data1, data1.id['x'])
     assert_quantity_allclose(spec.spectral_axis, [1, 2, 3, 4] * u.m / u.s)

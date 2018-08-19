@@ -1,17 +1,18 @@
-# This is a data viewer for individual spectra - that is, the glue Data object
-# should be 1-dimensional and have a spectral axis. For more information about
-# how this viewer is written, see the following documentation page:
+# This is a data viewer for glue data objects that have a spectral axis. For
+# more information about how this viewer is written, see the following
+# documentation page:
 #
 # Writing a custom viewer for glue with Qt
 # http://docs.glueviz.org/en/latest/customizing_guide/qt_viewer.html
 
 import os
 
-import uuid
+from collections import OrderedDict
 
 from qtpy.QtWidgets import QWidget, QMessageBox
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
+from glue.core.exceptions import IncompatibleAttribute
 
 from glue.external.echo import CallbackProperty, SelectionCallbackProperty, keep_in_sync
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
@@ -22,30 +23,29 @@ from glue.viewers.common.qt.data_viewer import DataViewer
 
 from glue.utils.qt import load_ui
 
-from .utils import glue_data_to_spectrum1d, is_glue_data_1d_spectrum
+from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
 from ...widgets.main_window import MainWindow
 
 __all__ = ['SpecvizSingleDataViewer']
 
+FUNCTIONS = OrderedDict([('maximum', 'Maximum'),
+                         ('minimum', 'Minimum'),
+                         ('mean', 'Mean'),
+                         ('median', 'Median'),
+                         ('sum', 'Sum')])
+
 
 class SpecvizSingleViewerState(ViewerState):
-
-    y_att = SelectionCallbackProperty(docstring='The attribute to use on the y-axis')
-
-    def __init__(self, *args, **kwargs):
-        super(SpecvizSingleViewerState, self).__init__(*args, **kwargs)
-        self._y_att_helper = ComponentIDComboHelper(self, 'y_att')
-        self.add_callback('layers', self._on_layers_change)
-
-    def _on_layers_change(self, value):
-        self._y_att_helper.set_multiple_data(self.layers_data)
-
+    pass
 
 class SpecvizSingleLayerState(LayerState):
 
     color = CallbackProperty(docstring='The color used to display the data')
     alpha = CallbackProperty(docstring='The transparency used to display the data')
     linewidth = CallbackProperty(1, docstring='The width of the line for the data')
+
+    attribute = SelectionCallbackProperty(docstring='The attribute to use for the spectrum')
+    statistic = SelectionCallbackProperty(docstring='The statistic to use to collapse data')
 
     def __init__(self, viewer_state=None, **kwargs):
 
@@ -56,6 +56,19 @@ class SpecvizSingleLayerState(LayerState):
 
         self._sync_color = keep_in_sync(self, 'color', self.layer.style, 'color')
         self._sync_alpha = keep_in_sync(self, 'alpha', self.layer.style, 'alpha')
+
+        self._att_helper = ComponentIDComboHelper(self, 'attribute')
+        self.add_callback('layer', self._on_layer_change)
+        self._on_layer_change()
+
+        SpecvizSingleLayerState.statistic.set_choices(self, list(FUNCTIONS))
+        SpecvizSingleLayerState.statistic.set_display_func(self, FUNCTIONS.get)
+
+    def _on_layer_change(self, *args):
+        if self.layer is None:
+            self._att_helper.set_multiple_data([])
+        else:
+            self._att_helper.set_multiple_data([self.layer])
 
 
 class SpecvizSingleLayerArtist(LayerArtist):
@@ -69,12 +82,10 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.specviz_window = specviz_window
         self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
 
-        # FIXME: at the moment the zorder is ignored, and we need to figure out
-        # how to programmatically change this in specviz
+        self.state.add_callback('attribute', self.update)
+        self.state.add_callback('statistic', self.update)
 
-        # self.state.add_callback('zorder', self.update)
-        self._viewer_state.add_callback('y_att', self.update)
-
+        self.state.add_callback('zorder', self.update_visual)
         self.state.add_callback('visible', self.update_visual)
         self.state.add_callback('color', self.update_visual)
         self.state.add_callback('alpha', self.update_visual)
@@ -109,20 +120,29 @@ class SpecvizSingleLayerArtist(LayerArtist):
             return self.plot_widget.proxy_model.item_from_id(self.data_item.identifier)
 
     def update_visual(self, *args, **kwargs):
-        self.plot_data_item.visible = self.state.visible
-        self.plot_data_item.zorder = self.state.zorder
-        self.plot_data_item.width = self.state.linewidth
-        self.plot_data_item.color = self.state.layer.style.color
+        plot_data_item = self.plot_data_item
+        if plot_data_item is not None:
+            plot_data_item.visible = self.state.visible
+            plot_data_item.zorder = self.state.zorder
+            plot_data_item.width = self.state.linewidth
+            plot_data_item.color = self.state.layer.style.color
 
     def update(self, *args, **kwargs):
 
-        if not is_glue_data_1d_spectrum(self.state.layer):
-            self.disable('Not a 1D spectrum')
+        if self.state.layer is None or self.state.attribute is None:
+            return
+
+        if not glue_data_has_spectral_axis(self.state.layer):
+            self.disable('Data does not have a spectral axis')
+            return
+
+        try:
+            spectrum = glue_data_to_spectrum1d(self.state.layer, self.state.attribute, statistic=self.state.statistic)
+        except IncompatibleAttribute:
+            self.disable_invalid_attributes(self.state.attribute)
             return
 
         self.enable()
-
-        spectrum = glue_data_to_spectrum1d(self.state.layer, self._viewer_state.y_att)
 
         if self.data_item is None:
             self.data_item = self.specviz_window.workspace.model.add_data(spectrum, name=self.state.layer.label)
@@ -187,14 +207,14 @@ class SpecvizSingleDataViewer(DataViewer):
         self.specviz_window.workspace._model.clear()
 
     def add_data(self, data):
-        if not is_glue_data_1d_spectrum(data):
+        if not glue_data_has_spectral_axis(data):
             QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
             return False
         return super(SpecvizSingleDataViewer, self).add_data(data)
 
     def add_subset(self, subset):
-        if not is_glue_data_1d_spectrum(subset):
+        if not glue_data_has_spectral_axis(subset):
             QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
             return False
