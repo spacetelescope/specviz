@@ -55,6 +55,13 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
 
     # Get units and attach to value
     component = data.get_component(attribute)
-    values = values * u.Unit(component.units)
 
-    return Spectrum1D(values, wcs=data.coords.wcs.sub([WCSSUB_SPECTRAL]))
+    if component.units is None:
+        values = values * u.one
+    else:
+        values = values * u.Unit(component.units)
+
+    # Get spectral WCS
+    wcs_spec = data.coords.wcs.sub([WCSSUB_SPECTRAL])
+
+    return Spectrum1D(values, wcs=wcs_spec)

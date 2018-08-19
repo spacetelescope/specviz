@@ -37,7 +37,7 @@ class TestSpecvizDataViewer(object):
         self.data_1d.add_component(Component(x, units='Jy'), 'x')
         self.data_1d.add_component(Component(y, units='Jy'), 'y')
         self.data_3d.add_component(Component(np.broadcast_to(x, (6, 5, 4)), units='Jy'), 'x')
-        self.data_3d.add_component(Component(np.broadcast_to(x, (6, 5, 4)), units='Jy'), 'y')
+        self.data_3d.add_component(Component(np.broadcast_to(x, (6, 5, 4))), 'y')
 
         self.app = GlueApplication()
         self.session = self.app.session

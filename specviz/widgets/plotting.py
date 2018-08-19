@@ -362,7 +362,9 @@ class PlotWidget(pg.PlotWidget):
         spectral_axis_unit : str or :class:`~astropy.units.Unit`
             The spectral axis unit used for the display of the x axis.
         """
-        self._data_unit = data_unit or self._data_unit
+        # We need to be careful here to explicitly check the data_unit against
+        # None since it may also be '' which is a valid dimensionless unit.
+        self._data_unit = self._data_unit if data_unit is None else data_unit
         self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
 
         # Deal with dispersion units
