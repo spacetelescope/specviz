@@ -1,5 +1,8 @@
+import pytest
 import numpy as np
 from astropy.wcs import WCS
+
+pytest.importorskip("glue")
 
 from glue.app.qt import GlueApplication
 

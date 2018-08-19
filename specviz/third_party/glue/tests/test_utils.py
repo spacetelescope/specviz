@@ -1,8 +1,11 @@
+import pytest
 import numpy as np
 
 from astropy import units as u
 from astropy.wcs import WCS
 from astropy.tests.helper import assert_quantity_allclose
+
+pytest.importorskip("glue")
 
 from glue.core import Data
 from glue.core.component import Component
