@@ -118,8 +118,11 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     def item_from_id(self, identifier):
         data_item = self.sourceModel().item_from_id(identifier)
-        item = self._items.get(data_item.identifier)
 
+        if data_item.identifier not in self._items:
+            self._items[data_item.identifier] = PlotDataItem(data_item)
+
+        item = self._items.get(data_item.identifier)
         return item
 
     def data(self, index, role=Qt.DisplayRole):
