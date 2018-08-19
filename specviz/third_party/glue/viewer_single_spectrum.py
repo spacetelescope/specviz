@@ -69,22 +69,18 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.specviz_window = specviz_window
         self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
 
-
         # FIXME: at the moment the zorder is ignored, and we need to figure out
         # how to programmatically change this in specviz
 
         # self.state.add_callback('zorder', self.update)
         self._viewer_state.add_callback('y_att', self.update)
 
-        # FIXME: at the moment changing the color causes the data to be removed
-        # from and added back to Specviz - obviously we need to do this more
-        # efficiently
         self.state.add_callback('visible', self.update_visual)
         self.state.add_callback('color', self.update_visual)
         self.state.add_callback('alpha', self.update_visual)
         self.state.add_callback('linewidth', self.update_visual)
 
-        self.uuid = str(uuid.uuid4())
+        self.data_item = None
 
     def _on_visible_change(self, value=None):
         self.redraw()
@@ -93,16 +89,8 @@ class SpecvizSingleLayerArtist(LayerArtist):
         self.redraw()
 
     def remove(self):
-
-        # FIXME: simplify the following by implementing DataListModel.remove_data
-        # and making it able to take e.g. data name.
-
-        data_model = self.specviz_window.workspace._model
-        for i in range(data_model.rowCount()):
-            item = data_model.item(i)
-            if item.data() == self.uuid:
-                data_model.removeRow(i)
-                return
+        self.specviz_window.workspace.model.remove_data(self.data_item.identifier)
+        self.data_item = None
 
     def clear(self):
         self.remove()
@@ -111,36 +99,14 @@ class SpecvizSingleLayerArtist(LayerArtist):
         pass
 
     @property
-    def proxy_index(self):
-
-        # FIXME: this and plot_data_item definitely needs to be simplified!
-
-        data_model = self.specviz_window.workspace._model
-        for i in range(data_model.rowCount()):
-            item = data_model.item(i)
-            if item.data() == self.uuid:
-                break
-        else:
-            return None
-
-        source_index = self.plot_widget.proxy_model.sourceModel().indexFromItem(item)
-        proxy_index = self.plot_widget.proxy_model.mapFromSource(source_index)
-
-        return proxy_index
-
-    @property
     def plot_data_item(self):
         """
         Get the PlotDataItem corresponding to this layer artist.
         """
-
-        # FIXME: this definitely needs to be simplified!
-
-        proxy_index = self.proxy_index
-        if proxy_index is None:
-            return
+        if self.data_item is None:
+            return None
         else:
-            return self.specviz_window.workspace.proxy_model.item_from_index(proxy_index)
+            return self.plot_widget.proxy_model.item_from_id(self.data_item.identifier)
 
     def update_visual(self, *args, **kwargs):
         self.plot_data_item.visible = self.state.visible
@@ -158,8 +124,8 @@ class SpecvizSingleLayerArtist(LayerArtist):
 
         spectrum = glue_data_to_spectrum1d(self.state.layer, self._viewer_state.y_att)
 
-        if self.plot_data_item is None:
-            self.specviz_window.workspace.model.add_data(spectrum, name=self.uuid)
+        if self.data_item is None:
+            self.data_item = self.specviz_window.workspace.model.add_data(spectrum, name=self.state.layer.label)
             self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
@@ -204,10 +170,19 @@ class SpecvizSingleDataViewer(DataViewer):
     _subset_artist_cls = SpecvizSingleLayerArtist
 
     def __init__(self, *args, **kwargs):
+
         super(SpecvizSingleDataViewer, self).__init__(*args, **kwargs)
+        self.statusBar().hide()
+
         self.specviz_window = MainWindow()
-        self.setCentralWidget(self.specviz_window)
         self.specviz_window.set_embeded(True)
+
+        self.setCentralWidget(self.specviz_window)
+
+        # For some reason this causes the PlotWindow to no longer be part of the
+        # workspace MDI area which then causes issues down the line.
+        # self.setCentralWidget(self.plot_window)
+
         # FIXME: the following shouldn't be needed
         self.specviz_window.workspace._model.clear()
 
@@ -227,3 +202,6 @@ class SpecvizSingleDataViewer(DataViewer):
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.specviz_window, self.state, layer=layer, layer_state=layer_state)
+
+    def initialize_toolbar(self):
+        pass
