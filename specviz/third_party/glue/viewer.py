@@ -93,12 +93,6 @@ class SpecvizLayerArtist(LayerArtist):
 
         self.data_item = None
 
-    def _on_visible_change(self, value=None):
-        self.redraw()
-
-    def _on_zorder_change(self, value=None):
-        self.redraw()
-
     def remove(self):
         self.specviz_window.workspace.model.remove_data(self.data_item.identifier)
         self.data_item = None
@@ -130,10 +124,6 @@ class SpecvizLayerArtist(LayerArtist):
     def update(self, *args, **kwargs):
 
         if self.state.layer is None or self.state.attribute is None:
-            return
-
-        if not glue_data_has_spectral_axis(self.state.layer):
-            self.disable('Data does not have a spectral axis')
             return
 
         try:
@@ -182,7 +172,7 @@ class SpecvizLayerStateWidget(QWidget):
 
 class SpecvizDataViewer(DataViewer):
 
-    LABEL = 'Specviz viewer (single spectrum)'
+    LABEL = 'Specviz viewer'
     _state_cls = SpecvizViewerState
     _options_cls = SpecvizViewerStateWidget
     _layer_style_widget_cls = SpecvizLayerStateWidget

@@ -48,23 +48,36 @@ class TestSpecvizDataViewer(object):
         self.data_collection.append(self.data_3d)
 
     def test_init_viewer(self):
-        self.app.new_data_viewer(SpecvizDataViewer)
+        viewer = self.app.new_data_viewer(SpecvizDataViewer)
+        viewer.close(warn=False)
 
     def test_add_data_1d(self):
         viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_1d)
         assert viewer.layers[0].plot_data_item.visible
+        viewer.close(warn=False)
 
     def test_add_data_3d(self):
         viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_3d)
         assert viewer.layers[0].plot_data_item.visible
+        viewer.close(warn=False)
 
     def test_define_subset(self):
+
         viewer = self.app.new_data_viewer(SpecvizDataViewer)
         viewer.add_data(self.data_3d)
+
         self.data_collection.new_subset_group(subset_state=self.data_3d.id['x'] > 0, label='Subset')
+
+        assert viewer.layers[0].enabled
         assert viewer.layers[0].plot_data_item.visible
         assert viewer.layers[0].plot_data_item.zorder == 1
+        assert viewer.layers[1].enabled
         assert viewer.layers[1].plot_data_item.visible
         assert viewer.layers[1].plot_data_item.zorder == 2
+
+        # Check that updating doesn't crash
+        self.data_3d.subsets[0].subset_state = self.data_3d.id['x'] > 0.1
+
+        viewer.close(warn=False)
