@@ -139,6 +139,8 @@ class SpecvizLayerArtist(LayerArtist):
             self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
+            # FIXME: we shouldn't have to call update_data manually
+            self.plot_data_item.update_data()
 
         self.update_visual()
 
