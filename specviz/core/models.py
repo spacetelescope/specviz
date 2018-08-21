@@ -145,6 +145,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         return super(PlotProxyModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
+
         if not index.isValid():
             return
 
