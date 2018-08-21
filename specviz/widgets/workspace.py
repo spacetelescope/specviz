@@ -125,6 +125,17 @@ class Workspace(QMainWindow):
         """
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
 
+    @property
+    def selected_region(self):
+        if self.current_plot_window is not None:
+            return self.current_plot_window.plot_widget.selected_region
+
+    @property
+    def selected_region_pos(self):
+        if self.current_plot_window is not None:
+            if self.current_plot_window.plot_widget is not None:
+                return self.current_plot_window.plot_widget.selected_region_pos
+
     def remove_current_window(self):
         self.mdi_area.removeSubWindow(self.current_plot_window)
 
@@ -210,6 +221,8 @@ class Workspace(QMainWindow):
         # Load plot tool bar plugins
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
+
+        plot_window.plot_widget.roi_moved.connect(self._on_region_changed)
 
     def _on_sub_window_activated(self, window):
         if window is None:

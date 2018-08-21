@@ -16,16 +16,6 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="median_label">
-       <property name="text">
-        <string>Median</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="median_line_edit"/>
-     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="meanLabel">
        <property name="text">
@@ -34,27 +24,84 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="meanLineEdit"/>
+      <widget class="QLineEdit" name="mean_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="stdDevLabel">
        <property name="text">
         <string>Std dev</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="stdDevLineEdit"/>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="std_dev_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
-     <item row="3" column="0">
+     <item row="2" column="0">
+      <widget class="QLabel" name="median_label">
+       <property name="text">
+        <string>Median</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="median_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="rmsLabel">
+       <property name="text">
+        <string>RMS</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="rms_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="snrLabel">
+       <property name="text">
+        <string>SNR</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="snr_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
       <widget class="QLabel" name="countTotalLabel">
        <property name="text">
         <string>Count total</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="countTotalLineEdit"/>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="count_total_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

@@ -124,6 +124,9 @@ class PlotWidget(pg.PlotWidget):
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
 
+    roi_moved = Signal(u.Quantity)
+    roi_clear = Signal()
+
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
         self._title = title or "Untitled Plot"
@@ -242,6 +245,12 @@ class PlotWidget(pg.PlotWidget):
             mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
 
         return mask
+
+    @property
+    def selected_region_pos(self):
+        if self.selected_region is not None:
+            return self.selected_region.getRegion() * u.Unit(self.spectral_axis_unit or "")
+        return None
 
     def on_item_changed(self, item):
         """
@@ -425,10 +434,9 @@ class PlotWidget(pg.PlotWidget):
         selected region is changed.
         """
         self._region_text_item.setText(
-            "Region: ({:0.5g}, {:0.5g})".format(
-                *(self._selected_region.getRegion() *
-                  u.Unit(self.spectral_axis_unit or ""))
-                ))
+            "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_pos))
+        print("pos:", self.selected_region_pos)
+        self.roi_moved.emit(self.selected_region_pos)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """
@@ -486,3 +494,4 @@ class PlotWidget(pg.PlotWidget):
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
+        self.roi_clear.emit()
