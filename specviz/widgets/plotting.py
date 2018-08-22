@@ -125,7 +125,7 @@ class PlotWidget(pg.PlotWidget):
     plot_removed = Signal(PlotDataItem)
 
     roi_moved = Signal(u.Quantity)
-    roi_clear = Signal()
+    roi_removed = Signal(LinearRegionItem)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -435,7 +435,6 @@ class PlotWidget(pg.PlotWidget):
         """
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_pos))
-        print("pos:", self.selected_region_pos)
         self.roi_moved.emit(self.selected_region_pos)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
@@ -491,7 +490,9 @@ class PlotWidget(pg.PlotWidget):
 
     def _on_remove_linear_region(self):
         """Remove the selected linear region from the plot."""
+        roi = self._selected_region
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
-        self.roi_clear.emit()
+        self.roi_removed.emit(roi)
+

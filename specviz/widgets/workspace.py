@@ -91,6 +91,9 @@ class Workspace(QMainWindow):
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
+        # When the current subwindow changes, update the stat widget
+        self.mdi_area.subWindowActivated.connect(self.update_stats)
+
         # Add an initially empty plot
         self.add_plot_window()
 
@@ -126,12 +129,34 @@ class Workspace(QMainWindow):
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
 
     @property
+    def stat_widget(self):
+        """
+        Get the main window's statistics widget.
+        """
+        return self._statistics
+
+    @stat_widget.setter
+    def stat_widget(self, statistics):
+        """
+        Set the statistics widget and make signal connections.
+        """
+        self._statistics = statistics
+
+
+    @property
     def selected_region(self):
+        """
+        Get the current selected region.
+        """
         if self.current_plot_window is not None:
             return self.current_plot_window.plot_widget.selected_region
 
     @property
     def selected_region_pos(self):
+        """
+        Get the range of the current selected region.
+        Returns a tuple of Qualities (left, right).
+        """
         if self.current_plot_window is not None:
             if self.current_plot_window.plot_widget is not None:
                 return self.current_plot_window.plot_widget.selected_region_pos
@@ -204,7 +229,7 @@ class Workspace(QMainWindow):
         Creates a new plot widget sub window and adds it to the workspace.
         """
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
-        self.list_view.setModel(plot_window.plot_widget.proxy_model)
+        self._set_list_view_model(plot_window.plot_widget.proxy_model)
 
         plot_window.setWindowTitle(plot_window._plot_widget.title)
         plot_window.setAttribute(Qt.WA_DeleteOnClose)
@@ -222,7 +247,8 @@ class Workspace(QMainWindow):
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
 
-        plot_window.plot_widget.roi_moved.connect(self._on_region_changed)
+        plot_window.plot_widget.roi_moved.connect(self.update_stats)
+        plot_window.plot_widget.roi_removed.connect(self.update_stats)
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -236,7 +262,7 @@ class Workspace(QMainWindow):
             except TypeError:
                 pass
 
-        self.list_view.setModel(window.proxy_model)
+        self._set_list_view_model(window.proxy_model)
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)

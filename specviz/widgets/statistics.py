@@ -11,6 +11,24 @@ from qtpy.uic import loadUi
 
 from ..core.items import PlotDataItem
 from ..utils import UI_PATH
+from ..utils.helper_functions import format_float_text
+
+"""
+The next three functions are place holders while
+specutils is updated to handle these computations 
+internally.
+"""
+
+
+def check_unit_compatibility(spec, region):
+    spec_unit = spec.spectral_axis.unit
+    if region.lower is not None:
+        region_unit = region.lower.unit
+    elif region.upper is not None:
+        region_unit = region.upper.unit
+    else:
+        return False
+    return spec_unit.is_equivalent(region_unit)
 
 
 def clip_region(spectrum, region):
@@ -31,6 +49,8 @@ def compute_stats(spectrum, region=None):
     """
 
     if region is not None:
+        if not check_unit_compatibility(spectrum, region):
+            return None
         region = clip_region(spectrum, region)
         try:
             spectrum = region.extract(spectrum)
@@ -49,49 +69,93 @@ def compute_stats(spectrum, region=None):
             'total': np.trapz(flux)}
 
 
-def format_text(value):
-    v = value
-    if isinstance(v, u.Quantity):
-        v = value.value
-    if 0.001 <= abs(v) <= 1000 or abs(v) == 0.0:
-        return "{0:.3f}".format(value)
-    else:
-        return "{0:.3e}".format(value)
-
-
 class StatisticsWidget(QWidget):
-    def __init__(self, workspace, parent=None):
+    """
+    This widget controls the statistics box.
+    It is responsible for calling stats computation
+    functions and updating the stats widget. It only
+    takes the owner workspace's current data item and
+    selected region for stats computations. The stats
+    box can be updated by calling the update_statistics
+    function.
+    """
+    def __init__(self, parent=None):
         super(StatisticsWidget, self).__init__(parent=parent)
-        self.workspace = workspace
+        self._workspace = None
 
         self._current_spectrum = None
         self.stats = None
 
         self._init_ui()
 
-        self.workspace.current_item_changed.connect(self._on_workspace_item_changed)
-        self.workspace.list_view.selectionModel().currentChanged.connect(self._on_list_view_changed)
-
     def _init_ui(self):
         loadUi(os.path.join(UI_PATH, "statistics.ui"), self)
 
-    @property
-    def current_spectrum(self):
-        return self._current_spectrum
+        # A dict of display `QLineEdit` items:
+        self.stat_widgets = {
+            'mean': self.mean_line_edit,
+            'median': self.median_line_edit,
+            'stddev': self.std_dev_line_edit,
+            'rms': self.rms_line_edit,
+            'snr': self.snr_line_edit,
+            'total': self.count_total_line_edit
+        }
 
     @property
-    def current_workspace_spectrum(self):
-        """Sets Data selection to currently active data"""
-        current_item = self.workspace.current_item
-        if current_item is not None:
-            if isinstance(current_item, PlotDataItem):
-                current_item = current_item.data_item
-        if current_item is not None and hasattr(current_item, "spectrum"):
-            return current_item.spectrum
-        return None
+    def workspace(self):
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        # Disconnect old workspece
+        if self.workspace is not None:
+            self.workspace.current_item_changed.disconnect(self.update_signal_handler)
+            self.workspace.list_view.selectionModel().currentChanged.disconnect(self.update_signal_handler)
+
+        # Connect new workspace
+        self._workspace = workspace
+        if workspace is not None:
+            workspace.current_item_changed.connect(self.update_signal_handler)
+
+    def _update_stat_widgets(self, stats):
+        """
+        Clears all widgets then fills in
+        the available stat values.
+        Parameters
+        ----------
+        stats: dict
+            Key: key in `StatisticsWidget.stat_widgets`.
+            Value: float value to display
+        """
+        self._clear_stat_widgets()
+        if stats is None:
+            return
+        for key in stats:
+            text = format_float_text(stats[key])
+            self.stat_widgets[key].setText(text)
+
+    def _clear_stat_widgets(self):
+        """
+        Clears all widgets in `StatisticsWidget.stat_widgets`
+        """
+        for key in self.stat_widgets:
+            self.stat_widgets[key].setText("")
 
     @staticmethod
     def pos_to_spectral_region(pos):
+        """
+        Vet input region position and construct
+        a `~specutils.utils.SpectralRegion`.
+        Parameters
+        ----------
+        pos : `~astropy.units.Quantity`
+            A tuple `~astropy.units.Quantity` with
+            (min, max) range of roi.
+
+        Returns
+        -------
+        None or `~specutils.utils.SpectralRegion`
+        """
         if not isinstance(pos, u.Quantity):
             return None
         elif pos.unit == u.Unit("") or \
@@ -101,79 +165,41 @@ class StatisticsWidget(QWidget):
             pos = [pos[1], pos[0]] * pos.unit
         return SpectralRegion(*pos)
 
-    def current_workspace_region(self):
+    def _get_workspace_region(self):
+        """Get current widget region."""
         pos = self.workspace.selected_region_pos
         if pos is not None:
             return self.pos_to_spectral_region(pos)
         return None
 
-    def _on_region_changed(self, pos=None):
-        if self.current_spectrum is None:
-            self._current_spectrum = self.current_workspace_spectrum
+    def _get_workspace_spectrum(self):
+        """Gets currently active data."""
+        current_item = self.workspace.current_item
+        if current_item is not None:
+            if isinstance(current_item, PlotDataItem):
+                current_item = current_item.data_item
+        if current_item is not None and hasattr(current_item, "spectrum"):
+            return current_item.spectrum
+        return None
 
-        spec = self.current_spectrum
-        if spec is None:
-            self.clear_widget_stats()
+    def update_statistics(self):
+        if self.workspace is None:
+            self._clear_stat_widgets()
             return
 
-        spectral_region = self.pos_to_spectral_region(pos)
-        stats = compute_stats(spec, spectral_region)
-        print(stats)
-        self.update_widget_stats(stats)
+        spec = self._get_workspace_spectrum()
+        spectral_region = self._get_workspace_region()
 
-    def _on_list_view_changed(self, index):
-        spec = self.current_workspace_spectrum
         self._current_spectrum = spec
-
         if spec is None:
+            self._clear_stat_widgets()
             return
 
-        spectral_region = self.current_workspace_region()
+        self.stats = compute_stats(spec, spectral_region)
+        self._update_stat_widgets(self.stats)
 
-        stats = compute_stats(spec, spectral_region)
-        print(stats)
-        self.update_widget_stats(stats)
-
-    def _on_workspace_item_changed(self, plot_data_item):
-        if plot_data_item is None:
-            self.clear_widget_stats()
-            return
-
-        current_item = plot_data_item.data_item
-        if not (current_item is not None) or not hasattr(current_item, "spectrum"):
-            return
-
-        spec = current_item.spectrum
-        self._current_spectrum = spec
-
-        spectral_region = self.current_workspace_region()
-
-        stats = compute_stats(spec, spectral_region)
-        print(stats)
-        self.update_widget_stats(stats)
-
-    def update_widget_stats(self, stats):
-        if stats is None:
-            self.clear_widget_stats()
-            return
-        self.mean_line_edit.setText(format_text(stats['mean']))
-        self.median_line_edit.setText(format_text(stats['median']))
-        self.std_dev_line_edit.setText(format_text(stats['stddev']))
-        self.rms_line_edit.setText(format_text(stats['rms']))
-        self.snr_line_edit.setText(format_text(stats['snr']))
-        self.count_total_line_edit.setText(format_text(stats['total']))
-        self.stats = stats
-
-    def clear_widget_stats(self):
-        self.mean_line_edit.setText("")
-        self.median_line_edit.setText("")
-        self.std_dev_line_edit.setText("")
-        self.rms_line_edit.setText("")
-        self.snr_line_edit.setText("")
-        self.count_total_line_edit.setText("")
-        self.stats = None
-
-
-
-
-
+    def update_signal_handler(self, *args, **kwargs):
+        """
+        Universal signal handler for update calls.
+        """
+        self.update_statistics()
