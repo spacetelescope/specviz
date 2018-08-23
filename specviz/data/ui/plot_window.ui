@@ -69,6 +69,7 @@
    </attribute>
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
+   <addaction name="plot_options_action"/>
    <addaction name="export_plot_action"/>
    <addaction name="change_unit_action"/>
   </widget>

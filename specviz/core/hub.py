@@ -4,17 +4,19 @@ from qtpy.QtCore import Signal, Slot, QObject
 from specutils import Spectrum1D
 from astropy.io import registry as io_registry
 
+from .items import PlotDataItem, DataItem
+
 
 class Hub(QObject):
     """
     Centralized event processing for interfacing with signal/slots outside the
     normal hierarchy of Qt widgets.
     """
-    plot_added = Signal()
-    plot_removed = Signal()
+    plot_added = Signal(PlotDataItem)
+    plot_removed = Signal(PlotDataItem)
 
-    data_added = Signal()
-    data_removed = Signal()
+    data_added = Signal(DataItem)
+    data_removed = Signal(DataItem)
 
     def __init__(self, *args, **kwargs):
         super(Hub, self).__init__(*args, **kwargs)

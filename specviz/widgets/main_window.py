@@ -1,14 +1,18 @@
 import os
+from collections import OrderedDict
 
-from qtpy.QtCore import QCoreApplication, QEvent, Signal
-from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow,
-                            QSizePolicy, QWidget)
+from qtpy.QtCore import QCoreApplication, QEvent, Signal, Qt
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QTabBar,
+                            QSizePolicy, QWidget, QMenu, QAction, QToolButton)
 from qtpy.uic import loadUi
+from qtpy.QtGui import QIcon, QPixmap
+from qtpy.QtSvg import QSvgRenderer
 import qtawesome as qta
 
 from . import resources
 from ..core.hub import Hub
 from ..utils import UI_PATH
+from ..utils.qt_utils import dict_to_menu
 from .workspace import Workspace
 
 __all__ = ['MainWindow']
@@ -75,8 +79,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self._workspace.name + " — SpecViz")
 
         # Setup workspace action connections
-        self.new_workspace_action.triggered.connect(
-            QApplication.instance().add_workspace)
+
+        # We need to be careful here as if Specviz is embedded in another
+        # Qt application, the QApplication instance won't have the add_workspace
+        # method
+        from ..app import Application
+        app = QApplication.instance()
+        if isinstance(app, Application):
+            self.new_workspace_action.triggered.connect(app.add_workspace)
+
         self.new_plot_action.triggered.connect(
             self.workspace._on_new_plot)
 
@@ -85,6 +96,15 @@ class MainWindow(QMainWindow):
             self.workspace._on_load_data)
         self.delete_data_action.triggered.connect(
             self.workspace._on_delete_data)
+
+        # Setup operations menu
+        operations_button = self.tool_bar.widgetForAction(self.operations_action)
+        operations_button.setPopupMode(QToolButton.InstantPopup)
+
+        operations_menu = dict_to_menu(self, OrderedDict([
+            ('Smoothing', self.workspace._on_smoothing)
+        ]))
+        operations_button.setMenu(operations_menu)
 
         # Setup plugin toolbar action actions
         self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
@@ -102,6 +122,24 @@ class MainWindow(QMainWindow):
     def workspace(self):
         """Return the workspace widget within this `QMainWindow`."""
         return self._workspace
+
+    def set_embeded(self, embed):
+        """
+        Toggles the visibility of certain parts of the ui to make it more
+        amenable to being embeded in other applications.
+        """
+        if embed:
+            self.menu_bar.hide()
+            self.workspace.list_view.hide()
+            self.tool_bar.hide()
+            self.plugin_tool_bar.hide()
+            self.workspace.mdi_area.findChild(QTabBar).hide()
+        else:
+            self.menu_bar.show()
+            self.workspace.list_view.show()
+            self.tool_bar.show()
+            self.plugin_tool_bar.show()
+            self.workspace.mdi_area.findChild(QTabBar).show()
 
     def event(self, e):
         """Scrap window events."""
@@ -131,5 +169,3 @@ class MainWindow(QMainWindow):
             self.plugin_dock.setWidget(self._model_editor)
         if object_name == 'statistics_toggle':
             self.plugin_dock.setWidget(self._statistics)
-        # else:
-        #     self.plugin_dock.setWidget(None)

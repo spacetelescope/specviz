@@ -7,8 +7,8 @@ import pyqtgraph as pg
 import qtawesome as qta
 
 from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
-from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow,
-                            QToolButton, QSizePolicy, QWidget, QMenu, QWidgetAction, QColorDialog, QMessageBox)
+from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow, QDialog,
+                            QToolButton, QSizePolicy, QWidget, QMenu, QWidgetAction, QColorDialog, QMessageBox, QDialogButtonBox)
 from qtpy.uic import loadUi
 
 from ..core.items import PlotDataItem
@@ -30,10 +30,10 @@ class PlotWindow(QMdiSubWindow):
 
         # The central widget of the sub window will be a main window so that it
         # can support having tab bars
-        self._main_window = QMainWindow()
-        self.setWidget(self._main_window)
+        self._central_widget = QMainWindow()
+        self.setWidget(self._central_widget)
 
-        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._main_window)
+        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._central_widget)
 
         # The central widget of the main window widget will be the plot
         self._model = model
@@ -42,31 +42,27 @@ class PlotWindow(QMdiSubWindow):
         self._plot_widget = PlotWidget(model=self._model)
         self._plot_widget.plotItem.setMenuEnabled(False)
 
-        self._main_window.setCentralWidget(self._plot_widget)
+        self._central_widget.setCentralWidget(self._plot_widget)
 
-        self._plot_options_button = QToolButton(self._main_window)
-        self._plot_options_button.setText("Plot Options")
-        self._plot_options_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self._plot_options_button.setPopupMode(QToolButton.InstantPopup)
+        # Add a menu to the plot options action
+        _plot_options_button = self._central_widget.tool_bar.widgetForAction(
+            self._central_widget.plot_options_action)
+        _plot_options_button.setPopupMode(QToolButton.InstantPopup)
 
-        self._plot_options_menu = QMenu(self._main_window)
-        self._plot_options_button.setMenu(self._plot_options_menu)
+        self._plot_options_menu = QMenu(self._central_widget)
+        _plot_options_button.setMenu(self._plot_options_menu)
 
+        # Add the line color action
         self._change_color_action = QAction("Line Color")
         self._plot_options_menu.addAction(self._change_color_action)
 
-        self._plot_options_button_action = QWidgetAction(self._main_window)
-        self._plot_options_button_action.setDefaultWidget(self._plot_options_button)
-
-        self._main_window.tool_bar.insertAction(self._main_window.export_plot_action, self._plot_options_button_action)
-
         # Add the qtawesome icons to the plot-specific actions
-        self._main_window.linear_region_action.setIcon(
+        self._central_widget.linear_region_action.setIcon(
             qta.icon('fa.compress',
                      color='black',
                      color_active='orange'))
 
-        self._main_window.remove_region_action.setIcon(
+        self._central_widget.remove_region_action.setIcon(
             qta.icon('fa.compress', 'fa.trash',
                       options=[{'scale_factor': 1},
                                {'color': 'red', 'scale_factor': 0.75,
@@ -78,13 +74,13 @@ class PlotWindow(QMdiSubWindow):
         #              color='black',
         #              color_active='orange'))
 
-        self._plot_options_button.setIcon(
+        self._central_widget.plot_options_action.setIcon(
             qta.icon('fa.line-chart',
                      active='fa.legal',
                      color='black',
                      color_active='orange'))
 
-        self._main_window.export_plot_action.setIcon(
+        self._central_widget.export_plot_action.setIcon(
             qta.icon('fa.download',
                      active='fa.legal',
                      color='black',
@@ -98,29 +94,27 @@ class PlotWindow(QMdiSubWindow):
 
         self.setup_connections()
         spacer = QWidget()
-        spacer.setFixedSize(self._main_window.tool_bar.iconSize() * 2)
-        self._main_window.tool_bar.insertWidget(
-            self._plot_options_button_action, spacer)
+        spacer.setFixedSize(self._central_widget.tool_bar.iconSize() * 2)
+        self._central_widget.tool_bar.insertWidget(
+            self._central_widget.plot_options_action, spacer)
 
         spacer = QWidget()
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(1)
         spacer.setSizePolicy(size_policy)
-        self._main_window.tool_bar.addWidget(spacer)
-
-        # Listen for item selection events
-        # self._model.
+        self._central_widget.tool_bar.addWidget(spacer)
 
         # Setup connections
-        self._main_window.linear_region_action.triggered.connect(
+        self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
-        self._main_window.remove_region_action.triggered.connect(
+        self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
         self._change_color_action.triggered.connect(self._on_change_color)
 
     @property
     def current_item(self):
-        return self.proxy_model.item_from_index(self._current_item_index)
+        if self._current_item_index is not None:
+            return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
@@ -168,9 +162,6 @@ class PlotWindow(QMdiSubWindow):
 
         if color.isValid():
             self.current_item.color = color.name()
-
-        self.proxy_model.dataChanged.emit(self._current_item_index,
-                                          self._current_item_index)
 
 
 class PlotWidget(pg.PlotWidget):
@@ -236,7 +227,8 @@ class PlotWidget(pg.PlotWidget):
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
-        self.proxy_model.rowsAboutToBeRemoved.connect(self.remove_plot)
+        self.proxy_model.rowsAboutToBeRemoved.connect(
+            lambda idx: self.remove_plot(index=idx))
 
         self.plot_added.connect(self.check_plot_compatibility)
         self.plot_removed.connect(self.check_plot_compatibility)
@@ -262,20 +254,36 @@ class PlotWidget(pg.PlotWidget):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_data_unit_compatible(value):
                 plot_data_item.data_unit = value
-            else:
-                plot_data_item.visible = False
 
-        self.initialize_plot(data_unit=value)
+                # Re-initialize plot to update the displayed values and
+                # adjust ranges of the displayed axes
+                self.initialize_plot(spectral_axis_unit=value)
+            else:
+                # Technically, this should not occur, but in the unforseen
+                # case that it does, remove the plot and log an error
+                self.remove_plot(item=plot_data_item)
+                logging.error("Removing plot '%s' due to incompatible units "
+                              "('%s' and '%s').",
+                              plot_data_item.data_item.name,
+                              plot_data_item.spectral_axis_unit, value)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_spectral_axis_unit_compatible(value):
                 plot_data_item.spectral_axis_unit = value
-            else:
-                plot_data_item.visible = False
 
-        self.initialize_plot(spectral_axis_unit=value)
+                # Re-initialize plot to update the displayed values and
+                # adjust ranges of the displayed axes
+                self.initialize_plot(spectral_axis_unit=value)
+            else:
+                # Technically, this should not occur, but in the unforseen
+                # case that it does, remove the plot and log an error
+                self.remove_plot(item=plot_data_item)
+                logging.error("Removing plot '%s' due to incompatible units "
+                              "('%s' and '%s').",
+                              plot_data_item.data_item.name,
+                              plot_data_item.spectral_axis_unit, value)
 
     def on_item_changed(self, item):
         """
@@ -289,13 +297,13 @@ class PlotWidget(pg.PlotWidget):
         if plot_data_item.visible:
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
-                self.add_plot(proxy_index,
+                self.add_plot(item=plot_data_item,
                               visible=True,
                               initialize=len(self.listDataItems()) == 0)
         else:
             if plot_data_item in self.listDataItems():
                 logging.info("Removing plot %s", item.name)
-                self.remove_plot(proxy_index)
+                self.remove_plot(item=plot_data_item)
 
         # Re-evaluate plot unit compatibilities
         # self.check_plot_compatibility()
@@ -328,30 +336,60 @@ class PlotWidget(pg.PlotWidget):
                                                    self.data_unit):
             plot_data_item.setEnabled(False)
 
-    def add_plot(self, index, first=None, last=None, visible=True,
-                 initialize=False):
-        # Retrieve the data item from the model
-        plot_data_item = self._proxy_model.item_from_index(index)
-        plot_data_item.visible = self._visible and visible
+    def add_plot(self, item=None, index=None, visible=True, initialize=False):
+        """
+        Adds a plot data item given an index in the current plot sub
+        window's proxy model, or if given the item explicitly.
 
-        if plot_data_item.are_units_compatible(self.spectral_axis_unit,
+        Parameters
+        ----------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The item in the proxy model to add to this plot.
+        index : :class:`~qtpy.QtCore.QModelIndex`
+            The index in the model of the data item associated with this plot.
+        visible : bool
+            Sets the initial visibility state of this plot item.
+        initialize : bool
+            Whether the plot should re-evaluate axis labels and re-configure
+            axis bounds.
+        """
+        if item is None:
+            # Retrieve the data item from the model
+            item = self._proxy_model.item_from_index(index)
+            item.visible = self._visible
+
+        if item.are_units_compatible(self.spectral_axis_unit,
                                                self.data_unit):
-            plot_data_item.data_unit = self.data_unit
-            plot_data_item.spectral_axis_unit = self.spectral_axis_unit
+            item.data_unit = self.data_unit
+            item.spectral_axis_unit = self.spectral_axis_unit
         else:
-            plot_data_item.reset_units()
+            item.reset_units()
 
-        self.addItem(plot_data_item)
+        self.addItem(item)
 
         if initialize:
-            self.initialize_plot(plot_data_item.data_unit,
-                                 plot_data_item.spectral_axis_unit)
+            self.initialize_plot(item.data_unit,
+                                 item.spectral_axis_unit)
 
         # Emit a plot added signal
-        self.plot_added.emit(plot_data_item)
+        self.plot_added.emit(item)
 
     def initialize_plot(self, data_unit=None, spectral_axis_unit=None):
-        self._data_unit = data_unit or self._data_unit
+        """
+        Routine to re-configure the display settings of the plot to fit the
+        plotted data and re-assess the physical type and unit information of
+        the data.
+
+        Parameters
+        ----------
+        data_unit : str or :class:`~astropy.units.Unit`
+            The data unit used for the display of the y axis.
+        spectral_axis_unit : str or :class:`~astropy.units.Unit`
+            The spectral axis unit used for the display of the x axis.
+        """
+        # We need to be careful here to explicitly check the data_unit against
+        # None since it may also be '' which is a valid dimensionless unit.
+        self._data_unit = self._data_unit if data_unit is None else data_unit
         self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
 
         # Deal with dispersion units
@@ -376,13 +414,15 @@ class PlotWidget(pg.PlotWidget):
 
         self.autoRange()
 
-    def remove_plot(self, index, start=None, end=None):
+    def remove_plot(self, item=None, index=None, start=None, end=None):
         """
         Removes a plot data item given an index in the current plot sub
         window's proxy model.
 
         Parameters
         ----------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The item in the proxy model to remove from this plot.
         index : :class:`~qtpy.QtCore.QModelIndex`
             The index in the model of the data item associated with this plot.
         start : int
@@ -390,15 +430,20 @@ class PlotWidget(pg.PlotWidget):
         end : int
             The ending index in the model item list.
         """
-        if not index.isValid():
-            return
+        if item is None and index is not None:
+            if not index.isValid():
+                return
 
-        # Retrieve the data item from the proxy model
-        plot_data_item = self.proxy_model.item_from_index(index)
+            # Retrieve the data item from the proxy model
+            item = self.proxy_model.item_from_index(index)
 
-        if plot_data_item is not None:
+        if item is not None:
+            # Since we've removed the plot, ensure that its visibility state
+            # had been changed as well
+            item.visible = False
+
             # Remove plot data item from this plot
-            self.removeItem(plot_data_item)
+            self.removeItem(item)
 
             # If there are no current plots, reset unit information for plot
             if len(self.listDataItems()) == 0:
@@ -414,26 +459,38 @@ class PlotWidget(pg.PlotWidget):
                 self.autoRange()
 
             # Emit a plot added signal
-            self.plot_removed.emit()
-            self.plot_removed.emit(plot_data_item)
-            self.plot_removed.emit(plot_data_item)
+            self.plot_removed.emit(item)
 
     def _on_region_changed(self):
-        # When the currently select region is changed, update the displayed
-        # minimum and maximum values
+        """
+        Updates the displayed minimum and maximum values when the currently
+        selected region is changed.
+        """
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(
-                *(self._selected_region.getRegion() * u.Unit(self.spectral_axis_unit or ""))
+                *(self._selected_region.getRegion() *
+                  u.Unit(self.spectral_axis_unit or ""))
                 ))
 
-    def _on_add_linear_region(self):
+    def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """
-        Create a new region and add it to the plot widget.
+        Create a new region and add it to the plot widget. If no bounds are
+        given, region is placed around the middle 50 percent of the displayed
+        spectral axis.
+
+        Parameters
+        ----------
+        min_bound : float
+            Placement of the left edge of the region in axis units.
+        max_bound : float
+            Placement of the right edge of the region in axis units.
         """
         disp_axis = self.getAxis('bottom')
-        mid_point = disp_axis.range[0] + (disp_axis.range[1] - disp_axis.range[0]) * 0.5
-        region = LinearRegionItem(values=(disp_axis.range[0] + mid_point * 0.75,
-                                          disp_axis.range[1] - mid_point * 0.75))
+        mid_point = disp_axis.range[0] + (disp_axis.range[1] -
+                                          disp_axis.range[0]) * 0.5
+        region = LinearRegionItem(
+            values=(min_bound or disp_axis.range[0] + mid_point * 0.75,
+                    max_bound or disp_axis.range[1] - mid_point * 0.75))
 
         def _on_region_updated(new_region):
             # If the most recently selected region is already the currently
@@ -463,7 +520,11 @@ class PlotWidget(pg.PlotWidget):
 
         self.addItem(region)
 
+        # Display the bounds in the upper-left hand corner of the plot
+        self._on_region_changed()
+
     def _on_remove_linear_region(self):
+        """Remove the selected linear region from the plot."""
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
