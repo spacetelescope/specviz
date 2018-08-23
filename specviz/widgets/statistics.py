@@ -198,10 +198,10 @@ class StatisticsWidget(QWidget):
             return "Data: {0}".format(current_item.name)
         else:
             return "Data: {0}\n" \
-                   "Region Min: {1:0.5g}\n" \
-                   "Region Max: {2:0.5g}".format(current_item.name,
-                                                 region.lower,
-                                                 region.upper)
+                   "Region Max: {1:0.5g}\n" \
+                   "Region Min: {2:0.5g}".format(current_item.name,
+                                                 region.upper,
+                                                 region.lower)
 
     def clear_statistics(self):
         self._clear_stat_widgets()
