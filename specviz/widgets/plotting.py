@@ -87,7 +87,7 @@ class PlotWindow(QMdiSubWindow):
                      color='black',
                      color_active='orange'))
 
-        self._main_window.change_unit_action.setIcon(
+        self._central_widget.change_unit_action.setIcon(
             qta.icon('fa.exchange',
                      active='fa.legal',
                      color='black',
@@ -128,8 +128,8 @@ class PlotWindow(QMdiSubWindow):
             print("Changing color on", data_item.name)
             data_item.color = '#000000'
 
-        self._main_window.plot_options_action.triggered.connect(change_color)
-        self._main_window.change_unit_action.triggered.connect(self._on_change_unit)
+        self._central_widget.plot_options_action.triggered.connect(change_color)
+        self._central_widget.change_unit_action.triggered.connect(self._on_change_unit)
 
     def _on_change_unit(self):
         # print(self.current_item, self._plot_widget)
