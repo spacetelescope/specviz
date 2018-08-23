@@ -16,7 +16,8 @@ from ..utils.helper_functions import format_float_text
 """
 The next three functions are place holders while
 specutils is updated to handle these computations 
-internally.
+internally. They will be moved into the 
+StatisticsWidget once they are updated.
 """
 
 
@@ -32,6 +33,12 @@ def check_unit_compatibility(spec, region):
 
 
 def clip_region(spectrum, region):
+    # If the region is out of data range return None:
+    if region.lower > spectrum.spectral_axis.max() or \
+            region.upper < spectrum.spectral_axis.min():
+        return None
+
+    # Clip region:
     if region.lower < spectrum.spectral_axis.min():
         region.lower = spectrum.spectral_axis.min()
     if region.upper > spectrum.spectral_axis.max():
@@ -39,7 +46,7 @@ def clip_region(spectrum, region):
     return region
 
 
-def compute_stats(spectrum, region=None):
+def compute_stats(spectrum):
     """
     Compute basic statistics for a spectral region.
     Parameters
@@ -47,16 +54,6 @@ def compute_stats(spectrum, region=None):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
     region: `~specutils.utils.SpectralRegion`
     """
-
-    if region is not None:
-        if not check_unit_compatibility(spectrum, region):
-            return None
-        region = clip_region(spectrum, region)
-        try:
-            spectrum = region.extract(spectrum)
-        except ValueError:
-            return None
-
     flux = spectrum.flux
 
     mean = flux.mean()
@@ -66,7 +63,9 @@ def compute_stats(spectrum, region=None):
             'stddev': flux.std(),
             'rms': rms,
             'snr': mean / rms,  # snr(spectrum=spectrum),
-            'total': np.trapz(flux)}
+            'total': np.trapz(flux),
+            'maxval': flux.max(),
+            'minval': flux.min()}
 
 
 class StatisticsWidget(QWidget):
@@ -83,16 +82,18 @@ class StatisticsWidget(QWidget):
         super(StatisticsWidget, self).__init__(parent=parent)
         self._workspace = None
 
-        self._current_spectrum = None
-        self.stats = None
+        self._current_spectrum = None  # Current `Spectrum1D`
+        self.stats = None  # dict with stats
 
         self._init_ui()
 
     def _init_ui(self):
         loadUi(os.path.join(UI_PATH, "statistics.ui"), self)
 
-        # A dict of display `QLineEdit` items:
+        # A dict of display `QLineEdit` and their stat keys:
         self.stat_widgets = {
+            'minval': self.min_val_line_edit,
+            'maxval': self.max_val_line_edit,
             'mean': self.mean_line_edit,
             'median': self.median_line_edit,
             'stddev': self.std_dev_line_edit,
@@ -108,7 +109,13 @@ class StatisticsWidget(QWidget):
     @workspace.setter
     def workspace(self, workspace):
         self._workspace = workspace
-        
+
+    def set_status(self, message):
+        self.status_display.setPlainText(message)
+
+    def clear_status(self):
+        self.set_status("")
+
     def _update_stat_widgets(self, stats):
         """
         Clears all widgets then fills in
@@ -123,8 +130,9 @@ class StatisticsWidget(QWidget):
         if stats is None:
             return
         for key in stats:
-            text = format_float_text(stats[key])
-            self.stat_widgets[key].setText(text)
+            if key in self.stat_widgets:
+                text = format_float_text(stats[key])
+                self.stat_widgets[key].setText(text)
 
     def _clear_stat_widgets(self):
         """
@@ -164,6 +172,10 @@ class StatisticsWidget(QWidget):
             return self.pos_to_spectral_region(pos)
         return None
 
+    def _workspace_has_region(self):
+        """True if there is an active region"""
+        return self.workspace.selected_region is not None
+
     def _get_workspace_spectrum(self):
         """Gets currently active data."""
         current_item = self.workspace.current_item
@@ -174,21 +186,51 @@ class StatisticsWidget(QWidget):
             return current_item.spectrum
         return None
 
+    def clear_statistics(self):
+        self._clear_stat_widgets()
+        self.stats = None
+
     def update_statistics(self):
         if self.workspace is None:
-            self._clear_stat_widgets()
-            return
+            return self.clear_statistics()
 
         spec = self._get_workspace_spectrum()
         spectral_region = self._get_workspace_region()
 
         self._current_spectrum = spec
-        if spec is None:
-            self._clear_stat_widgets()
-            return
 
-        self.stats = compute_stats(spec, spectral_region)
+        # Check for issues and extract
+        # region from input spectra:
+        if spec is None:
+            self.clear_status()
+            return self.clear_statistics()
+        if spectral_region is not None:
+            if not check_unit_compatibility(spec, spectral_region):
+                self.set_status("Region units are not compatible with "
+                                "selected data's spectral axis units.")
+                return self.clear_statistics()
+            spectral_region = clip_region(spec, spectral_region)
+            if spectral_region is None:
+                self.set_status("Region out of bound.")
+                return self.clear_statistics()
+            try:
+                idx1, idx2 = spectral_region.to_pixel(spec)
+                if idx1 == idx2:
+                    self.set_status("Region over single value.")
+                    return self.clear_statistics()
+                spec = spectral_region.extract(spec)
+            except ValueError as e:
+                self.set_status("Region could not be extracted "
+                                "from target data.")
+                return self.clear_statistics()
+        elif self._workspace_has_region():
+            self.set_status("Region has no units")
+            return self.clear_statistics()
+
+        # Compute stats and update widget:
+        self.stats = compute_stats(spec)
         self._update_stat_widgets(self.stats)
+        self.clear_status()
 
     def update_signal_handler(self, *args, **kwargs):
         """

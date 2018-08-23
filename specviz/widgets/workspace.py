@@ -145,7 +145,6 @@ class Workspace(QMainWindow):
         """
         self._statistics = statistics
 
-
     @property
     def selected_region(self):
         """

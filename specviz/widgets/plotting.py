@@ -120,6 +120,10 @@ class PlotWidget(pg.PlotWidget):
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
         Fired when a plot data item has been removed from the plot widget.
+    roi_moved : Signal
+        Fired when region is moved. Delivers the range of region as tuple.
+    roi_removed : Signal
+        Fired when region is removed. Delivers the region removed.
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
