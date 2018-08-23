@@ -568,6 +568,10 @@ class UnitChangeDialog(QDialog):
         self.ui.line_custom_units.hide()
         self.ui.label_valid_units.hide()
 
+        # TODO: Implement option to preview the effect unit change will have on data
+        self.ui.label_preview.hide()
+        self.ui.label_preview_values.hide()
+
     def setup_connections(self):
         """Setup signal/slot connections for this dialog."""
         self.ui.comboBox_spectral.currentTextChanged.connect(lambda: self.on_combobox_change("X"))
