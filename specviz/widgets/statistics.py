@@ -55,7 +55,6 @@ def compute_stats(spectrum):
     region: `~specutils.utils.SpectralRegion`
     """
     flux = spectrum.flux
-
     mean = flux.mean()
     rms = np.sqrt(flux.dot(flux) / len(flux))
     return {'mean': mean,
@@ -186,6 +185,24 @@ class StatisticsWidget(QWidget):
             return current_item.spectrum
         return None
 
+    def _get_target_name(self):
+        """Gets name of data and region selected"""
+        current_item = self.workspace.current_item
+        region = self._get_workspace_region()
+        if current_item is not None:
+            if isinstance(current_item, PlotDataItem):
+                current_item = current_item.data_item
+        if current_item is None or not hasattr(current_item, "name"):
+            return ""
+        if region is None:
+            return "Data: {0}".format(current_item.name)
+        else:
+            return "Data: {0}\n" \
+                   "Region Min: {1:0.5g}\n" \
+                   "Region Max: {2:0.5g}".format(current_item.name,
+                                                 region.lower,
+                                                 region.upper)
+
     def clear_statistics(self):
         self._clear_stat_widgets()
         self.stats = None
@@ -202,7 +219,7 @@ class StatisticsWidget(QWidget):
         # Check for issues and extract
         # region from input spectra:
         if spec is None:
-            self.clear_status()
+            self.set_status("No data selected.")
             return self.clear_statistics()
         if spectral_region is not None:
             if not check_unit_compatibility(spec, spectral_region):
@@ -230,7 +247,7 @@ class StatisticsWidget(QWidget):
         # Compute stats and update widget:
         self.stats = compute_stats(spec)
         self._update_stat_widgets(self.stats)
-        self.clear_status()
+        self.set_status(self._get_target_name())
 
     def update_signal_handler(self, *args, **kwargs):
         """

@@ -249,6 +249,8 @@ class Workspace(QMainWindow):
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
 
+        plot_window.plot_widget.plot_added.connect(self.update_stats)
+        plot_window.plot_widget.plot_removed.connect(self.update_stats)
         plot_window.plot_widget.roi_moved.connect(self.update_stats)
         plot_window.plot_widget.roi_removed.connect(self.update_stats)
 
