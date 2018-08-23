@@ -86,7 +86,6 @@ class PlotWindow(QMdiSubWindow):
                      color='black',
                      color_active='orange'))
 
-        self.setup_connections()
         spacer = QWidget()
         spacer.setFixedSize(self._central_widget.tool_bar.iconSize() * 2)
         self._central_widget.tool_bar.insertWidget(
