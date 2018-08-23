@@ -2,32 +2,32 @@ import logging
 import sys
 
 import click
-from qtpy.QtCore import QObject, Qt, Signal
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from .widgets.main_window import MainWindow
+from .widgets.workspace import Workspace
 
 
 class Application(QApplication):
     """
     Primary application object for specviz.
     """
-    current_window_changed = Signal(QMainWindow)
+    current_workspace_changed = Signal(QMainWindow)
 
     def __init__(self, *args, file_path=None, file_loader=None, embeded=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         # Cache a reference to the currently active window
-        self._current_window = None
+        self._current_workspace = None
 
         # Create a default workspace
         self.add_workspace()
 
         # Set embed mode state
-        self.current_window.set_embeded(embeded)
+        self.current_workspace.set_embeded(embeded)
 
         # If a file path has been given, automatically add data
         if file_path is not None:
-            self.current_window.workspace.load_data(
+            self.current_workspace.load_data(
                 file_path, file_loader, display=True)
 
     def add_workspace(self):
@@ -35,29 +35,29 @@ class Application(QApplication):
         Create a new main window instance with a new workspace embedded within.
         """
         # Initialize with a single main window
-        main_window = MainWindow()
-        main_window.show()
+        workspace = Workspace()
+        workspace.show()
 
         # Connect the window focus event to the current workspace reference
-        main_window.window_activated.connect(self._on_window_activated)
+        workspace.window_activated.connect(self._on_window_activated)
 
-        self._current_window = main_window
+        self._current_workspace = workspace
 
     def remove_workspace(self):
         pass
 
     @property
-    def current_window(self):
+    def current_workspace(self):
         """
         Returns the active current window.
         """
-        return self._current_window
+        return self._current_workspace
 
     def _on_window_activated(self, window):
-        self._current_window = window
-        self.current_window_changed.emit(self._current_window)
+        self._current_workspace = window
+        self.current_workspace_changed.emit(self.current_workspace)
 
-        logging.info("Setting active workspace to '%s'", window.workspace.name)
+        logging.info("Setting active workspace to '%s'", window.name)
 
 
 @click.command()
@@ -71,6 +71,10 @@ def start(file_path=None, loader=None, embed=None):
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
+    # import qdarkstyle
+    # app.setStyleSheet(qdarkstyle.load_stylesheet())
+
 
     sys.exit(app.exec_())
 
