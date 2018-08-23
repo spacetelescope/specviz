@@ -107,16 +107,8 @@ class StatisticsWidget(QWidget):
 
     @workspace.setter
     def workspace(self, workspace):
-        # Disconnect old workspece
-        if self.workspace is not None:
-            self.workspace.current_item_changed.disconnect(self.update_signal_handler)
-            self.workspace.list_view.selectionModel().currentChanged.disconnect(self.update_signal_handler)
-
-        # Connect new workspace
         self._workspace = workspace
-        if workspace is not None:
-            workspace.current_item_changed.connect(self.update_signal_handler)
-
+        
     def _update_stat_widgets(self, stats):
         """
         Clears all widgets then fills in

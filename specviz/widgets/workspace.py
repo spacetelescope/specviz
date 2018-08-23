@@ -94,6 +94,9 @@ class Workspace(QMainWindow):
         # When the current subwindow changes, update the stat widget
         self.mdi_area.subWindowActivated.connect(self.update_stats)
 
+        # When current item changes, update the stat widget
+        self.current_item_changed.connect(self.update_stats)
+
         # Add an initially empty plot
         self.add_plot_window()
 
