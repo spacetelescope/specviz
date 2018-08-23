@@ -114,15 +114,6 @@ class PlotWindow(QMdiSubWindow):
     def plot_widget(self):
         return self._plot_widget
 
-    def setup_connections(self):
-        def change_color():
-            model = self._model
-            data_item = model.items[0]
-            print("Changing color on", data_item.name)
-            data_item.color = '#000000'
-
-        self._central_widget.plot_options_action.triggered.connect(change_color)
-
     @property
     def proxy_model(self):
         return self.plot_widget.proxy_model
