@@ -1,12 +1,10 @@
 import pytest
+import sys
 
 from qtpy import QtCore
 from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
 
 from ..widgets.plotting import UnitChangeDialog
-
-def test_spec_gui(specviz_gui):
-    specviz_gui.exec_()
 
 # def test_custom_units_correct(qtbot):
 #     uc = UnitChangeDialog()
