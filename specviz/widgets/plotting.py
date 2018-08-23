@@ -5,15 +5,16 @@ import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
-from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
-from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow, QDialog,
-                            QToolButton, QSizePolicy, QWidget, QMenu, QWidgetAction, QColorDialog, QMessageBox)
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import (QAction, QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMenu, QMessageBox, QSizePolicy, QToolButton,
+                            QWidget)
 from qtpy.uic import loadUi
 
+from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
-from .custom import LinearRegionItem
 
 
 class PlotWindow(QMdiSubWindow):
@@ -200,6 +201,9 @@ class PlotWidget(pg.PlotWidget):
         # Set default axes ranges
         self.setRange(xRange=(0, 1), yRange=(0, 1))
 
+        # Show grid lines
+        self.showGrid(x=True, y=True, alpha=0.25)
+
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(
@@ -259,6 +263,27 @@ class PlotWidget(pg.PlotWidget):
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
                               plot_data_item.spectral_axis_unit, value)
+
+    @property
+    def region_mask(self):
+        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
+        mask_holder = []
+
+        for roi in rois:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
+
+            mask = (container.layer.masked_dispersion.data.value >= x1) & \
+                   (container.layer.masked_dispersion.data.value <= x2)
+
+            mask_holder.append(mask)
+
+        if len(mask_holder) > 0:
+            mask = reduce(np.logical_or, mask_holder)
+            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
+
+        return mask
 
     def on_item_changed(self, item):
         """
@@ -331,7 +356,7 @@ class PlotWidget(pg.PlotWidget):
         if item is None:
             # Retrieve the data item from the model
             item = self._proxy_model.item_from_index(index)
-            item.visible = self._visible
+            item.visible = visible or self._visible
 
         if item.are_units_compatible(self.spectral_axis_unit,
                                                self.data_unit):

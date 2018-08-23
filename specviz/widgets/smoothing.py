@@ -51,7 +51,7 @@ class SmoothingDialog(QDialog):
         self.setWindowTitle("Spectral Smoothing")
         self.workspace = workspace  # Parent Workspace
         # List of `~specviz.core.items.DataItem`:
-        self.model_items = self.workspace.model.data_list()
+        self.model_items = self.workspace.model.items
 
         self._smoothing_thread = None  # Worker thread
 
