@@ -267,10 +267,8 @@ class PlotWidget(pg.PlotWidget):
     def data_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_data_unit_compatible(value):
-                print("Compatible ", value, plot_data_item)
                 plot_data_item.data_unit = value
             else:
-                print("Incompatible", value, plot_data_item)
                 plot_data_item.visible = False
 
         self.initialize_plot(data_unit=value)
@@ -279,10 +277,8 @@ class PlotWidget(pg.PlotWidget):
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_spectral_axis_unit_compatible(value):
-                print("Compatible ", value, plot_data_item)
                 plot_data_item.spectral_axis_unit = value
             else:
-                print("Incompatible", value, plot_data_item)
                 plot_data_item.visible = False
 
         self.initialize_plot(spectral_axis_unit=value)
@@ -350,8 +346,6 @@ class PlotWidget(pg.PlotWidget):
             plot_data_item.spectral_axis_unit = self.spectral_axis_unit
         else:
             plot_data_item.reset_units()
-
-        print("plot_data_item: ", plot_data_item.data_unit)
 
         self.addItem(plot_data_item)
 
