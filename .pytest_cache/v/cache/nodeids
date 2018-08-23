@@ -1,3 +1,4 @@
 [
-  "specviz/widgets/tests/test_specviz_gui.py::test_spec_gui"
+  "specviz/tests/test_example.py::test_deprecation",
+  "specviz/tests/test_specviz_gui.py::test_spec_gui"
 ]
