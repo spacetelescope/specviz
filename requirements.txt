@@ -1,0 +1,15 @@
+astropy==3.0.2
+click==6.7
+coverage==4.5.1
+gwcs==0.9.1
+numpy==1.14.3
+PyQt5==5.11.2
+pyqtgraph==0.10.0
+pytest==3.5.1
+pytest-astropy==0.4.0
+pytest-qt==3.0.0
+PyYAML==3.12
+QtAwesome==0.4.4
+QtPy==1.4.2
+scipy==1.1.0
+-e git+https://github.com/nmearl/specutils@0bfe6851a56b2a0409f5abc5fcc76a61e19e37ff#egg=specutils
