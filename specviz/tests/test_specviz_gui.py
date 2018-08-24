@@ -3,7 +3,7 @@ import pytest
 
 def test_spec_gui(specviz_gui):
     """
-    Tests GUI
+    Tests specviz GUI
     :param specviz_gui:
     :return:
     """
