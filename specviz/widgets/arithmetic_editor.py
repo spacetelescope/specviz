@@ -64,6 +64,7 @@ class EquationEditor(QDialog):
         label = current_item.text(0)
         equation = current_item.text(1)
         
+        self.is_editmode = True
         self.editor = Editor(self, label=label, equation=equation, parent=self)
 
     def remove_expression(self):
@@ -78,13 +79,12 @@ class EquationEditor(QDialog):
         """Show editor
         """ 
         self.editor = Editor(self, parent=self)     
-    
+
     def find_matches(self, eq_name):
         """Checks for matching names
         """
         matches = self.list_derived_components.findItems(eq_name, Qt.MatchExactly, 0)
         matches = [item.text(0) for item in matches]
-        # print(matches)
         return matches
 
 class Editor(QDialog):
@@ -118,8 +118,8 @@ class Editor(QDialog):
         super(Editor, self).__init__(parent)
         loadUi(os.path.join(UI_PATH,'equation_editor.ui'), self)
         
-        self._equation_editor = equation_editor
 
+        self._equation_editor = equation_editor
         self.is_addmode = label is None
 
         if label is not None:
@@ -147,6 +147,7 @@ class Editor(QDialog):
         self.expression.textChanged.connect(self._update_status)
         self._update_status()
 
+        self.setModal(True)
         self.show()
 
     def _get_eq_name(self):
