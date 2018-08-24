@@ -91,55 +91,15 @@ class Workspace(QMainWindow):
         # Add an initially empty plot
         self.add_plot_window()
 
-        # Load editor ui files
-        self._model_editor = QWidget()
-        loadUi(os.path.join(UI_PATH, "model_editor.ui"), self._model_editor)
-        self._model_editor.add_model_button.setIcon(
-            qta.icon('fa.plus'))
-        self._model_editor.remove_model_button.setIcon(
-            qta.icon('fa.minus'))
-
         # Hide the plugin dock initially
         self.plugin_dock.hide()
 
-        self._statistics = QWidget()
-        loadUi(os.path.join(UI_PATH, "statistics.ui"), self._statistics)
-
         # Setup plugin toolbar
-        self._plugin_action_group = QActionGroup(self)
-        self.model_editor_toggle.setActionGroup(self._plugin_action_group)
-        self.statistics_toggle.setActionGroup(self._plugin_action_group)
-        self.mask_editor_toggle.setActionGroup(self._plugin_action_group)
+        self.plugin_action_group = QActionGroup(self)
 
         # Setup plugin toolbar action actions
-        self._plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
+        self.plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
         self._last_toggled_action = None
-
-        # Model editing
-        from ..core.models import ModelFittingModel, ModelFittingProxyModel
-
-        model_fitting_model = ModelFittingModel()
-        model_fitting_proxy_model = ModelFittingProxyModel()
-        model_fitting_proxy_model.setSourceModel(model_fitting_model)
-
-        self._model_editor.model_tree_view.setModel(model_fitting_proxy_model)
-        self._model_editor.model_tree_view.setHeaderHidden(True)
-        self._model_editor.parameter_tree_view.setModel(model_fitting_model)
-
-        def _set_root(idx):
-            src_idx = model_fitting_proxy_model.mapToSource(idx)
-            idx = src_idx.siblingAtColumn(1)
-            self._model_editor.parameter_tree_view.setRootIndex(idx)
-
-        self._model_editor.model_tree_view.selectionModel().currentChanged.connect(_set_root)
-
-        # Attach individual loading of editors to their actions
-        self.model_editor_toggle.triggered.connect(
-            lambda: self._on_editor_triggered(self.model_editor_toggle.objectName()))
-        self.statistics_toggle.triggered.connect(
-            lambda: self._on_editor_triggered(self.statistics_toggle.objectName()))
-        self.mask_editor_toggle.triggered.connect(
-            lambda: self._on_editor_triggered(self.mask_editor_toggle.objectName()))
 
     @property
     def name(self):
@@ -341,7 +301,7 @@ class Workspace(QMainWindow):
             self.plugin_dock.hide()
             self._last_toggled_action = None
 
-    def _on_editor_triggered(self, object_name):
+    def on_plugin_action_triggered(self, object_name):
         if object_name == 'model_editor_toggle':
             self.plugin_dock.setWidget(self._model_editor)
         if object_name == 'statistics_toggle':

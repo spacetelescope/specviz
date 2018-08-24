@@ -6,6 +6,10 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from .widgets.workspace import Workspace
+import pkgutil
+import importlib
+
+import specviz.plugins
 
 
 class Application(QApplication):
@@ -29,6 +33,28 @@ class Application(QApplication):
         if file_path is not None:
             self.current_workspace.load_data(
                 file_path, file_loader, display=True)
+
+        from .plugins.statistics.main import Statistics
+        from .plugins.model_editor.main import ModelEditor
+
+        Statistics()
+        ModelEditor()
+
+        # Load plugins
+        def iter_namespace(ns_pkg):
+            # Specifying the second argument (prefix) to iter_modules makes the
+            # returned name an absolute name instead of a relative one. This allows
+            # import_module to work without having to do additional modification to
+            # the name.
+            return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
+
+        myapp_plugins = {
+            name: importlib.import_module(name)
+            for finder, name, ispkg
+            in iter_namespace(specviz.plugins)
+        }
+
+        print(myapp_plugins)
 
     def add_workspace(self):
         """
