@@ -16,6 +16,9 @@ log.setLevel(logging.WARNING)
 
 
 class UnitChangeDialog(QDialog):
+    """
+    A dialog box that allows the user to change units
+    """
     def __init__(self, plot_widget, *args, **kwargs):
         super(UnitChangeDialog, self).__init__(*args, **kwargs)
 
