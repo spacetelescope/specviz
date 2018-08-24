@@ -242,9 +242,6 @@ class PlotWidget(pg.PlotWidget):
     def data_unit(self):
         return self._data_unit
 
-    # def set_data_unit(self, data_unit):
-    #     self._data_unit = data_unit
-
     @property
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
@@ -528,12 +525,3 @@ class PlotWidget(pg.PlotWidget):
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
-
-    def set_units(self, data_unit, spectral_axis_unit):
-        self._data_unit = data_unit
-        self._spectral_axis_unit = spectral_axis_unit
-
-        self._plot_item.setLabel('bottom', units=self.spectral_axis_unit)
-        self._plot_item.setLabel('left', units=self.data_unit)
-
-        self.autoRange()
