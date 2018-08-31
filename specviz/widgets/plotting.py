@@ -127,7 +127,7 @@ class PlotWindow(QMdiSubWindow):
 
     def _on_change_unit(self):
         # print(self.current_item, self._plot_widget)
-        unit_change = UnitChangeDialog(self._plot_widget)
+        unit_change = UnitChangeDialog(self._plot_widget, self.current_item)
         unit_change.exec_()
 
     @property
