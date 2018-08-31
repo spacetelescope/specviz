@@ -1,9 +1,0 @@
-{
-  "astropy_helpers/astropy_helpers/tests/test_openmp_helpers.py::test_add_openmp_flags_if_available": true,
-  "astropy_helpers/astropy_helpers/tests/test_setup_helpers.py::test_build_docs[deprecated]": true,
-  "astropy_helpers/astropy_helpers/tests/test_setup_helpers.py::test_cython_autoextensions": true,
-  "specviz/tests/test_unit_conversion_gui.py::test_accept_works_correctly": true,
-  "specviz/tests/test_unit_conversion_gui.py::test_cancel_works_correctly": true,
-  "specviz/tests/test_unit_conversion_gui.py::test_custom_units_correct": true,
-  "specviz/tests/test_unit_conversion_gui.py::test_custom_units_incorrect": true
-}

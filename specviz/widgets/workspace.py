@@ -5,7 +5,7 @@ from astropy.io import registry as io_registry
 from qtpy import compat
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtWidgets import (QAction, QPushButton,
-                            QTabBar, QTabWidget, QWidget, QColorDialog)
+                            QTabBar, QTabWidget, QWidget)
 from qtpy.uic import loadUi
 
 from specutils import Spectrum1D
@@ -131,17 +131,6 @@ class Workspace(QWidget):
         item.visible = state
 
         self.proxy_model.dataChanged.emit(idx, idx)
-
-    def _on_changed_color(self, color):
-        color = QColorDialog.getColor()
-
-        if color.isValid():
-            idx = self.list_view.currentIndex()
-            item = self.proxy_model.data(idx, role=Qt.UserRole)
-
-            item.color = color.name()
-
-            self.proxy_model.dataChanged.emit(idx, idx)
 
     def _on_new_plot(self):
         """
