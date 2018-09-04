@@ -170,9 +170,6 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="statistics_toggle"/>
-   <addaction name="model_editor_toggle"/>
-   <addaction name="mask_editor_toggle"/>
   </widget>
   <widget class="QDockWidget" name="plugin_dock">
    <property name="enabled">

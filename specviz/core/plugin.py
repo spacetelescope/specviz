@@ -6,17 +6,7 @@ from ..widgets import resources
 
 class Plugin(QWidget):
     name = "Custom Plugin"
-    icon = QIcon(":/icons/012-file.svg")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.app = QApplication.instance()
-
-        self._action = QAction(self.workspace.plugin_tool_bar)
-        self._action.setText(self.name)
-        self._action.setIcon(self.icon)
-        self._action.setCheckable(True)
+    icon = None
 
     @property
     def action(self):
@@ -25,7 +15,7 @@ class Plugin(QWidget):
     @property
     def workspace(self):
         """Returns the active workspace."""
-        return self.app.current_workspace
+        return QApplication.instance().current_workspace
 
     @property
     def model(self):
@@ -58,6 +48,13 @@ class Plugin(QWidget):
         return self.model.items
 
     def add_to_plugin_bar(self):
+        self._action = QAction(self.workspace.plugin_tool_bar)
+        self._action.setText(self.name)
+
+        if self.icon is not None:
+            self._action.setIcon(self.icon)
+
+        self._action.setCheckable(True)
 
         # Add the action to the toolbar
         self.workspace.plugin_tool_bar.addAction(self.action)
@@ -68,6 +65,24 @@ class Plugin(QWidget):
         # When the action is clicked, ensure that the connect to the dock
         # widget is made.
         self.action.triggered.connect(lambda: self.set_plugin_dock())
+
+    def add_to_operations_menu(self):
+        self._action = QAction(self.workspace.operations_menu)
+        self._action.setText(self.name)
+
+        if self.icon is not None:
+            self._action.setIcon(self.icon)
+
+        self.workspace.operations_menu.addAction(self.action)
+
+        self.action.triggered.connect(
+            lambda: self.exec_())
+
+        from qtpy.QtWidgets import QMdiArea, QTabWidget, QTabBar
+
+        a = QMdiArea(self)
+        a.setViewMode(QMdiArea.TabbedView)
+        print(a.findChild(QTabWidget))
 
     def set_plugin_dock(self):
         self.workspace.plugin_dock.setWidget(self)

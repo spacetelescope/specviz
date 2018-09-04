@@ -1,18 +1,17 @@
 import os
+import sys
 from collections import OrderedDict
 
-import qtawesome as qta
 from astropy.io import registry as io_registry
 from qtpy import compat
 from qtpy.QtCore import Qt, Signal, QEvent
-from qtpy.QtWidgets import (QApplication, QWidget, QActionGroup,
-                            QTabBar, QMainWindow, QToolButton, QSizePolicy)
+from qtpy.QtWidgets import (QApplication, QWidget, QActionGroup, QMessageBox,
+                            QTabBar, QMainWindow, QToolButton, QSizePolicy, QMenu)
 from qtpy.uic import loadUi
 from specutils import Spectrum1D
 
-from . import resources
 from .plotting import PlotWindow
-from .smoothing import SmoothingDialog
+from specviz.plugins.smoothing.main import SmoothingDialog
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
 from ..utils import UI_PATH
@@ -71,13 +70,11 @@ class Workspace(QMainWindow):
             self._on_delete_data)
 
         # Setup operations menu
-        operations_button = self.main_tool_bar.widgetForAction(self.operations_action)
-        operations_button.setPopupMode(QToolButton.InstantPopup)
+        self.operations_button = self.main_tool_bar.widgetForAction(self.operations_action)
+        self.operations_button.setPopupMode(QToolButton.InstantPopup)
 
-        operations_menu = dict_to_menu(self, OrderedDict([
-            ('Smoothing', self._on_smoothing)
-        ]))
-        operations_button.setMenu(operations_menu)
+        self.operations_menu = QMenu(self.operations_button)
+        self.operations_button.setMenu(self.operations_menu)
 
         # Define a new data list model for this workspace
         self._model = DataListModel()
@@ -150,12 +147,12 @@ class Workspace(QMainWindow):
             self.main_tool_bar.hide()
             self.main_tool_bar.hide()
             self.mdi_area.findChild(QTabBar).hide()
-        else:
-            self.menu_bar.show()
-            self.list_view.show()
-            self.main_tool_bar.show()
-            self.main_tool_bar.show()
-            self.mdi_area.findChild(QTabBar).show()
+        # else:
+        #     self.menu_bar.show()
+        #     self.list_view.show()
+        #     self.main_tool_bar.show()
+        #     self.main_tool_bar.show()
+        #     self.mdi_area.findChild(QTabBar).show()
 
     def event(self, e):
         """Scrap window events."""
@@ -254,18 +251,22 @@ class Workspace(QMainWindow):
         : :class:`~specviz.core.items.DataItem`
             The `DataItem` instance that has been added to the internal model.
         """
-        spec = Spectrum1D.read(file_path, format=file_loader)
-        name = file_path.split('/')[-1].split('.')[0]
-        data_item = self.model.add_data(spec, name=name)
+        try:
+            spec = Spectrum1D.read(file_path, format=file_loader)
+            name = file_path.split('/')[-1].split('.')[0]
+            data_item = self.model.add_data(spec, name=name)
 
-        # print(self.proxy_model._items.keys())
+            return data_item
+        except:
+            message_box = QMessageBox()
+            message_box.setText("Error loading data set.")
+            message_box.setIcon(QMessageBox.Critical)
+            message_box.setInformativeText(
+                "{}\n{}".format(
+                    sys.exc_info()[0], sys.exc_info()[1])
+            )
 
-        # if display:
-        #     idx = data_item.index()
-        #     plot_item = self.proxy_model.item_from_index(idx)
-        #     plot_item.visible = True
-
-        return data_item
+            message_box.exec()
 
     def _on_delete_data(self):
         """
@@ -282,10 +283,6 @@ class Workspace(QMainWindow):
             sub_window.plot_widget.remove_plot(index=proxy_idx)
 
         self.model.removeRow(model_idx.row())
-
-    def _on_smoothing(self):
-        """Launches smoothing UI"""
-        return SmoothingDialog(self, parent=self)
 
     def _on_toggle_plugin_dock(self, action):
         """

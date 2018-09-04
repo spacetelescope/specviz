@@ -16,7 +16,7 @@ class ModelEditor(Plugin):
 
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
-                         "..", "model_editor", "model_editor.ui")), self)
+                         ".", "model_editor.ui")), self)
 
         self.add_model_button.setIcon(qta.icon('fa.plus'))
         self.remove_model_button.setIcon(qta.icon('fa.minus'))

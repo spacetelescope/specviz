@@ -59,6 +59,8 @@ class SmoothingDialog(QDialog, Plugin):
         self.size = None  # Current kernel size
 
         self._load_ui()
+
+        # Add an action to the operations menu
         self.add_to_operations_menu()
 
     def _load_ui(self):
