@@ -6,8 +6,8 @@ from qtpy.uic import loadUi
 
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
-from ..core.items import PlotDataItem
-from ..utils import UI_PATH
+from ...core.items import PlotDataItem
+from ...core.plugin import Plugin
 
 KERNEL_REGISTRY = {
     """
@@ -38,19 +38,17 @@ KERNEL_REGISTRY = {
                "function": median_smooth}
 }
 
-
-class SmoothingDialog(QDialog):
+class SmoothingDialog(QDialog, Plugin):
     """
     Widget to handle user interactions with smoothing operations.
     Allows the user to select spectra, kernel type and kernel size.
     It utilizes smoothing functions in `~specutils.manipulation.smoothing`.
     Assigns the smoothing workload to a QTread instance.
     """
-    def __init__(self, workspace, parent=None):
+    name = "Smoothing"
+
+    def __init__(self, parent=None):
         super(SmoothingDialog, self).__init__(parent=parent)
-        self.setWindowTitle("Spectral Smoothing")
-        self.workspace = workspace  # Parent Workspace
-        # List of `~specviz.core.items.DataItem`:
         self.model_items = self.workspace.model.items
 
         self._smoothing_thread = None  # Worker thread
@@ -61,10 +59,13 @@ class SmoothingDialog(QDialog):
         self.size = None  # Current kernel size
 
         self._load_ui()
+        self.add_to_operations_menu()
 
     def _load_ui(self):
         # Load UI form .ui file
-        loadUi(os.path.join(UI_PATH, "smoothing.ui"), self)
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "smoothing.ui")), self)
 
         for index, data in enumerate(self.model_items):
             self.data_combo.addItem(data.name, index)
@@ -82,7 +83,6 @@ class SmoothingDialog(QDialog):
         self._on_kernel_change(0)
 
         self.set_to_current_selection()
-        self.show()
 
     def set_to_current_selection(self):
         """Sets Data selection to currently active data"""
