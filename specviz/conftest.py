@@ -61,5 +61,9 @@ from .app import Application
 
 @pytest.fixture(scope='session')
 def specviz_gui():
+    """
+    for testing of specviz gui
+    :return:
+    """
     spec_app = Application([])
     return spec_app
