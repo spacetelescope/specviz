@@ -34,11 +34,26 @@ class Application(QApplication):
             self.current_workspace.load_data(
                 file_path, file_loader, display=True)
 
+    def add_workspace(self):
+        """
+        Create a new main window instance with a new workspace embedded within.
+        """
+        # Initialize with a single main window
+        workspace = Workspace()
+        workspace.show()
+
+        # Connect the window focus event to the current workspace reference
+        workspace.window_activated.connect(self._on_window_activated)
+
+        self._current_workspace = workspace
+
         from .plugins.statistics.main import Statistics
         from .plugins.model_editor.main import ModelEditor
+        from .plugins.smoothing.main import SmoothingDialog
 
         Statistics()
         ModelEditor()
+        SmoothingDialog()
 
         # Load plugins
         def iter_namespace(ns_pkg):
@@ -55,19 +70,6 @@ class Application(QApplication):
         }
 
         print(myapp_plugins)
-
-    def add_workspace(self):
-        """
-        Create a new main window instance with a new workspace embedded within.
-        """
-        # Initialize with a single main window
-        workspace = Workspace()
-        workspace.show()
-
-        # Connect the window focus event to the current workspace reference
-        workspace.window_activated.connect(self._on_window_activated)
-
-        self._current_workspace = workspace
 
     def remove_workspace(self):
         pass
@@ -99,7 +101,7 @@ def start(file_path=None, loader=None, embed=None):
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     # import qdarkstyle
-    # app.setStyleSheet(qdarkstyle.load_stylesheet())
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
 
     sys.exit(app.exec_())
