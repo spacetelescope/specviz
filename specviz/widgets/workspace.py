@@ -33,6 +33,8 @@ class Workspace(QMainWindow):
     """
     window_activated = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
+    list_view_model_changed = Signal()
+    plot_window_added = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -91,12 +93,6 @@ class Workspace(QMainWindow):
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
-        # When the current subwindow changes, update the stat widget
-        self.mdi_area.subWindowActivated.connect(self.update_stats)
-
-        # When current item changes, update the stat widget
-        self.current_item_changed.connect(self.update_stats)
-
         # Add an initially empty plot
         self.add_plot_window()
 
@@ -130,20 +126,6 @@ class Workspace(QMainWindow):
         Get the current active plot window tab.
         """
         return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
-
-    @property
-    def stat_widget(self):
-        """
-        Get the main window's statistics widget.
-        """
-        return self._statistics
-
-    @stat_widget.setter
-    def stat_widget(self, statistics):
-        """
-        Set the statistics widget and make signal connections.
-        """
-        self._statistics = statistics
 
     @property
     def selected_region(self):
@@ -249,10 +231,7 @@ class Workspace(QMainWindow):
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
 
-        plot_window.plot_widget.plot_added.connect(self.update_stats)
-        plot_window.plot_widget.plot_removed.connect(self.update_stats)
-        plot_window.plot_widget.roi_moved.connect(self.update_stats)
-        plot_window.plot_widget.roi_removed.connect(self.update_stats)
+        self.plot_window_added.emit(plot_window)
 
     def _on_sub_window_activated(self, window):
         if window is None:

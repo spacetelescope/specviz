@@ -101,13 +101,46 @@ class StatisticsWidget(QWidget):
             'total': self.count_total_line_edit
         }
 
+    def _connect_plot_window(self, plot_window):
+        plot_window.plot_widget.plot_added.connect(self.update_statistics)
+        plot_window.plot_widget.plot_removed.connect(self.update_statistics)
+        plot_window.plot_widget.roi_moved.connect(self.update_statistics)
+        plot_window.plot_widget.roi_removed.connect(self.update_statistics)
+
+    def _connect_list_view(self, *args, workspace=None):
+        if workspace is None:
+            if self.workspace is None:
+                return
+            else:
+                workspace = self.workspace
+        selection_model = workspace.list_view.selectionModel()
+        if selection_model is not None:
+            selection_model.currentChanged.connect(self.update_statistics)
+
+    def _connect_workspace(self, workspace):
+        # When the current subwindow changes, update the stat widget
+        workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
+
+        # When current item changes, update the stat widget
+        workspace.current_item_changed.connect(self.update_statistics)
+
+        # When new plot window is added, connect signals
+        workspace.plot_window_added.connect(self._connect_plot_window)
+
+        # Connect current list view and listen for changes
+        self._connect_list_view(workspace)
+        workspace.list_view_model_changed.connect(self._connect_list_view)
+
+        for plot_window in workspace.mdi_area.subWindowList():
+            self._connect_plot_window(plot_window)
+
+    def set_workspace(self, workspace):
+        self._workspace = workspace
+        self._connect_workspace(self.workspace)
+
     @property
     def workspace(self):
         return self._workspace
-
-    @workspace.setter
-    def workspace(self, workspace):
-        self._workspace = workspace
 
     def set_status(self, message):
         self.status_display.setPlainText(message)
