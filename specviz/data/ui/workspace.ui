@@ -188,7 +188,7 @@
   </widget>
   <widget class="QToolBar" name="main_tool_bar">
    <property name="windowTitle">
-    <string>toolBar</string>
+    <string>Main Tool Bar</string>
    </property>
    <property name="movable">
     <bool>false</bool>

@@ -101,6 +101,10 @@ class PlotWindow(QMdiSubWindow):
         self._change_color_action.triggered.connect(self._on_change_color)
 
     @property
+    def tool_bar(self):
+        return self._central_widget.tool_bar
+
+    @property
     def current_item(self):
         if self._current_item_index is not None:
             return self.proxy_model.item_from_index(self._current_item_index)
@@ -455,10 +459,10 @@ class PlotWidget(pg.PlotWidget):
 
                 # Reset the plot axes
                 self.setRange(xRange=(0, 1), yRange=(0, 1))
-            elif len(self.listDataItems()) == 1:
-                self.autoRange()
+            # elif len(self.listDataItems()) == 1:
+            #     self.autoRange()
 
-            # Emit a plot added signal
+            # Emit a plot removed signal
             self.plot_removed.emit(item)
 
     def _on_region_changed(self):

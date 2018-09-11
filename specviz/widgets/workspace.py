@@ -11,7 +11,6 @@ from qtpy.uic import loadUi
 from specutils import Spectrum1D
 
 from .plotting import PlotWindow
-from specviz.plugins.smoothing.main import SmoothingDialog
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
 from ..utils import UI_PATH
@@ -34,6 +33,9 @@ class Workspace(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
+        # Retain a reference to the application
+        self._app = QApplication.instance()
+
         self._name = "Untitled Workspace"
 
         # Load the ui file and attach it to this instance
@@ -42,7 +44,7 @@ class Workspace(QMainWindow):
         # Add spacers to the main tool bar
         spacer = QWidget()
         spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        self.main_tool_bar.insertWidget(self.load_data_action, spacer)
+        # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
 
         spacer = QWidget()
         spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
@@ -97,6 +99,9 @@ class Workspace(QMainWindow):
         # Setup plugin toolbar action actions
         self.plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
         self._last_toggled_action = None
+
+    def create_tool_bar_menu(self, name, icon):
+        pass
 
     @property
     def name(self):
@@ -179,7 +184,11 @@ class Workspace(QMainWindow):
         self.mdi_area.subWindowActivated.emit(plot_window)
 
         # Subscribe this new plot window to list view item selection events
-        self.list_view.selectionModel().currentChanged.connect(plot_window._on_current_item_changed)
+        self.list_view.selectionModel().currentChanged.connect(
+            plot_window._on_current_item_changed)
+
+        # Load plot tool bar plugins
+        self._app.load_local_plugins(filt='is_plot_tool')
 
     def _on_sub_window_activated(self, window):
         if window is None:

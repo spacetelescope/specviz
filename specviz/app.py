@@ -1,15 +1,18 @@
+import importlib
 import logging
-import sys
+import os
+import pkgutil
+import sys, inspect
 
 import click
 from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMainWindow
 
+from . import plugins
+from .core.plugin import Plugin
+from .utils import DATA_PATH
 from .widgets.workspace import Workspace
-import pkgutil
-import importlib
-
-import specviz.plugins
 
 
 class Application(QApplication):
@@ -18,7 +21,8 @@ class Application(QApplication):
     """
     current_workspace_changed = Signal(QMainWindow)
 
-    def __init__(self, *args, file_path=None, file_loader=None, embeded=False, **kwargs):
+    def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
+                 **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         # Cache a reference to the currently active window
         self._current_workspace = None
@@ -47,29 +51,27 @@ class Application(QApplication):
 
         self._current_workspace = workspace
 
-        from .plugins.statistics.main import Statistics
-        from .plugins.model_editor.main import ModelEditor
-        from .plugins.smoothing.main import SmoothingDialog
+        # Load local plugins
+        self.load_local_plugins()
 
-        Statistics()
-        ModelEditor()
-        SmoothingDialog()
-
+    def load_local_plugins(self, filt=None):
         # Load plugins
         def iter_namespace(ns_pkg):
             # Specifying the second argument (prefix) to iter_modules makes the
-            # returned name an absolute name instead of a relative one. This allows
-            # import_module to work without having to do additional modification to
-            # the name.
+            # returned name an absolute name instead of a relative one. This
+            # allows import_module to work without having to do additional
+            # modification to the name.
             return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
-        myapp_plugins = {
-            name: importlib.import_module(name)
-            for finder, name, ispkg
-            in iter_namespace(specviz.plugins)
-        }
+        # Import plugins modules into current namespace
+        loaded_plugins = {name: importlib.import_module(name)
+                          for finder, name, ispkg
+                          in iter_namespace(plugins)}
 
-        print(myapp_plugins)
+        # Instantiate plugins to include them in the UI
+        for sub_cls in Plugin.__subclasses__():
+            logging.info("Loading plugin '{}'.".format(sub_cls.__name__))
+            sub_cls(filt=filt)
 
     def remove_workspace(self):
         pass
@@ -102,6 +104,9 @@ def start(file_path=None, loader=None, embed=None):
 
     # import qdarkstyle
     # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+    # Set application icon
+    app.setWindowIcon(QIcon(os.path.join(DATA_PATH, "icon.png")))
 
 
     sys.exit(app.exec_())
