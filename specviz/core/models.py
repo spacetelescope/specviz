@@ -25,9 +25,11 @@ class DataListModel(QStandardItemModel):
 
         data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
         data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
+        data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec2)
 
         self.appendRow(data_item)
         self.appendRow(data_item2)
+        self.appendRow(data_item3)
 
     @property
     def items(self):

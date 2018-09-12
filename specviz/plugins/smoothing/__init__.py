@@ -60,7 +60,7 @@ class SmoothingDialog(QDialog, Plugin):
 
         self._load_ui()
 
-    @Plugin.plot_bar("Smoothing", location="Operations")
+    @Plugin.tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
         self.exec_()
 
