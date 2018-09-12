@@ -45,19 +45,19 @@ class Workspace(QMainWindow):
         loadUi(os.path.join(UI_PATH, "workspace.ui"), self)
 
         # Add spacers to the main tool bar
-        spacer = QWidget()
-        spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
+        # spacer = QWidget()
+        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
+        # # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
 
-        spacer = QWidget()
-        spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        self.main_tool_bar.insertWidget(self.new_plot_action, spacer)
+        # spacer = QWidget()
+        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
+        # self.main_tool_bar.insertWidget(self.new_plot_action, spacer)
 
-        spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
-        self.main_tool_bar.addWidget(spacer)
+        # spacer = QWidget()
+        # size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # size_policy.setHorizontalStretch(1)
+        # spacer.setSizePolicy(size_policy)
+        # self.main_tool_bar.addWidget(spacer)
 
         # Update title
         self.setWindowTitle(self.name + " — SpecViz")

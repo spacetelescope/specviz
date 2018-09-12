@@ -197,6 +197,7 @@
    <addaction name="load_data_action"/>
    <addaction name="delete_data_action"/>
    <addaction name="export_data_action"/>
+   <addaction name="separator"/>
    <addaction name="new_plot_action"/>
    <addaction name="operations_action"/>
    <addaction name="arithmetic_action"/>
