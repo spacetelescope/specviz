@@ -1,20 +1,23 @@
+import logging
 import os
 import sys
 from collections import OrderedDict
 
 from astropy.io import registry as io_registry
 from qtpy import compat
-from qtpy.QtCore import Qt, Signal, QEvent
-from qtpy.QtWidgets import (QApplication, QWidget, QActionGroup, QMessageBox,
-                            QTabBar, QMainWindow, QToolButton, QSizePolicy, QMenu)
+from qtpy.QtCore import QEvent, Qt, Signal
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QMenu,
+                            QMessageBox, QSizePolicy, QTabBar, QToolButton,
+                            QWidget)
 from qtpy.uic import loadUi
 from specutils import Spectrum1D
 
-from .plotting import PlotWindow
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
+from ..core.plugin import Plugin
 from ..utils import UI_PATH
 from ..utils.qt_utils import dict_to_menu
+from .plotting import PlotWindow
 
 
 class Workspace(QMainWindow):
@@ -61,7 +64,7 @@ class Workspace(QMainWindow):
 
         # Setup workspace action connections
         self.new_workspace_action.triggered.connect(
-            QApplication.instance().add_workspace)
+            self._on_add_workspace)
         self.new_plot_action.triggered.connect(
             self._on_new_plot)
 
@@ -141,6 +144,10 @@ class Workspace(QMainWindow):
 
         return item
 
+    def _on_add_workspace(self):
+        workspace = self._app.add_workspace()
+        self._app.current_workspace = workspace
+
     def set_embeded(self, embed):
         """
         Toggles the visibility of certain parts of the ui to make it more
@@ -188,7 +195,8 @@ class Workspace(QMainWindow):
             plot_window._on_current_item_changed)
 
         # Load plot tool bar plugins
-        self._app.load_local_plugins(filt='is_plot_tool')
+        for sub_cls in Plugin.__subclasses__():
+            sub_cls(filt='is_plot_tool')
 
     def _on_sub_window_activated(self, window):
         if window is None:

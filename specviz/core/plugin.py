@@ -7,6 +7,7 @@ from ..widgets import resources
 
 class Plugin:
     def __init__(self, filt=None):
+        self._app = QApplication.instance()
         # For each decorated method in the plugin, call it in order to have
         # the decorator apply the behavior in the UI.
         method_list = [func for func in dir(self)
@@ -26,7 +27,7 @@ class Plugin:
     @property
     def workspace(self):
         """Returns the active workspace."""
-        return QApplication.instance().current_workspace
+        return self._app.current_workspace
 
     @property
     def model(self):
@@ -79,8 +80,8 @@ class Plugin:
                 # Add the plugin action to the plugin bar toggle group
                 self._action.setActionGroup(self.workspace.plugin_action_group)
 
-                # When the action is clicked, ensure that the connect to the dock
-                # widget is made.
+                # When the action is clicked, ensure that the connect to the
+                # dock widget is made.
                 self._action.triggered.connect(lambda: func(self, *args, **kwargs))
 
             return func_wrapper
@@ -120,7 +121,6 @@ class Plugin:
 
             @wraps(func)
             def func_wrapper(self, *args, **kwargs):
-                print(QApplication.instance().current_workspace)
                 self._action = QAction(self.plot_window.tool_bar)
                 self._action.setText(name)
 

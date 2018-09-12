@@ -20,15 +20,13 @@ class Application(QApplication):
     Primary application object for specviz.
     """
     current_workspace_changed = Signal(QMainWindow)
+    workspace_added = Signal(Workspace)
 
     def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
                  **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         # Cache a reference to the currently active window
-        self._current_workspace = None
-
-        # Create a default workspace
-        self.add_workspace()
+        self._current_workspace = self.add_workspace()
 
         # Set embed mode state
         self.current_workspace.set_embeded(embeded)
@@ -37,6 +35,9 @@ class Application(QApplication):
         if file_path is not None:
             self.current_workspace.load_data(
                 file_path, file_loader, display=True)
+
+        # Load local plugins
+        self.load_local_plugins()
 
     def add_workspace(self):
         """
@@ -49,10 +50,7 @@ class Application(QApplication):
         # Connect the window focus event to the current workspace reference
         workspace.window_activated.connect(self._on_window_activated)
 
-        self._current_workspace = workspace
-
-        # Load local plugins
-        self.load_local_plugins()
+        return workspace
 
     def load_local_plugins(self, filt=None):
         # Load plugins
@@ -82,6 +80,11 @@ class Application(QApplication):
         Returns the active current window.
         """
         return self._current_workspace
+
+    @current_workspace.setter
+    def current_workspace(self, value):
+        self._current_workspace = value
+        self.current_workspace_changed.emit(self.current_workspace)
 
     def _on_window_activated(self, window):
         self._current_workspace = window
