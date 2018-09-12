@@ -269,6 +269,11 @@ class PlotWidget(pg.PlotWidget):
                               plot_data_item.spectral_axis_unit, value)
 
     @property
+    def selected_region(self):
+        """Returns currently selected region object."""
+        return self._selected_region
+
+    @property
     def region_mask(self):
         mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
         mask_holder = []

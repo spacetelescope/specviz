@@ -35,14 +35,8 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="lineWidth">
-       <number>0</number>
-      </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="handleWidth">
-       <number>1</number>
       </property>
       <widget class="QListView" name="list_view">
        <property name="sizePolicy">
@@ -59,11 +53,6 @@
        </property>
        <property name="contextMenuPolicy">
         <enum>Qt::ActionsContextMenu</enum>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QListView::item {
-	height: 36px;
-}</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::NoFrame</enum>
@@ -136,15 +125,6 @@
   <widget class="QToolBar" name="plugin_tool_bar">
    <property name="windowTitle">
     <string>Plugin Tool Bar</string>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QToolBar {
-	background: rgb(245, 245, 245);
-	border: none;
-	border-left: 1px solid rgb(179, 179, 179);
-	padding: 5px;
-	spacing: 8px;
-}</string>
    </property>
    <property name="movable">
     <bool>false</bool>

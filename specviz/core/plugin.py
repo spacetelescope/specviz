@@ -19,11 +19,6 @@ class Plugin:
 
         [getattr(self, meth)() for meth in method_list]
 
-    # def __call__(self, cls):
-    #     class CustomPlugin(cls):
-    #         def __getattribute__(self, attr):
-    #             pass
-
     @property
     def workspace(self):
         """Returns the active workspace."""
@@ -48,6 +43,11 @@ class Plugin:
     def plot_item(self):
         """Returns the currently selected plot item."""
         return self.workspace.current_item
+
+    @property
+    def selected_region(self):
+        """Returns the currently active ROI on the plot."""
+        return self.plot_window.selected_region
 
     @property
     def data_item(self):
@@ -141,6 +141,10 @@ class Plugin:
 
 
 def get_action(parent, level=None):
+    """
+    Creates nested menu actions dependending on the user-created plugin
+    decorator location values.
+    """
     for action in parent.actions():
         if action.text() == level:
             if isinstance(parent, QToolBar):

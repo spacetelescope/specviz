@@ -103,9 +103,6 @@ class Workspace(QMainWindow):
         self.plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
         self._last_toggled_action = None
 
-    def create_tool_bar_menu(self, name, icon):
-        pass
-
     @property
     def name(self):
         """The name of this workspace."""
@@ -159,12 +156,6 @@ class Workspace(QMainWindow):
             self.main_tool_bar.hide()
             self.main_tool_bar.hide()
             self.mdi_area.findChild(QTabBar).hide()
-        # else:
-        #     self.menu_bar.show()
-        #     self.list_view.show()
-        #     self.main_tool_bar.show()
-        #     self.main_tool_bar.show()
-        #     self.mdi_area.findChild(QTabBar).show()
 
     def event(self, e):
         """Scrap window events."""
