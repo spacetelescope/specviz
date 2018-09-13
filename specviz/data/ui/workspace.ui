@@ -221,11 +221,25 @@
      <string>View</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <widget class="QMenu" name="menuColor_Theme_2">
+     <property name="title">
+      <string>Color Theme</string>
+     </property>
+     <addaction name="default_theme_action"/>
+     <addaction name="dark_theme_action"/>
+    </widget>
+    <addaction name="menuColor_Theme_2"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuData"/>
    <addaction name="menuPlot"/>
+   <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="mask_editor_toggle">
@@ -379,6 +393,16 @@
    </property>
    <property name="toolTip">
     <string>Delete the selected data item</string>
+   </property>
+  </action>
+  <action name="default_theme_action">
+   <property name="text">
+    <string>Default</string>
+   </property>
+  </action>
+  <action name="dark_theme_action">
+   <property name="text">
+    <string>Dark</string>
    </property>
   </action>
  </widget>

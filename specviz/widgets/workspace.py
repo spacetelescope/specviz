@@ -93,12 +93,11 @@ class Workspace(QMainWindow):
         # Add an initially empty plot
         self.add_plot_window()
 
-        # Setup plugin toolbar
-        self.plugin_action_group = QActionGroup(self)
-
-        # Setup plugin toolbar action actions
-        self.plugin_action_group.triggered.connect(self._on_toggle_plugin_dock)
-        self._last_toggled_action = None
+        # Color theme
+        self.default_theme_action.triggered.connect(
+            lambda: self._on_change_color_theme('default'))
+        self.dark_theme_action.triggered.connect(
+            lambda: self._on_change_color_theme('dark'))
 
     @property
     def name(self):
@@ -141,6 +140,31 @@ class Workspace(QMainWindow):
     def _on_add_workspace(self):
         workspace = self._app.add_workspace()
         self._app.current_workspace = workspace
+
+    def _on_change_color_theme(self, theme):
+        import pyqtgraph as pg
+
+        if theme == 'default':
+            self._app.setStyleSheet(None)
+            pg.setConfigOptions(background='w', foreground='k')
+
+            for sub_window in self.mdi_area.subWindowList():
+                sub_window.plot_widget.setBackground('w')
+                sub_window.plot_widget.getAxis('bottom').setPen('k')
+                sub_window.plot_widget.getAxis('left').setPen('k')
+        elif theme == 'dark':
+            try:
+                import qdarkstyle
+            except ImportError:
+                logging.error("No dark style installed.")
+            else:
+                self._app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+                pg.setConfigOptions(background='#232629', foreground='w')
+
+                for sub_window in self.mdi_area.subWindowList():
+                    sub_window.plot_widget.setBackground('#232629')
+                    sub_window.plot_widget.getAxis('bottom').setPen('w')
+                    sub_window.plot_widget.getAxis('left').setPen('w')
 
     def set_embeded(self, embed):
         """
