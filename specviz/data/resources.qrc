@@ -1,19 +1,23 @@
 <RCC>
-  <qresource prefix="icons">
-    <file>007-visibility.png</file>
-    <file>006-invisible.svg</file>
-    <file>007-visibility.svg</file>
-    <file>delete-1.svg</file>
-    <file>050-mask.svg</file>
-    <file>015-compass-1.svg</file>
-    <file>014-calculator.svg</file>
-    <file>005-stats.svg</file>
-    <file>048-line-chart.svg</file>
-    <file>inbox.svg</file>
-    <file>folder-2.svg</file>
-    <file>012-file.svg</file>
-    <file>014-save.svg</file>
-    <file>folder.svg</file>
-    <file>015-new.svg</file>
-  </qresource>
+    <qresource prefix="/icons">
+        <file>007-visibility.png</file>
+        <file>006-invisible.svg</file>
+        <file>007-visibility.svg</file>
+        <file>delete-1.svg</file>
+        <file>050-mask.svg</file>
+        <file>015-compass-1.svg</file>
+        <file>014-calculator.svg</file>
+        <file>005-stats.svg</file>
+        <file>048-line-chart.svg</file>
+        <file>inbox.svg</file>
+        <file>folder-2.svg</file>
+        <file>012-file.svg</file>
+        <file>014-save.svg</file>
+        <file>folder.svg</file>
+        <file>015-new.svg</file>
+        <file>export.svg</file>
+        <file>color.svg</file>
+        <file>region_remove.svg</file>
+        <file>region_add.svg</file>
+    </qresource>
 </RCC>

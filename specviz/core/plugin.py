@@ -59,85 +59,70 @@ class Plugin:
         """Returns a list of all data items held in the data item model."""
         return self.model.items
 
-    @staticmethod
-    def plugin_bar(name, icon):
-        def plugin_bar_decorator(func):
-            func.wrapped = True
 
-            @wraps(func)
-            def func_wrapper(self, *args, **kwargs):
-                self._action = QAction(self.workspace.plugin_tool_bar)
-                self._action.setText(name)
+def plugin_bar(name, icon):
+    def plugin_bar_decorator(cls):
+        cls.wrapped = True
 
-                if icon is not None:
-                    self._action.setIcon(icon)
+        plugin = cls()
 
-                self._action.setCheckable(True)
+        plugin.workspace.plugin_tab_widget.addTab(
+            plugin, icon, name)
 
-                # Add the action to the toolbar
-                self.workspace.plugin_tool_bar.addAction(self._action)
+        return plugin
+    return plugin_bar_decorator
 
-                # Add the plugin action to the plugin bar toggle group
-                self._action.setActionGroup(self.workspace.plugin_action_group)
 
-                # When the action is clicked, ensure that the connect to the
-                # dock widget is made.
-                self._action.triggered.connect(lambda: func(self, *args, **kwargs))
+def tool_bar(name, icon=None, location=None):
+    def tool_bar_decorator(func):
+        func.wrapped = True
+        func.is_main_tool = True
 
-            return func_wrapper
-        return plugin_bar_decorator
+        @wraps(func)
+        def func_wrapper(self, *args, **kwargs):
+            self._action = QAction(self.workspace.main_tool_bar)
+            self._action.setText(name)
 
-    @staticmethod
-    def tool_bar(name, icon=None, location=None):
-        def tool_bar_decorator(func):
-            func.wrapped = True
-            func.is_main_tool = True
+            if icon is not None:
+                self._action.setIcon(icon)
 
-            @wraps(func)
-            def func_wrapper(self, *args, **kwargs):
-                self._action = QAction(self.workspace.main_tool_bar)
-                self._action.setText(name)
+            parent = self.workspace.main_tool_bar
 
-                if icon is not None:
-                    self._action.setIcon(icon)
+            if location is not None:
+                for level in location.split('/'):
+                    parent = get_action(parent, level)
 
-                parent = self.workspace.main_tool_bar
+            parent.addAction(self._action)
+            self._action.triggered.connect(lambda: func(self, *args, **kwargs))
 
-                if location is not None:
-                    for level in location.split('/'):
-                        parent = get_action(parent, level)
+        return func_wrapper
+    return tool_bar_decorator
 
-                parent.addAction(self._action)
-                self._action.triggered.connect(lambda: func(self, *args, **kwargs))
 
-            return func_wrapper
-        return tool_bar_decorator
+def plot_bar(name, icon=None, location=None):
+    def plot_bar_decorator(func):
+        func.wrapped = True
+        func.is_plot_tool = True
 
-    @staticmethod
-    def plot_bar(name, icon=None, location=None):
-        def plot_bar_decorator(func):
-            func.wrapped = True
-            func.is_plot_tool = True
+        @wraps(func)
+        def func_wrapper(self, *args, **kwargs):
+            self._action = QAction(self.plot_window.tool_bar)
+            self._action.setText(name)
 
-            @wraps(func)
-            def func_wrapper(self, *args, **kwargs):
-                self._action = QAction(self.plot_window.tool_bar)
-                self._action.setText(name)
+            if icon is not None:
+                self._action.setIcon(icon)
 
-                if icon is not None:
-                    self._action.setIcon(icon)
+            parent = self.plot_window.tool_bar
 
-                parent = self.plot_window.tool_bar
+            if location is not None:
+                for level in location.split('/'):
+                    parent = get_action(parent, level)
 
-                if location is not None:
-                    for level in location.split('/'):
-                        parent = get_action(parent, level)
+            parent.addAction(self._action)
+            self._action.triggered.connect(lambda: func(self, *args, **kwargs))
 
-                parent.addAction(self._action)
-                self._action.triggered.connect(lambda: func(self, *args, **kwargs))
-
-            return func_wrapper
-        return plot_bar_decorator
+        return func_wrapper
+    return plot_bar_decorator
 
 
 def get_action(parent, level=None):

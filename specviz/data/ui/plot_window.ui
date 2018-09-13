@@ -19,6 +19,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="leftMargin">
@@ -62,12 +65,17 @@
    </attribute>
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
-   <addaction name="plot_options_action"/>
+   <addaction name="separator"/>
+   <addaction name="change_color_action"/>
    <addaction name="export_plot_action"/>
   </widget>
   <action name="linear_region_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/region_add.svg</normaloff>:/icons/region_add.svg</iconset>
+   </property>
    <property name="text">
-    <string>Linear Region</string>
+    <string>Add Region</string>
    </property>
    <property name="toolTip">
     <string>Add a linear selection region</string>
@@ -90,6 +98,10 @@
    </property>
   </action>
   <action name="export_plot_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/export.svg</normaloff>:/icons/export.svg</iconset>
+   </property>
    <property name="text">
     <string>Export Plot</string>
    </property>
@@ -98,11 +110,27 @@
    </property>
   </action>
   <action name="remove_region_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/region_remove.svg</normaloff>:/icons/region_remove.svg</iconset>
+   </property>
    <property name="text">
     <string>Remove Region</string>
    </property>
    <property name="toolTip">
     <string>Remove selected region</string>
+   </property>
+  </action>
+  <action name="change_color_action">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/color.svg</normaloff>:/icons/color.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Change Color</string>
+   </property>
+   <property name="toolTip">
+    <string>Change the current plot item color</string>
    </property>
   </action>
  </widget>

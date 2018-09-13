@@ -1,6 +1,6 @@
 import os
 
-from ...core.plugin import Plugin
+from ...core.plugin import Plugin, plugin_bar
 from qtpy.uic import loadUi
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QWidget
@@ -8,6 +8,7 @@ from qtpy.QtWidgets import QWidget
 import qtawesome as qta
 
 
+@plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
 class ModelEditor(QWidget, Plugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -36,7 +37,3 @@ class ModelEditor(QWidget, Plugin):
             self.parameter_tree_view.setRootIndex(idx)
 
         self.model_tree_view.selectionModel().currentChanged.connect(_set_root)
-
-    @Plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
-    def on_action_triggered(self):
-        self.workspace.plugin_dock.setWidget(self)

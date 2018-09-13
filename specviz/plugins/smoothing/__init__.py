@@ -8,7 +8,7 @@ from qtpy.uic import loadUi
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
 from ...core.items import PlotDataItem
-from ...core.plugin import Plugin
+from ...core.plugin import Plugin, tool_bar
 
 KERNEL_REGISTRY = {
     """
@@ -60,7 +60,7 @@ class SmoothingDialog(QDialog, Plugin):
 
         self._load_ui()
 
-    @Plugin.tool_bar("Smoothing", location="Operations")
+    @tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
         self.exec_()
 
