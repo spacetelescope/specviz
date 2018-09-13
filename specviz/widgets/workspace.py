@@ -93,9 +93,6 @@ class Workspace(QMainWindow):
         # Add an initially empty plot
         self.add_plot_window()
 
-        # Hide the plugin dock initially
-        self.plugin_dock.hide()
-
         # Setup plugin toolbar
         self.plugin_action_group = QActionGroup(self)
 
