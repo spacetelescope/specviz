@@ -33,8 +33,6 @@ class Workspace(QMainWindow):
     """
     window_activated = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
-    list_view_model_changed = Signal()
-    plot_window_added = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -213,7 +211,6 @@ class Workspace(QMainWindow):
         Creates a new plot widget sub window and adds it to the workspace.
         """
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
-        self._set_list_view_model(plot_window.plot_widget.proxy_model)
 
         plot_window.setWindowTitle(plot_window._plot_widget.title)
         plot_window.setAttribute(Qt.WA_DeleteOnClose)
@@ -231,8 +228,6 @@ class Workspace(QMainWindow):
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
 
-        self.plot_window_added.emit(plot_window)
-
     def _on_sub_window_activated(self, window):
         if window is None:
             return
@@ -245,7 +240,7 @@ class Workspace(QMainWindow):
             except TypeError:
                 pass
 
-        self._set_list_view_model(window.proxy_model)
+        self.list_view.setModel(window.proxy_model)
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)

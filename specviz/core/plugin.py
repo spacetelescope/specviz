@@ -7,6 +7,7 @@ from ..widgets import resources
 
 class Plugin:
     def __init__(self, filt=None):
+        print("PCalled")
         self._app = QApplication.instance()
         # For each decorated method in the plugin, call it in order to have
         # the decorator apply the behavior in the UI.
@@ -65,6 +66,9 @@ def plugin_bar(name, icon):
         cls.wrapped = True
 
         plugin = cls()
+
+        print(isinstance(plugin, Plugin))
+        print(hasattr(plugin, 'workspace'))
 
         plugin.workspace.plugin_tab_widget.addTab(
             plugin, icon, name)
