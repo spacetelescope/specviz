@@ -29,7 +29,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget = QMainWindow()
         self.setWidget(self._central_widget)
 
-        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._central_widget)
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "plot_window.ui"),
+               self._central_widget)
 
         # The central widget of the main window widget will be the plot
         self._model = model

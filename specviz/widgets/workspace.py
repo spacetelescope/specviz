@@ -42,7 +42,8 @@ class Workspace(QMainWindow):
         self._name = "Untitled Workspace"
 
         # Load the ui file and attach it to this instance
-        loadUi(os.path.join(UI_PATH, "workspace.ui"), self)
+        loadUi(os.path.join(os.path.dirname(__file__),
+                            "ui", "workspace.ui"), self)
 
         # Add spacers to the main tool bar
         # spacer = QWidget()
