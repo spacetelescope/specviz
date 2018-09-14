@@ -99,7 +99,7 @@ package_info = get_package_info()
 # Add the project-global data
 package_info['package_data'].setdefault(PACKAGENAME, [])
 package_info['package_data'][PACKAGENAME].append('data/*')
-package_info['package_data'][PACKAGENAME].append('data/ui/*')
+package_info['package_data'][PACKAGENAME].append('data/resources/*')
 
 # Define entry points for command-line scripts
 entry_points = {'console_scripts': []}
@@ -128,11 +128,21 @@ package_info['package_data'][PACKAGENAME].extend(c_files)
 # ``setup``, since these are now deprecated. See this link for more details:
 # https://groups.google.com/forum/#!topic/astropy-dev/urYO8ckB2uM
 
+install_requires = [s.strip() for s in metadata.get('install_requires', 'astropy').split(',')]
+
+# Check if pyqt5 is already installed, whether by pip or some other manager.
+# If so, avoid trying to install it again.
+try:
+    import PyQt5  # noqa
+    install_requires.remove('pyqt5')
+except ImportError:
+    pass
+
 setup(name=PACKAGENAME,
       version=VERSION,
       description=DESCRIPTION,
       scripts=scripts,
-      install_requires=[s.strip() for s in metadata.get('install_requires', 'astropy').split(',')],
+      install_requires=install_requires,
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,

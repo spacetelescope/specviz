@@ -2,12 +2,13 @@ import os
 
 from qtpy.QtCore import QThread, Signal
 from qtpy.QtWidgets import QDialog, QMessageBox
+from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
 
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
-from ..core.items import PlotDataItem
-from ..utils import UI_PATH
+from ...core.items import PlotDataItem
+from ...core.plugin import Plugin, tool_bar
 
 KERNEL_REGISTRY = {
     """
@@ -39,19 +40,16 @@ KERNEL_REGISTRY = {
 }
 
 
-class SmoothingDialog(QDialog):
+class SmoothingDialog(QDialog, Plugin):
     """
     Widget to handle user interactions with smoothing operations.
     Allows the user to select spectra, kernel type and kernel size.
     It utilizes smoothing functions in `~specutils.manipulation.smoothing`.
     Assigns the smoothing workload to a QTread instance.
     """
-    def __init__(self, workspace, parent=None):
-        super(SmoothingDialog, self).__init__(parent=parent)
-        self.setWindowTitle("Spectral Smoothing")
-        self.workspace = workspace  # Parent Workspace
-        # List of `~specviz.core.items.DataItem`:
-        self.model_items = self.workspace.model.data_list()
+    def __init__(self, parent=None, *args, **kwargs):
+        super().__init__(parent=parent, *args, **kwargs)
+        self.model_items = self.workspace.model.items
 
         self._smoothing_thread = None  # Worker thread
 
@@ -62,9 +60,15 @@ class SmoothingDialog(QDialog):
 
         self._load_ui()
 
+    @tool_bar("Smoothing", location="Operations")
+    def on_action_triggered(self):
+        self.exec_()
+
     def _load_ui(self):
         # Load UI form .ui file
-        loadUi(os.path.join(UI_PATH, "smoothing.ui"), self)
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "smoothing.ui")), self)
 
         for index, data in enumerate(self.model_items):
             self.data_combo.addItem(data.name, index)
@@ -82,7 +86,6 @@ class SmoothingDialog(QDialog):
         self._on_kernel_change(0)
 
         self.set_to_current_selection()
-        self.show()
 
     def set_to_current_selection(self):
         """Sets Data selection to currently active data"""
