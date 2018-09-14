@@ -230,6 +230,16 @@ class PlotWidget(pg.PlotWidget):
         return self._selected_region
 
     @property
+    def selected_region_bounds(self):
+        """
+        Returns the bounds of the currently selected region as a tuple of
+        quantities.
+        """
+        if self.selected_region is not None:
+            return self.selected_region.getRegion() * u.Unit(
+                self.spectral_axis_unit or "")
+
+    @property
     def region_mask(self):
         mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
         mask_holder = []
@@ -249,12 +259,6 @@ class PlotWidget(pg.PlotWidget):
             mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
 
         return mask
-
-    @property
-    def selected_region_pos(self):
-        if self.selected_region is not None:
-            return self.selected_region.getRegion() * u.Unit(self.spectral_axis_unit or "")
-        return None
 
     def on_item_changed(self, item):
         """
@@ -438,8 +442,8 @@ class PlotWidget(pg.PlotWidget):
         selected region is changed.
         """
         self._region_text_item.setText(
-            "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_pos))
-        self.roi_moved.emit(self.selected_region_pos)
+            "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_bounds))
+        self.roi_moved.emit(self.selected_region_bounds)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """

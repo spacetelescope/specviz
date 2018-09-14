@@ -66,12 +66,9 @@ def compute_stats(spectrum):
             'maxval': flux.max(),
             'minval': flux.min()}
 
-class Test:
-    def __init__(self, *args, **kwargs):
-        print("TCalled")
 
 @plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"))
-class StatisticsWidget(QWidget, Test, Plugin):
+class StatisticsWidget(QWidget, Plugin):
     """
     This widget controls the statistics box. It is responsible for calling
     stats computation functions and updating the stats widget. It only takes
@@ -86,9 +83,25 @@ class StatisticsWidget(QWidget, Test, Plugin):
 
         self._init_ui()
 
+        print(self.workspace)
+
+        self.workspace.current_item_changed.connect(self.update_statistics)
+        # When the current subwindow changes, update the stat widget
+        self.workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
+        # When current item changes, update the stat widget
+        self.workspace.current_item_changed.connect(self.update_statistics)
+        # When selection changes, update the stat widget
+        self.workspace.current_selected_changed.connect(self.update_statistics)
+        # When new plot window is added, connect signals
+        self.workspace.plot_window_added.connect(self._connect_plot_window)
+
+        # Connect any currently open plot windows
+        for plot_window in self.plot_windows:
+            self._connect_plot_window(plot_window)
+
     def _init_ui(self):
         loadUi(os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "statistics.ui")), self)
+               os.path.join(os.path.dirname(__file__), "statistics.ui")), self)
 
         # A dict of display `QLineEdit` and their stat keys:
         self.stat_widgets = {
@@ -107,41 +120,6 @@ class StatisticsWidget(QWidget, Test, Plugin):
         plot_window.plot_widget.plot_removed.connect(self.update_statistics)
         plot_window.plot_widget.roi_moved.connect(self.update_statistics)
         plot_window.plot_widget.roi_removed.connect(self.update_statistics)
-
-    def _connect_list_view(self, *args, workspace=None):
-        if workspace is None:
-            if self.workspace is None:
-                return
-            else:
-                workspace = self.workspace
-        selection_model = workspace.list_view.selectionModel()
-        if selection_model is not None:
-            selection_model.currentChanged.connect(self.update_statistics)
-
-    def _connect_workspace(self, workspace):
-        # When the current subwindow changes, update the stat widget
-        workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
-
-        # When current item changes, update the stat widget
-        workspace.current_item_changed.connect(self.update_statistics)
-
-        # When new plot window is added, connect signals
-        workspace.plot_window_added.connect(self._connect_plot_window)
-
-        # Connect current list view and listen for changes
-        self._connect_list_view(workspace)
-        workspace.list_view_model_changed.connect(self._connect_list_view)
-
-        for plot_window in workspace.mdi_area.subWindowList():
-            self._connect_plot_window(plot_window)
-
-    def set_workspace(self, workspace):
-        self._workspace = workspace
-        self._connect_workspace(self.workspace)
-
-    @property
-    def workspace(self):
-        return self._workspace
 
     def set_status(self, message):
         self.status_display.setPlainText(message)
@@ -200,24 +178,14 @@ class StatisticsWidget(QWidget, Test, Plugin):
 
     def _get_workspace_region(self):
         """Get current widget region."""
-        pos = self.workspace.selected_region_pos
+        pos = self.selected_region_bounds
+
         if pos is not None:
             return self.pos_to_spectral_region(pos)
-        return None
 
     def _workspace_has_region(self):
         """True if there is an active region"""
-        return self.workspace.selected_region is not None
-
-    def _get_workspace_spectrum(self):
-        """Gets currently active data."""
-        current_item = self.workspace.current_item
-        if current_item is not None:
-            if isinstance(current_item, PlotDataItem):
-                current_item = current_item.data_item
-        if current_item is not None and hasattr(current_item, "spectrum"):
-            return current_item.spectrum
-        return None
+        return self.selected_region is not None
 
     def _get_target_name(self):
         """Gets name of data and region selected"""
@@ -242,10 +210,14 @@ class StatisticsWidget(QWidget, Test, Plugin):
         self.stats = None
 
     def update_statistics(self):
-        if self.workspace is None:
+        if self.workspace is None or self.plot_item is None:
             return self.clear_statistics()
 
-        spec = self._get_workspace_spectrum()
+        # If the plot item is not visible, don't bother updating stats
+        if not self.plot_item.visible:
+            return self.clear_statistics()
+
+        spec = self.data_item.spectrum if self.data_item is not None else None
         spectral_region = self._get_workspace_region()
 
         self._current_spectrum = spec

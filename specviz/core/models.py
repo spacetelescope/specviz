@@ -19,13 +19,14 @@ class DataListModel(QStandardItemModel):
 
         spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
                            spectral_axis=np.arange(100) * u.AA)
-
         spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
+                           spectral_axis=np.arange(100) * u.Hz)
+        spec3 = Spectrum1D(flux=np.random.sample(100) * u.erg,
                            spectral_axis=np.arange(100) * u.Hz)
 
         data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
         data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
-        data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec2)
+        data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec3)
 
         self.appendRow(data_item)
         self.appendRow(data_item2)
@@ -101,6 +102,11 @@ class PlotProxyModel(QSortFilterProxyModel):
 
         self.setSourceModel(source)
         self._items = {}
+
+    @property
+    def items(self):
+        """Returns a list of :class:`PlotDataItems` in the proxy model."""
+        return self._items.values()
 
     def item_from_index(self, index):
         index = self.mapToSource(index)
