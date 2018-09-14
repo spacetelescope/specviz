@@ -37,64 +37,80 @@ class UnitChangeDialog(QDialog, Plugin):
             os.path.join(os.path.dirname(__file__),
                          ".", "unit_change_dialog.ui")), self)
 
-        log.debug("Spectral axis: {}".format(self.workspace.current_item.data_item.spectral_axis))
-
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
-        if self.plot_widget and self.data_item and self.plot_widget.data_unit and self.plot_widget.spectral_axis_unit:
-
-            # Gets all possible conversions from current spectral_axis_unit
-            self._spectral_axis_unit_equivalencies = u.Unit(self.plot_widget.spectral_axis_unit).find_equivalent_units(equivalencies=u.spectral())
-            self._spectral_axis_unit_equivalencies_titles =[u.Unit(unit).long_names[0].title()
-                                                       if len(u.Unit(unit).long_names) > 0
-                                                       else u.Unit(unit).to_string()
-                                                       for unit in self._spectral_axis_unit_equivalencies]
-
-            # Gets all possible conversions for flux from current spectral axis and corresponding units
-            self._data_unit_equivalencies = u.Unit(self.plot_widget.spectral_axis_unit).find_equivalent_units(
-                equivalencies=u.spectral_density(self.data_item.spectral_axis))
-            self._data_unit_equivalencies_titles = [u.Unit(unit).long_names[0].title()
-                                                    if len(u.Unit(unit).long_names) > 0
-                                                    else u.Unit(unit).to_string()
-                                                    for unit in self._data_unit_equivalencies]
-
-            # Holder values for current data unit and spectral axis unit
-            self.current_data_unit = self._data_unit_equivalencies_titles[0]
-            self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
-
-            try:
-                # Set the current data units to be the ones in plot_widget
-                self.current_data_unit = u.Unit(self.plot_widget.data_unit).long_names[0].title() \
-                    if len(u.Unit(self.plot_widget.data_unit).long_names) > 0 else u.Unit(self.plot_widget.data_unit).to_string()
-
-                # Add current unit used by PlotWidget to the list [self._spectral_axis_unit_equivalencies] that fills the combobox
-                if u.Unit(self.plot_widget.data_unit) not in self._data_unit_equivalencies and \
-                        self.current_data_unit not in self._data_unit_equivalencies_titles:
-                    self._data_unit_equivalencies.append(u.Unit(self.plot_widget.data_unit))
-                    self._data_unit_equivalencies_titles.append(self.current_data_unit)
-
-            except Exception as e:
-                self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
-                log.error(e)
-                self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
-
-            try:
-                # Set the current spectral_axis unit to be the ones in plot_widget
-                self.current_spectral_axis_unit = u.Unit(self.plot_widget.spectral_axis_unit).long_names[0].title() \
-                    if len(u.Unit(self.plot_widget.spectral_axis_unit).long_names) else u.Unit(self.plot_widget.spectral_axis_unit).to_string()
-
-                # Add current unit used by PlotWidget to the list [self._spectral_axis_unit_equivalencies] that fills the combobox
-                if u.Unit(self.plot_widget.spectral_axis_unit) not in self._spectral_axis_unit_equivalencies and \
-                        self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
-                    self._spectral_axis_unit_equivalencies.append(u.Unit(self.plot_widget.spectral_axis_unit))
-                    self._spectral_axis_unit_equivalencies_titles.append(self.current_spectral_axis_unit)
-
-            except Exception as e:
-                self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
-                log.error(e)
-                self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
-
-        else:
+        if not (self.plot_widget
+                and self.data_item
+                and self.plot_widget.data_unit
+                and self.plot_widget.spectral_axis_unit):
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+
+        # Gets all possible conversions from current spectral_axis_unit
+        self._spectral_axis_unit_equivalencies = u.Unit(
+            self.plot_widget.spectral_axis_unit).find_equivalent_units(
+                equivalencies=u.spectral())
+        self._spectral_axis_unit_equivalencies_titles = [
+            u.Unit(unit).long_names[0].title()
+            if len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            for unit in self._spectral_axis_unit_equivalencies]
+
+        # Gets all possible conversions for flux from current spectral axis and corresponding units
+        self._data_unit_equivalencies = u.Unit(
+            self.plot_widget.spectral_axis_unit).find_equivalent_units(
+                equivalencies=u.spectral_density(self.data_item.spectral_axis))
+        self._data_unit_equivalencies_titles = [
+            u.Unit(unit).long_names[0].title()
+            if len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            for unit in self._data_unit_equivalencies]
+
+        # Holder values for current data unit and spectral axis unit
+        self.current_data_unit = self._data_unit_equivalencies_titles[0]
+        self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
+
+        try:
+            # Set the current data units to be the ones in plot_widget
+            if len(u.Unit(self.plot_widget.data_unit).long_names) > 0:
+                self.current_data_unit = u.Unit(
+                    self.plot_widget.data_unit).long_names[0].title()
+            else:
+                self.current_data_unit = u.Unit(
+                    self.plot_widget.data_unit).to_string()
+
+            # Add current unit used by PlotWidget to the list of equivalencies
+            # that fills the combobox
+            if (u.Unit(self.plot_widget.data_unit) not in self._data_unit_equivalencies
+                and self.current_data_unit not in self._data_unit_equivalencies_titles):
+                self._data_unit_equivalencies.append(
+                    u.Unit(self.plot_widget.data_unit))
+                self._data_unit_equivalencies_titles.append(
+                    self.current_data_unit)
+        except Exception as e:
+            self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
+            self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+            logging.error(e)
+
+        try:
+            # Set the current spectral_axis unit to be the ones in plot_widget
+            if len(u.Unit(self.plot_widget.spectral_axis_unit).long_names) > 0:
+                self.current_spectral_axis_unit = u.Unit(
+                    self.plot_widget.spectral_axis_unit).long_names[0].title()
+            else:
+                self.current_spectral_axis_unit = u.Unit(
+                    self.plot_widget.spectral_axis_unit).to_string()
+
+            # Add current unit used by PlotWidget to the list of equivalencies
+            # that fills the combobox
+            if (u.Unit(self.plot_widget.spectral_axis_unit)
+                not in self._spectral_axis_unit_equivalencies
+                and self.current_spectral_axis_unit
+                not in self._spectral_axis_unit_equivalencies_titles):
+                self._spectral_axis_unit_equivalencies.append(
+                    u.Unit(self.plot_widget.spectral_axis_unit))
+                self._spectral_axis_unit_equivalencies_titles.append(
+                    self.current_spectral_axis_unit)
+        except Exception as e:
+            self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
+            self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+            logging.error(e)
 
         # This gives the user the option to use their own units. These units are checked by u.Unit()
         # and PlotDataItem.is_spectral_axis_unit_compatible(spectral_axis_unit) and
