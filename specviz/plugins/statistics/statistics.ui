@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>254</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,47 +16,187 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="median_label">
-       <property name="text">
-        <string>Median</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="median_line_edit"/>
-     </item>
-     <item row="1" column="0">
+     <property name="fieldGrowthPolicy">
+      <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+     </property>
+     <item row="3" column="0">
       <widget class="QLabel" name="meanLabel">
+       <property name="toolTip">
+        <string>astropy.units.Quantity.mean</string>
+       </property>
        <property name="text">
         <string>Mean</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="meanLineEdit"/>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="mean_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
-     <item row="2" column="0">
+     <item row="4" column="0">
+      <widget class="QLabel" name="median_label">
+       <property name="toolTip">
+        <string>numpy.median</string>
+       </property>
+       <property name="text">
+        <string>Median</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="median_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
       <widget class="QLabel" name="stdDevLabel">
+       <property name="toolTip">
+        <string>astropy.units.Quantity.std</string>
+       </property>
        <property name="text">
         <string>Std dev</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="stdDevLineEdit"/>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="std_dev_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
-     <item row="3" column="0">
+     <item row="6" column="0">
+      <widget class="QLabel" name="rmsLabel">
+       <property name="toolTip">
+        <string>numpy.sqrt(flux.dot(flux) / len(flux))</string>
+       </property>
+       <property name="text">
+        <string>RMS</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="rms_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="snrLabel">
+       <property name="toolTip">
+        <string>specutils.analysis.snr.snr</string>
+       </property>
+       <property name="text">
+        <string>SNR</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="snr_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
       <widget class="QLabel" name="countTotalLabel">
+       <property name="toolTip">
+        <string>numpy.trapz</string>
+       </property>
        <property name="text">
         <string>Count total</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="countTotalLineEdit"/>
+     <item row="10" column="1">
+      <widget class="QLineEdit" name="count_total_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="max_val_label">
+       <property name="toolTip">
+        <string>astropy.units.Quantity.max</string>
+       </property>
+       <property name="text">
+        <string>Max</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLineEdit" name="max_val_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="min_val_label">
+       <property name="toolTip">
+        <string>astropy.units.Quantity.min</string>
+       </property>
+       <property name="text">
+        <string>Min</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QLineEdit" name="min_val_line_edit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QPlainTextEdit" name="status_display">
+     <property name="minimumSize">
+      <size>
+       <width>230</width>
+       <height>192</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>230</width>
+       <height>192</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

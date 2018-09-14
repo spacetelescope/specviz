@@ -51,9 +51,6 @@ class PlotWindow(QMdiSubWindow):
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
-        self._central_widget.change_unit_action.triggered.connect(
-            self._on_change_unit)
-
 
     @property
     def tool_bar(self):
@@ -131,9 +128,16 @@ class PlotWidget(pg.PlotWidget):
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
         Fired when a plot data item has been removed from the plot widget.
+    roi_moved : Signal
+        Fired when region is moved. Delivers the range of region as tuple.
+    roi_removed : Signal
+        Fired when region is removed. Delivers the region removed.
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
+
+    roi_moved = Signal(u.Quantity)
+    roi_removed = Signal(LinearRegionItem)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -232,6 +236,16 @@ class PlotWidget(pg.PlotWidget):
     def selected_region(self):
         """Returns currently selected region object."""
         return self._selected_region
+
+    @property
+    def selected_region_bounds(self):
+        """
+        Returns the bounds of the currently selected region as a tuple of
+        quantities.
+        """
+        if self.selected_region is not None:
+            return self.selected_region.getRegion() * u.Unit(
+                self.spectral_axis_unit or "")
 
     @property
     def region_mask(self):
@@ -436,10 +450,8 @@ class PlotWidget(pg.PlotWidget):
         selected region is changed.
         """
         self._region_text_item.setText(
-            "Region: ({:0.5g}, {:0.5g})".format(
-                *(self._selected_region.getRegion() *
-                  u.Unit(self.spectral_axis_unit or ""))
-                ))
+            "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_bounds))
+        self.roi_moved.emit(self.selected_region_bounds)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """
@@ -494,6 +506,9 @@ class PlotWidget(pg.PlotWidget):
 
     def _on_remove_linear_region(self):
         """Remove the selected linear region from the plot."""
+        roi = self._selected_region
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
+        self.roi_removed.emit(roi)
+
