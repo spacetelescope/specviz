@@ -63,8 +63,8 @@ class Application(QApplication):
 
         # Import plugins modules into current namespace
         loaded_plugins = {name: importlib.import_module(name)
-                          for finder, name, ispkg
-                          in iter_namespace(plugins)}
+                            for finder, name, ispkg
+                            in iter_namespace(plugins)}
 
         # Instantiate plugins to include them in the UI
         for sub_cls in Plugin.__subclasses__():

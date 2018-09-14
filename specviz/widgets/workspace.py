@@ -33,6 +33,8 @@ class Workspace(QMainWindow):
     """
     window_activated = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
+    current_selected_changed = Signal(PlotDataItem)
+    plot_window_added = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -100,6 +102,12 @@ class Workspace(QMainWindow):
         self.dark_theme_action.triggered.connect(
             lambda: self._on_change_color_theme('dark'))
 
+        # Connect to signals given off by the list view
+        self._model.itemChanged.connect(
+            self._on_item_changed)
+        self.list_view.selectionModel().selectionChanged.connect(
+            self._on_current_selected_changed)
+
     @property
     def name(self):
         """The name of this workspace."""
@@ -123,7 +131,26 @@ class Workspace(QMainWindow):
         """
         Get the current active plot window tab.
         """
-        return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
+        return (self.mdi_area.currentSubWindow() or
+                next((x for x in self.mdi_area.subWindowList()), None))
+
+    @property
+    def selected_region(self):
+        """
+        Get the current selected region.
+        """
+        if self.current_plot_window is not None:
+            return self.current_plot_window.plot_widget.selected_region
+
+    @property
+    def selected_region_pos(self):
+        """
+        Get the range of the current selected region.
+        Returns a tuple of Qualities (left, right).
+        """
+        if self.current_plot_window is not None:
+            if self.current_plot_window.plot_widget is not None:
+                return self.current_plot_window.plot_widget.selected_region_pos
 
     def remove_current_window(self):
         self.mdi_area.removeSubWindow(self.current_plot_window)
@@ -134,9 +161,30 @@ class Workspace(QMainWindow):
         Get the currently selected :class:`~specviz.core.items.PlotDataItem`.
         """
         idx = self.list_view.currentIndex()
+
+        if idx is None:
+            idx = self.list_view.model().index(0, 0)
+            self.list_view.setCurrentIndex(idx)
+
         item = self.proxy_model.data(idx, role=Qt.UserRole)
 
         return item
+
+    def _on_item_changed(self, item):
+        # If the item checkbox is clicked, ensure that the item is also selected
+        if item.isEnabled():
+            source_index = self.list_view.model().sourceModel().indexFromItem(item)
+            proxy_index = self.list_view.model().mapFromSource(source_index)
+            self.list_view.setCurrentIndex(proxy_index)
+        else:
+            for item in self._model.items:
+                if item.isEnabled():
+                    self.list_view.setCurrentIndex(item.index())
+                    break
+
+    def _on_current_selected_changed(self, selected, deselected):
+        item = self.proxy_model.data(selected.indexes()[0], role=Qt.UserRole)
+        self.current_selected_changed.emit(item)
 
     def _on_add_workspace(self):
         workspace = self._app.add_workspace()
@@ -193,7 +241,6 @@ class Workspace(QMainWindow):
         Creates a new plot widget sub window and adds it to the workspace.
         """
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
-        self.list_view.setModel(plot_window.plot_widget.proxy_model)
 
         plot_window.setWindowTitle(plot_window._plot_widget.title)
         plot_window.setAttribute(Qt.WA_DeleteOnClose)
@@ -211,6 +258,9 @@ class Workspace(QMainWindow):
         for sub_cls in Plugin.__subclasses__():
             sub_cls(filt='is_plot_tool')
 
+        # Fire a signal letting everyone know a new plot window has been added
+        self.plot_window_added.emit(plot_window)
+
     def _on_sub_window_activated(self, window):
         if window is None:
             return
@@ -224,6 +274,10 @@ class Workspace(QMainWindow):
                 pass
 
         self.list_view.setModel(window.proxy_model)
+
+        if self.list_view.currentIndex() is None:
+            idx = self.list_view.model().index(0, 0)
+            self.list_view.setCurrentIndex(idx)
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)

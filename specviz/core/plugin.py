@@ -1,5 +1,6 @@
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction, QApplication, QWidget, QMenu, QToolButton, QToolBar
+from qtpy.QtCore import Signal
 from functools import wraps
 
 from ..widgets import resources
@@ -22,7 +23,7 @@ class Plugin:
     @property
     def workspace(self):
         """Returns the active workspace."""
-        return self._app.current_workspace
+        return QApplication.instance().current_workspace
 
     @property
     def model(self):
@@ -40,19 +41,36 @@ class Plugin:
         return self.workspace.current_plot_window
 
     @property
+    def plot_windows(self):
+        """Returns the currently selected plot window of the workspace."""
+        return self.workspace.mdi_area.subWindowList()
+
+    @property
     def plot_item(self):
         """Returns the currently selected plot item."""
-        return self.workspace.current_item
+        if self.workspace is not None:
+            return self.workspace.current_item
+
+    @property
+    def plot_items(self):
+        """Returns the currently selected plot item."""
+        return self.proxy_model.items
 
     @property
     def selected_region(self):
         """Returns the currently active ROI on the plot."""
-        return self.plot_window.selected_region
+        return self.plot_window.plot_widget.selected_region
+
+    @property
+    def selected_region_bounds(self):
+        """Returns the bounds of currently active ROI on the plot."""
+        return self.plot_window.plot_widget.selected_region_bounds
 
     @property
     def data_item(self):
         """Returns the data item of the currently selected plot item."""
-        return self.plot_item.data_item
+        if self.plot_item is not None:
+            return self.plot_item.data_item
 
     @property
     def data_items(self):
@@ -62,14 +80,12 @@ class Plugin:
 
 def plugin_bar(name, icon):
     def plugin_bar_decorator(cls):
-        cls.wrapped = True
-
         plugin = cls()
 
         plugin.workspace.plugin_tab_widget.addTab(
             plugin, icon, name)
 
-        return plugin
+        return cls
     return plugin_bar_decorator
 
 
