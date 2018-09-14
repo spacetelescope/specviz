@@ -66,11 +66,6 @@ class Application(QApplication):
                             for finder, name, ispkg
                             in iter_namespace(plugins)}
 
-        # Instantiate plugins to include them in the UI
-        for sub_cls in Plugin.__subclasses__():
-            logging.info("Loading plugin '{}'.".format(sub_cls.__name__))
-            sub_cls(filt=filt)
-
     def remove_workspace(self):
         pass
 

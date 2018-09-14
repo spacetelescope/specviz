@@ -1,10 +1,11 @@
-import logging
 import os
 
 import astropy.units as u
 import numpy as np
+import logging
 import pyqtgraph as pg
 import qtawesome as qta
+
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import (QAction, QColorDialog, QMainWindow, QMdiSubWindow,
                             QMenu, QMessageBox, QSizePolicy, QToolButton,
@@ -15,6 +16,8 @@ from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
+
+from .unit_change_dialog import UnitChangeDialog
 
 
 class PlotWindow(QMdiSubWindow):
@@ -61,6 +64,11 @@ class PlotWindow(QMdiSubWindow):
     @property
     def plot_widget(self):
         return self._plot_widget
+
+    def _on_change_unit(self):
+        # print(self.current_item, self._plot_widget)
+        unit_change = UnitChangeDialog(self._plot_widget, self.current_item)
+        unit_change.exec_()
 
     @property
     def proxy_model(self):
