@@ -51,8 +51,8 @@ def load_settings():
 
     pyqtgraph_settings = {
         'leftButtonPan': parser['PyQtGraph'].getboolean('leftbuttonpan', True),
-        'foreground': parser['PyQtGraph'].get('foreground', 'k'),
-        'background': parser['PyQtGraph'].get('background', 'w'),
+        'foreground': parser['PyQtGraph'].get('foreground', 'w'),
+        'background': parser['PyQtGraph'].get('background', 'k'),
         'antialias': parser['PyQtGraph'].getboolean('antialias', False),
         'imageAxisOrder': parser['PyQtGraph'].get('imageaxisorder', 'col-major'),
         'useWeave': parser['PyQtGraph'].getboolean('useweave', False),

@@ -1,38 +1,86 @@
 import logging
 import os
+import sys
+from collections import OrderedDict
 
 from astropy.io import registry as io_registry
 from qtpy import compat
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import (QAction, QPushButton,
-                            QTabBar, QTabWidget, QWidget)
+from qtpy.QtCore import QEvent, Qt, Signal
+from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QMenu,
+                            QMessageBox, QSizePolicy, QTabBar, QToolButton,
+                            QWidget)
 from qtpy.uic import loadUi
-
 from specutils import Spectrum1D
 
-from . import resources
-from ..core.delegates import DataItemDelegate
 from ..core.items import PlotDataItem
-from ..core.models import DataListModel, PlotProxyModel
+from ..core.models import DataListModel
+from ..core.plugin import Plugin
 from ..utils import UI_PATH
+from ..utils.qt_utils import dict_to_menu
 from .plotting import PlotWindow
-from .smoothing import SmoothingDialog
 
 
-class Workspace(QWidget):
+class Workspace(QMainWindow):
     """
     A widget representing the primary interaction area for a given workspace.
     This includes the :class:`~qtpy.QtWidgets.QListView`, and the
     :class:`~qtpy.QtWigets.QMdiArea` widgets, and associated model information.
+
+    Signals
+    -------
+    window_activated : :class:`~qtpy.QtWidgets.QMainWindow`
+        Fired when a particular `QMainWindow` is activated.
     """
+    window_activated = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
+        # Retain a reference to the application
+        self._app = QApplication.instance()
+
         self._name = "Untitled Workspace"
 
         # Load the ui file and attach it to this instance
-        loadUi(os.path.join(UI_PATH, "workspace.ui"), self)
+        loadUi(os.path.join(os.path.dirname(__file__),
+                            "ui", "workspace.ui"), self)
+
+        # Add spacers to the main tool bar
+        # spacer = QWidget()
+        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
+        # # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
+
+        # spacer = QWidget()
+        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
+        # self.main_tool_bar.insertWidget(self.new_plot_action, spacer)
+
+        # spacer = QWidget()
+        # size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        # size_policy.setHorizontalStretch(1)
+        # spacer.setSizePolicy(size_policy)
+        # self.main_tool_bar.addWidget(spacer)
+
+        # Update title
+        self.setWindowTitle(self.name + " — SpecViz")
+
+        # Setup workspace action connections
+        self.new_workspace_action.triggered.connect(
+            self._on_add_workspace)
+        self.new_plot_action.triggered.connect(
+            self._on_new_plot)
+
+        # Setup data action connections
+        self.load_data_action.triggered.connect(
+            self._on_load_data)
+        self.delete_data_action.triggered.connect(
+            self._on_delete_data)
+
+        # Setup operations menu
+        self.operations_button = self.main_tool_bar.widgetForAction(self.operations_action)
+        self.operations_button.setPopupMode(QToolButton.InstantPopup)
+
+        self.operations_menu = QMenu(self.operations_button)
+        self.operations_button.setMenu(self.operations_menu)
 
         # Define a new data list model for this workspace
         self._model = DataListModel()
@@ -40,14 +88,17 @@ class Workspace(QWidget):
         # Set the styled item delegate on the model
         # self.list_view.setItemDelegate(DataItemDelegate(self))
 
-        # Don't expand mdiarea tabs
-        self.mdi_area.findChild(QTabBar).setExpanding(True)
-
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
         # Add an initially empty plot
         self.add_plot_window()
+
+        # Color theme
+        self.default_theme_action.triggered.connect(
+            lambda: self._on_change_color_theme('default'))
+        self.dark_theme_action.triggered.connect(
+            lambda: self._on_change_color_theme('dark'))
 
     @property
     def name(self):
@@ -87,6 +138,56 @@ class Workspace(QWidget):
 
         return item
 
+    def _on_add_workspace(self):
+        workspace = self._app.add_workspace()
+        self._app.current_workspace = workspace
+
+    def _on_change_color_theme(self, theme):
+        import pyqtgraph as pg
+
+        if theme == 'default':
+            self._app.setStyleSheet(None)
+            pg.setConfigOptions(background='w', foreground='k')
+
+            for sub_window in self.mdi_area.subWindowList():
+                sub_window.plot_widget.setBackground('w')
+                sub_window.plot_widget.getAxis('bottom').setPen('k')
+                sub_window.plot_widget.getAxis('left').setPen('k')
+        elif theme == 'dark':
+            try:
+                import qdarkstyle
+            except ImportError:
+                logging.error("No dark style installed.")
+            else:
+                self._app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+                pg.setConfigOptions(background='#232629', foreground='w')
+
+                for sub_window in self.mdi_area.subWindowList():
+                    sub_window.plot_widget.setBackground('#232629')
+                    sub_window.plot_widget.getAxis('bottom').setPen('w')
+                    sub_window.plot_widget.getAxis('left').setPen('w')
+
+    def set_embeded(self, embed):
+        """
+        Toggles the visibility of certain parts of the ui to make it more
+        amenable to being embeded in other applications.
+        """
+        if embed:
+            self.menu_bar.hide()
+            self.list_view.hide()
+            self.main_tool_bar.hide()
+            self.main_tool_bar.hide()
+            self.mdi_area.findChild(QTabBar).hide()
+
+    def event(self, e):
+        """Scrap window events."""
+        # When this window is in focus and selected, tell the application that
+        # it's the active window
+        if e.type() == QEvent.WindowActivate:
+            self.window_activated.emit(self)
+
+        return super().event(e)
+
     def add_plot_window(self):
         """
         Creates a new plot widget sub window and adds it to the workspace.
@@ -103,7 +204,12 @@ class Workspace(QWidget):
         self.mdi_area.subWindowActivated.emit(plot_window)
 
         # Subscribe this new plot window to list view item selection events
-        self.list_view.selectionModel().currentChanged.connect(plot_window._on_current_item_changed)
+        self.list_view.selectionModel().currentChanged.connect(
+            plot_window._on_current_item_changed)
+
+        # Load plot tool bar plugins
+        for sub_cls in Plugin.__subclasses__():
+            sub_cls(filt='is_plot_tool')
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -175,18 +281,22 @@ class Workspace(QWidget):
         : :class:`~specviz.core.items.DataItem`
             The `DataItem` instance that has been added to the internal model.
         """
-        spec = Spectrum1D.read(file_path, format=file_loader)
-        name = file_path.split('/')[-1].split('.')[0]
-        data_item = self.model.add_data(spec, name=name)
+        try:
+            spec = Spectrum1D.read(file_path, format=file_loader)
+            name = file_path.split('/')[-1].split('.')[0]
+            data_item = self.model.add_data(spec, name=name)
 
-        # print(self.proxy_model._items.keys())
+            return data_item
+        except:
+            message_box = QMessageBox()
+            message_box.setText("Error loading data set.")
+            message_box.setIcon(QMessageBox.Critical)
+            message_box.setInformativeText(
+                "{}\n{}".format(
+                    sys.exc_info()[0], sys.exc_info()[1])
+            )
 
-        # if display:
-        #     idx = data_item.index()
-        #     plot_item = self.proxy_model.item_from_index(idx)
-        #     plot_item.visible = True
-
-        return data_item
+            message_box.exec()
 
     def _on_delete_data(self):
         """
@@ -204,6 +314,22 @@ class Workspace(QWidget):
 
         self.model.removeRow(model_idx.row())
 
-    def _on_smoothing(self):
-        """Launches smoothing UI"""
-        return SmoothingDialog(self, parent=self.parent())
+    def _on_toggle_plugin_dock(self, action):
+        """
+        Show/hide the plugin dock depending on the state of the plugin
+        action group.
+        """
+        if action != self._last_toggled_action:
+            self.plugin_dock.show()
+            self.plugin_dock.setWindowTitle(action.text())
+            self._last_toggled_action = action
+        else:
+            action.setChecked(False)
+            self.plugin_dock.hide()
+            self._last_toggled_action = None
+
+    def on_plugin_action_triggered(self, object_name):
+        if object_name == 'model_editor_toggle':
+            self.plugin_dock.setWidget(self._model_editor)
+        if object_name == 'statistics_toggle':
+            self.plugin_dock.setWidget(self._statistics)

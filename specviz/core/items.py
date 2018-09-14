@@ -1,11 +1,9 @@
 from itertools import cycle
 
-import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
-from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-from qtpy.QtCore import Property, QObject, Qt, Signal, Slot
-from qtpy.QtGui import QColor, QStandardItem
+from qtpy.QtCore import Property, Qt, Signal
+from qtpy.QtGui import QStandardItem
 
 flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
                 "#34495e", "#2ecc71"])
@@ -190,3 +188,25 @@ class PlotDataItem(pg.PlotDataItem):
 
     def set_data(self):
         self.setData(self.spectral_axis, self.flux, connect="finite")
+
+
+class ModelItem(QStandardItem):
+    DataRole = Qt.UserRole + 2
+
+    def __init__(self, model, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setData(model.__class__.name, Qt.DisplayRole)
+        self.setData(model, self.DataRole)
+
+
+class ParameterItem(QStandardItem):
+    DataRole = Qt.UserRole + 2
+    UnitRole = Qt.UserRole + 3
+
+    def __init__(self, parameter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setData(parameter.name, Qt.DisplayRole)
+        self.setData(parameter.value, self.DataRole)
+        self.setData(parameter.unit, self.UnitRole)

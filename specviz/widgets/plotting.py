@@ -6,21 +6,17 @@ import logging
 import pyqtgraph as pg
 import qtawesome as qta
 
-from qtpy.QtCore import Property, QEvent, QModelIndex, QObject, Qt, Signal
-from qtpy.QtWidgets import (QAction, QListWidget, QMainWindow, QMdiSubWindow,
-                            QMenu, QSizePolicy, QWidget, QDialog, QDialogButtonBox,
-                            QToolButton, QWidgetAction, QColorDialog, QMessageBox)
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import (QAction, QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMenu, QMessageBox, QSizePolicy, QToolButton,
+                            QWidget)
 from qtpy.uic import loadUi
 
+from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
-from .custom import LinearRegionItem
 from .unit_change_dialog import UnitChangeDialog
-
-logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
-log = logging.getLogger('UnitChangeDialog')
-log.setLevel(logging.WARNING)
 
 
 class PlotWindow(QMdiSubWindow):
@@ -35,7 +31,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget = QMainWindow()
         self.setWidget(self._central_widget)
 
-        loadUi(os.path.join(UI_PATH, "plot_window.ui"), self._central_widget)
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "plot_window.ui"),
+               self._central_widget)
 
         # The central widget of the main window widget will be the plot
         self._model = model
@@ -46,72 +43,18 @@ class PlotWindow(QMdiSubWindow):
 
         self._central_widget.setCentralWidget(self._plot_widget)
 
-        # Add a menu to the plot options action
-        _plot_options_button = self._central_widget.tool_bar.widgetForAction(
-            self._central_widget.plot_options_action)
-        _plot_options_button.setPopupMode(QToolButton.InstantPopup)
-
-        self._plot_options_menu = QMenu(self._central_widget)
-        _plot_options_button.setMenu(self._plot_options_menu)
-
-        # Add the line color action
-        self._change_color_action = QAction("Line Color")
-        self._plot_options_menu.addAction(self._change_color_action)
-
-        # Add the qtawesome icons to the plot-specific actions
-        self._central_widget.linear_region_action.setIcon(
-            qta.icon('fa.compress',
-                     color='black',
-                     color_active='orange'))
-
-        self._central_widget.remove_region_action.setIcon(
-            qta.icon('fa.compress', 'fa.trash',
-                      options=[{'scale_factor': 1},
-                               {'color': 'red', 'scale_factor': 0.75,
-                                'offset': (0.25, 0.25)}]))
-
-        # self._main_window.rectangular_region_action.setIcon(
-        #     qta.icon('fa.square',
-        #              active='fa.legal',
-        #              color='black',
-        #              color_active='orange'))
-
-        self._central_widget.plot_options_action.setIcon(
-            qta.icon('fa.line-chart',
-                     active='fa.legal',
-                     color='black',
-                     color_active='orange'))
-
-        self._central_widget.export_plot_action.setIcon(
-            qta.icon('fa.download',
-                     active='fa.legal',
-                     color='black',
-                     color_active='orange'))
-
-        self._central_widget.change_unit_action.setIcon(
-            qta.icon('fa.exchange',
-                     active='fa.legal',
-                     color='black',
-                     color_active='orange'))
-
-        spacer = QWidget()
-        spacer.setFixedSize(self._central_widget.tool_bar.iconSize() * 2)
-        self._central_widget.tool_bar.insertWidget(
-            self._central_widget.plot_options_action, spacer)
-
-        spacer = QWidget()
-        size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(1)
-        spacer.setSizePolicy(size_policy)
-        self._central_widget.tool_bar.addWidget(spacer)
-
         # Setup connections
         self.setup_connections()
         self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
         self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
-        self._change_color_action.triggered.connect(self._on_change_color)
+        self._central_widget.change_color_action.triggered.connect(
+            self._on_change_color)
+
+    @property
+    def tool_bar(self):
+        return self._central_widget.tool_bar
 
     @property
     def current_item(self):
@@ -222,6 +165,9 @@ class PlotWidget(pg.PlotWidget):
         # Set default axes ranges
         self.setRange(xRange=(0, 1), yRange=(0, 1))
 
+        # Show grid lines
+        self.showGrid(x=True, y=True, alpha=0.25)
+
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(
@@ -281,6 +227,32 @@ class PlotWidget(pg.PlotWidget):
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
                               plot_data_item.spectral_axis_unit, value)
+
+    @property
+    def selected_region(self):
+        """Returns currently selected region object."""
+        return self._selected_region
+
+    @property
+    def region_mask(self):
+        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
+        mask_holder = []
+
+        for roi in rois:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
+
+            mask = (container.layer.masked_dispersion.data.value >= x1) & \
+                   (container.layer.masked_dispersion.data.value <= x2)
+
+            mask_holder.append(mask)
+
+        if len(mask_holder) > 0:
+            mask = reduce(np.logical_or, mask_holder)
+            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
+
+        return mask
 
     def on_item_changed(self, item):
         """
@@ -353,7 +325,7 @@ class PlotWidget(pg.PlotWidget):
         if item is None:
             # Retrieve the data item from the model
             item = self._proxy_model.item_from_index(index)
-            item.visible = self._visible
+            item.visible = visible or self._visible
 
         if item.are_units_compatible(self.spectral_axis_unit,
                                                self.data_unit):
@@ -452,10 +424,10 @@ class PlotWidget(pg.PlotWidget):
 
                 # Reset the plot axes
                 self.setRange(xRange=(0, 1), yRange=(0, 1))
-            elif len(self.listDataItems()) == 1:
-                self.autoRange()
+            # elif len(self.listDataItems()) == 1:
+            #     self.autoRange()
 
-            # Emit a plot added signal
+            # Emit a plot removed signal
             self.plot_removed.emit(item)
 
     def _on_region_changed(self):

@@ -22,26 +22,14 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QTreeWidget" name="treeWidget">
-         <column>
-          <property name="text">
-           <string>Model</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Operation</string>
-          </property>
-         </column>
-         <item>
-          <property name="text">
-           <string>Gaussian1D</string>
-          </property>
-          <property name="text">
-           <string>Addition</string>
-          </property>
-         </item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Models</string>
+         </property>
         </widget>
+       </item>
+       <item>
+        <widget class="QTreeView" name="model_tree_view"/>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -86,42 +74,18 @@
       </layout>
      </item>
      <item>
-      <widget class="QTreeWidget" name="treeWidget">
-       <column>
-        <property name="text">
-         <string>Parameter</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Value</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Tied</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Fixed</string>
-        </property>
-       </column>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <property name="text">
-         <string>mean</string>
-        </property>
-        <property name="text">
-         <string>10</string>
-        </property>
-        <property name="text">
-         <string>False</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Parameters</string>
+         </property>
+        </widget>
        </item>
-      </widget>
+       <item>
+        <widget class="QTreeView" name="parameter_tree_view"/>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
