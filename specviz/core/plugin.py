@@ -6,23 +6,10 @@ from ..widgets import resources
 
 
 class Plugin:
-    def __init__(self, filt=None):
-        self._app = QApplication.instance()
-        # For each decorated method in the plugin, call it in order to have
-        # the decorator apply the behavior in the UI.
-        method_list = [func for func in dir(self)
-                       if hasattr(self, func)
-                       and callable(getattr(self, func))
-                       and not func.startswith("__")
-                       and hasattr(getattr(self, func), 'wrapped')
-                       and (filt is None or hasattr(getattr(self, func), filt))]
-
-        [getattr(self, meth)() for meth in method_list]
-
     @property
     def workspace(self):
         """Returns the active workspace."""
-        return self._app.current_workspace
+        return QApplication.instance().current_workspace
 
     @property
     def model(self):
@@ -38,6 +25,11 @@ class Plugin:
     def plot_window(self):
         """Returns the currently selected plot window of the workspace."""
         return self.workspace.current_plot_window
+
+    @property
+    def plot_widget(self):
+        """The plot widget of the currently active plot window."""
+        return self.workspace.current_plot_window.plot_widget
 
     @property
     def plot_item(self):
@@ -60,104 +52,129 @@ class Plugin:
         return self.model.items
 
 
-def plugin_bar(name, icon):
-    def plugin_bar_decorator(cls):
-        cls.wrapped = True
+class DecoratorRegistry:
+    def __init__(self):
+        self._registry = []
 
-        plugin = cls()
+    @property
+    def registry(self):
+        return self._registry
 
-        plugin.workspace.plugin_tab_widget.addTab(
-            plugin, icon, name)
+    @staticmethod
+    def get_action(parent, level=None):
+        """
+        Creates nested menu actions dependending on the user-created plugin
+        decorator location values.
+        """
+        for action in parent.actions():
+            if action.text() == level:
+                if isinstance(parent, QToolBar):
+                    button = parent.widgetForAction(action)
+                    button.setPopupMode(QToolButton.InstantPopup)
+                elif isinstance(parent, QMenu):
+                    button = action
 
-        return plugin
-    return plugin_bar_decorator
+                if button.menu():
+                    menu = button.menu()
+                else:
+                    menu = QMenu(parent)
+                    button.setMenu(menu)
 
+                return menu
+        else:
+            action = QAction(parent)
+            action.setText(level)
 
-def tool_bar(name, icon=None, location=None):
-    def tool_bar_decorator(func):
-        func.wrapped = True
-        func.is_main_tool = True
-
-        @wraps(func)
-        def func_wrapper(self, *args, **kwargs):
-            self._action = QAction(self.workspace.main_tool_bar)
-            self._action.setText(name)
-
-            if icon is not None:
-                self._action.setIcon(icon)
-
-            parent = self.workspace.main_tool_bar
-
-            if location is not None:
-                for level in location.split('/'):
-                    parent = get_action(parent, level)
-
-            parent.addAction(self._action)
-            self._action.triggered.connect(lambda: func(self, *args, **kwargs))
-
-        return func_wrapper
-    return tool_bar_decorator
-
-
-def plot_bar(name, icon=None, location=None):
-    def plot_bar_decorator(func):
-        func.wrapped = True
-        func.is_plot_tool = True
-
-        @wraps(func)
-        def func_wrapper(self, *args, **kwargs):
-            self._action = QAction(self.plot_window.tool_bar)
-            self._action.setText(name)
-
-            if icon is not None:
-                self._action.setIcon(icon)
-
-            parent = self.plot_window.tool_bar
-
-            if location is not None:
-                for level in location.split('/'):
-                    parent = get_action(parent, level)
-
-            parent.addAction(self._action)
-            self._action.triggered.connect(lambda: func(self, *args, **kwargs))
-
-        return func_wrapper
-    return plot_bar_decorator
-
-
-def get_action(parent, level=None):
-    """
-    Creates nested menu actions dependending on the user-created plugin
-    decorator location values.
-    """
-    for action in parent.actions():
-        if action.text() == level:
             if isinstance(parent, QToolBar):
+                parent.addAction(action)
                 button = parent.widgetForAction(action)
                 button.setPopupMode(QToolButton.InstantPopup)
             elif isinstance(parent, QMenu):
+                parent.addAction(action)
                 button = action
 
-            if button.menu():
-                menu = button.menu()
-            else:
-                menu = QMenu(parent)
-                button.setMenu(menu)
+            menu = QMenu(parent)
+            button.setMenu(menu)
 
             return menu
-    else:
-        action = QAction(parent)
-        action.setText(level)
 
-        if isinstance(parent, QToolBar):
-            parent.addAction(action)
-            button = parent.widgetForAction(action)
-            button.setPopupMode(QToolButton.InstantPopup)
-        elif isinstance(parent, QMenu):
-            parent.addAction(action)
-            button = action
 
-        menu = QMenu(parent)
-        button.setMenu(menu)
+class PluginBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon):
+        def plugin_bar_decorator(cls):
+            self.registry.append(cls)
 
-        return menu
+            cls.wrapped = True
+            cls.is_plugin_bar = True
+
+            plugin = cls()
+
+            plugin.workspace.plugin_tab_widget.addTab(
+                plugin, icon, name)
+
+            return plugin
+        return plugin_bar_decorator
+
+
+class ToolBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon=None, location=None):
+        def tool_bar_decorator(func):
+            self.registry.append(func)
+
+            func.wrapped = True
+            func.is_main_tool = True
+
+            @wraps(func)
+            def func_wrapper(*args, **kwargs):
+                app = QApplication.instance()
+                parent = app.current_workspace.main_tool_bar
+                action = QAction(parent)
+                action.setText(name)
+
+                if icon is not None:
+                    action.setIcon(icon)
+
+                if location is not None:
+                    for level in location.split('/'):
+                        parent = self.get_action(parent, level)
+
+                parent.addAction(action)
+                action.triggered.connect(lambda: func(*args, **kwargs))
+
+            return func_wrapper()
+        return tool_bar_decorator
+
+
+class PlotBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon=None, location=None):
+        def plot_bar_decorator(func):
+            self.registry.append(func)
+
+            func.wrapped = True
+            func.is_plot_tool = True
+
+            @wraps(func)
+            def func_wrapper(*args, **kwargs):
+                app = QApplication.instance()
+                parent = app.current_workspace.current_plot_window.tool_bar
+                action = QAction(parent)
+
+                action.setText(name)
+
+                if icon is not None:
+                    action.setIcon(icon)
+
+                if location is not None:
+                    for level in location.split('/'):
+                        parent = self.get_action(parent, level)
+
+                parent.addAction(action)
+                action.triggered.connect(lambda: func(*args, **kwargs))
+
+            return func_wrapper()
+        return plot_bar_decorator
+
+
+plugin_bar = PluginBarDecorator()
+tool_bar = ToolBarDecorator()
+plot_bar = PlotBarDecorator()
