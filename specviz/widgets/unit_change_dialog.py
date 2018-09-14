@@ -12,7 +12,7 @@ from qtpy.uic import loadUi
 
 from ..utils import UI_PATH
 
-logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(filename)s: %(levelname)8s %(message)s")
 log = logging.getLogger('UnitChangeDialog')
 log.setLevel(logging.WARNING)
 
@@ -32,8 +32,6 @@ class UnitChangeDialog(QDialog):
         # This is currently only used to get the spectral_axis in order to find possible conversions for flux
         # using equivalencies=u.spectral_density(wav)
         self.plot_data_item = plot_data_item
-
-        log.debug("Spectral axis: {}".format(self.plot_data_item.spectral_axis))
 
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
         if self.plot_widget and self.plot_data_item and self.plot_widget.data_unit and self.plot_widget.spectral_axis_unit:
@@ -112,7 +110,6 @@ class UnitChangeDialog(QDialog):
 
         # Find the current unit in the list used to fill the combobox and set it as the current text
         self.ui.comboBox_units.addItems(self._data_unit_equivalencies_titles)
-        print(self.current_data_unit, self._data_unit_equivalencies_titles)
         index = self._data_unit_equivalencies_titles.index(self.current_data_unit)
         self.ui.comboBox_units.setCurrentIndex(index) if index > 0 else False
         self.ui.label_convert_units.setText("Convert Y axis units from {} to: ".format(self.current_data_unit))

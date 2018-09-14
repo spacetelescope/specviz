@@ -16,6 +16,7 @@ from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
+
 from .unit_change_dialog import UnitChangeDialog
 
 
@@ -44,13 +45,15 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.setCentralWidget(self._plot_widget)
 
         # Setup connections
-        self.setup_connections()
         self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
         self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
+        self._central_widget.change_unit_action.triggered.connect(
+            self._on_change_unit)
+
 
     @property
     def tool_bar(self):
@@ -64,9 +67,6 @@ class PlotWindow(QMdiSubWindow):
     @property
     def plot_widget(self):
         return self._plot_widget
-
-    def setup_connections(self):
-        self._central_widget.change_unit_action.triggered.connect(self._on_change_unit)
 
     def _on_change_unit(self):
         # print(self.current_item, self._plot_widget)
