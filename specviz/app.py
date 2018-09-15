@@ -26,7 +26,10 @@ class Application(QApplication):
                  **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         # Cache a reference to the currently active window
-        self._current_workspace = self.add_workspace()
+        self.current_workspace = self.add_workspace()
+
+        # Add an initially empty plot
+        self.current_workspace.add_plot_window()
 
         # Set embed mode state
         self.current_workspace.set_embeded(embeded)
@@ -82,7 +85,7 @@ class Application(QApplication):
         self.current_workspace_changed.emit(self.current_workspace)
 
     def _on_window_activated(self, window):
-        self._current_workspace = window
+        self.current_workspace = window
         self.current_workspace_changed.emit(self.current_workspace)
 
         logging.info("Setting active workspace to '%s'", window.name)

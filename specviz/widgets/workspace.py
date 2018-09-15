@@ -47,21 +47,6 @@ class Workspace(QMainWindow):
         loadUi(os.path.join(os.path.dirname(__file__),
                             "ui", "workspace.ui"), self)
 
-        # Add spacers to the main tool bar
-        # spacer = QWidget()
-        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        # # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
-
-        # spacer = QWidget()
-        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        # self.main_tool_bar.insertWidget(self.new_plot_action, spacer)
-
-        # spacer = QWidget()
-        # size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        # size_policy.setHorizontalStretch(1)
-        # spacer.setSizePolicy(size_policy)
-        # self.main_tool_bar.addWidget(spacer)
-
         # Update title
         self.setWindowTitle(self.name + " — SpecViz")
 
@@ -94,7 +79,7 @@ class Workspace(QMainWindow):
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
         # Add an initially empty plot
-        self.add_plot_window()
+        # self.add_plot_window()
 
         # Color theme
         self.default_theme_action.triggered.connect(
@@ -105,8 +90,6 @@ class Workspace(QMainWindow):
         # Connect to signals given off by the list view
         self._model.itemChanged.connect(
             self._on_item_changed)
-        self.list_view.selectionModel().selectionChanged.connect(
-            self._on_current_selected_changed)
 
     @property
     def name(self):
@@ -124,7 +107,8 @@ class Workspace(QMainWindow):
 
     @property
     def proxy_model(self):
-        return self.current_plot_window.proxy_model
+        if self.current_plot_window is not None:
+            return self.current_plot_window.proxy_model
 
     @property
     def current_plot_window(self):
@@ -166,9 +150,10 @@ class Workspace(QMainWindow):
             idx = self.list_view.model().index(0, 0)
             self.list_view.setCurrentIndex(idx)
 
-        item = self.proxy_model.data(idx, role=Qt.UserRole)
+        if self.proxy_model is not None:
+            item = self.proxy_model.data(idx, role=Qt.UserRole)
 
-        return item
+            return item
 
     def _on_item_changed(self, item):
         # If the item checkbox is clicked, ensure that the item is also selected
@@ -189,6 +174,12 @@ class Workspace(QMainWindow):
     def _on_add_workspace(self):
         workspace = self._app.add_workspace()
         self._app.current_workspace = workspace
+        workspace.add_plot_window()
+
+        from ..core.plugin import plugin_bar, tool_bar, plot_bar
+
+        for plugin in plugin_bar.registry + tool_bar.registry:
+            plugin()
 
     def _on_change_color_theme(self, theme):
         import pyqtgraph as pg
@@ -250,16 +241,21 @@ class Workspace(QMainWindow):
 
         self.mdi_area.subWindowActivated.emit(plot_window)
 
-        # Subscribe this new plot window to list view item selection events
+        # Subscribe this new plot window to list view item selection events.
+        # NOTE: selectionModel() requires a plot window since the list view
+        # holds onto *proxy* models defined by the plot window
         self.list_view.selectionModel().currentChanged.connect(
             plot_window._on_current_item_changed)
-
-        # Load plot tool bar plugins
-        for sub_cls in Plugin.__subclasses__():
-            sub_cls(filt='is_plot_tool')
+        self.list_view.selectionModel().selectionChanged.connect(
+            self._on_current_selected_changed)
 
         # Fire a signal letting everyone know a new plot window has been added
         self.plot_window_added.emit(plot_window)
+
+        from ..core.plugin import plot_bar
+
+        for pi in plot_bar.registry:
+            pi()
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -367,23 +363,3 @@ class Workspace(QMainWindow):
             sub_window.plot_widget.remove_plot(index=proxy_idx)
 
         self.model.removeRow(model_idx.row())
-
-    def _on_toggle_plugin_dock(self, action):
-        """
-        Show/hide the plugin dock depending on the state of the plugin
-        action group.
-        """
-        if action != self._last_toggled_action:
-            self.plugin_dock.show()
-            self.plugin_dock.setWindowTitle(action.text())
-            self._last_toggled_action = action
-        else:
-            action.setChecked(False)
-            self.plugin_dock.hide()
-            self._last_toggled_action = None
-
-    def on_plugin_action_triggered(self, object_name):
-        if object_name == 'model_editor_toggle':
-            self.plugin_dock.setWidget(self._model_editor)
-        if object_name == 'statistics_toggle':
-            self.plugin_dock.setWidget(self._statistics)
