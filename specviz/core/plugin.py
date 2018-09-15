@@ -120,25 +120,26 @@ class DecoratorRegistry:
 class PluginBarDecorator(DecoratorRegistry):
     def __call__(self, name, icon):
         def plugin_bar_decorator(cls):
-            self.registry.append(cls)
-
             cls.wrapped = True
             cls.is_plugin_bar = True
 
-            plugin = cls()
+            @wraps(cls)
+            def cls_wrapper(*args, **kwargs):
 
-            plugin.workspace.plugin_tab_widget.addTab(
-                plugin, icon, name)
+                plugin = cls()
 
-            return plugin
+                plugin.workspace.plugin_tab_widget.addTab(
+                    plugin, icon, name)
+
+            self.registry.append(cls_wrapper)
+
+            return cls_wrapper()
         return plugin_bar_decorator
 
 
 class ToolBarDecorator(DecoratorRegistry):
     def __call__(self, name, icon=None, location=None):
         def tool_bar_decorator(func):
-            self.registry.append(func)
-
             func.wrapped = True
             func.is_main_tool = True
 
@@ -159,6 +160,8 @@ class ToolBarDecorator(DecoratorRegistry):
                 parent.addAction(action)
                 action.triggered.connect(lambda: func(*args, **kwargs))
 
+            self.registry.append(func_wrapper)
+            
             return func_wrapper()
         return tool_bar_decorator
 
@@ -166,8 +169,6 @@ class ToolBarDecorator(DecoratorRegistry):
 class PlotBarDecorator(DecoratorRegistry):
     def __call__(self, name, icon=None, location=None):
         def plot_bar_decorator(func):
-            self.registry.append(func)
-
             func.wrapped = True
             func.is_plot_tool = True
 
@@ -188,6 +189,8 @@ class PlotBarDecorator(DecoratorRegistry):
 
                 parent.addAction(action)
                 action.triggered.connect(lambda: func(*args, **kwargs))
+
+            self.registry.append(func_wrapper)
 
             return func_wrapper()
         return plot_bar_decorator
