@@ -9,7 +9,7 @@ import os
 
 from collections import OrderedDict
 
-from qtpy.QtWidgets import QWidget, QMessageBox
+from qtpy.QtWidgets import QWidget, QMessageBox, QApplication
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.core.exceptions import IncompatibleAttribute
@@ -25,6 +25,7 @@ from glue.utils.qt import load_ui
 
 from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
 from ...widgets.workspace import Workspace
+from ...app import Application
 
 __all__ = ['SpecvizDataViewer']
 
@@ -80,8 +81,6 @@ class SpecvizLayerArtist(LayerArtist):
         super(SpecvizLayerArtist, self).__init__(*args, **kwargs)
 
         self.specviz_window = specviz_window
-        # Add an intially empty plot window
-        self.specviz_window.add_plot_window()
         self.plot_widget = self.specviz_window.current_plot_window.plot_widget
 
         self.state.add_callback('attribute', self.update)
@@ -189,8 +188,19 @@ class SpecvizDataViewer(DataViewer):
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
+        # In order for specviz to pick up plugins, the entire application must
+        # but loaded
+
+        # Fake a current_workspace property so that plugins can mount
         self.specviz_window = Workspace()
         self.specviz_window.set_embeded(True)
+        QApplication.instance().current_workspace = self.specviz_window
+
+        # Add an intially empty plot window
+        self.specviz_window.add_plot_window()
+
+        # Load specviz plugins
+        Application.load_local_plugins()
 
         self.setCentralWidget(self.specviz_window)
 

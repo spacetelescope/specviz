@@ -125,11 +125,16 @@ class PluginBarDecorator(DecoratorRegistry):
 
             @wraps(cls)
             def cls_wrapper(*args, **kwargs):
+                app = QApplication.instance()
+
+                if app.current_workspace is None:
+                    return
 
                 plugin = cls()
 
-                plugin.workspace.plugin_tab_widget.addTab(
-                    plugin, icon, name)
+                if plugin.workspace is not None:
+                    plugin.workspace.plugin_tab_widget.addTab(
+                        plugin, icon, name)
 
             self.registry.append(cls_wrapper)
 
@@ -146,6 +151,10 @@ class ToolBarDecorator(DecoratorRegistry):
             @wraps(func)
             def func_wrapper(*args, **kwargs):
                 app = QApplication.instance()
+
+                if app.current_workspace is None:
+                    return
+
                 parent = app.current_workspace.main_tool_bar
                 action = QAction(parent)
                 action.setText(name)
@@ -175,6 +184,10 @@ class PlotBarDecorator(DecoratorRegistry):
             @wraps(func)
             def func_wrapper(*args, **kwargs):
                 app = QApplication.instance()
+
+                if app.current_workspace is None:
+                    return
+
                 parent = app.current_workspace.current_plot_window.tool_bar
                 action = QAction(parent)
 

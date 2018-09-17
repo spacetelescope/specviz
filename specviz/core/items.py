@@ -87,7 +87,12 @@ class PlotDataItem(pg.PlotDataItem):
 
     def _update_pen(self, *args):
         if self.visible:
-            self.setPen(color=self.color, width=self.width)
+            try:
+                color = float(self.color)
+            except ValueError:
+                color = self.color
+
+            self.setPen(color=color, width=float(self.width))
         else:
             self.setPen(None)
 
