@@ -153,6 +153,7 @@ class PlotWidget(pg.PlotWidget):
         self._region_text_item = pg.TextItem(color="k")
         self.addItem(self._region_text_item, ignoreBounds=True)
         self._region_text_item.setParentItem(self.getViewBox())
+        self.getAxis('bottom').enableAutoSIPrefix(False)
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -467,7 +468,6 @@ class PlotWidget(pg.PlotWidget):
         mid_point = disp_axis.range[0] + (disp_axis.range[1] -
                                           disp_axis.range[0]) * 0.5
 
-        print(mid_point)
         region = LinearRegionItem(
             values=(min_bound or (disp_axis.range[0] + mid_point * 0.75),
                     max_bound or (disp_axis.range[1] - mid_point * 0.75)))
