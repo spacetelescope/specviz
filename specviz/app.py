@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from . import plugins
+from . import plugins, __version__
 from .core.plugin import Plugin
 from .utils import DATA_PATH
 from .widgets.workspace import Workspace
@@ -99,7 +99,12 @@ class Application(QApplication):
 @click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
 @click.option('--loader', '-L', type=str, help="Use specified loader when opening the provided file.")
 @click.option('--embed', '-E', is_flag=True, help="Only display a single plot window. Useful when embedding in other applications.")
-def start(file_path=None, loader=None, embed=None):
+@click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
+def start(version=False, file_path=None, loader=None, embed=None):
+    if version:
+        print(__version__)
+        return
+
     # Start the application, passing in arguments
     app = Application(sys.argv, file_path=file_path, file_loader=loader,
                       embeded=embed)
