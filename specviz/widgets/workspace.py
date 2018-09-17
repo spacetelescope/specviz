@@ -217,6 +217,7 @@ class Workspace(QMainWindow):
             self.main_tool_bar.hide()
             self.main_tool_bar.hide()
             self.mdi_area.findChild(QTabBar).hide()
+            self.plugin_tab_widget.hide()
 
     def event(self, e):
         """Scrap window events."""

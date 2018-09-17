@@ -24,7 +24,7 @@ from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.qt import load_ui
 
 from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
-from ...widgets.main_window import MainWindow
+from ...widgets.workspace import Workspace
 
 __all__ = ['SpecvizDataViewer']
 
@@ -80,7 +80,9 @@ class SpecvizLayerArtist(LayerArtist):
         super(SpecvizLayerArtist, self).__init__(*args, **kwargs)
 
         self.specviz_window = specviz_window
-        self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
+        # Add an intially empty plot window
+        self.specviz_window.add_plot_window()
+        self.plot_widget = self.specviz_window.current_plot_window.plot_widget
 
         self.state.add_callback('attribute', self.update)
         self.state.add_callback('statistic', self.update)
@@ -94,8 +96,9 @@ class SpecvizLayerArtist(LayerArtist):
         self.data_item = None
 
     def remove(self):
-        self.specviz_window.workspace.model.remove_data(self.data_item.identifier)
-        self.data_item = None
+        if self.data_item is not None:
+            self.specviz_window.model.remove_data(self.data_item.identifier)
+            self.data_item = None
 
     def clear(self):
         self.remove()
@@ -135,7 +138,7 @@ class SpecvizLayerArtist(LayerArtist):
         self.enable()
 
         if self.data_item is None:
-            self.data_item = self.specviz_window.workspace.model.add_data(spectrum, name=self.state.layer.label)
+            self.data_item = self.specviz_window.model.add_data(spectrum, name=self.state.layer.label)
             self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
@@ -186,7 +189,7 @@ class SpecvizDataViewer(DataViewer):
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
-        self.specviz_window = MainWindow()
+        self.specviz_window = Workspace()
         self.specviz_window.set_embeded(True)
 
         self.setCentralWidget(self.specviz_window)
@@ -196,20 +199,20 @@ class SpecvizDataViewer(DataViewer):
         # self.setCentralWidget(self.plot_window)
 
         # FIXME: the following shouldn't be needed
-        self.specviz_window.workspace._model.clear()
+        # self.specviz_window.workspace._model.clear()
 
     def add_data(self, data):
-        if not glue_data_has_spectral_axis(data):
-            QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
-                                 buttons=QMessageBox.Ok)
-            return False
+        # if not glue_data_has_spectral_axis(data):
+        #     QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
+        #                          buttons=QMessageBox.Ok)
+        #     return False
         return super(SpecvizDataViewer, self).add_data(data)
 
     def add_subset(self, subset):
-        if not glue_data_has_spectral_axis(subset):
-            QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
-                                 buttons=QMessageBox.Ok)
-            return False
+        # if not glue_data_has_spectral_axis(subset):
+        #     QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
+        #                          buttons=QMessageBox.Ok)
+        #     return False
         return super(SpecvizDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):

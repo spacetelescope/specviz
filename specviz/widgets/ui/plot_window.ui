@@ -67,6 +67,7 @@
    <addaction name="remove_region_action"/>
    <addaction name="separator"/>
    <addaction name="change_color_action"/>
+   <addaction name="reset_view_action"/>
    <addaction name="export_plot_action"/>
   </widget>
   <action name="linear_region_action">
@@ -131,6 +132,14 @@
    </property>
    <property name="toolTip">
     <string>Change the current plot item color</string>
+   </property>
+  </action>
+  <action name="reset_view_action">
+   <property name="text">
+    <string>Reset View</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset the axes to fit the data</string>
    </property>
   </action>
  </widget>
