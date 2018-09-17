@@ -159,13 +159,16 @@ class Workspace(QMainWindow):
         # If the item checkbox is clicked, ensure that the item is also selected
         if item.isEnabled():
             source_index = self.list_view.model().sourceModel().indexFromItem(item)
-            proxy_index = self.list_view.model().mapFromSource(source_index)
-            self.list_view.setCurrentIndex(proxy_index)
+            idx = self.list_view.model().mapFromSource(source_index)
+            self.list_view.setCurrentIndex(idx)
+
+        for item in self.list_view.model().items:
+            if item.visible:
+                proxy_index = self.list_view.model().mapFromSource(item.data_item.index())
+                self.list_view.setCurrentIndex(proxy_index)
+                break
         else:
-            for item in self._model.items:
-                if item.isEnabled():
-                    self.list_view.setCurrentIndex(item.index())
-                    break
+            self.list_view.clearSelection()
 
     def _on_current_selected_changed(self, selected, deselected):
         if len(selected.indexes()) > 0:

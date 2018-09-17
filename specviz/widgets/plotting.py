@@ -466,9 +466,11 @@ class PlotWidget(pg.PlotWidget):
         disp_axis = self.getAxis('bottom')
         mid_point = disp_axis.range[0] + (disp_axis.range[1] -
                                           disp_axis.range[0]) * 0.5
+
+        print(mid_point)
         region = LinearRegionItem(
-            values=(min_bound or disp_axis.range[0] + mid_point * 0.75,
-                    max_bound or disp_axis.range[1] - mid_point * 0.75))
+            values=(min_bound or (disp_axis.range[0] + mid_point * 0.75),
+                    max_bound or (disp_axis.range[1] - mid_point * 0.75)))
 
         def _on_region_updated(new_region):
             # If the most recently selected region is already the currently

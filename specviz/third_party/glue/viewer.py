@@ -188,9 +188,6 @@ class SpecvizDataViewer(DataViewer):
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
-        # In order for specviz to pick up plugins, the entire application must
-        # but loaded
-
         # Fake a current_workspace property so that plugins can mount
         self.specviz_window = Workspace()
         self.specviz_window.set_embeded(True)
