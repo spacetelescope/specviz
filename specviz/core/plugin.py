@@ -161,7 +161,7 @@ class ToolBarDecorator(DecoratorRegistry):
                 action.triggered.connect(lambda: func(*args, **kwargs))
 
             self.registry.append(func_wrapper)
-            
+
             return func_wrapper()
         return tool_bar_decorator
 
@@ -187,7 +187,9 @@ class PlotBarDecorator(DecoratorRegistry):
                     for level in location.split('/'):
                         parent = self.get_action(parent, level)
 
-                parent.addAction(action)
+                before_action = [x for x in parent.actions()
+                                 if x.isSeparator()].pop()
+                parent.insertAction(before_action, action)
                 action.triggered.connect(lambda: func(*args, **kwargs))
 
             self.registry.append(func_wrapper)

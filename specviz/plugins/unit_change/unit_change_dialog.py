@@ -132,7 +132,7 @@ class UnitChangeDialog(QDialog, Plugin):
 
         # Find the current unit in the list used to fill the combobox and set it as the current text
         self.ui.comboBox_units.addItems(self._data_unit_equivalencies_titles)
-        print(self.current_data_unit, self._data_unit_equivalencies_titles)
+        
         index = self._data_unit_equivalencies_titles.index(self.current_data_unit)
         self.ui.comboBox_units.setCurrentIndex(index) if index > 0 else False
         self.ui.label_convert_units.setText("Convert Y axis units from {} to: ".format(self.current_data_unit))

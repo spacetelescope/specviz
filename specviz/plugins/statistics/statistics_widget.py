@@ -83,8 +83,6 @@ class StatisticsWidget(QWidget, Plugin):
 
         self._init_ui()
 
-        print(self.workspace)
-
         self.workspace.current_item_changed.connect(self.update_statistics)
         # When the current subwindow changes, update the stat widget
         self.workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
