@@ -24,5 +24,6 @@
         <file>region_add.svg</file>
         <file>region_remove.svg</file>
         <file>selection.svg</file>
+        <file>house.svg</file>
     </qresource>
 </RCC>

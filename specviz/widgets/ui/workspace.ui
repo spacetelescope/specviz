@@ -40,15 +40,21 @@
       </property>
       <widget class="QListView" name="list_view">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>2</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
        <property name="minimumSize">
         <size>
-         <width>200</width>
+         <width>100</width>
          <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>250</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="contextMenuPolicy">
@@ -77,6 +83,12 @@
        </property>
       </widget>
       <widget class="QMdiArea" name="mdi_area">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="lineWidth">
         <number>0</number>
        </property>
@@ -119,6 +131,12 @@
        </widget>
       </widget>
       <widget class="QTabWidget" name="plugin_tab_widget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>300</width>
@@ -181,7 +199,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -220,6 +238,7 @@
     <property name="title">
      <string>View</string>
     </property>
+    <addaction name="tabbed_view_toggle"/>
    </widget>
    <widget class="QMenu" name="menuWindow">
     <property name="title">
@@ -397,12 +416,29 @@
   </action>
   <action name="default_theme_action">
    <property name="text">
-    <string>Default</string>
+    <string>Native</string>
+   </property>
+   <property name="toolTip">
+    <string>Switch application to native theme</string>
    </property>
   </action>
   <action name="dark_theme_action">
    <property name="text">
     <string>Dark</string>
+   </property>
+   <property name="toolTip">
+    <string>Switch application to dark theme</string>
+   </property>
+  </action>
+  <action name="tabbed_view_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tabbed View</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle between tabbed view and subwindow view</string>
    </property>
   </action>
  </widget>

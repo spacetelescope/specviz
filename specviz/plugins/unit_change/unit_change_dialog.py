@@ -22,7 +22,6 @@ log.setLevel(logging.WARNING)
 @plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
 def on_action_triggered():
     dialog = UnitChangeDialog()
-    dialog.exec_()
 
 
 class UnitChangeDialog(QDialog, Plugin):
@@ -32,15 +31,25 @@ class UnitChangeDialog(QDialog, Plugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # If there is no plot item, don't even try to process unit info
+        if self.plot_item is None or len(self.visible_plot_items) == 0:
+            message_box = QMessageBox()
+            message_box.setText("No item plotted, cannot parse unit information.")
+            message_box.setIcon(QMessageBox.Warning)
+            message_box.setInformativeText(
+                "There is currently no items plotted. Please plot an item "
+                "before changing unit.")
+
+            message_box.exec_()
+            return
+
         # Load the ui dialog
         self.ui = loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "unit_change_dialog.ui")), self)
 
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
-        if not (self.plot_widget
-                and self.data_item
-                and self.plot_widget.data_unit
+        if not (self.plot_widget.data_unit
                 and self.plot_widget.spectral_axis_unit):
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
@@ -121,6 +130,8 @@ class UnitChangeDialog(QDialog, Plugin):
         self.setup_ui()
         self.setup_connections()
 
+        self.exec_()
+
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
         # Find the current unit in the list used to fill the combobox and set it as the current text
@@ -132,7 +143,7 @@ class UnitChangeDialog(QDialog, Plugin):
 
         # Find the current unit in the list used to fill the combobox and set it as the current text
         self.ui.comboBox_units.addItems(self._data_unit_equivalencies_titles)
-        print(self.current_data_unit, self._data_unit_equivalencies_titles)
+
         index = self._data_unit_equivalencies_titles.index(self.current_data_unit)
         self.ui.comboBox_units.setCurrentIndex(index) if index > 0 else False
         self.ui.label_convert_units.setText("Convert Y axis units from {} to: ".format(self.current_data_unit))

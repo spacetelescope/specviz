@@ -52,6 +52,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
 
+        self._central_widget.reset_view_action.triggered.connect(lambda: self.plot_widget.autoRange())
+
     @property
     def tool_bar(self):
         return self._central_widget.tool_bar
@@ -64,11 +66,6 @@ class PlotWindow(QMdiSubWindow):
     @property
     def plot_widget(self):
         return self._plot_widget
-
-    def _on_change_unit(self):
-        # print(self.current_item, self._plot_widget)
-        unit_change = UnitChangeDialog(self._plot_widget, self.current_item)
-        unit_change.exec_()
 
     @property
     def proxy_model(self):
@@ -154,8 +151,9 @@ class PlotWidget(pg.PlotWidget):
 
         # Setup select region labels
         self._region_text_item = pg.TextItem(color="k")
-        self.addItem(self._region_text_item)
+        self.addItem(self._region_text_item, ignoreBounds=True)
         self._region_text_item.setParentItem(self.getViewBox())
+        self.getAxis('bottom').enableAutoSIPrefix(False)
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -469,9 +467,10 @@ class PlotWidget(pg.PlotWidget):
         disp_axis = self.getAxis('bottom')
         mid_point = disp_axis.range[0] + (disp_axis.range[1] -
                                           disp_axis.range[0]) * 0.5
+
         region = LinearRegionItem(
-            values=(min_bound or disp_axis.range[0] + mid_point * 0.75,
-                    max_bound or disp_axis.range[1] - mid_point * 0.75))
+            values=(min_bound or (disp_axis.range[0] + mid_point * 0.75),
+                    max_bound or (disp_axis.range[1] - mid_point * 0.75)))
 
         def _on_region_updated(new_region):
             # If the most recently selected region is already the currently
