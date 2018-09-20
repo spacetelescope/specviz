@@ -4,7 +4,7 @@ import numpy as np
 from astropy import units as u
 
 from specutils.spectra.spectral_region import SpectralRegion
-from specutils.analysis.snr import snr
+from specutils.analysis.uncertainty import snr
 
 from qtpy.QtWidgets import QWidget
 from qtpy.uic import loadUi

@@ -449,6 +449,9 @@ class PlotWidget(pg.PlotWidget):
         """
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_bounds))
+
+        # Check for color theme changes
+
         self.roi_moved.emit(self.selected_region_bounds)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
