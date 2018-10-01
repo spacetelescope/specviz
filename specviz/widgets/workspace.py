@@ -69,6 +69,9 @@ class Workspace(QMainWindow):
         self.operations_menu = QMenu(self.operations_button)
         self.operations_button.setMenu(self.operations_menu)
 
+        # Ensure the mdiarea is in tabbed mode
+        self.mdi_area.setViewMode(self.mdi_area.ViewMode.TabbedView)
+
         # Define a new data list model for this workspace
         self._model = DataListModel()
 

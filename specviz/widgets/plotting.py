@@ -17,8 +17,6 @@ from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
 
-from .unit_change_dialog import UnitChangeDialog
-
 
 class PlotWindow(QMdiSubWindow):
     """
@@ -52,7 +50,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
 
-        self._central_widget.reset_view_action.triggered.connect(lambda: self.plot_widget.autoRange())
+        self._central_widget.reset_view_action.triggered.connect(
+            lambda: self.plot_widget.autoRange())
 
     @property
     def tool_bar(self):
@@ -441,6 +440,11 @@ class PlotWidget(pg.PlotWidget):
 
             # Emit a plot removed signal
             self.plot_removed.emit(item)
+
+    def clear_plots():
+        for item in self.listDataItems():
+            if isintance(item, PlotWidget):
+                self.removeItem(item)
 
     def _on_region_changed(self):
         """
