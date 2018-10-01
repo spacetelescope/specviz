@@ -11,6 +11,9 @@ from specutils import Spectrum1D
 class ModelFittingModel(QStandardItemModel):
     def __init__(self, *args):
         super().__init__(*args)
+
+        self.setHorizontalHeaderLabels(["Name", "Value", "Unit", "Fixed"])
+
         from astropy.modeling.models import Gaussian1D, Linear1D
 
         a = Gaussian1D()
@@ -18,11 +21,19 @@ class ModelFittingModel(QStandardItemModel):
 
         self.add_model(a)
         self.add_model(l)
+        self.add_model(Gaussian1D())
 
     def add_model(self, model):
         oper_item = QStandardItem("Add")
 
-        model_item = QStandardItem(model.__class__.name)
+        model_name = model.__class__.name
+
+        model_count = len([self.item(idx) for idx in range(self.rowCount())
+                           if model.__class__.name in self.item(idx).text()])
+
+        model_name = model_name + str(model_count) if model_count > 0 else model_name
+
+        model_item = QStandardItem(model_name)
         model_item.setData(model, Qt.UserRole + 1)
 
         for para_name in model.param_names:
@@ -50,7 +61,7 @@ class ModelFittingModel(QStandardItemModel):
 
             model_item.appendRow([param_name, param_value, param_unit, param_fixed])
 
-        self.appendRow([oper_item, model_item, None, None])
+        self.appendRow([model_item, None, None, None])
 
 
 class ModelFittingProxyModel(QSortFilterProxyModel):
