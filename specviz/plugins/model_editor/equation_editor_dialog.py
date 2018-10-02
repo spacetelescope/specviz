@@ -1,11 +1,13 @@
 import os
 
 from asteval import Interpreter
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, Qt
 from qtpy.QtGui import QValidator
 from qtpy.QtWidgets import QDialog, QDialogButtonBox
 from qtpy.uic import loadUi
 import re
+
+import astropy.units as u
 
 
 class ModelEquationEditorDialog(QDialog):
@@ -14,17 +16,11 @@ class ModelEquationEditorDialog(QDialog):
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "equation_editor_dialog.ui")), self)
-
-        # Create a mapping of the model names and their model objects, this
-        # will be used in the evalulation function as namespace objects.
-        self._fittable_models = {model.item(idx).text(): model.item(idx).data()
-                                 for idx in range(model.rowCount())}
+        self._model_editor_model = model
+        self._fittable_models = None
 
         # Instantiate the validator so we can connect to its signals
         self._validator = EquationValidator()
-
-        # Populate the drop down list with the model names
-        self.model_list_combo_box.addItems(self._fittable_models.keys())
 
         # When the insert button is pressed, parse the current text of the
         # combo box and put that variable in the equation.
@@ -44,25 +40,57 @@ class ModelEquationEditorDialog(QDialog):
         # depending on whether the validation is successful.
         self._validator.status_changed.connect(self._update_status_text)
 
+    @property
+    def result(self):
+        return self._validator.result
+
+    def exec_(self):
+        # Recompose the model objects with the current values in each of its
+        # parameter rows.
+        self._fittable_models = {}
+
+        for idx in range(self._model_editor_model.rowCount()):
+            # Get the base astropy model object
+            model_item = self._model_editor_model.item(idx)
+            model_kwargs = {'name': model_item.text(), 'fixed': {}}
+
+            # For each of the children `StandardItem`s, parse out their
+            # individual stored values
+            for cidx in range(model_item.rowCount()):
+                param_name = model_item.child(cidx, 0).data()
+                param_value = model_item.child(cidx, 1).data()
+                param_unit = model_item.child(cidx, 2).data()
+                param_fixed = model_item.child(cidx, 3).checkState() == Qt.Checked
+
+                model_kwargs[param_name] = (u.Quantity(param_value, param_unit)
+                                            if param_unit is not None else param_value)
+                model_kwargs.get('fixed').setdefault(param_name, param_fixed)
+
+            self._fittable_models[model_item.text()] = model_item.data().__class__(**model_kwargs)
+
+        # Populate the drop down list with the model names
+        self.model_list_combo_box.clear()
+        self.model_list_combo_box.addItems(self._fittable_models.keys())
+
         # Do an initial validation just to easily update the status text when
         # the dialog is first shown.
         self._validator.validate(self.equation_text_edit.toPlainText(),
                                  self._fittable_models)
 
-    @property
-    def result(self):
-        return self._validator.result
+        super().exec_()
 
     def _update_status_text(self, state, status_text):
         """
         Update dialog status text depending on the state of the validator.
         """
+        self.status_label.setText(status_text)
+
         if state == QValidator.Acceptable:
-            self.status_label.setText(status_text)
             self.button_box.button(QDialogButtonBox.Ok).setEnabled(True)
         else:
-            self.status_label.setText(status_text)
             self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
+
+        self.button_box.repaint()
 
     def _parse_variables(self):
         """
@@ -72,14 +100,19 @@ class ModelEquationEditorDialog(QDialog):
         full_string = self.equation_text_edit.toPlainText()
 
         for var in self._fittable_models.keys():
-            if full_string.find(var) >= 0:
+            comp_reg = re.compile(r"\b{}\b".format(var))
+
+            if len(comp_reg.findall(full_string)) > 0:
                 full_string = re.sub(r"\b{}\b".format(var),
                                      "<span style='color:blue; font-weight:bold'>{0}</span>".format(var),
                                      full_string)
 
+        # Store the cursor position because setting the html explicitly will
+        # reset it to the beginning. Also, disable signals so that setting the
+        # text in the box doesn't cause infinite recursion.
         cursor_pos = self.equation_text_edit.textCursor()
         self.equation_text_edit.blockSignals(True)
-        self.equation_text_edit.setText(full_string)
+        self.equation_text_edit.setHtml(full_string)
         self.equation_text_edit.blockSignals(False)
         self.equation_text_edit.setTextCursor(cursor_pos)
 
@@ -95,6 +128,14 @@ class EquationValidator(QValidator):
 
     @property
     def result(self):
+        """
+        Returned value from the string evaluation.
+
+        Returns
+        -------
+        : :class:`~astropy.modeling.CompoundModel`
+            The composed compound model generated from the input equation.
+        """
         return self._result
 
     def validate(self, string, fittable_models):
@@ -111,9 +152,13 @@ class EquationValidator(QValidator):
         # Create an evaluation namespace for use in parsing the string
         namespace = {}
         namespace.update(fittable_models)
-        # namespace.update({'disp': np.arange(10)})
 
-        aeval = Interpreter(usersyms=namespace)
+        # Create a quick class to dump err output instead of piping to the
+        # user's terminal. Seems this cannot be None, and must be an object
+        # that has a `write` method.
+        aeval = Interpreter(usersyms=namespace,
+                            err_writer=type("FileDump", (object,),
+                                            {'write': lambda x: None}))
 
         self._result = aeval(string)
 
