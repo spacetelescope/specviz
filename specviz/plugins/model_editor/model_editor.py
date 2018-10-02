@@ -82,7 +82,6 @@ class ModelEditor(QWidget, Plugin):
         new_spec = Spectrum1D(flux=fit_mod(self.data_item.spectrum.spectral_axis),
                               spectral_axis=self.data_item.spectrum.spectral_axis)
         self.model.add_data(new_spec, "Fitted Model Spectrum")
-        self.plot_widget.autoRange()
 
         # Fitted quantity models do not preserve the names of the sub models
         # which are used to relate the fitted sub models back to the displayed
@@ -90,21 +89,16 @@ class ModelEditor(QWidget, Plugin):
         # preserved.
         if result.n_submodels() > 1:
             for i, x in enumerate(result):
-                fit_mod.unitless_model[i].name = x.name
-        else:
-            fit_mod.unitless_model.name = result.name
-
-        # At this point, the results are valid and accepted. Now, update
-        # the displayed values in the model editor
-        if fit_mod.unitless_model.n_submodels() > 1:
+                fit_mod.unitless_model._submodels[i].name = x.name
             sub_mods = [x for x in fit_mod.unitless_model]
         else:
+            fit_mod.unitless_model.name = result.name
             sub_mods = [fit_mod.unitless_model]
 
         disp_mods = {self._model_editor_model.item(idx).text(): self._model_editor_model.item(idx)
                      for idx in range(self._model_editor_model.rowCount())}
 
-        for sub_mod in sub_mods:
+        for i, sub_mod in enumerate(sub_mods):
             # Get the base astropy model object
             model_item = disp_mods.get(sub_mod.name)
 
@@ -112,7 +106,11 @@ class ModelEditor(QWidget, Plugin):
             # individual stored values
             for cidx in range(model_item.rowCount()):
                 param_name = model_item.child(cidx, 0).data()
-                parameter = getattr(sub_mod, param_name)
+
+                if result.n_submodels() > 1:
+                    parameter = getattr(fit_mod, "{0}_{1}".format(param_name, i))
+                else:
+                    parameter = getattr(fit_mod, param_name)
 
                 model_item.child(cidx, 1).setText("{:.4g}".format(parameter.value))
                 model_item.child(cidx, 1).setData(parameter.value, Qt.UserRole + 1)
