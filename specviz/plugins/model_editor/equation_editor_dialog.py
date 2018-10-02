@@ -58,7 +58,7 @@ class ModelEquationEditorDialog(QDialog):
             # individual stored values
             for cidx in range(model_item.rowCount()):
                 param_name = model_item.child(cidx, 0).data()
-                param_value = model_item.child(cidx, 1).data()
+                param_value = float(model_item.child(cidx, 1).text())
                 param_unit = model_item.child(cidx, 2).data()
                 param_fixed = model_item.child(cidx, 3).checkState() == Qt.Checked
 
