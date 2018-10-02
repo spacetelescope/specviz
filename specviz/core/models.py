@@ -17,7 +17,11 @@ class DataListModel(QStandardItemModel):
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
-        spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
+        from astropy.modeling.models import Gaussian1D
+
+        y = Gaussian1D(mean=50, stddev=10)(np.arange(100)) + np.random.sample(100) * 0.1
+
+        spec1 = Spectrum1D(flux=y * u.Jy,
                            spectral_axis=np.arange(100) * u.AA)
         spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
                            spectral_axis=np.arange(100) * u.Hz)

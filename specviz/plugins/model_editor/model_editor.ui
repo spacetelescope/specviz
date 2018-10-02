@@ -56,30 +56,38 @@
          <number>0</number>
         </property>
         <item>
-         <widget class="QToolButton" name="toolButton">
+         <widget class="QToolButton" name="add_model_button">
           <property name="text">
            <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normalon>:/icons/plus.svg</normalon>
+           </iconset>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="toolButton_2">
+         <widget class="QToolButton" name="remove_model_button">
           <property name="text">
            <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normalon>:/icons/minus.svg</normalon>
+           </iconset>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="toolButton_3">
+         <widget class="QToolButton" name="equation_edit_button">
           <property name="text">
            <string>...</string>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="equation_editor_button">
-          <property name="text">
-           <string>...</string>
+          <property name="icon">
+           <iconset>
+            <normalon>:/icons/014-calculator.svg</normalon>
+           </iconset>
           </property>
          </widget>
         </item>
@@ -103,6 +111,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../data/resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

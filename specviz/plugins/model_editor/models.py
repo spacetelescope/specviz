@@ -24,8 +24,6 @@ class ModelFittingModel(QStandardItemModel):
         self.add_model(Gaussian1D())
 
     def add_model(self, model):
-        oper_item = QStandardItem("Add")
-
         model_name = model.__class__.name
 
         model_count = len([self.item(idx) for idx in range(self.rowCount())
@@ -42,7 +40,7 @@ class ModelFittingModel(QStandardItemModel):
 
             # Store the name value
             param_name = QStandardItem(parameter.name)
-            param_name.setData(parameter, Qt.UserRole + 1)
+            param_name.setData(parameter.name, Qt.UserRole + 1)
             param_name.setEditable(False)
 
             # Store the data value of the parameter
@@ -52,16 +50,18 @@ class ModelFittingModel(QStandardItemModel):
             # Store the unit information
             param_unit = QStandardItem("{}".format(parameter.unit))
             param_unit.setData(parameter.unit, Qt.UserRole + 1)
+            param_unit.setEditable(False)
 
             # Store the fixed state of the unit
             param_fixed = QStandardItem()
             param_fixed.setData(parameter.fixed, Qt.UserRole + 1)
             param_fixed.setCheckable(True)
-            param_fixed.setEditable(False)
 
             model_item.appendRow([param_name, param_value, param_unit, param_fixed])
 
         self.appendRow([model_item, None, None, None])
+
+        return model_item.index()
 
 
 class ModelFittingProxyModel(QSortFilterProxyModel):
