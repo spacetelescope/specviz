@@ -142,7 +142,7 @@ class SpecvizLayerArtist(LayerArtist):
         else:
             self.plot_data_item.data_item.set_data(spectrum)
             # FIXME: we shouldn't have to call update_data manually
-            self.plot_data_item.update_data()
+            # self.plot_data_item.update_data()
 
         self.update_visual()
 
@@ -206,7 +206,7 @@ class SpecvizDataViewer(DataViewer):
         # self.setCentralWidget(self.plot_window)
 
         # FIXME: the following shouldn't be needed
-        self.specviz_window._model.clear()
+        # self.specviz_window._model.clear()
 
     def add_data(self, data):
         if not glue_data_has_spectral_axis(data):
