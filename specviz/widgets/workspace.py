@@ -344,6 +344,12 @@ class Workspace(QMainWindow):
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
 
+            # If there are any current plots, attempt to add the data to the
+            # plot
+            plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
+            plot_data_item.visible = True
+            self.current_plot_window.plot_widget.on_item_changed(data_item)
+
             return data_item
         except:
             message_box = QMessageBox()
