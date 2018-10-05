@@ -99,6 +99,14 @@ class DataListModel(QStandardItemModel):
 
         return super(DataListModel, self).setData(index, value, role)
 
+    def clear(self):
+        self.beginResetModel()
+
+        for item in self.items:
+            self.removeRow(item.index().row())
+
+        self.endResetModel()
+
 
 class PlotProxyModel(QSortFilterProxyModel):
     def __init__(self, source=None, *args, **kwargs):
