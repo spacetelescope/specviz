@@ -31,18 +31,10 @@ class ModelEditor(QWidget, Plugin):
             os.path.join(os.path.dirname(__file__),
                          ".", "model_editor.ui")), self)
 
-        # Instantiate the model fitting model
-        self._model_editor_model = ModelFittingModel()
-
-        # Set the model on the tree view and expand all children initially.
-        self.model_tree_view.setModel(self._model_editor_model)
-        self.model_tree_view.expandAll()
-
         # Store a reference to the equation editor dialog. This way, after a
         # user has closed the dialog, the state of the text edit box will be
         # preserved.
-        self._equation_dialog = ModelEquationEditorDialog(
-                self._model_editor_model)
+        self._equation_dialog = ModelEquationEditorDialog()
 
         # Populate the add mode button with a dropdown containing available
         # fittable model objects
@@ -59,11 +51,30 @@ class ModelEditor(QWidget, Plugin):
             self._equation_dialog.exec_)
 
         # When the equation editor dialog input is accepted, create the
+        # compound model
         self._equation_dialog.accepted.connect(
             lambda: self._on_equation_accepted(self._equation_dialog.result))
 
+        # When a plot data item is select, get its model editor model
+        # representation
+        self._plot_data_item_models = {}
+        self.workspace.current_selected_changed.connect(self._on_plot_item_selected)
+
         for i in range(1, 4):
             self.model_tree_view.resizeColumnToContents(i)
+
+    def _on_plot_item_selected(self, plot_data_item):
+        print("Model set")
+        if plot_data_item not in self._plot_data_item_models:
+            self._plot_data_item_models[plot_data_item] = ModelFittingModel()
+
+        self._model_editor_model = self._plot_data_item_models.get(plot_data_item)
+
+        # Set the model on the tree view and expand all children initially.
+        self.model_tree_view.setModel(self._model_editor_model)
+        self.model_tree_view.expandAll()
+
+        self._equation_dialog.model = self._model_editor_model
 
     def _on_equation_accepted(self, result):
         if self.data_item is None:

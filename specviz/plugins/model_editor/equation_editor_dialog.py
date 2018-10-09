@@ -11,12 +11,12 @@ import astropy.units as u
 
 
 class ModelEquationEditorDialog(QDialog):
-    def __init__(self, model, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "equation_editor_dialog.ui")), self)
-        self._model_editor_model = model
+        self._model_editor_model = None
         self._fittable_models = None
 
         # Instantiate the validator so we can connect to its signals
@@ -39,6 +39,14 @@ class ModelEquationEditorDialog(QDialog):
         # Listen for validation updates and change the displayed status text
         # depending on whether the validation is successful.
         self._validator.status_changed.connect(self._update_status_text)
+
+    @property
+    def model(self):
+        return self._model_editor_model
+
+    @model.setter
+    def model(self, value):
+        self._model_editor_model = value
 
     @property
     def result(self):
