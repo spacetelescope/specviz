@@ -4,6 +4,7 @@ from qtpy.QtCore import Signal
 from functools import wraps
 
 from ..widgets import resources
+from .items import PlotDataItem
 
 
 class Plugin:
