@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt
 
 from .equation_editor_dialog import ModelEquationEditorDialog
 from .models import ModelFittingModel
-from ...core.plugin import Plugin, plugin_bar
+from ...core.plugin import plugin
 
 from specutils.spectra import Spectrum1D
 from specutils.fitting import fit_lines
@@ -23,8 +23,8 @@ MODELS = {
 }
 
 
-@plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
-class ModelEditor(QWidget, Plugin):
+@plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
+class ModelEditor(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         loadUi(os.path.abspath(
@@ -58,10 +58,16 @@ class ModelEditor(QWidget, Plugin):
         # When a plot data item is select, get its model editor model
         # representation
         self._plot_data_item_models = {}
-        self.workspace.current_selected_changed.connect(self._on_plot_item_selected)
+        # self.workspace.current_selected_changed.connect(
+        #     self._on_plot_item_selected)
 
         for i in range(1, 4):
             self.model_tree_view.resizeColumnToContents(i)
+
+    @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
+    def on_new_model_triggered(self):
+        # Grab the currently select plot data item
+        self._on_plot_item_selected(self.plot_item)
 
     def _on_plot_item_selected(self, plot_data_item):
         print("Model set")

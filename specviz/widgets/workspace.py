@@ -14,10 +14,12 @@ from specutils import Spectrum1D
 
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
-from ..core.plugin import Plugin
+from ..core.plugin import plugin
 from ..utils import UI_PATH
 from ..utils.qt_utils import dict_to_menu
 from .plotting import PlotWindow
+
+from . import resources
 
 
 class Workspace(QMainWindow):
@@ -93,6 +95,9 @@ class Workspace(QMainWindow):
         # Connect to signals given off by the list view
         self._model.itemChanged.connect(
             self._on_item_changed)
+
+        # Mount plugins
+        plugin.mount(self)
 
     @property
     def name(self):
@@ -183,11 +188,6 @@ class Workspace(QMainWindow):
         self._app.current_workspace = workspace
         workspace.add_plot_window()
 
-        from ..core.plugin import plugin_bar, tool_bar, plot_bar
-
-        for plugin in plugin_bar.registry + tool_bar.registry:
-            plugin()
-
     def _on_change_color_theme(self, theme):
         import pyqtgraph as pg
 
@@ -260,10 +260,8 @@ class Workspace(QMainWindow):
         # Fire a signal letting everyone know a new plot window has been added
         self.plot_window_added.emit(plot_window)
 
-        from ..core.plugin import plot_bar
-
-        for pi in plot_bar.registry:
-            pi()
+        # Mount plugins
+        plugin.mount(self, filt='plot_bar')
 
     def _on_sub_window_activated(self, window):
         if window is None:
