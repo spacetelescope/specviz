@@ -13,7 +13,8 @@ from qtpy.QtGui import QIcon
 from ...core.items import PlotDataItem
 from ...utils import UI_PATH
 from ...utils.helper_functions import format_float_text
-from ...core.plugin import Plugin, plugin_bar
+from ...core.plugin import plugin
+from ...core.hub import Hub
 
 
 """
@@ -67,8 +68,8 @@ def compute_stats(spectrum):
             'minval': flux.min()}
 
 
-@plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"))
-class StatisticsWidget(QWidget, Plugin):
+@plugin.plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"))
+class StatisticsWidget(QWidget):
     """
     This widget controls the statistics box. It is responsible for calling
     stats computation functions and updating the stats widget. It only takes
@@ -83,18 +84,18 @@ class StatisticsWidget(QWidget, Plugin):
 
         self._init_ui()
 
-        self.workspace.current_item_changed.connect(self.update_statistics)
+        self.hub.workspace.current_item_changed.connect(self.update_statistics)
         # When the current subwindow changes, update the stat widget
-        self.workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
+        self.hub.workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
         # When current item changes, update the stat widget
-        self.workspace.current_item_changed.connect(self.update_statistics)
+        self.hub.workspace.current_item_changed.connect(self.update_statistics)
         # When selection changes, update the stat widget
-        self.workspace.current_selected_changed.connect(self.update_statistics)
+        self.hub.workspace.current_selected_changed.connect(self.update_statistics)
         # When new plot window is added, connect signals
-        self.workspace.plot_window_added.connect(self._connect_plot_window)
+        self.hub.workspace.plot_window_added.connect(self._connect_plot_window)
 
         # Connect any currently open plot windows
-        for plot_window in self.plot_windows:
+        for plot_window in self.hub.plot_windows:
             self._connect_plot_window(plot_window)
 
     def _init_ui(self):
@@ -176,18 +177,18 @@ class StatisticsWidget(QWidget, Plugin):
 
     def _get_workspace_region(self):
         """Get current widget region."""
-        pos = self.selected_region_bounds
+        pos = self.hub.selected_region_bounds
 
         if pos is not None:
             return self.pos_to_spectral_region(pos)
 
     def _workspace_has_region(self):
         """True if there is an active region"""
-        return self.selected_region is not None
+        return self.hub.selected_region is not None
 
     def _get_target_name(self):
         """Gets name of data and region selected"""
-        current_item = self.workspace.current_item
+        current_item = self.hub.workspace.current_item
         region = self._get_workspace_region()
         if current_item is not None:
             if isinstance(current_item, PlotDataItem):
@@ -208,14 +209,14 @@ class StatisticsWidget(QWidget, Plugin):
         self.stats = None
 
     def update_statistics(self):
-        if self.workspace is None or self.plot_item is None:
+        if self.hub.workspace is None or self.hub.plot_item is None:
             return self.clear_statistics()
 
         # If the plot item is not visible, don't bother updating stats
-        if not self.plot_item.visible:
+        if not self.hub.plot_item.visible:
             return self.clear_statistics()
 
-        spec = self.data_item.spectrum if self.data_item is not None else None
+        spec = self.hub.data_item.spectrum if self.hub.data_item is not None else None
         spectral_region = self._get_workspace_region()
 
         self._current_spectrum = spec

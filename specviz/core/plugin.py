@@ -2,83 +2,14 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction, QApplication, QWidget, QMenu, QToolButton, QToolBar
 from qtpy.QtCore import Signal
 from functools import wraps
+import inspect
+import logging
 
-from ..widgets import resources
-from .items import PlotDataItem
-
-
-class Plugin:
-    @property
-    def workspace(self):
-        """The active workspace."""
-        return QApplication.instance().current_workspace
-
-    @property
-    def model(self):
-        """The data item model of the active workspace."""
-        return self.workspace.model
-
-    @property
-    def proxy_model(self):
-        """The proxy model of the active workspace."""
-        return self.workspace.proxy_model
-
-    @property
-    def plot_window(self):
-        """The currently selected plot window of the workspace."""
-        return self.workspace.current_plot_window
-
-    @property
-    def plot_windows(self):
-        """The currently selected plot window of the workspace."""
-        return self.workspace.mdi_area.subWindowList()
-
-    @property
-    def plot_widget(self):
-        """The plot widget of the currently active plot window."""
-        return self.workspace.current_plot_window.plot_widget
-
-    @property
-    def plot_item(self):
-        """The currently selected plot item."""
-        if self.workspace is not None:
-            return self.workspace.current_item
-
-    @property
-    def plot_items(self):
-        """Returns the currently selected plot item."""
-        return self.proxy_model.items
-
-    @property
-    def visible_plot_items(self):
-        """Plotted data that are currently visible."""
-        if self.plot_widget is not None:
-            return self.plot_widget.listDataItems()
-
-    @property
-    def selected_region(self):
-        """The currently active ROI on the plot."""
-        return self.plot_window.plot_widget.selected_region
-
-    @property
-    def selected_region_bounds(self):
-        """The bounds of currently active ROI on the plot."""
-        return self.plot_window.plot_widget.selected_region_bounds
-
-    @property
-    def data_item(self):
-        """The data item of the currently selected plot item."""
-        if self.plot_item is not None:
-            return self.plot_item.data_item
-
-    @property
-    def data_items(self):
-        """List of all data items held in the data item model."""
-        return self.model.items
+from .hub import Hub
 
 
 class DecoratorRegistry:
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._registry = []
 
     @property
@@ -88,7 +19,7 @@ class DecoratorRegistry:
     @staticmethod
     def get_action(parent, level=None):
         """
-        Creates nested menu actions dependending on the user-created plugin
+        Creates nested menu actions depending on the user-created plugin
         decorator location values.
         """
         for action in parent.actions():
@@ -124,45 +55,107 @@ class DecoratorRegistry:
             return menu
 
 
-class PluginBarDecorator(DecoratorRegistry):
-    def __call__(self, name, icon):
-        def plugin_bar_decorator(cls):
+class Plugin(DecoratorRegistry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._plugin_bar_decorator = PluginBarDecorator()
+        self._tool_bar_decorator = ToolBarDecorator()
+        self._plot_bar_decorator = PlotBarDecorator()
+
+    @property
+    def registry(self):
+        return self._registry
+
+    def __call__(self, name):
+        logging.info("Adding plugin '%s'.", name)
+
+        def plugin_decorator(cls):
             cls.wrapped = True
-            cls.is_plugin_bar = True
+            cls.type = None
 
             @wraps(cls)
-            def cls_wrapper(*args, **kwargs):
-                app = QApplication.instance()
-
-                if app.current_workspace is None:
+            def cls_wrapper(workspace, filt=None, *args, **kwargs):
+                if workspace is None:
                     return
 
+                cls.hub = Hub(workspace)
                 plugin = cls()
 
-                if plugin.workspace is not None:
-                    plugin.workspace.plugin_tab_widget.addTab(
-                        plugin, icon, name)
+                # Call any internal tool or plot bar decorators
+                members = inspect.getmembers(plugin, predicate=inspect.ismethod)
+
+                for meth_name, meth in members:
+                    if hasattr(meth, 'wrapped') and (filt is None or meth.plugin_type == filt):
+                        meth(workspace)
+
+            self._registry.append(cls_wrapper)
+
+            return cls_wrapper
+        return plugin_decorator
+
+    def mount(self, workspace, filt=None):
+        for plugin in self.registry:
+            plugin(workspace, filt=filt)
+
+    def plugin_bar(self, name, icon):
+        def plugin_bar_decorator(cls):
+            cls.wrapped = True
+            cls.type = 'plugin_bar'
+
+            @wraps(cls)
+            def cls_wrapper(workspace, *args, **kwargs):
+                if workspace is None:
+                    return
+
+                cls.hub = Hub(workspace)
+                plugin = cls()
+
+                if workspace is not None:
+                    # Check if this plugin already exists as a tab
+                    for i in range(workspace.plugin_tab_widget.count()):
+                        if workspace.plugin_tab_widget.tabText(i) == name:
+                            plugin = workspace.plugin_tab_widget.widget(i)
+
+                            # In the case where the plugin is already added to
+                            # the plugin bar, we only want to re-add any
+                            # internal plot bar plugins.
+                            members = inspect.getmembers(
+                                plugin, predicate=inspect.ismethod)
+                            [meth(workspace) for meth_name, meth in members
+                             if hasattr(meth, 'wrapped')
+                             and meth.plugin_type == 'plot_bar']
+
+                            break
+                    else:
+                        workspace.plugin_tab_widget.addTab(
+                            plugin, icon, name)
+
+                        # Call any internal tool or plot bar decorators. Since
+                        # this is the first time this plugin is being added to
+                        # the bar, make sure to include both plot and tool bar
+                        # plugins.
+                        members = inspect.getmembers(
+                            plugin, predicate=inspect.ismethod)
+                        [meth(workspace) for meth_name, meth in members
+                         if hasattr(meth, 'wrapped')]
 
             self.registry.append(cls_wrapper)
 
-            return cls_wrapper()
+            return cls_wrapper
         return plugin_bar_decorator
 
-
-class ToolBarDecorator(DecoratorRegistry):
-    def __call__(self, name, icon=None, location=None):
+    def tool_bar(self, name, icon=None, location=None):
         def tool_bar_decorator(func):
             func.wrapped = True
-            func.is_main_tool = True
+            func.plugin_type = 'tool_bar'
 
             @wraps(func)
-            def func_wrapper(*args, **kwargs):
-                app = QApplication.instance()
-
-                if app.current_workspace is None:
+            def func_wrapper(plugin, workspace, *args, **kwargs):
+                if workspace is None:
                     return
 
-                parent = app.current_workspace.main_tool_bar
+                parent = workspace.main_tool_bar
                 action = QAction(parent)
                 action.setText(name)
 
@@ -174,28 +167,27 @@ class ToolBarDecorator(DecoratorRegistry):
                         parent = self.get_action(parent, level)
 
                 parent.addAction(action)
-                action.triggered.connect(lambda: func(*args, **kwargs))
+                action.triggered.connect(lambda: func(plugin, *args, **kwargs))
 
-            self.registry.append(func_wrapper)
+            # self.registry.append(func_wrapper)
 
-            return func_wrapper()
+            return func_wrapper
         return tool_bar_decorator
 
-
-class PlotBarDecorator(DecoratorRegistry):
-    def __call__(self, name, icon=None, location=None):
+    def plot_bar(self, name, icon=None, location=None):
         def plot_bar_decorator(func):
             func.wrapped = True
-            func.is_plot_tool = True
+            func.plugin_type = 'plot_bar'
 
             @wraps(func)
-            def func_wrapper(*args, **kwargs):
-                app = QApplication.instance()
-
-                if app.current_workspace is None:
+            def func_wrapper(plugin, workspace, *args, **kwargs):
+                if workspace is None:
                     return
 
-                parent = app.current_workspace.current_plot_window.tool_bar
+                if workspace.current_plot_window is None:
+                    return
+
+                parent = workspace.current_plot_window.tool_bar
                 action = QAction(parent)
 
                 action.setText(name)
@@ -210,14 +202,110 @@ class PlotBarDecorator(DecoratorRegistry):
                 before_action = [x for x in parent.actions()
                                  if x.isSeparator()].pop()
                 parent.insertAction(before_action, action)
-                action.triggered.connect(lambda: func(*args, **kwargs))
+                action.triggered.connect(lambda: func(plugin, *args, **kwargs))
 
-            self.registry.append(func_wrapper)
+            # self.registry.append(func_wrapper)
 
-            return func_wrapper()
+            return func_wrapper
         return plot_bar_decorator
 
 
-plugin_bar = PluginBarDecorator()
-tool_bar = ToolBarDecorator()
-plot_bar = PlotBarDecorator()
+class PluginBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon):
+        logging.info("Adding plugin '%s'.", name)
+
+        def plugin_bar_decorator(cls):
+            cls.wrapped = True
+            cls.type = 'plugin'
+
+            @wraps(cls)
+            def cls_wrapper(workspace, *args, **kwargs):
+                if workspace is None:
+                    return
+
+                cls.hub = Hub(workspace)
+                plugin = cls()
+
+                if workspace is not None:
+                    workspace.plugin_tab_widget.addTab(
+                        plugin, icon, name)
+
+                # Call any internal tool or plot bar decorators
+                members = inspect.getmembers(plugin, predicate=inspect.ismethod)
+                [meth(workspace) for meth_name, meth in members if hasattr(meth, 'wrapped')]
+
+            self.registry.append(cls_wrapper)
+
+            return cls_wrapper
+        return plugin_bar_decorator
+
+
+class ToolBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon=None, location=None):
+        def tool_bar_decorator(func):
+            func.wrapped = True
+            func.plugin_type = 'tool'
+
+            @wraps(func)
+            def func_wrapper(plugin, workspace, *args, **kwargs):
+                if workspace is None:
+                    return
+
+                parent = workspace.main_tool_bar
+                action = QAction(parent)
+                action.setText(name)
+
+                if icon is not None:
+                    action.setIcon(icon)
+
+                if location is not None:
+                    for level in location.split('/'):
+                        parent = self.get_action(parent, level)
+
+                parent.addAction(action)
+                action.triggered.connect(lambda: func(plugin, *args, **kwargs))
+
+            self.registry.append(func_wrapper)
+
+            return func_wrapper
+        return tool_bar_decorator
+
+
+class PlotBarDecorator(DecoratorRegistry):
+    def __call__(self, name, icon=None, location=None):
+        def plot_bar_decorator(func):
+            func.wrapped = True
+            func.plugin_type = 'plot'
+
+            @wraps(func)
+            def func_wrapper(plugin, workspace, *args, **kwargs):
+                if workspace is None:
+                    return
+
+                if workspace.current_plot_window is None:
+                    return
+
+                parent = workspace.current_plot_window.tool_bar
+                action = QAction(parent)
+
+                action.setText(name)
+
+                if icon is not None:
+                    action.setIcon(icon)
+
+                if location is not None:
+                    for level in location.split('/'):
+                        parent = self.get_action(parent, level)
+
+                before_action = [x for x in parent.actions()
+                                 if x.isSeparator()].pop()
+                parent.insertAction(before_action, action)
+                action.triggered.connect(lambda: func(plugin, *args, **kwargs))
+
+            self.registry.append(func_wrapper)
+
+            return func_wrapper
+        return plot_bar_decorator
+
+
+plugin = Plugin()

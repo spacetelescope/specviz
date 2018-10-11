@@ -8,13 +8,8 @@ from qtpy.uic import loadUi
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
 from ...core.items import PlotDataItem
-from ...core.plugin import Plugin, tool_bar
-
-
-@tool_bar("Smoothing", location="Operations")
-def on_action_triggered():
-    dialog = SmoothingDialog()
-    dialog.exec_()
+from ...core.plugin import plugin
+from ...core.hub import Hub
 
 
 KERNEL_REGISTRY = {
@@ -47,7 +42,8 @@ KERNEL_REGISTRY = {
 }
 
 
-class SmoothingDialog(QDialog, Plugin):
+@plugin("Smoothing")
+class SmoothingDialog(QDialog):
     """
     Widget to handle user interactions with smoothing operations.
     Allows the user to select spectra, kernel type and kernel size.
@@ -56,7 +52,8 @@ class SmoothingDialog(QDialog, Plugin):
     """
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(parent=parent, *args, **kwargs)
-        self.model_items = self.data_items
+
+        self.model_items = self.hub.data_items
 
         self._smoothing_thread = None  # Worker thread
 
@@ -66,6 +63,10 @@ class SmoothingDialog(QDialog, Plugin):
         self.size = None  # Current kernel size
 
         self._load_ui()
+
+    @plugin.tool_bar("Smoothing", location="Operations")
+    def on_action_triggered(self):
+        self.exec_()
 
     def _load_ui(self):
         # Load UI form .ui file
@@ -92,7 +93,7 @@ class SmoothingDialog(QDialog, Plugin):
 
     def set_to_current_selection(self):
         """Sets Data selection to currently active data"""
-        current_item = self.workspace.current_item
+        current_item = self.hub.workspace.current_item
         if current_item is not None:
             if isinstance(current_item, PlotDataItem):
                 current_item = current_item.data_item
@@ -112,7 +113,9 @@ class SmoothingDialog(QDialog, Plugin):
     def _on_data_change(self, index):
         """Callback for data combo index change"""
         data_index = self.data_combo.currentData()
-        self.data = self.model_items[data_index]
+
+        if len(self.model_items) > 0:
+            self.data = self.model_items[data_index]
 
     def _generate_output_name(self):
         """Generate a name for output spectra"""
@@ -156,11 +159,13 @@ class SmoothingDialog(QDialog, Plugin):
         self.cancel_button.setEnabled(False)
 
         self.size = float(self.size_input.text())
-        self._smoothing_thread = SmoothingThread(self.data.spectrum, self.size, self.function)
-        self._smoothing_thread.finished.connect(self.on_finished)
-        self._smoothing_thread.exception.connect(self.on_exception)
 
-        self._smoothing_thread.start()
+        if self.data is not None:
+            self._smoothing_thread = SmoothingThread(self.data.spectrum, self.size, self.function)
+            self._smoothing_thread.finished.connect(self.on_finished)
+            self._smoothing_thread.exception.connect(self.on_exception)
+
+            self._smoothing_thread.start()
 
     def on_finished(self, spec):
         """
@@ -172,7 +177,7 @@ class SmoothingDialog(QDialog, Plugin):
             The result of the smoothing operation.
         """
         name = self._generate_output_name()
-        self.workspace.model.add_data(spec=spec, name=name)
+        self.hub.workspace.model.add_data(spec=spec, name=name)
         self.close()
 
     def on_exception(self, exception):

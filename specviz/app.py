@@ -10,7 +10,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from . import plugins, __version__
-from .core.plugin import Plugin
+from .core.plugin import plugin
 from .utils import DATA_PATH
 from .widgets.workspace import Workspace
 
@@ -25,6 +25,9 @@ class Application(QApplication):
     def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
                  dev=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
+        # Load local plugins
+        self.load_local_plugins()
+
         # If specviz is not being embded in another application, go ahead and
         # perform the normal gui setup procedure.
         if not embeded:
@@ -36,9 +39,6 @@ class Application(QApplication):
 
             # Set embed mode state
             self.current_workspace.set_embeded(embeded)
-
-            # Load local plugins
-            self.load_local_plugins()
 
         if dev:
             from astropy.modeling.models import Gaussian1D
@@ -93,8 +93,8 @@ class Application(QApplication):
 
         # Import plugins modules into current namespace
         loaded_plugins = {name: importlib.import_module(name)
-                            for finder, name, ispkg
-                            in iter_namespace(plugins)}
+                          for finder, name, ispkg
+                          in iter_namespace(plugins)}
 
     def remove_workspace(self):
         pass
