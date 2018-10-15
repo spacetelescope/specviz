@@ -68,7 +68,7 @@ def compute_stats(spectrum):
             'minval': flux.min()}
 
 
-@plugin.plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"))
+@plugin.plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"), priority=1)
 class StatisticsWidget(QWidget):
     """
     This widget controls the statistics box. It is responsible for calling

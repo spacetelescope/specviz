@@ -67,12 +67,13 @@ class Plugin(DecoratorRegistry):
     def registry(self):
         return self._registry
 
-    def __call__(self, name):
+    def __call__(self, name, priority=0):
         logging.info("Adding plugin '%s'.", name)
 
         def plugin_decorator(cls):
             cls.wrapped = True
             cls.type = None
+            cls.priority = priority
 
             @wraps(cls)
             def cls_wrapper(workspace, filt=None, *args, **kwargs):
@@ -95,13 +96,14 @@ class Plugin(DecoratorRegistry):
         return plugin_decorator
 
     def mount(self, workspace, filt=None):
-        for plugin in self.registry:
+        for plugin in sorted(self.registry, key=lambda x: -x.priority):
             plugin(workspace, filt=filt)
 
-    def plugin_bar(self, name, icon):
+    def plugin_bar(self, name, icon, priority=0):
         def plugin_bar_decorator(cls):
             cls.wrapped = True
             cls.type = 'plugin_bar'
+            cls.priority = priority
 
             @wraps(cls)
             def cls_wrapper(workspace, *args, **kwargs):
@@ -145,10 +147,11 @@ class Plugin(DecoratorRegistry):
             return cls_wrapper
         return plugin_bar_decorator
 
-    def tool_bar(self, name, icon=None, location=None):
+    def tool_bar(self, name, icon=None, location=None, priority=0):
         def tool_bar_decorator(func):
             func.wrapped = True
             func.plugin_type = 'tool_bar'
+            func.priority = priority
 
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):
@@ -174,10 +177,11 @@ class Plugin(DecoratorRegistry):
             return func_wrapper
         return tool_bar_decorator
 
-    def plot_bar(self, name, icon=None, location=None):
+    def plot_bar(self, name, icon=None, location=None, priority=0):
         def plot_bar_decorator(func):
             func.wrapped = True
             func.plugin_type = 'plot_bar'
+            func.priority = priority
 
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):

@@ -24,10 +24,11 @@ class DataListModel(QStandardItemModel):
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
-    def add_data(self, spec, name):
+    def add_data(self, spec, name, is_model=False):
         """
         """
-        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec,
+                             is_model=is_model)
         self.appendRow(data_item)
 
         return data_item
