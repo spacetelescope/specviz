@@ -2,7 +2,7 @@ from itertools import cycle
 
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
-from qtpy.QtCore import Property, Qt, Signal
+from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem
 
 flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
@@ -14,8 +14,8 @@ class DataItem(QStandardItem):
     IdRole = Qt.UserRole + 2
     DataRole = Qt.UserRole + 3
 
-    def __init__(self, name, identifier, data, unit=None,
-                 spectral_axis_unit=None, *args, **kwargs):
+    def __init__(self, name, identifier, data, is_model=False,
+                 *args, **kwargs):
         super(DataItem, self).__init__(*args, **kwargs)
 
         self.setData(name, self.NameRole)
@@ -28,7 +28,7 @@ class DataItem(QStandardItem):
     def identifier(self):
         return self.data(self.IdRole)
 
-    @Property(str)
+    @property
     def name(self):
         return self.data(self.NameRole)
 
@@ -36,11 +36,11 @@ class DataItem(QStandardItem):
     def name(self, value):
         self.setData(value, self.NameRole)
 
-    @Property(list)
+    @property
     def flux(self):
         return self.data(self.DataRole).flux
 
-    @Property(list)
+    @property
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
 
@@ -100,7 +100,7 @@ class PlotDataItem(pg.PlotDataItem):
     def data_item(self):
         return self._data_item
 
-    @Property(str, notify=data_unit_changed)
+    @property
     def data_unit(self):
         return self._data_unit
 
@@ -125,7 +125,7 @@ class PlotDataItem(pg.PlotDataItem):
                 self.data_item.spectral_axis.unit.is_equivalent(
                     unit, equivalencies=spectral()))
 
-    @Property(str, notify=spectral_axis_unit_changed)
+    @property
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
 
@@ -138,18 +138,18 @@ class PlotDataItem(pg.PlotDataItem):
         self.data_unit = self.data_item.flux.unit.to_string()
         self.spectral_axis_unit = self.data_item.spectral_axis.unit.to_string()
 
-    @Property(list)
+    @property
     def flux(self):
-        return self._data_item.flux.to(self.data_unit,
+        return self._data_item.flux.to(self.data_unit or "",
                                        equivalencies=spectral_density(
                                            self.spectral_axis)).value
 
     @property
     def spectral_axis(self):
-        return self._data_item.spectral_axis.to(self.spectral_axis_unit,
+        return self._data_item.spectral_axis.to(self.spectral_axis_unit or "",
                                                 equivalencies=spectral()).value
 
-    @Property(str, notify=color_changed)
+    @property
     def color(self):
         return self._color
 
@@ -159,7 +159,7 @@ class PlotDataItem(pg.PlotDataItem):
         self.color_changed.emit(self._color)
         self.data_item.emitDataChanged()
 
-    @Property(int, notify=width_changed)
+    @property
     def width(self):
         return self._width
 
@@ -178,7 +178,7 @@ class PlotDataItem(pg.PlotDataItem):
         self.setZValue(value)
         self.data_item.emitDataChanged()
 
-    @Property(bool, notify=visibility_changed)
+    @property
     def visible(self):
         return self._visible
 

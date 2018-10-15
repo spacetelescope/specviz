@@ -72,3 +72,23 @@ class Hub:
     def data_items(self):
         """List of all data items held in the data item model."""
         return self.model.items
+
+    def set_active_plugin_bar(self, name=None, index=None):
+        """
+        Sets the currently displayed widget in the plugin side panel.
+
+        Parameters
+        ----------
+        name : str, optional
+            The displayed name of the widget in the tab title.
+        index : int, optional
+            The index of the widget in the plugin tab widget.
+        """
+        if name is None and index is None:
+            return
+        elif index is not None:
+            self.workspace.plugin_tab_widget.setCurrentIndex(index)
+        elif name is not None:
+            for i in range(self.workspace.plugin_tab_widget.count()):
+                if self.workspace.plugin_tab_widget.tabText(i) == name:
+                    self.workspace.plugin_tab_widget.setCurrentIndex(i)
