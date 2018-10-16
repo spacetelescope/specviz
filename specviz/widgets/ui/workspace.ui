@@ -72,15 +72,6 @@
        <property name="dragDropMode">
         <enum>QAbstractItemView::DragOnly</enum>
        </property>
-       <property name="movement">
-        <enum>QListView::Free</enum>
-       </property>
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="selectionRectVisible">
-        <bool>false</bool>
-       </property>
       </widget>
       <widget class="QMdiArea" name="mdi_area">
        <property name="sizePolicy">

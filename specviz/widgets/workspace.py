@@ -18,6 +18,7 @@ from ..core.plugin import plugin
 from ..utils import UI_PATH
 from ..utils.qt_utils import dict_to_menu
 from .plotting import PlotWindow
+from ..widgets.delegates import DataItemDelegate
 
 from . import resources
 
@@ -78,7 +79,7 @@ class Workspace(QMainWindow):
         self._model = DataListModel()
 
         # Set the styled item delegate on the model
-        # self.list_view.setItemDelegate(DataItemDelegate(self))
+        self.list_view.setItemDelegate(DataItemDelegate(self))
 
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
@@ -95,8 +96,9 @@ class Workspace(QMainWindow):
         # Connect to signals given off by the list view
         self._model.itemChanged.connect(
             self._on_item_changed)
-        self._model.rowsInserted.connect(
-            lambda idx: self._on_item_changed(index=idx))
+
+        # When a new data item is added to the model, select that item
+        # self._model.rowsInserted.connect(self._on_row_inserted)
 
         # Mount plugins
         plugin.mount(self)
@@ -174,7 +176,7 @@ class Workspace(QMainWindow):
         plot_item = self.proxy_model.item_from_id(item.identifier)
 
         if plot_item.visible:
-            source_index = self.list_view.model().sourceModel().indexFromItem(item)
+            source_index = self.model.indexFromItem(item)
             idx = self.list_view.model().mapFromSource(source_index)
             self.list_view.setCurrentIndex(idx)
             return

@@ -131,7 +131,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         if role == Qt.DisplayRole:
             return item._data_item.name
         elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
+            icon = qta.icon('fa.circle' if item.data_item.isEnabled() else 'fa.circle-o',
                             color=item.color)
             return icon
         elif role == Qt.UserRole:
