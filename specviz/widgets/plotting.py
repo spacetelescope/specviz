@@ -17,8 +17,6 @@ from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
 
-from .unit_change_dialog import UnitChangeDialog
-
 
 class PlotWindow(QMdiSubWindow):
     """
@@ -52,7 +50,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
 
-        self._central_widget.reset_view_action.triggered.connect(lambda: self.plot_widget.autoRange())
+        self._central_widget.reset_view_action.triggered.connect(
+            lambda: self.plot_widget.autoRange())
 
     @property
     def tool_bar(self):
@@ -275,6 +274,9 @@ class PlotWidget(pg.PlotWidget):
 
         plot_data_item = self.proxy_model.item_from_index(proxy_index)
 
+        # Re-evaluate plot unit compatibilities
+        self.check_plot_compatibility()
+
         if plot_data_item.visible:
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
@@ -285,9 +287,6 @@ class PlotWidget(pg.PlotWidget):
             if plot_data_item in self.listDataItems():
                 logging.info("Removing plot %s", item.name)
                 self.remove_plot(item=plot_data_item)
-
-        # Re-evaluate plot unit compatibilities
-        # self.check_plot_compatibility()
 
     def check_plot_compatibility(self):
         for i in range(self.proxy_model.sourceModel().rowCount()):
@@ -305,6 +304,7 @@ class PlotWidget(pg.PlotWidget):
                         self.spectral_axis_unit, self.data_unit):
                 plot_data_item.data_item.setEnabled(True)
             else:
+                plot_data_item.visible = False
                 plot_data_item.data_item.setEnabled(False)
 
     def _check_unit_compatibility(self, index, first=None, last=None):
@@ -413,6 +413,7 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
+                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
@@ -442,6 +443,11 @@ class PlotWidget(pg.PlotWidget):
             # Emit a plot removed signal
             self.plot_removed.emit(item)
 
+    def clear_plots(self):
+        for item in self.listDataItems():
+            if isinstance(item, PlotDataItem):
+                self.remove_plot(item=item)
+
     def _on_region_changed(self):
         """
         Updates the displayed minimum and maximum values when the currently
@@ -449,6 +455,9 @@ class PlotWidget(pg.PlotWidget):
         """
         self._region_text_item.setText(
             "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_bounds))
+
+        # Check for color theme changes
+
         self.roi_moved.emit(self.selected_region_bounds)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):

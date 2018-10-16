@@ -17,21 +17,6 @@ class DataListModel(QStandardItemModel):
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
-        spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
-                           spectral_axis=np.arange(100) * u.AA)
-        spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
-                           spectral_axis=np.arange(100) * u.Hz)
-        spec3 = Spectrum1D(flux=np.random.sample(100) * u.erg,
-                           spectral_axis=np.arange(100) * u.Hz)
-
-        data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
-        data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
-        data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec3)
-
-        self.appendRow(data_item)
-        self.appendRow(data_item2)
-        self.appendRow(data_item3)
-
     @property
     def items(self):
         """
@@ -39,10 +24,11 @@ class DataListModel(QStandardItemModel):
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
-    def add_data(self, spec, name):
+    def add_data(self, spec, name, is_model=False):
         """
         """
-        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec,
+                             is_model=is_model)
         self.appendRow(data_item)
 
         return data_item
@@ -95,6 +81,14 @@ class DataListModel(QStandardItemModel):
 
         return super(DataListModel, self).setData(index, value, role)
 
+    def clear(self):
+        self.beginResetModel()
+
+        for item in self.items:
+            self.removeRow(item.index().row())
+
+        self.endResetModel()
+
 
 class PlotProxyModel(QSortFilterProxyModel):
     def __init__(self, source=None, *args, **kwargs):
@@ -137,7 +131,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         if role == Qt.DisplayRole:
             return item._data_item.name
         elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
+            icon = qta.icon('fa.circle' if item.data_item.isEnabled() else 'fa.circle-o',
                             color=item.color)
             return icon
         elif role == Qt.UserRole:

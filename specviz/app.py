@@ -10,7 +10,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from . import plugins, __version__
-from .core.plugin import Plugin
+from .core.plugin import plugin
 from .utils import DATA_PATH
 from .widgets.workspace import Workspace
 
@@ -23,8 +23,11 @@ class Application(QApplication):
     workspace_added = Signal(Workspace)
 
     def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
-                 **kwargs):
+                 dev=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
+        # Load local plugins
+        self.load_local_plugins()
+
         # If specviz is not being embded in another application, go ahead and
         # perform the normal gui setup procedure.
         if not embeded:
@@ -37,8 +40,28 @@ class Application(QApplication):
             # Set embed mode state
             self.current_workspace.set_embeded(embeded)
 
-            # Load local plugins
-            self.load_local_plugins()
+        if dev:
+            from astropy.modeling.models import Gaussian1D
+            import numpy as np
+            from specutils import Spectrum1D
+            import astropy.units as u
+
+            y = Gaussian1D(mean=50, stddev=10)(np.arange(100)) + np.random.sample(100) * 0.1
+
+            spec1 = Spectrum1D(flux=y * u.Jy,
+                            spectral_axis=np.arange(100) * u.AA)
+            spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
+                            spectral_axis=np.arange(100) * u.Hz)
+            spec3 = Spectrum1D(flux=np.random.sample(100) * u.erg,
+                            spectral_axis=np.arange(100) * u.Hz)
+
+            # data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
+            # data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
+            # data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec3)
+
+            self.current_workspace.model.add_data(spec1, "Spectrum 1")
+            self.current_workspace.model.add_data(spec2, "Spectrum 2")
+            self.current_workspace.model.add_data(spec3, "Spectrum 3")
 
         # If a file path has been given, automatically add data
         if file_path is not None:
@@ -70,8 +93,8 @@ class Application(QApplication):
 
         # Import plugins modules into current namespace
         loaded_plugins = {name: importlib.import_module(name)
-                            for finder, name, ispkg
-                            in iter_namespace(plugins)}
+                          for finder, name, ispkg
+                          in iter_namespace(plugins)}
 
     def remove_workspace(self):
         pass
@@ -99,15 +122,16 @@ class Application(QApplication):
 @click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
 @click.option('--loader', '-L', type=str, help="Use specified loader when opening the provided file.")
 @click.option('--embed', '-E', is_flag=True, help="Only display a single plot window. Useful when embedding in other applications.")
+@click.option('--dev', '-D', is_flag=True, help="Open SpecViz in developer mode. This mode auto-loads example spectral data.")
 @click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
-def start(version=False, file_path=None, loader=None, embed=None):
+def start(version=False, file_path=None, loader=None, embed=None, dev=None):
     if version:
         print(__version__)
         return
 
     # Start the application, passing in arguments
     app = Application(sys.argv, file_path=file_path, file_loader=loader,
-                      embeded=embed)
+                      embeded=embed, dev=dev)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)

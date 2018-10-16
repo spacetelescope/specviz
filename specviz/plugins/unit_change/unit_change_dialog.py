@@ -11,7 +11,8 @@ from qtpy.QtWidgets import (QAction, QColorDialog, QDialog, QDialogButtonBox,
 from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
 
-from ...core.plugin import Plugin, plot_bar
+from ...core.plugin import plugin
+from ...core.hub import Hub
 
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
@@ -19,20 +20,22 @@ log = logging.getLogger('UnitChangeDialog')
 log.setLevel(logging.WARNING)
 
 
-@plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
-def on_action_triggered():
-    dialog = UnitChangeDialog()
-
-
-class UnitChangeDialog(QDialog, Plugin):
+@plugin("Unit Change Plugin")
+class UnitChangeDialog(QDialog):
     """
     A dialog box that allows the user to change units
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Load the ui dialog
+        self.ui = loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "unit_change_dialog.ui")), self)
+
+    def exec_(self):
         # If there is no plot item, don't even try to process unit info
-        if self.plot_item is None or len(self.visible_plot_items) == 0:
+        if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
             message_box.setText("No item plotted, cannot parse unit information.")
             message_box.setIcon(QMessageBox.Warning)
@@ -43,19 +46,14 @@ class UnitChangeDialog(QDialog, Plugin):
             message_box.exec_()
             return
 
-        # Load the ui dialog
-        self.ui = loadUi(os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                         ".", "unit_change_dialog.ui")), self)
-
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
-        if not (self.plot_widget.data_unit
-                and self.plot_widget.spectral_axis_unit):
+        if not (self.hub.plot_widget.data_unit
+                and self.hub.plot_widget.spectral_axis_unit):
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         # Gets all possible conversions from current spectral_axis_unit
         self._spectral_axis_unit_equivalencies = u.Unit(
-            self.plot_widget.spectral_axis_unit).find_equivalent_units(
+            self.hub.plot_widget.spectral_axis_unit).find_equivalent_units(
                 equivalencies=u.spectral())
         self._spectral_axis_unit_equivalencies_titles = [
             u.Unit(unit).long_names[0].title()
@@ -64,8 +62,8 @@ class UnitChangeDialog(QDialog, Plugin):
 
         # Gets all possible conversions for flux from current spectral axis and corresponding units
         self._data_unit_equivalencies = u.Unit(
-            self.plot_widget.spectral_axis_unit).find_equivalent_units(
-                equivalencies=u.spectral_density(self.data_item.spectral_axis))
+            self.hub.plot_widget.spectral_axis_unit).find_equivalent_units(
+                equivalencies=u.spectral_density(self.hub.data_item.spectral_axis))
         self._data_unit_equivalencies_titles = [
             u.Unit(unit).long_names[0].title()
             if len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
@@ -77,19 +75,19 @@ class UnitChangeDialog(QDialog, Plugin):
 
         try:
             # Set the current data units to be the ones in plot_widget
-            if len(u.Unit(self.plot_widget.data_unit).long_names) > 0:
+            if len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
                 self.current_data_unit = u.Unit(
-                    self.plot_widget.data_unit).long_names[0].title()
+                    self.hub.plot_widget.data_unit).long_names[0].title()
             else:
                 self.current_data_unit = u.Unit(
-                    self.plot_widget.data_unit).to_string()
+                    self.hub.plot_widget.data_unit).to_string()
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if (u.Unit(self.plot_widget.data_unit) not in self._data_unit_equivalencies
+            if (u.Unit(self.hub.plot_widget.data_unit) not in self._data_unit_equivalencies
                 and self.current_data_unit not in self._data_unit_equivalencies_titles):
                 self._data_unit_equivalencies.append(
-                    u.Unit(self.plot_widget.data_unit))
+                    u.Unit(self.hub.plot_widget.data_unit))
                 self._data_unit_equivalencies_titles.append(
                     self.current_data_unit)
         except Exception as e:
@@ -99,21 +97,21 @@ class UnitChangeDialog(QDialog, Plugin):
 
         try:
             # Set the current spectral_axis unit to be the ones in plot_widget
-            if len(u.Unit(self.plot_widget.spectral_axis_unit).long_names) > 0:
+            if len(u.Unit(self.hub.plot_widget.spectral_axis_unit).long_names) > 0:
                 self.current_spectral_axis_unit = u.Unit(
-                    self.plot_widget.spectral_axis_unit).long_names[0].title()
+                    self.hub.plot_widget.spectral_axis_unit).long_names[0].title()
             else:
                 self.current_spectral_axis_unit = u.Unit(
-                    self.plot_widget.spectral_axis_unit).to_string()
+                    self.hub.plot_widget.spectral_axis_unit).to_string()
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if (u.Unit(self.plot_widget.spectral_axis_unit)
+            if (u.Unit(self.hub.plot_widget.spectral_axis_unit)
                 not in self._spectral_axis_unit_equivalencies
                 and self.current_spectral_axis_unit
                 not in self._spectral_axis_unit_equivalencies_titles):
                 self._spectral_axis_unit_equivalencies.append(
-                    u.Unit(self.plot_widget.spectral_axis_unit))
+                    u.Unit(self.hub.plot_widget.spectral_axis_unit))
                 self._spectral_axis_unit_equivalencies_titles.append(
                     self.current_spectral_axis_unit)
         except Exception as e:
@@ -130,6 +128,10 @@ class UnitChangeDialog(QDialog, Plugin):
         self.setup_ui()
         self.setup_connections()
 
+        super().exec_()
+
+    @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
+    def on_action_triggered(self):
         self.exec_()
 
     def setup_ui(self):
@@ -256,14 +258,14 @@ class UnitChangeDialog(QDialog, Plugin):
             data_unit_formatted = u.Unit(self.current_data_unit).to_string()
 
             # Checks to make sure data_unit is compatible
-            for plot_data_item in self.plot_widget.listDataItems():
+            for plot_data_item in self.hub.plot_widget.listDataItems():
                 if not plot_data_item.is_data_unit_compatible(data_unit_formatted):
                     log.warning("DID NOT CHANGE UNITS. {} NOT COMPATIBLE".format(data_unit_formatted))
                     self.close()
                     return False
 
             # Set new units
-            self.plot_widget.data_unit = data_unit_formatted
+            self.hub.plot_widget.data_unit = data_unit_formatted
 
         else:
             # Converts the data_unit to something that can be used by PlotWidget
@@ -272,14 +274,14 @@ class UnitChangeDialog(QDialog, Plugin):
             data_unit_formatted = u.Unit(current_data_unit_in_u).to_string()
 
             # Checks to make sure data_unit is compatible
-            for plot_data_item in self.plot_widget.listDataItems():
+            for plot_data_item in self.hub.plot_widget.listDataItems():
                 if not plot_data_item.is_data_unit_compatible(data_unit_formatted):
                     log.warning("DID NOT CHANGE UNITS. {} NOT COMPATIBLE".format(data_unit_formatted))
                     self.close()
                     return False
 
             # Set new units
-            self.plot_widget.data_unit = data_unit_formatted
+            self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":
 
@@ -302,14 +304,14 @@ class UnitChangeDialog(QDialog, Plugin):
             spectral_axis_unit_formatted = u.Unit(self.current_spectral_axis_unit).to_string()
 
             # Checks to make sure spectral_axis_unit is compatible
-            for plot_data_item in self.plot_widget.listDataItems():
+            for plot_data_item in self.hub.plot_widget.listDataItems():
                 if not plot_data_item.is_spectral_axis_unit_compatible(spectral_axis_unit_formatted):
                     log.warning("DID NOT CHANGE UNITS. {} NOT COMPATIBLE".format(spectral_axis_unit_formatted))
                     self.close()
                     return False
 
             # Set new units
-            self.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
+            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
 
         else:
             # Converts the spectral_axis_unit to something that can be used by PlotWidget
@@ -318,14 +320,14 @@ class UnitChangeDialog(QDialog, Plugin):
             spectral_axis_unit_formatted = u.Unit(current_spectral_axis_unit_in_u).to_string()
 
             # Checks to make sure spectral_axis_unit is compatible
-            for plot_data_item in self.plot_widget.listDataItems():
+            for plot_data_item in self.hub.plot_widget.listDataItems():
                 if not plot_data_item.is_spectral_axis_unit_compatible(spectral_axis_unit_formatted):
                     log.warning("DID NOT CHANGE UNITS. {} NOT COMPATIBLE".format(spectral_axis_unit_formatted))
                     self.close()
                     return False
 
             # Set new units
-            self.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
+            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
 
         self.close()
         return True

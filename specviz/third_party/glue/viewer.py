@@ -142,7 +142,7 @@ class SpecvizLayerArtist(LayerArtist):
         else:
             self.plot_data_item.data_item.set_data(spectrum)
             # FIXME: we shouldn't have to call update_data manually
-            self.plot_data_item.update_data()
+            # self.plot_data_item.update_data()
 
         self.update_visual()
 
@@ -206,20 +206,20 @@ class SpecvizDataViewer(DataViewer):
         # self.setCentralWidget(self.plot_window)
 
         # FIXME: the following shouldn't be needed
-        # self.specviz_window.workspace._model.clear()
+        # self.specviz_window._model.clear()
 
     def add_data(self, data):
-        # if not glue_data_has_spectral_axis(data):
-        #     QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
-        #                          buttons=QMessageBox.Ok)
-        #     return False
+        if not glue_data_has_spectral_axis(data):
+            QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
+                                 buttons=QMessageBox.Ok)
+            return False
         return super(SpecvizDataViewer, self).add_data(data)
 
     def add_subset(self, subset):
-        # if not glue_data_has_spectral_axis(subset):
-        #     QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
-        #                          buttons=QMessageBox.Ok)
-        #     return False
+        if not glue_data_has_spectral_axis(subset):
+            QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
+                                 buttons=QMessageBox.Ok)
+            return False
         return super(SpecvizDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):

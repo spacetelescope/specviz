@@ -14,10 +14,13 @@ from specutils import Spectrum1D
 
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
-from ..core.plugin import Plugin
+from ..core.plugin import plugin
 from ..utils import UI_PATH
 from ..utils.qt_utils import dict_to_menu
 from .plotting import PlotWindow
+from ..widgets.delegates import DataItemDelegate
+
+from . import resources
 
 
 class Workspace(QMainWindow):
@@ -69,11 +72,14 @@ class Workspace(QMainWindow):
         self.operations_menu = QMenu(self.operations_button)
         self.operations_button.setMenu(self.operations_menu)
 
+        # Ensure the mdiarea is in tabbed mode
+        self.mdi_area.setViewMode(self.mdi_area.ViewMode.TabbedView)
+
         # Define a new data list model for this workspace
         self._model = DataListModel()
 
         # Set the styled item delegate on the model
-        # self.list_view.setItemDelegate(DataItemDelegate(self))
+        self.list_view.setItemDelegate(DataItemDelegate(self))
 
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
@@ -90,6 +96,12 @@ class Workspace(QMainWindow):
         # Connect to signals given off by the list view
         self._model.itemChanged.connect(
             self._on_item_changed)
+
+        # When a new data item is added to the model, select that item
+        # self._model.rowsInserted.connect(self._on_row_inserted)
+
+        # Mount plugins
+        plugin.mount(self)
 
     @property
     def name(self):
@@ -155,20 +167,27 @@ class Workspace(QMainWindow):
 
             return item
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self, item=None, index=None):
+        if index is not None:
+            self.list_view.setCurrentIndex(index)
+            return
+
         # If the item checkbox is clicked, ensure that the item is also selected
-        if item.isEnabled():
-            source_index = self.list_view.model().sourceModel().indexFromItem(item)
+        plot_item = self.proxy_model.item_from_id(item.identifier)
+
+        if plot_item.visible:
+            source_index = self.model.indexFromItem(item)
             idx = self.list_view.model().mapFromSource(source_index)
             self.list_view.setCurrentIndex(idx)
+            return
 
-        for item in self.list_view.model().items:
-            if item.visible:
-                proxy_index = self.list_view.model().mapFromSource(item.data_item.index())
+        for plot_item in self.list_view.model().items:
+            if plot_item.visible:
+                proxy_index = self.list_view.model().mapFromSource(plot_item.data_item.index())
                 self.list_view.setCurrentIndex(proxy_index)
-                break
-        else:
-            self.list_view.clearSelection()
+                return
+
+        self.list_view.clearSelection()
 
     def _on_current_selected_changed(self, selected, deselected):
         if len(selected.indexes()) > 0:
@@ -179,11 +198,6 @@ class Workspace(QMainWindow):
         workspace = self._app.add_workspace()
         self._app.current_workspace = workspace
         workspace.add_plot_window()
-
-        from ..core.plugin import plugin_bar, tool_bar, plot_bar
-
-        for plugin in plugin_bar.registry + tool_bar.registry:
-            plugin()
 
     def _on_change_color_theme(self, theme):
         import pyqtgraph as pg
@@ -257,10 +271,8 @@ class Workspace(QMainWindow):
         # Fire a signal letting everyone know a new plot window has been added
         self.plot_window_added.emit(plot_window)
 
-        from ..core.plugin import plot_bar
-
-        for pi in plot_bar.registry:
-            pi()
+        # Mount plugins
+        plugin.mount(self, filt='plot_bar')
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -340,6 +352,12 @@ class Workspace(QMainWindow):
             spec = Spectrum1D.read(file_path, format=file_loader)
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
+
+            # If there are any current plots, attempt to add the data to the
+            # plot
+            plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
+            plot_data_item.visible = True
+            self.current_plot_window.plot_widget.on_item_changed(data_item)
 
             return data_item
         except:
