@@ -95,6 +95,8 @@ class Workspace(QMainWindow):
         # Connect to signals given off by the list view
         self._model.itemChanged.connect(
             self._on_item_changed)
+        self._model.rowsInserted.connect(
+            lambda idx: self._on_item_changed(index=idx))
 
         # Mount plugins
         plugin.mount(self)
@@ -163,20 +165,27 @@ class Workspace(QMainWindow):
 
             return item
 
-    def _on_item_changed(self, item):
+    def _on_item_changed(self, item=None, index=None):
+        if index is not None:
+            self.list_view.setCurrentIndex(index)
+            return
+
         # If the item checkbox is clicked, ensure that the item is also selected
-        if item.isEnabled():
+        plot_item = self.proxy_model.item_from_id(item.identifier)
+
+        if plot_item.visible:
             source_index = self.list_view.model().sourceModel().indexFromItem(item)
             idx = self.list_view.model().mapFromSource(source_index)
             self.list_view.setCurrentIndex(idx)
+            return
 
-        for item in self.list_view.model().items:
-            if item.visible:
-                proxy_index = self.list_view.model().mapFromSource(item.data_item.index())
+        for plot_item in self.list_view.model().items:
+            if plot_item.visible:
+                proxy_index = self.list_view.model().mapFromSource(plot_item.data_item.index())
                 self.list_view.setCurrentIndex(proxy_index)
-                break
-        else:
-            self.list_view.clearSelection()
+                return
+
+        self.list_view.clearSelection()
 
     def _on_current_selected_changed(self, selected, deselected):
         if len(selected.indexes()) > 0:
