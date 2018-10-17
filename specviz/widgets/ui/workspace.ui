@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>720</height>
+    <width>941</width>
+    <height>582</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -69,8 +69,14 @@
        <property name="lineWidth">
         <number>1</number>
        </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
        <property name="dragDropMode">
         <enum>QAbstractItemView::DragOnly</enum>
+       </property>
+       <property name="textElideMode">
+        <enum>Qt::ElideRight</enum>
        </property>
       </widget>
       <widget class="QMdiArea" name="mdi_area">
@@ -189,8 +195,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1280</width>
-     <height>22</height>
+     <width>941</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

@@ -11,7 +11,7 @@ class DataItemDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         # option.decorationAlignment = Qt.AlignRight
-        option.decorationPosition = QStyleOptionViewItem.Right
+        option.decorationPosition = QStyleOptionViewItem.Left
 
         super().paint(painter, option, index)
         # x = option.rect.x()

@@ -53,7 +53,7 @@ class SmoothingDialog(QDialog):
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(parent=parent, *args, **kwargs)
 
-        self.model_items = self.hub.data_items
+        self.model_items = None
 
         self._smoothing_thread = None  # Worker thread
 
@@ -62,10 +62,11 @@ class SmoothingDialog(QDialog):
         self.data = None  # Current `~specviz.core.items.DataItem`
         self.size = None  # Current kernel size
 
-        self._load_ui()
-
     @plugin.tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
+        # Update the current list of available data items
+        self.model_items = self.hub.data_items
+        self._load_ui()
         self.exec_()
 
     def _load_ui(self):
