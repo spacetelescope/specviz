@@ -1,24 +1,19 @@
 import os
-
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QWidget, QMessageBox, QToolButton, QMenu, QAction
-from qtpy.uic import loadUi
-from qtpy.QtCore import Qt
-
-from .equation_editor_dialog import ModelEquationEditorDialog
-from .models import ModelFittingModel
-from ...core.plugin import plugin
-from ...core.items import DataItem
-from .items import ModelDataItem
-
-from specutils.spectra import Spectrum1D
-from specutils.fitting import fit_lines
-
-from astropy.modeling import models
-import astropy.units as u
-import numpy as np
 import uuid
 
+import numpy as np
+from astropy.modeling import models
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget
+from qtpy.uic import loadUi
+from specutils.fitting import fit_lines
+from specutils.spectra import Spectrum1D
+
+from .equation_editor_dialog import ModelEquationEditorDialog
+from .items import ModelDataItem
+from .models import ModelFittingModel
+from ...core.plugin import plugin
 
 MODELS = {
     'Const1D': models.Const1D,

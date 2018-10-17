@@ -11,7 +11,7 @@ class LinearRegionItem(pg.LinearRegionItem):
         self._selected = False
 
         # Define the selected region color
-        self._default_brush = pg.mkBrush((200, 200, 200, 100))
+        self._default_brush = pg.mkBrush((200, 200, 200, 75))
         self._selected_brush = self.brush
         self.setBrush(self._default_brush)
 
