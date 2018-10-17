@@ -4,6 +4,7 @@ import numpy as np
 from astropy import units as u
 
 from specutils.spectra.spectral_region import SpectralRegion
+from specutils.manipulation import extract_region
 from specutils.analysis.uncertainty import snr
 
 from qtpy.QtWidgets import QWidget
@@ -236,11 +237,11 @@ class StatisticsWidget(QWidget):
                 self.set_status("Region out of bound.")
                 return self.clear_statistics()
             try:
-                idx1, idx2 = spectral_region.to_pixel(spec)
+                idx1, idx2 = spectral_region.bounds
                 if idx1 == idx2:
                     self.set_status("Region over single value.")
                     return self.clear_statistics()
-                spec = spectral_region.extract(spec)
+                spec = extract_region(spec, spectral_region)
             except ValueError as e:
                 self.set_status("Region could not be extracted "
                                 "from target data.")

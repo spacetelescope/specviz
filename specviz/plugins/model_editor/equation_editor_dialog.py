@@ -87,8 +87,11 @@ class ModelEquationEditorDialog(QDialog):
         # Store the cursor position because setting the html explicitly will
         # reset it to the beginning. Also, disable signals so that setting the
         # text in the box doesn't cause infinite recursion.
-        cursor_pos = self.equation_text_edit.textCursor()
+        cursor = self.equation_text_edit.textCursor()
+        cursor_pos = cursor.position()
         self.equation_text_edit.blockSignals(True)
         self.equation_text_edit.setHtml(full_string)
         self.equation_text_edit.blockSignals(False)
-        self.equation_text_edit.setTextCursor(cursor_pos)
+        cursor.setPosition(cursor_pos)
+        self.equation_text_edit.setTextCursor(cursor)
+        self.equation_text_edit.repaint()

@@ -1,24 +1,19 @@
 import os
-
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QWidget, QMessageBox, QToolButton, QMenu, QAction
-from qtpy.uic import loadUi
-from qtpy.QtCore import Qt
-
-from .equation_editor_dialog import ModelEquationEditorDialog
-from .models import ModelFittingModel
-from ...core.plugin import plugin
-from ...core.items import DataItem
-from .items import ModelDataItem
-
-from specutils.spectra import Spectrum1D
-from specutils.fitting import fit_lines
-
-from astropy.modeling import models
-import astropy.units as u
-import numpy as np
 import uuid
 
+import numpy as np
+from astropy.modeling import models
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget
+from qtpy.uic import loadUi
+from specutils.fitting import fit_lines
+from specutils.spectra import Spectrum1D
+
+from .equation_editor_dialog import ModelEquationEditorDialog
+from .items import ModelDataItem
+from .models import ModelFittingModel
+from ...core.plugin import plugin
 
 MODELS = {
     'Const1D': models.Const1D,
@@ -87,14 +82,24 @@ class ModelEditor(QWidget):
         # Connect data change signals so that the plot updates when the user
         # changes a parameter in the model view model
         model_data_item.model_editor_model.dataChanged.connect(
-            plot_data_item.set_data)
+            lambda tl, br, r, pi=plot_data_item: self._on_model_data_changed(tl, br, pi))
 
     def _add_fittable_model(self, model):
         idx = self.model_tree_view.model().add_model(model())
         self.model_tree_view.setExpanded(idx, True)
 
-        for i in range(1, 4):
+        for i in range(0, 3):
             self.model_tree_view.resizeColumnToContents(i)
+
+    def _on_model_data_changed(self, top_left, bottom_right, plot_data_item):
+        if top_left.column() == 1:
+            # We only want to update the model if the parameter values
+            # are changed, which exist in column 1.
+            plot_data_item.set_data()
+        elif top_left.column() == 0:
+            # In this case, the user has renamed a model. Since the equation
+            # editor now doesn't know about the old model, reset the equation
+            self.hub.data_item.model_editor_model.reset_equation()
 
     def _on_equation_edit_button_clicked(self):
         # Get the current model
@@ -118,6 +123,7 @@ class ModelEditor(QWidget):
 
     def _on_plot_item_selected(self, plot_data_item):
         if not isinstance(plot_data_item.data_item, ModelDataItem):
+            self.model_tree_view.setModel(None)
             return
 
         model_data_item = plot_data_item.data_item
@@ -126,7 +132,7 @@ class ModelEditor(QWidget):
         self.model_tree_view.setModel(model_data_item.model_editor_model)
         self.model_tree_view.expandAll()
 
-        for i in range(1, 4):
+        for i in range(0, 3):
             self.model_tree_view.resizeColumnToContents(i)
 
     def _on_fit_clicked(self, model_plot_data_item):
@@ -173,5 +179,5 @@ class ModelEditor(QWidget):
 
                 model_item.child(cidx, 3).setData(parameter.fixed, Qt.UserRole + 1)
 
-        for i in range(1, 4):
+        for i in range(0, 3):
             self.model_tree_view.resizeColumnToContents(i)

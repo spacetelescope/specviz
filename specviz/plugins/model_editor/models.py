@@ -100,6 +100,7 @@ class ModelFittingModel(QStandardItemModel):
             param_fixed = QStandardItem()
             param_fixed.setData(parameter.fixed, Qt.UserRole + 1)
             param_fixed.setCheckable(True)
+            param_fixed.setEditable(False)
 
             model_item.appendRow([param_name, param_value, param_unit, param_fixed])
 
@@ -111,6 +112,13 @@ class ModelFittingModel(QStandardItemModel):
             if len(self._equation) > 0 else "{}".format(model_name)
 
         return model_item.index()
+
+    def reset_equation(self):
+        self._equation = ""
+
+        for item in self.items:
+            self._equation += " + {}".format(item.text()) \
+                if len(self._equation) > 0 else "{}".format(item.text())
 
     def evaluate(self):
         """
