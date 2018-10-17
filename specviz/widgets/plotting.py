@@ -1,21 +1,17 @@
+import logging
 import os
 
 import astropy.units as u
 import numpy as np
-import logging
 import pyqtgraph as pg
-import qtawesome as qta
-
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import (QAction, QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMenu, QMessageBox, QSizePolicy, QToolButton,
-                            QWidget)
+from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMessageBox)
 from qtpy.uic import loadUi
 
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
-from ..utils import UI_PATH
 
 
 class PlotWindow(QMdiSubWindow):
