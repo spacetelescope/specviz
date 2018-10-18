@@ -7,8 +7,8 @@ import time
 import random
 
 import click
-from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QIcon
+from qtpy.QtCore import Qt, Signal, QRectF
+from qtpy.QtGui import QIcon, QPainterPath, QRegion
 from qtpy.QtWidgets import QApplication, QMainWindow, QWidget
 
 from . import plugins, __version__
@@ -139,6 +139,9 @@ class SplashDialog(QDialog):
         self._total_time = 0
 
         self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAutoFillBackground(True)
+        self.setAttribute(Qt.WA_NoSystemBackground, True)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
 
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
