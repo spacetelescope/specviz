@@ -1,23 +1,19 @@
 import logging
 import os
 import sys
-from collections import OrderedDict
 
 from astropy.io import registry as io_registry
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
-from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QMenu,
-                            QMessageBox, QSizePolicy, QTabBar, QToolButton,
-                            QWidget)
+from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
+                            QMessageBox, QTabBar, QToolButton)
 from qtpy.uic import loadUi
 from specutils import Spectrum1D
 
+from .plotting import PlotWindow
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
 from ..core.plugin import plugin
-from ..utils import UI_PATH
-from ..utils.qt_utils import dict_to_menu
-from .plotting import PlotWindow
 from ..widgets.delegates import DataItemDelegate
 
 from . import resources
@@ -319,7 +315,9 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]
+        filters = [x['Format'] + " (*)"
+                   for x in io_registry.get_formats(Spectrum1D)
+                   if x['Read'] == 'Yes']
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
@@ -328,7 +326,7 @@ class Workspace(QMainWindow):
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=fmt.split()[0])
+        self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
 
     def load_data(self, file_path, file_loader, display=False):
         """

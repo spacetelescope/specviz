@@ -3,7 +3,7 @@ import pytest
 from qtpy import QtCore
 from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
 
-from ..widgets.plotting import UnitChangeDialog
+from ..unit_change_dialog import UnitChangeDialog
 
 
 # def test_custom_units_correct(qtbot):

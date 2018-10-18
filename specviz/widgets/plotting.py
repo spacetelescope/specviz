@@ -4,6 +4,7 @@ import os
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
+import qtawesome as qta
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox)
@@ -20,6 +21,8 @@ class PlotWindow(QMdiSubWindow):
     """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
+        # Hide the icon in the title bar
+        self.setWindowIcon(qta.icon('fa.circle', opacity=0))
 
         # The central widget of the sub window will be a main window so that it
         # can support having tab bars
@@ -342,6 +345,10 @@ class PlotWidget(pg.PlotWidget):
         else:
             item.reset_units()
 
+        # Include uncertainty item
+        if item.uncertainty is not None:
+            self.addItem(item.error_bar_item)
+
         self.addItem(item)
 
         if initialize:
@@ -422,6 +429,10 @@ class PlotWidget(pg.PlotWidget):
 
             # Remove plot data item from this plot
             self.removeItem(item)
+
+            # Remove plot error bars
+            if item.uncertainty is not None:
+                self.removeItem(item.error_bar_item)
 
             # If there are no current plots, reset unit information for plot
             if len(self.listDataItems()) == 0:

@@ -1,5 +1,6 @@
 from itertools import cycle
 
+import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
 from qtpy.QtCore import Qt, Signal
@@ -44,6 +45,10 @@ class DataItem(QStandardItem):
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
 
+    @property
+    def uncertainty(self):
+        return self.data(self.DataRole).uncertainty
+
     def set_data(self, data):
         """
         Updates the stored :class:`~specutils.Spectrum1D` data values.
@@ -63,7 +68,7 @@ class PlotDataItem(pg.PlotDataItem):
     visibility_changed = Signal(bool)
 
     def __init__(self, data_item, color=None, *args, **kwargs):
-        super(PlotDataItem, self).__init__(*args, **kwargs)
+        super(PlotDataItem, self).__init__(stepMode=True, *args, **kwargs)
 
         self._data_item = data_item
         self._data_unit = self._data_item.flux.unit.to_string()
@@ -71,6 +76,9 @@ class PlotDataItem(pg.PlotDataItem):
         self._color = color or next(flatui)
         self._width = 1
         self._visible = False
+
+        # Include error bar item
+        self._error_bar_item = pg.ErrorBarItem(pen=[128, 128, 128, 200])
 
         # Set data
         self.set_data()
@@ -109,6 +117,22 @@ class PlotDataItem(pg.PlotDataItem):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
 
+    @property
+    def error_bar_item(self):
+        spectral_axis = self.spectral_axis
+
+        # If step mode is one, offset the error bars by a half delta so that
+        # they cross the middle of the bin.
+        if self.opts.get('stepMode'):
+            diff = np.diff(spectral_axis)
+            spectral_axis += np.append(diff, diff[-1]) * 0.5
+
+        self._error_bar_item.setData(x=spectral_axis,
+                                     y=self.flux,
+                                     height=self.uncertainty)
+
+        return self._error_bar_item
+
     def are_units_compatible(self, spectral_axis_unit, data_unit):
         return self.is_data_unit_compatible(data_unit) and \
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
@@ -140,14 +164,26 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def flux(self):
-        return self._data_item.flux.to(self.data_unit or "",
-                                       equivalencies=spectral_density(
-                                           self.spectral_axis)).value
+        return self.data_item.flux.to(self.data_unit or "",
+                                      equivalencies=spectral_density(
+                                          self.spectral_axis)).value
 
     @property
     def spectral_axis(self):
-        return self._data_item.spectral_axis.to(self.spectral_axis_unit or "",
-                                                equivalencies=spectral()).value
+        return self.data_item.spectral_axis.to(self.spectral_axis_unit or "",
+                                               equivalencies=spectral()).value
+
+    @property
+    def uncertainty(self):
+        if self.data_item.uncertainty is None:
+            return
+
+        uncertainty = self.data_item.uncertainty.array * \
+                      self.data_item.uncertainty.unit
+
+        return uncertainty.to(self.data_unit or "",
+                              equivalencies=spectral_density(
+                                  self.spectral_axis)).value
 
     @property
     def color(self):
@@ -187,12 +223,13 @@ class PlotDataItem(pg.PlotDataItem):
         self._visible = value
         self.visibility_changed.emit(self._visible)
 
-    def update_data(self):
-        # Replot data
-        self.setData(self.spectral_axis, self.flux, connect="finite")
-
     def set_data(self):
-        self.setData(self.spectral_axis, self.flux, connect="finite")
+        spectral_axis = self.spectral_axis
+
+        if self.opts.get('stepMode'):
+            spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
+
+        self.setData(spectral_axis, self.flux, connect="finite")
 
 
 class ModelItem(QStandardItem):
