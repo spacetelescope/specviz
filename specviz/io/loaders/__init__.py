@@ -1,0 +1,1 @@
+from .hst_cos import cos_spectrum_loader
