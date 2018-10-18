@@ -9,9 +9,7 @@ __all__ = ['ecsv_identify', 'ecsv_spectrum_loader']
 
 
 def ecsv_identify(*args, **kwargs):
-    """ Check if it's an ECSV file.
-
-    """
+    """Check if it's an ECSV file."""
     name = os.path.basename(args[0])
 
     if name.lower().split('.')[-1] == 'ecsv':
@@ -22,7 +20,8 @@ def ecsv_identify(*args, **kwargs):
 
 @data_loader(label="Spectrum ECSV", identifier=ecsv_identify)
 def ecsv_spectrum_loader(file_name, **kwargs):
-    """ Load spectrum from ECSV file
+    """
+    Load spectrum from ECSV file
 
     Parameters
     ----------

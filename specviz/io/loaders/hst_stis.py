@@ -11,10 +11,7 @@ __all__ = ['stis_identify', 'stis_spectrum_loader']
 
 
 def stis_identify(*args, **kwargs):
-    """
-    Check whether given file contains HST/STIS spectral data.
-    """
-
+    """Check whether given file contains HST/STIS spectral data."""
     with fits.open(args[0]) as hdu:
         if hdu[0].header['TELESCOP'] == 'HST' and hdu[0].header['INSTRUME'] == 'STIS':
            return True
@@ -24,7 +21,8 @@ def stis_identify(*args, **kwargs):
 
 @data_loader(label="HST/STIS",identifier=stis_identify)
 def stis_spectrum_loader(file_name, **kwargs):
-    """ Load file from STIS spectral data into a spectrum object
+    """
+    Load file from STIS spectral data into a spectrum object
 
     Parameters
     ----------
@@ -45,11 +43,11 @@ def stis_spectrum_loader(file_name, **kwargs):
 
         unit = Unit("erg/cm**2 Angstrom s")
         disp_unit = Unit('Angstrom')
-        dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
         data = hdu[1].data['FLUX'].flatten() * unit
+        dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
         uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten() * unit)
 
-    return Spectrum1D(flux=data * unit,
+    return Spectrum1D(flux=data,
                       spectral_axis=dispersion,
                       uncertainty=uncertainty,
                       meta=meta)
