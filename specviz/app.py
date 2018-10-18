@@ -3,16 +3,21 @@ import logging
 import os
 import pkgutil
 import sys, inspect
+import time
+import random
 
 import click
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QMainWindow
+from qtpy.QtWidgets import QApplication, QMainWindow, QWidget
 
 from . import plugins, __version__
 from .core.plugin import plugin
 from .utils import DATA_PATH
 from .widgets.workspace import Workspace
+from qtpy.QtWidgets import QDialog
+from qtpy.uic import loadUi
+from qtpy.QtCore import Qt, QTimer, QThread
 
 
 class Application(QApplication):
@@ -23,10 +28,19 @@ class Application(QApplication):
     workspace_added = Signal(Workspace)
 
     def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
-                 dev=False, **kwargs):
+                 dev=False, skip_splash=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
+
+        # Set application icon
+        self.setWindowIcon(QIcon(":/icons/icon.png"))
+
         # Load local plugins
         self.load_local_plugins()
+
+        # Show splash
+        if not skip_splash:
+            self._splash_dialog = SplashDialog(2000)
+            self._splash_dialog.exec()
 
         # If specviz is not being embded in another application, go ahead and
         # perform the normal gui setup procedure.
@@ -118,26 +132,55 @@ class Application(QApplication):
         logging.info("Setting active workspace to '%s'", window.name)
 
 
+class SplashDialog(QDialog):
+    def __init__(self, wait_time, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._wait_time = wait_time
+        self._total_time = 0
+
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         "widgets", "ui", "splash_non_modal.ui")),
+            self)
+
+        # Set the version number
+        self.version_label.setText("Version {}".format(__version__))
+
+        self._timer = QTimer()
+        self._timer.timeout.connect(self.calculate_progress)
+        self._timer.start(300)
+
+    def calculate_progress(self):
+        rand = random.randrange(100, 500)
+        self._total_time += rand
+        self.progress_bar.setValue(self._total_time/self._wait_time*100)
+
+        if self._total_time > self._wait_time:
+            self._timer.stop()
+            self.close()
+
+
+
 @click.command()
+@click.option('--hide_splash', '-H', is_flag=True, help="Hide the startup splash screen.")
 @click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
 @click.option('--loader', '-L', type=str, help="Use specified loader when opening the provided file.")
 @click.option('--embed', '-E', is_flag=True, help="Only display a single plot window. Useful when embedding in other applications.")
 @click.option('--dev', '-D', is_flag=True, help="Open SpecViz in developer mode. This mode auto-loads example spectral data.")
 @click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
-def start(version=False, file_path=None, loader=None, embed=None, dev=None):
+def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide_splash=False):
     if version:
         print(__version__)
         return
 
     # Start the application, passing in arguments
     app = Application(sys.argv, file_path=file_path, file_loader=loader,
-                      embeded=embed, dev=dev)
+                      embeded=embed, dev=dev, skip_splash=hide_splash)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-
-    # Set application icon
-    app.setWindowIcon(QIcon(os.path.join(DATA_PATH, "icon.png")))
 
     sys.exit(app.exec_())
 
