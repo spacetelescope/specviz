@@ -4,6 +4,7 @@ import os
 import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
+import qtawesome as qta
 from qtpy.QtCore import Signal
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox)
@@ -20,6 +21,8 @@ class PlotWindow(QMdiSubWindow):
     """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
+        # Hide the icon in the title bar
+        self.setWindowIcon(qta.icon('fa.circle', opacity=0))
 
         # The central widget of the sub window will be a main window so that it
         # can support having tab bars
