@@ -319,7 +319,9 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]
+        filters = [x['Format'] + " (*)"
+                   for x in io_registry.get_formats(Spectrum1D)
+                   if x['Read'] == 'Yes']
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
