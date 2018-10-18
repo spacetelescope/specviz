@@ -342,6 +342,10 @@ class PlotWidget(pg.PlotWidget):
         else:
             item.reset_units()
 
+        # Include uncertainty item
+        if item.uncertainty is not None:
+            self.addItem(item.error_bar_item)
+
         self.addItem(item)
 
         if initialize:
@@ -422,6 +426,10 @@ class PlotWidget(pg.PlotWidget):
 
             # Remove plot data item from this plot
             self.removeItem(item)
+
+            # Remove plot error bars
+            if item.uncertainty is not None:
+                self.removeItem(item.error_bar_item)
 
             # If there are no current plots, reset unit information for plot
             if len(self.listDataItems()) == 0:

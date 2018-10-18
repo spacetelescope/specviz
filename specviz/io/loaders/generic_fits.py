@@ -12,7 +12,7 @@ from astropy.nddata import StdDevUncertainty
 from specutils.io.registers import data_loader, custom_writer
 from specutils import Spectrum1D
 
-__all__ = ['fits_identify', 'simple_generic_loader', 'simple_generic_writer']
+__all__ = ['simple_generic_loader', 'simple_generic_writer']
 
 
 def fits_identify(*args, **kwargs):
@@ -24,7 +24,7 @@ def fits_identify(*args, **kwargs):
             args[0].lower().split('.')[-1] in ['fits', 'fit', 'fits.gz'])
 
 
-@custom_writer("Generic FITS Writer")
+@custom_writer("Generic FITS")
 def simple_generic_writer(data, file_name, **kwargs):
     """
     Basic `Spectrum1DRef` FITS writer.
@@ -48,7 +48,7 @@ def simple_generic_writer(data, file_name, **kwargs):
     thdulist.writeto("{}.fits".format(file_name), overwrite=True)
 
 
-@data_loader(label="Generic FITS Loader", identifier=fits_identify)
+@data_loader(label="Generic FITS", identifier=fits_identify)
 def simple_generic_loader(file_name, **kwargs):
     """
     Basic FITS file loader
@@ -71,12 +71,14 @@ def simple_generic_loader(file_name, **kwargs):
     hdulist = fits.open(file_name, **kwargs)
 
     header = hdulist[0].header
+    header['CTYPE1'] = 'LINEAR'
+    header['CUNIT1'] = 'Angstrom'
 
     tab = Table.read(file_name)
 
     unit = Unit('Jy')
     meta = {'header': header}
-    wcs = WCS(hdulist[0].header)
+    wcs = WCS(header)
     uncertainty = StdDevUncertainty(tab["err"] * unit)
     data = tab["flux"] * unit
 
