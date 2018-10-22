@@ -14,6 +14,11 @@ from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 
+from .linelists_window import LineListsWindow
+from ..core.linelist import ingest
+from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
+from .line_labels_plotter import LineLabelsPlotter
+
 
 class PlotWindow(QMdiSubWindow):
     """
@@ -98,7 +103,7 @@ class PlotWindow(QMdiSubWindow):
             self.current_item.color = color.name()
 
     def _on_line_labels(self):
-        pass # for now
+        self._plot_widget._show_linelists_window()
 
 
 class PlotWidget(pg.PlotWidget):
@@ -172,6 +177,10 @@ class PlotWidget(pg.PlotWidget):
 
         # Show grid lines
         self.showGrid(x=True, y=True, alpha=0.25)
+
+        # Line label plot control.
+        self._linelist_window = None
+        self._is_selected = True
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
@@ -531,4 +540,30 @@ class PlotWidget(pg.PlotWidget):
         self._selected_region = None
         self._region_text_item.setText("")
         self.roi_removed.emit(roi)
+
+    # --------  Line lists and line labels handling.
+
+    def _show_linelists_window(self, *args, **kwargs):
+        if self._is_selected:
+            if self._linelist_window is None:
+                self._linelist_window = LineListsWindow(self)
+                self.line_labels_plotter = LineLabelsPlotter(self)
+
+                self.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
+
+            self._linelist_window.show()
+
+    def _dismiss_linelists_window(self, close, **kwargs):
+        if self._is_selected and self._linelist_window:
+            if close:
+                self._linelist_window.close()
+                self.line_labels_plotter = None
+                self._linelist_window = None
+            else:
+                self._linelist_window.hide()
+
+
+
+
+
 
