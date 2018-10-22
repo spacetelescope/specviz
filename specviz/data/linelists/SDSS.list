@@ -1,0 +1,52 @@
+# Table of Spectral Lines Used in SDSS
+#
+# http://classic.sdss.org/dr6/algorithms/linestable.html
+# Vacuum wavelengths
+1033.82   0.0  1.0  Emission    O VI
+1215.24   0.0  9.0  Emission    Lyα
+1240.81   0.0  3.0  Emission    N V
+1305.53   0.0  0.0  Emission    O I
+1335.31   0.0  0.0  Emission    C II
+1397.61   0.0  0.0  Emission    Si IV
+1399.8    0.0  1.0  Emission    Si IV + O IV
+1549.48   0.0  8.0  Emission    C IV
+1640.4    0.0  0.0  Emission    He II
+1665.85   0.0  0.0  Emission    O III
+1857.4    0.0  0.0  Emission    Al III
+1908.734  0.0  7.0  Emission    C III
+2326.0    0.0  0.5  Emission    C II
+2439.5    0.0  0.0  Emission    Ne IV
+2799.117  1.0  8.0  Emission    Mg II
+3346.79   0.0  0.0  Emission    Ne V
+3426.85   0.0  0.0  Emission    Ne VI
+3727.092  5.0  1.0  Emission    O II
+3729.875  0.0  0.0  Emission    O II
+3889.0    0.0  0.0  Emission    He I
+4072.3    0.0  0.0  Emission    S II
+4102.89   0.5  2.0  Emission    Hδ
+4341.68   1.0  3.0  Emission    Hγ
+4364.436  0.0  0.0  Emission    O III
+4862.68   2.0  4.0  Emission    Hβ
+4932.603  0.0  0.0  Emission    O III
+4960.295  2.0  2.0  Emission    O III
+5008.240  3.0  2.0  Emission    O III
+6302.046  0.0  0.0  Emission    O I
+6365.536  0.0  0.0  Emission    O I
+6529.03   0.0  0.0  Emission    N I
+6549.86   3.0  0.0  Emission    N II
+6564.61   8.0  8.0  Emission    Hα
+6585.27   3.0  0.0  Emission    N II
+6718.29   3.0  0.0  Emission    S II
+6732.67   3.0  0.0  Emission    S II
+3934.777 -1.0  0.0  Absorption  K
+3969.588 -1.0  0.0  Absorption  H
+4305.61  -1.0  0.0  Absorption  G
+5176.7   -1.0  0.0  Absorption  Mg
+5895.6   -1.0  0.0  Absorption  Na
+8500.36  -1.0  0.0  Absorption  CaII
+8544.44  -1.0  0.0  Absorption  CaII
+8664.52  -1.0  0.0  Absorption  CaII
+5578.5    0.0  0.0  Sky         Sky
+5894.6    0.0  0.0  Sky         Sky
+6301.7    0.0  0.0  Sky         Sky
+7246.0    0.0  0.0  Sky         Sky

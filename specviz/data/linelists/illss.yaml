@@ -1,0 +1,33 @@
+name: ILLSS
+extension: [list]
+filename: 'illss.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 1
+    end: 10
+    units: 'Angstrom'
+  - name: 'Element'
+    index: 1
+    start: 12
+    end: 16
+  - name: 'n_lambda'
+    index: 2
+    start: 26
+    end: 26
+  - name: 'Multiplet'
+    index: 3
+    start: 29
+    end: 41
+  - name: 'Intensity'
+    index: 3
+    start: 48
+    end: 54
+  - name: 'IP'
+    index: 3
+    start: 62
+    end: 68
+meta:
+  author: STScI

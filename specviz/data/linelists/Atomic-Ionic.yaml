@@ -1,0 +1,30 @@
+name: Atomic/Ionic
+extension: [list]
+filename: 'Atomic-Ionic.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 32
+    end: 40
+    units: 'micron'
+  - name: 'Species'
+    index: 1
+    start: 0
+    end: 10
+  - name: 'Transition'
+    index: 2
+    start: 12
+    end: 25
+  - name: 'Error'
+    index: 3
+    start: 44
+    end: 51
+    units: 'micron'
+  - name: 'Reference'
+    index: 4
+    start: 60
+    end: 65
+meta:
+  author: STScI
