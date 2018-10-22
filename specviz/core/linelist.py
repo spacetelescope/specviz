@@ -53,10 +53,10 @@ _linelists_cache = []
 def get_from_file(linelist_path, filename):
 
     if filename.endswith('.yaml'):
-        loader = yaml.load(open(filename, 'r'))
-        linelist_fullname = linelist_path + os.path.sep + loader.filename
+        yaml_object = yaml.load(open(filename, 'r'))
+        linelist_fullname = linelist_path + os.path.sep + yaml_object['filename']
 
-        return LineList.read_list(linelist_fullname, loader)
+        return LineList.read_list(linelist_fullname, yaml_object)
 
     elif filename.endswith('.ecsv'):
         table = Table.read(filename, format='ascii.ecsv')
@@ -195,32 +195,32 @@ class LineList(Table):
         return self._table
 
     @classmethod
-    def read_list(cls, filename, yaml_loader):
+    def read_list(cls, filename, yaml_object):
         names_list = []
         start_list = []
         end_list = []
         units_list = []
         tooltips_list = []
-        for k in range(len((yaml_loader.columns))):
-            name = yaml_loader.columns[k][COLUMN_NAME]
+        for k in range(len((yaml_object['columns']))):
+            name = yaml_object['columns'][k][COLUMN_NAME]
             names_list.append(name)
 
-            start = yaml_loader.columns[k][COLUMN_START]
-            end = yaml_loader.columns[k][COLUMN_END]
+            start = yaml_object['columns'][k][COLUMN_START]
+            end = yaml_object['columns'][k][COLUMN_END]
             start_list.append(start)
             end_list.append(end)
 
             units = ''
-            if UNITS_COLUMN in yaml_loader.columns[k]:
-                units = yaml_loader.columns[k][UNITS_COLUMN]
+            if UNITS_COLUMN in yaml_object['columns'][k]:
+                units = yaml_object['columns'][k][UNITS_COLUMN]
             units_list.append(units)
 
             tooltip = ''
-            if TOOLTIP_COLUMN in yaml_loader.columns[k]:
-                tooltip = yaml_loader.columns[k][TOOLTIP_COLUMN]
+            if TOOLTIP_COLUMN in yaml_object['columns'][k]:
+                tooltip = yaml_object['columns'][k][TOOLTIP_COLUMN]
             tooltips_list.append(tooltip)
 
-        tab = ascii.read(filename, format = yaml_loader.format,
+        tab = ascii.read(filename, format = yaml_object['format'],
                          names = names_list,
                          col_starts = start_list,
                          col_ends = end_list)
@@ -238,7 +238,7 @@ class LineList(Table):
         # is taken from the 'name' element in the
         # YAML file descriptor.
 
-        return cls(tab, tooltips=tooltips_list, name=yaml_loader.name)
+        return cls(tab, tooltips=tooltips_list, name=yaml_object['name'])
 
     @classmethod
     def merge(cls, lists, target_units):
