@@ -2,12 +2,15 @@ import os
 
 from qtpy.QtCore import QThread, Signal
 from qtpy.QtWidgets import QDialog, QMessageBox
+from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
 
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               trapezoid_smooth, median_smooth)
-from ..core.items import PlotDataItem
-from ..utils import UI_PATH
+from ...core.items import PlotDataItem
+from ...core.plugin import plugin
+from ...core.hub import Hub
+
 
 KERNEL_REGISTRY = {
     """
@@ -39,6 +42,7 @@ KERNEL_REGISTRY = {
 }
 
 
+@plugin("Smoothing")
 class SmoothingDialog(QDialog):
     """
     Widget to handle user interactions with smoothing operations.
@@ -46,12 +50,10 @@ class SmoothingDialog(QDialog):
     It utilizes smoothing functions in `~specutils.manipulation.smoothing`.
     Assigns the smoothing workload to a QTread instance.
     """
-    def __init__(self, workspace, parent=None):
-        super(SmoothingDialog, self).__init__(parent=parent)
-        self.setWindowTitle("Spectral Smoothing")
-        self.workspace = workspace  # Parent Workspace
-        # List of `~specviz.core.items.DataItem`:
-        self.model_items = self.workspace.model.data_list()
+    def __init__(self, parent=None, *args, **kwargs):
+        super().__init__(parent=parent, *args, **kwargs)
+
+        self.model_items = None
 
         self._smoothing_thread = None  # Worker thread
 
@@ -60,11 +62,18 @@ class SmoothingDialog(QDialog):
         self.data = None  # Current `~specviz.core.items.DataItem`
         self.size = None  # Current kernel size
 
+    @plugin.tool_bar("Smoothing", location="Operations")
+    def on_action_triggered(self):
+        # Update the current list of available data items
+        self.model_items = self.hub.data_items
         self._load_ui()
+        self.exec_()
 
     def _load_ui(self):
         # Load UI form .ui file
-        loadUi(os.path.join(UI_PATH, "smoothing.ui"), self)
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "smoothing.ui")), self)
 
         for index, data in enumerate(self.model_items):
             self.data_combo.addItem(data.name, index)
@@ -82,11 +91,10 @@ class SmoothingDialog(QDialog):
         self._on_kernel_change(0)
 
         self.set_to_current_selection()
-        self.show()
 
     def set_to_current_selection(self):
         """Sets Data selection to currently active data"""
-        current_item = self.workspace.current_item
+        current_item = self.hub.workspace.current_item
         if current_item is not None:
             if isinstance(current_item, PlotDataItem):
                 current_item = current_item.data_item
@@ -106,7 +114,9 @@ class SmoothingDialog(QDialog):
     def _on_data_change(self, index):
         """Callback for data combo index change"""
         data_index = self.data_combo.currentData()
-        self.data = self.model_items[data_index]
+
+        if len(self.model_items) > 0:
+            self.data = self.model_items[data_index]
 
     def _generate_output_name(self):
         """Generate a name for output spectra"""
@@ -150,11 +160,13 @@ class SmoothingDialog(QDialog):
         self.cancel_button.setEnabled(False)
 
         self.size = float(self.size_input.text())
-        self._smoothing_thread = SmoothingThread(self.data.spectrum, self.size, self.function)
-        self._smoothing_thread.finished.connect(self.on_finished)
-        self._smoothing_thread.exception.connect(self.on_exception)
 
-        self._smoothing_thread.start()
+        if self.data is not None:
+            self._smoothing_thread = SmoothingThread(self.data.spectrum, self.size, self.function)
+            self._smoothing_thread.finished.connect(self.on_finished)
+            self._smoothing_thread.exception.connect(self.on_exception)
+
+            self._smoothing_thread.start()
 
     def on_finished(self, spec):
         """
@@ -166,7 +178,7 @@ class SmoothingDialog(QDialog):
             The result of the smoothing operation.
         """
         name = self._generate_output_name()
-        self.workspace.model.add_data(spec=spec, name=name)
+        self.hub.workspace.model.add_data(spec=spec, name=name)
         self.close()
 
     def on_exception(self, exception):

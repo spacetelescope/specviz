@@ -3,10 +3,8 @@ import uuid
 import astropy.units as u
 import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import (QCoreApplication, QModelIndex, QSortFilterProxyModel,
-                         Qt, QVariant, Slot)
-from qtpy.QtGui import QColor, QIcon, QPixmap, QStandardItemModel
-
+from qtpy.QtCore import QSortFilterProxyModel, Qt
+from qtpy.QtGui import QStandardItem, QStandardItemModel
 from specutils import Spectrum1D
 
 from .items import DataItem, PlotDataItem
@@ -19,18 +17,6 @@ class DataListModel(QStandardItemModel):
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
-        spec1 = Spectrum1D(flux=np.random.sample(100) * u.Jy,
-                           spectral_axis=np.arange(100) * u.AA)
-
-        spec2 = Spectrum1D(flux=np.random.sample(100) * u.erg,
-                           spectral_axis=np.arange(100) * u.Hz)
-
-        data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
-        data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
-
-        self.appendRow(data_item)
-        self.appendRow(data_item2)
-
     @property
     def items(self):
         """
@@ -38,10 +24,11 @@ class DataListModel(QStandardItemModel):
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
-    def add_data(self, spec, name):
+    def add_data(self, spec, name, is_model=False):
         """
         """
-        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec,
+                             is_model=is_model)
         self.appendRow(data_item)
 
         return data_item
@@ -94,8 +81,13 @@ class DataListModel(QStandardItemModel):
 
         return super(DataListModel, self).setData(index, value, role)
 
-    def data_list(self):
-        return [self.item(i) for i in range(self.rowCount())]
+    def clear(self):
+        self.beginResetModel()
+
+        for item in self.items:
+            self.removeRow(item.index().row())
+
+        self.endResetModel()
 
 
 class PlotProxyModel(QSortFilterProxyModel):
@@ -104,6 +96,11 @@ class PlotProxyModel(QSortFilterProxyModel):
 
         self.setSourceModel(source)
         self._items = {}
+
+    @property
+    def items(self):
+        """Returns a list of :class:`PlotDataItems` in the proxy model."""
+        return self._items.values()
 
     def item_from_index(self, index):
         index = self.mapToSource(index)
@@ -134,7 +131,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         if role == Qt.DisplayRole:
             return item._data_item.name
         elif role == Qt.DecorationRole:
-            icon = qta.icon('fa.eye' if item.visible else 'fa.eye-slash',
+            icon = qta.icon('fa.circle' if item.data_item.isEnabled() else 'fa.circle-o',
                             color=item.color)
             return icon
         elif role == Qt.UserRole:

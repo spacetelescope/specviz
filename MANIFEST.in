@@ -6,7 +6,7 @@ include ah_bootstrap.py
 include setup.cfg
 include specviz/tests/coveragerc
 
-recursive-include specviz *.pyx *.c *.pxd
+recursive-include specviz *.pyx *.c *.pxd 
 recursive-include docs *
 recursive-include licenses *
 recursive-include cextern *
@@ -31,7 +31,6 @@ include astropy_helpers/ah_bootstrap.py
 
 recursive-include astropy_helpers/astropy_helpers *.py *.pyx *.c *.h *.rst
 recursive-include astropy_helpers/astropy_helpers.egg-info *
-# include the sphinx stuff with "*" because there are css/html/rst/etc.
 recursive-include astropy_helpers/astropy_helpers/sphinx *
 
 prune astropy_helpers/build
@@ -39,3 +38,11 @@ prune astropy_helpers/astropy_helpers/tests
 
 
 global-exclude *.pyc *.o
+
+# added by check_manifest.py
+include *.in
+include *.txt
+include *.yml
+recursive-include specviz *.list
+recursive-include specviz *.ui
+recursive-include specviz *.yaml
