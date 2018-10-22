@@ -37,6 +37,10 @@ class Application(QApplication):
         # Load local plugins
         self.load_local_plugins()
 
+        # cache the line lists for speedier access
+        from .core import linelist
+        linelist.populate_linelists_cache()
+
         # Show splash
         if not skip_splash:
             self._splash_dialog = SplashDialog(2000)
