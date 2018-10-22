@@ -48,6 +48,8 @@ class PlotWindow(QMdiSubWindow):
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
+        self._central_widget.line_labels_action.triggered.connect(
+            self._on_line_labels)
 
         self._central_widget.reset_view_action.triggered.connect(
             lambda: self.plot_widget.autoRange())
@@ -94,6 +96,9 @@ class PlotWindow(QMdiSubWindow):
 
         if color.isValid():
             self.current_item.color = color.name()
+
+    def _on_line_labels(self):
+        pass # for now
 
 
 class PlotWidget(pg.PlotWidget):
