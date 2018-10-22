@@ -17,7 +17,7 @@ from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 from ..utils import UI_PATH
 
-from .unit_change_dialog import UnitChangeDialog
+from ..plugins.unit_change.unit_change_dialog import UnitChangeDialog
 
 
 class PlotWindow(QMdiSubWindow):

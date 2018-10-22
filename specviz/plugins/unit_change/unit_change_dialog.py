@@ -37,7 +37,6 @@ class UnitChangeDialog(QDialog, Plugin):
             os.path.join(os.path.dirname(__file__),
                          ".", "unit_change_dialog.ui")), self)
 
-        log.debug("Spectral axis: {}".format(self.workspace.current_item.data_item.spectral_axis))
 
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
         if self.plot_widget and self.data_item and self.plot_widget.data_unit and self.plot_widget.spectral_axis_unit:
