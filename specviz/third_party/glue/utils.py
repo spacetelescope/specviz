@@ -19,8 +19,11 @@ def glue_data_has_spectral_axis(data):
     """
     if isinstance(data, Subset):
         data = data.data
+
+    spec_axis = data.coords.wcs.naxis - 1 - data.coords.wcs.wcs.spec
+
     return (isinstance(data.coords, WCSCoordinates) and
-            data.coords.wcs.wcs.spec >= 0)
+            spec_axis >= 0)
 
 
 def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
@@ -49,19 +52,21 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
 
     # Find non-spectral axes
     axes = tuple(i for i in range(data.ndim) if i != spec_axis)
+    component = data.get_component(attribute)
 
     # Collapse values to profile
-    values = data.compute_statistic(statistic, attribute, axis=axes, subset_state=subset_state)
-
-    # Get units and attach to value
-    component = data.get_component(attribute)
+    if data.ndim > 1:
+        # Get units and attach to value
+        values = data.compute_statistic(statistic, attribute, axis=axes,
+                                        subset_state=subset_state)
+    else:
+        values = component.data
 
     if component.units is None:
         values = values * u.one
     else:
         values = values * u.Unit(component.units)
 
-    # Get spectral WCS
-    wcs_spec = data.coords.wcs.sub([WCSSUB_SPECTRAL])
+    spec1d = Spectrum1D(values, wcs=data.coords.wcs)
 
-    return Spectrum1D(values, wcs=wcs_spec)
+    return spec1d

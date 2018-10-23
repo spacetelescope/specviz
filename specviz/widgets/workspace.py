@@ -1,23 +1,22 @@
 import logging
 import os
 import sys
-from collections import OrderedDict
 
 from astropy.io import registry as io_registry
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
-from qtpy.QtWidgets import (QActionGroup, QApplication, QMainWindow, QMenu,
-                            QMessageBox, QSizePolicy, QTabBar, QToolButton,
-                            QWidget)
+from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
+                            QMessageBox, QTabBar, QToolButton)
 from qtpy.uic import loadUi
 from specutils import Spectrum1D
 
+from .plotting import PlotWindow
 from ..core.items import PlotDataItem
 from ..core.models import DataListModel
-from ..core.plugin import Plugin
-from ..utils import UI_PATH
-from ..utils.qt_utils import dict_to_menu
-from .plotting import PlotWindow
+from ..core.plugin import plugin
+from ..widgets.delegates import DataItemDelegate
+
+from . import resources
 
 
 class Workspace(QMainWindow):
@@ -33,6 +32,8 @@ class Workspace(QMainWindow):
     """
     window_activated = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
+    current_selected_changed = Signal(PlotDataItem)
+    plot_window_added = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -44,21 +45,6 @@ class Workspace(QMainWindow):
         # Load the ui file and attach it to this instance
         loadUi(os.path.join(os.path.dirname(__file__),
                             "ui", "workspace.ui"), self)
-
-        # Add spacers to the main tool bar
-        # spacer = QWidget()
-        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        # # self.main_tool_bar.insertWidget(self.load_data_action, spacer)
-
-        # spacer = QWidget()
-        # spacer.setFixedSize(self.main_tool_bar.iconSize() * 2)
-        # self.main_tool_bar.insertWidget(self.new_plot_action, spacer)
-
-        # spacer = QWidget()
-        # size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        # size_policy.setHorizontalStretch(1)
-        # spacer.setSizePolicy(size_policy)
-        # self.main_tool_bar.addWidget(spacer)
 
         # Update title
         self.setWindowTitle(self.name + " — SpecViz")
@@ -82,23 +68,36 @@ class Workspace(QMainWindow):
         self.operations_menu = QMenu(self.operations_button)
         self.operations_button.setMenu(self.operations_menu)
 
+        # Ensure the mdiarea is in tabbed mode
+        self.mdi_area.setViewMode(self.mdi_area.TabbedView)
+
         # Define a new data list model for this workspace
         self._model = DataListModel()
 
         # Set the styled item delegate on the model
-        # self.list_view.setItemDelegate(DataItemDelegate(self))
+        self.list_view.setItemDelegate(DataItemDelegate(self))
 
         # When the current subwindow changes, mount that subwindow's proxy model
         self.mdi_area.subWindowActivated.connect(self._on_sub_window_activated)
 
         # Add an initially empty plot
-        self.add_plot_window()
+        # self.add_plot_window()
 
         # Color theme
         self.default_theme_action.triggered.connect(
             lambda: self._on_change_color_theme('default'))
         self.dark_theme_action.triggered.connect(
             lambda: self._on_change_color_theme('dark'))
+
+        # Connect to signals given off by the list view
+        self._model.itemChanged.connect(
+            self._on_item_changed)
+
+        # When a new data item is added to the model, select that item
+        # self._model.rowsInserted.connect(self._on_row_inserted)
+
+        # Mount plugins
+        plugin.mount(self)
 
     @property
     def name(self):
@@ -116,14 +115,34 @@ class Workspace(QMainWindow):
 
     @property
     def proxy_model(self):
-        return self.current_plot_window.proxy_model
+        if self.current_plot_window is not None:
+            return self.current_plot_window.proxy_model
 
     @property
     def current_plot_window(self):
         """
         Get the current active plot window tab.
         """
-        return self.mdi_area.currentSubWindow() or self.mdi_area.subWindowList()[0]
+        return (self.mdi_area.currentSubWindow() or
+                next((x for x in self.mdi_area.subWindowList()), None))
+
+    @property
+    def selected_region(self):
+        """
+        Get the current selected region.
+        """
+        if self.current_plot_window is not None:
+            return self.current_plot_window.plot_widget.selected_region
+
+    @property
+    def selected_region_pos(self):
+        """
+        Get the range of the current selected region.
+        Returns a tuple of Qualities (left, right).
+        """
+        if self.current_plot_window is not None:
+            if self.current_plot_window.plot_widget is not None:
+                return self.current_plot_window.plot_widget.selected_region_pos
 
     def remove_current_window(self):
         self.mdi_area.removeSubWindow(self.current_plot_window)
@@ -134,13 +153,47 @@ class Workspace(QMainWindow):
         Get the currently selected :class:`~specviz.core.items.PlotDataItem`.
         """
         idx = self.list_view.currentIndex()
-        item = self.proxy_model.data(idx, role=Qt.UserRole)
 
-        return item
+        if idx is None:
+            idx = self.list_view.model().index(0, 0)
+            self.list_view.setCurrentIndex(idx)
+
+        if self.proxy_model is not None:
+            item = self.proxy_model.data(idx, role=Qt.UserRole)
+
+            return item
+
+    def _on_item_changed(self, item=None, index=None):
+        if index is not None:
+            self.list_view.setCurrentIndex(index)
+            return
+
+        # If the item checkbox is clicked, ensure that the item is also selected
+        plot_item = self.proxy_model.item_from_id(item.identifier)
+
+        if plot_item.visible:
+            source_index = self.model.indexFromItem(item)
+            idx = self.list_view.model().mapFromSource(source_index)
+            self.list_view.setCurrentIndex(idx)
+            return
+
+        for plot_item in self.list_view.model().items:
+            if plot_item.visible:
+                proxy_index = self.list_view.model().mapFromSource(plot_item.data_item.index())
+                self.list_view.setCurrentIndex(proxy_index)
+                return
+
+        self.list_view.clearSelection()
+
+    def _on_current_selected_changed(self, selected, deselected):
+        if len(selected.indexes()) > 0:
+            item = self.proxy_model.data(selected.indexes()[0], role=Qt.UserRole)
+            self.current_selected_changed.emit(item)
 
     def _on_add_workspace(self):
         workspace = self._app.add_workspace()
         self._app.current_workspace = workspace
+        workspace.add_plot_window()
 
     def _on_change_color_theme(self, theme):
         import pyqtgraph as pg
@@ -178,6 +231,7 @@ class Workspace(QMainWindow):
             self.main_tool_bar.hide()
             self.main_tool_bar.hide()
             self.mdi_area.findChild(QTabBar).hide()
+            self.plugin_tab_widget.hide()
 
     def event(self, e):
         """Scrap window events."""
@@ -193,7 +247,6 @@ class Workspace(QMainWindow):
         Creates a new plot widget sub window and adds it to the workspace.
         """
         plot_window = PlotWindow(model=self.model, parent=self.mdi_area)
-        self.list_view.setModel(plot_window.plot_widget.proxy_model)
 
         plot_window.setWindowTitle(plot_window._plot_widget.title)
         plot_window.setAttribute(Qt.WA_DeleteOnClose)
@@ -203,13 +256,19 @@ class Workspace(QMainWindow):
 
         self.mdi_area.subWindowActivated.emit(plot_window)
 
-        # Subscribe this new plot window to list view item selection events
+        # Subscribe this new plot window to list view item selection events.
+        # NOTE: selectionModel() requires a plot window since the list view
+        # holds onto *proxy* models defined by the plot window
         self.list_view.selectionModel().currentChanged.connect(
             plot_window._on_current_item_changed)
+        self.list_view.selectionModel().selectionChanged.connect(
+            self._on_current_selected_changed)
 
-        # Load plot tool bar plugins
-        for sub_cls in Plugin.__subclasses__():
-            sub_cls(filt='is_plot_tool')
+        # Fire a signal letting everyone know a new plot window has been added
+        self.plot_window_added.emit(plot_window)
+
+        # Mount plugins
+        plugin.mount(self, filt='plot_bar')
 
     def _on_sub_window_activated(self, window):
         if window is None:
@@ -224,6 +283,10 @@ class Workspace(QMainWindow):
                 pass
 
         self.list_view.setModel(window.proxy_model)
+
+        if self.list_view.currentIndex() is None:
+            idx = self.list_view.model().index(0, 0)
+            self.list_view.setCurrentIndex(idx)
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)
@@ -252,7 +315,9 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        filters = [x + " (*)" for x in io_registry.get_formats(Spectrum1D)['Format']]
+        filters = [x['Format'] + " (*)"
+                   for x in io_registry.get_formats(Spectrum1D)
+                   if x['Read'] == 'Yes']
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
@@ -261,7 +326,7 @@ class Workspace(QMainWindow):
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=fmt.split()[0])
+        self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
 
     def load_data(self, file_path, file_loader, display=False):
         """
@@ -285,6 +350,12 @@ class Workspace(QMainWindow):
             spec = Spectrum1D.read(file_path, format=file_loader)
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
+
+            # If there are any current plots, attempt to add the data to the
+            # plot
+            plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
+            plot_data_item.visible = True
+            self.current_plot_window.plot_widget.on_item_changed(data_item)
 
             return data_item
         except:
@@ -313,23 +384,3 @@ class Workspace(QMainWindow):
             sub_window.plot_widget.remove_plot(index=proxy_idx)
 
         self.model.removeRow(model_idx.row())
-
-    def _on_toggle_plugin_dock(self, action):
-        """
-        Show/hide the plugin dock depending on the state of the plugin
-        action group.
-        """
-        if action != self._last_toggled_action:
-            self.plugin_dock.show()
-            self.plugin_dock.setWindowTitle(action.text())
-            self._last_toggled_action = action
-        else:
-            action.setChecked(False)
-            self.plugin_dock.hide()
-            self._last_toggled_action = None
-
-    def on_plugin_action_triggered(self, object_name):
-        if object_name == 'model_editor_toggle':
-            self.plugin_dock.setWidget(self._model_editor)
-        if object_name == 'statistics_toggle':
-            self.plugin_dock.setWidget(self._statistics)

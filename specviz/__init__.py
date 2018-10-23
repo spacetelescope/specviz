@@ -15,6 +15,9 @@ import logging
 import pyqtgraph as pg
 from configparser import ConfigParser
 
+# Import specviz-specific specutils loaders
+from .io.loaders import *
+
 __minimum_python_version__ = "3.5"
 
 class UnsupportedPythonError(Exception):
@@ -51,8 +54,8 @@ def load_settings():
 
     pyqtgraph_settings = {
         'leftButtonPan': parser['PyQtGraph'].getboolean('leftbuttonpan', True),
-        'foreground': parser['PyQtGraph'].get('foreground', 'w'),
-        'background': parser['PyQtGraph'].get('background', 'k'),
+        'foreground': parser['PyQtGraph'].get('foreground', 'k'),
+        'background': parser['PyQtGraph'].get('background', 'w'),
         'antialias': parser['PyQtGraph'].getboolean('antialias', False),
         'imageAxisOrder': parser['PyQtGraph'].get('imageaxisorder', 'col-major'),
         'useWeave': parser['PyQtGraph'].getboolean('useweave', False),

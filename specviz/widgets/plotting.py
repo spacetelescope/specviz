@@ -1,23 +1,19 @@
+import logging
 import os
 
 import astropy.units as u
 import numpy as np
-import logging
 import pyqtgraph as pg
 import qtawesome as qta
-
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import (QAction, QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMenu, QMessageBox, QSizePolicy, QToolButton,
-                            QWidget)
+from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMessageBox)
 from qtpy.uic import loadUi
 
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
-from ..utils import UI_PATH
 
-from ..plugins.unit_change.unit_change_dialog import UnitChangeDialog
 
 
 class PlotWindow(QMdiSubWindow):
@@ -26,6 +22,8 @@ class PlotWindow(QMdiSubWindow):
     """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
+        # Hide the icon in the title bar
+        self.setWindowIcon(qta.icon('fa.circle', opacity=0))
 
         # The central widget of the sub window will be a main window so that it
         # can support having tab bars
@@ -51,9 +49,9 @@ class PlotWindow(QMdiSubWindow):
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
-        self._central_widget.change_unit_action.triggered.connect(
-            self._on_change_unit)
 
+        self._central_widget.reset_view_action.triggered.connect(
+            lambda: self.plot_widget.autoRange())
 
     @property
     def tool_bar(self):
@@ -67,11 +65,6 @@ class PlotWindow(QMdiSubWindow):
     @property
     def plot_widget(self):
         return self._plot_widget
-
-    def _on_change_unit(self):
-        # print(self.current_item, self._plot_widget)
-        unit_change = UnitChangeDialog(self._plot_widget, self.current_item)
-        unit_change.exec_()
 
     @property
     def proxy_model(self):
@@ -131,9 +124,16 @@ class PlotWidget(pg.PlotWidget):
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
         Fired when a plot data item has been removed from the plot widget.
+    roi_moved : Signal
+        Fired when region is moved. Delivers the range of region as tuple.
+    roi_removed : Signal
+        Fired when region is removed. Delivers the region removed.
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
+
+    roi_moved = Signal(u.Quantity)
+    roi_removed = Signal(LinearRegionItem)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -150,8 +150,9 @@ class PlotWidget(pg.PlotWidget):
 
         # Setup select region labels
         self._region_text_item = pg.TextItem(color="k")
-        self.addItem(self._region_text_item)
+        self.addItem(self._region_text_item, ignoreBounds=True)
         self._region_text_item.setParentItem(self.getViewBox())
+        self.getAxis('bottom').enableAutoSIPrefix(False)
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -234,6 +235,16 @@ class PlotWidget(pg.PlotWidget):
         return self._selected_region
 
     @property
+    def selected_region_bounds(self):
+        """
+        Returns the bounds of the currently selected region as a tuple of
+        quantities.
+        """
+        if self.selected_region is not None:
+            return self.selected_region.getRegion() * u.Unit(
+                self.spectral_axis_unit or "")
+
+    @property
     def region_mask(self):
         mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
         mask_holder = []
@@ -263,6 +274,9 @@ class PlotWidget(pg.PlotWidget):
 
         plot_data_item = self.proxy_model.item_from_index(proxy_index)
 
+        # Re-evaluate plot unit compatibilities
+        self.check_plot_compatibility()
+
         if plot_data_item.visible:
             if plot_data_item not in self.listDataItems():
                 logging.info("Adding plot %s", item.name)
@@ -273,9 +287,6 @@ class PlotWidget(pg.PlotWidget):
             if plot_data_item in self.listDataItems():
                 logging.info("Removing plot %s", item.name)
                 self.remove_plot(item=plot_data_item)
-
-        # Re-evaluate plot unit compatibilities
-        # self.check_plot_compatibility()
 
     def check_plot_compatibility(self):
         for i in range(self.proxy_model.sourceModel().rowCount()):
@@ -293,6 +304,7 @@ class PlotWidget(pg.PlotWidget):
                         self.spectral_axis_unit, self.data_unit):
                 plot_data_item.data_item.setEnabled(True)
             else:
+                plot_data_item.visible = False
                 plot_data_item.data_item.setEnabled(False)
 
     def _check_unit_compatibility(self, index, first=None, last=None):
@@ -333,6 +345,10 @@ class PlotWidget(pg.PlotWidget):
             item.spectral_axis_unit = self.spectral_axis_unit
         else:
             item.reset_units()
+
+        # Include uncertainty item
+        if item.uncertainty is not None:
+            self.addItem(item.error_bar_item)
 
         self.addItem(item)
 
@@ -401,6 +417,7 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
+                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
@@ -413,6 +430,10 @@ class PlotWidget(pg.PlotWidget):
 
             # Remove plot data item from this plot
             self.removeItem(item)
+
+            # Remove plot error bars
+            if item.uncertainty is not None:
+                self.removeItem(item.error_bar_item)
 
             # If there are no current plots, reset unit information for plot
             if len(self.listDataItems()) == 0:
@@ -430,16 +451,22 @@ class PlotWidget(pg.PlotWidget):
             # Emit a plot removed signal
             self.plot_removed.emit(item)
 
+    def clear_plots(self):
+        for item in self.listDataItems():
+            if isinstance(item, PlotDataItem):
+                self.remove_plot(item=item)
+
     def _on_region_changed(self):
         """
         Updates the displayed minimum and maximum values when the currently
         selected region is changed.
         """
         self._region_text_item.setText(
-            "Region: ({:0.5g}, {:0.5g})".format(
-                *(self._selected_region.getRegion() *
-                  u.Unit(self.spectral_axis_unit or ""))
-                ))
+            "Region: ({:0.5g}, {:0.5g})".format(*self.selected_region_bounds))
+
+        # Check for color theme changes
+
+        self.roi_moved.emit(self.selected_region_bounds)
 
     def _on_add_linear_region(self, min_bound=None, max_bound=None):
         """
@@ -457,9 +484,10 @@ class PlotWidget(pg.PlotWidget):
         disp_axis = self.getAxis('bottom')
         mid_point = disp_axis.range[0] + (disp_axis.range[1] -
                                           disp_axis.range[0]) * 0.5
+
         region = LinearRegionItem(
-            values=(min_bound or disp_axis.range[0] + mid_point * 0.75,
-                    max_bound or disp_axis.range[1] - mid_point * 0.75))
+            values=(min_bound or (disp_axis.range[0] + mid_point * 0.75),
+                    max_bound or (disp_axis.range[1] - mid_point * 0.75)))
 
         def _on_region_updated(new_region):
             # If the most recently selected region is already the currently
@@ -494,6 +522,9 @@ class PlotWidget(pg.PlotWidget):
 
     def _on_remove_linear_region(self):
         """Remove the selected linear region from the plot."""
+        roi = self._selected_region
         self.removeItem(self._selected_region)
         self._selected_region = None
         self._region_text_item.setText("")
+        self.roi_removed.emit(roi)
+
