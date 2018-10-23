@@ -6,7 +6,7 @@ import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 import qtawesome as qta
-from qtpy.QtCore import Signal
+from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox)
 from qtpy.uic import loadUi
@@ -146,6 +146,8 @@ class PlotWidget(pg.PlotWidget):
 
     roi_moved = Signal(u.Quantity)
     roi_removed = Signal(LinearRegionItem)
+
+    mouse_enterexit = Signal(QEvent.Type)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -549,6 +551,13 @@ class PlotWidget(pg.PlotWidget):
     # Finds the wavelength range spanned by the spectrum (or spectra)
     # at hand. The range will be used to bracket the set of lines
     # actually read from the line list table(s).
+
+    def enterEvent(self, event):
+        self.mouse_enterexit.emit(event.type())
+
+    def leaveEvent(self, event):
+        self.mouse_enterexit.emit(event.type())
+
     def _find_wavelength_range(self):
         # increasing dispersion values!
         amin = sys.float_info.max

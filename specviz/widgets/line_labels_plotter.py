@@ -27,7 +27,7 @@ class LineLabelsPlotter(object):
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
-        # dispatch.setup(self)
+        self._caller.mouse_enterexit.connect(self._handle_mouse_events)
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
