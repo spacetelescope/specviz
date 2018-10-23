@@ -1,5 +1,6 @@
-import logging
+import sys
 import os
+import logging
 
 import astropy.units as u
 import numpy as np
@@ -9,6 +10,8 @@ from qtpy.QtCore import Signal
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox)
 from qtpy.uic import loadUi
+
+from astropy.units import Quantity
 
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
@@ -542,6 +545,46 @@ class PlotWidget(pg.PlotWidget):
         self.roi_removed.emit(roi)
 
     # --------  Line lists and line labels handling.
+
+    # Finds the wavelength range spanned by the spectrum (or spectra)
+    # at hand. The range will be used to bracket the set of lines
+    # actually read from the line list table(s).
+    def _find_wavelength_range(self):
+        # increasing dispersion values!
+        amin = sys.float_info.max
+        amax = 0.0
+
+        for item in self.listDataItems():
+            if isinstance(item, PlotDataItem):
+                amin = min(amin, item.spectral_axis[0])
+                amax = max(amax, item.spectral_axis[-1])
+
+        amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
+        amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
+
+        return (amin, amax)
+
+    def request_linelists(self, *args, **kwargs):
+        self.waverange = self._find_wavelength_range()
+
+        self.linelists = ingest(self.waverange)
+
+        if len(self.linelists) == 0:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage('Units conversion not possible. '
+                                     'Or, no line lists in internal library '
+                                     'match wavelength range.')
+            error_dialog.exec_()
+
+    # @dispatch.register_listener("on_activated_window")
+    def _set_selection_state(self, window):
+        self._is_selected = window == self
+
+        if self._linelist_window:
+            if self._is_selected:
+                self._linelist_window.show()
+            else:
+                self._linelist_window.hide()
 
     def _show_linelists_window(self, *args, **kwargs):
         if self._is_selected:

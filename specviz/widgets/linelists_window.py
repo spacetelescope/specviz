@@ -241,7 +241,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.tabWidget.tabCloseRequested.connect(self.tab_close)
 
         # Request that line lists be read from wherever are they sources.
-        dispatch.on_request_linelists.emit()
+        plot_window.request_linelists()
 
         # Populate line list selector with internal line lists
         model = self.line_list_selector.model()
@@ -451,7 +451,7 @@ class LineListsWindow(UiLinelistsWindow):
             amin = float(min_text.text())
             amax = float(max_text.text())
             if amax > amin:
-                units = self.plot_window._plot_units[0]
+                units = self.plot_window.listDataItems()[0].spectral_axis_unit
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
             else:
