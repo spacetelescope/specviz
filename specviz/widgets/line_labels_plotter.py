@@ -19,9 +19,9 @@ class LineLabelsPlotter(object):
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
         self._caller = caller
-        self._plot_item = caller._plot_item
-        self._linelist_window = caller._linelist_window
+        self._linelist_window = caller.linelist_window
         self._linelists = caller.linelists
+        self._plot_item = caller._plot_item
 
         # create a new, empty list that will store and help track down
         # which markers are actually being displayed at any time.
@@ -61,7 +61,7 @@ class LineLabelsPlotter(object):
             self._destroy_zoom_markers_thread()
 
     # Main method for drawing line labels on the plot surface.
-    def _plot_linelists(self, table_views, panes, units, caller, **kwargs):
+    def plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
         if caller != self._caller or not self._caller._is_selected:
             return

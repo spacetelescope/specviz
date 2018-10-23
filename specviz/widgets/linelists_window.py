@@ -11,7 +11,7 @@ from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
                             QDialog, QErrorMessage)
 from qtpy.QtGui import QIcon, QColor, QStandardItem, \
                        QDoubleValidator, QFont
-from qtpy.QtCore import (QSize, QCoreApplication, QMetaObject, Qt,
+from qtpy.QtCore import (Signal, QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 
@@ -275,11 +275,18 @@ class LineListsWindow(UiLinelistsWindow):
         # all in here for the sake of encapsulation. This is so because this class
         # is not a QWidget or one of its subclasses, thus it cannot implement a
         # DispatchHandle signal handler.
-        self.draw_button.clicked.connect(lambda:dispatch.on_plot_linelists.emit(
-            table_views=self._getTableViews(),
-            panes=self._getPanes(),
-            units=plot_window.waverange[0].unit,
-            caller=plot_window))
+        # self.draw_button.clicked.connect(self.on_plot_linelists.emit(
+        #     table_views=self._getTableViews(),
+        #     panes=self._getPanes(),
+        #     units=plot_window.waverange[0].unit,
+        #     caller=plot_window))
+
+        self.draw_button.clicked.connect(
+            lambda:self.plot_window.line_labels_plotter.plot_linelists(
+                table_views=self._getTableViews(),
+                panes=self._getPanes(),
+                units=self.plot_window.waverange[0].unit,
+                caller=self.plot_window))
 
         self.erase_button.clicked.connect(lambda:dispatch.on_erase_linelabels.emit(caller=plot_window))
         self.dismiss_button.clicked.connect(lambda:dispatch.on_dismiss_linelists_window.emit(close=False))

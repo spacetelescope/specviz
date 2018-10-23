@@ -182,7 +182,7 @@ class PlotWidget(pg.PlotWidget):
         self.showGrid(x=True, y=True, alpha=0.25)
 
         # Line label plot control.
-        self._linelist_window = None
+        self.linelist_window = None
         self._is_selected = True
 
         # Listen for model events to add/remove items from the plot
@@ -580,30 +580,30 @@ class PlotWidget(pg.PlotWidget):
     def _set_selection_state(self, window):
         self._is_selected = window == self
 
-        if self._linelist_window:
+        if self.linelist_window:
             if self._is_selected:
-                self._linelist_window.show()
+                self.linelist_window.show()
             else:
-                self._linelist_window.hide()
+                self.linelist_window.hide()
 
     def _show_linelists_window(self, *args, **kwargs):
         if self._is_selected:
-            if self._linelist_window is None:
-                self._linelist_window = LineListsWindow(self)
+            if self.linelist_window is None:
+                self.linelist_window = LineListsWindow(self)
                 self.line_labels_plotter = LineLabelsPlotter(self)
 
                 self.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
 
-            self._linelist_window.show()
+            self.linelist_window.show()
 
     def _dismiss_linelists_window(self, close, **kwargs):
-        if self._is_selected and self._linelist_window:
+        if self._is_selected and self.linelist_window:
             if close:
-                self._linelist_window.close()
+                self.linelist_window.close()
                 self.line_labels_plotter = None
-                self._linelist_window = None
+                self.linelist_window = None
             else:
-                self._linelist_window.hide()
+                self.linelist_window.hide()
 
 
 
