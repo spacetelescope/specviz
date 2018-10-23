@@ -15,6 +15,7 @@ from ..core.items import PlotDataItem
 from ..core.models import DataListModel
 from ..core.plugin import plugin
 from ..widgets.delegates import DataItemDelegate
+from ..version import version as specviz_version
 
 from . import resources
 
@@ -47,7 +48,7 @@ class Workspace(QMainWindow):
                             "ui", "workspace.ui"), self)
 
         # Update title
-        self.setWindowTitle(self.name + " — SpecViz")
+        self.setWindowTitle(self.name + " — SpecViz (v{})".format(specviz_version))
 
         # Setup workspace action connections
         self.new_workspace_action.triggered.connect(
