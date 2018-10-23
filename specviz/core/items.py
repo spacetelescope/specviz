@@ -3,9 +3,8 @@ from itertools import cycle
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
-from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-from qtpy.QtCore import Property, QObject, Qt, Signal, Slot
-from qtpy.QtGui import QColor, QStandardItem
+from qtpy.QtCore import Qt, Signal
+from qtpy.QtGui import QStandardItem
 
 flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
                 "#34495e", "#2ecc71"])
@@ -16,8 +15,8 @@ class DataItem(QStandardItem):
     IdRole = Qt.UserRole + 2
     DataRole = Qt.UserRole + 3
 
-    def __init__(self, name, identifier, data, unit=None,
-                 spectral_axis_unit=None, *args, **kwargs):
+    def __init__(self, name, identifier, data, is_model=False,
+                 *args, **kwargs):
         super(DataItem, self).__init__(*args, **kwargs)
 
         self.setData(name, self.NameRole)
@@ -30,7 +29,7 @@ class DataItem(QStandardItem):
     def identifier(self):
         return self.data(self.IdRole)
 
-    @Property(str)
+    @property
     def name(self):
         return self.data(self.NameRole)
 
@@ -38,13 +37,17 @@ class DataItem(QStandardItem):
     def name(self, value):
         self.setData(value, self.NameRole)
 
-    @Property(list)
+    @property
     def flux(self):
         return self.data(self.DataRole).flux
 
-    @Property(list)
+    @property
     def spectral_axis(self):
         return self.data(self.DataRole).spectral_axis
+
+    @property
+    def uncertainty(self):
+        return self.data(self.DataRole).uncertainty
 
     def set_data(self, data):
         """
@@ -65,7 +68,7 @@ class PlotDataItem(pg.PlotDataItem):
     visibility_changed = Signal(bool)
 
     def __init__(self, data_item, color=None, *args, **kwargs):
-        super(PlotDataItem, self).__init__(*args, **kwargs)
+        super(PlotDataItem, self).__init__(stepMode=True, *args, **kwargs)
 
         self._data_item = data_item
         self._data_unit = self._data_item.flux.unit.to_string()
@@ -73,6 +76,9 @@ class PlotDataItem(pg.PlotDataItem):
         self._color = color or next(flatui)
         self._width = 1
         self._visible = False
+
+        # Include error bar item
+        self._error_bar_item = pg.ErrorBarItem(pen=[128, 128, 128, 200])
 
         # Set data
         self.set_data()
@@ -89,7 +95,12 @@ class PlotDataItem(pg.PlotDataItem):
 
     def _update_pen(self, *args):
         if self.visible:
-            self.setPen(color=self.color, width=self.width)
+            try:
+                color = float(self.color)
+            except ValueError:
+                color = self.color
+
+            self.setPen(color=color, width=float(self.width))
         else:
             self.setPen(None)
 
@@ -97,7 +108,7 @@ class PlotDataItem(pg.PlotDataItem):
     def data_item(self):
         return self._data_item
 
-    @Property(str, notify=data_unit_changed)
+    @property
     def data_unit(self):
         return self._data_unit
 
@@ -105,6 +116,22 @@ class PlotDataItem(pg.PlotDataItem):
     def data_unit(self, value):
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
+
+    @property
+    def error_bar_item(self):
+        spectral_axis = self.spectral_axis
+
+        # If step mode is one, offset the error bars by a half delta so that
+        # they cross the middle of the bin.
+        if self.opts.get('stepMode'):
+            diff = np.diff(spectral_axis)
+            spectral_axis += np.append(diff, diff[-1]) * 0.5
+
+        self._error_bar_item.setData(x=spectral_axis,
+                                     y=self.flux,
+                                     height=self.uncertainty)
+
+        return self._error_bar_item
 
     def are_units_compatible(self, spectral_axis_unit, data_unit):
         return self.is_data_unit_compatible(data_unit) and \
@@ -122,7 +149,7 @@ class PlotDataItem(pg.PlotDataItem):
                 self.data_item.spectral_axis.unit.is_equivalent(
                     unit, equivalencies=spectral()))
 
-    @Property(str, notify=spectral_axis_unit_changed)
+    @property
     def spectral_axis_unit(self):
         return self._spectral_axis_unit
 
@@ -135,18 +162,30 @@ class PlotDataItem(pg.PlotDataItem):
         self.data_unit = self.data_item.flux.unit.to_string()
         self.spectral_axis_unit = self.data_item.spectral_axis.unit.to_string()
 
-    @Property(list)
+    @property
     def flux(self):
-        return self._data_item.flux.to(self.data_unit,
-                                       equivalencies=spectral_density(
-                                           self.spectral_axis)).value
+        return self.data_item.flux.to(self.data_unit or "",
+                                      equivalencies=spectral_density(
+                                          self.spectral_axis)).value
 
     @property
     def spectral_axis(self):
-        return self._data_item.spectral_axis.to(self.spectral_axis_unit,
-                                                equivalencies=spectral()).value
+        return self.data_item.spectral_axis.to(self.spectral_axis_unit or "",
+                                               equivalencies=spectral()).value
 
-    @Property(str, notify=color_changed)
+    @property
+    def uncertainty(self):
+        if self.data_item.uncertainty is None:
+            return
+
+        uncertainty = self.data_item.uncertainty.array * \
+                      self.data_item.uncertainty.unit
+
+        return uncertainty.to(self.data_unit or "",
+                              equivalencies=spectral_density(
+                                  self.spectral_axis)).value
+
+    @property
     def color(self):
         return self._color
 
@@ -156,7 +195,7 @@ class PlotDataItem(pg.PlotDataItem):
         self.color_changed.emit(self._color)
         self.data_item.emitDataChanged()
 
-    @Property(int, notify=width_changed)
+    @property
     def width(self):
         return self._width
 
@@ -175,7 +214,7 @@ class PlotDataItem(pg.PlotDataItem):
         self.setZValue(value)
         self.data_item.emitDataChanged()
 
-    @Property(bool, notify=visibility_changed)
+    @property
     def visible(self):
         return self._visible
 
@@ -184,9 +223,32 @@ class PlotDataItem(pg.PlotDataItem):
         self._visible = value
         self.visibility_changed.emit(self._visible)
 
-    def update_data(self):
-        # Replot data
-        self.setData(self.spectral_axis, self.flux, connect="finite")
-
     def set_data(self):
-        self.setData(self.spectral_axis, self.flux, connect="finite")
+        spectral_axis = self.spectral_axis
+
+        if self.opts.get('stepMode'):
+            spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
+
+        self.setData(spectral_axis, self.flux, connect="finite")
+
+
+class ModelItem(QStandardItem):
+    DataRole = Qt.UserRole + 2
+
+    def __init__(self, model, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setData(model.__class__.name, Qt.DisplayRole)
+        self.setData(model, self.DataRole)
+
+
+class ParameterItem(QStandardItem):
+    DataRole = Qt.UserRole + 2
+    UnitRole = Qt.UserRole + 3
+
+    def __init__(self, parameter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.setData(parameter.name, Qt.DisplayRole)
+        self.setData(parameter.value, self.DataRole)
+        self.setData(parameter.unit, self.UnitRole)

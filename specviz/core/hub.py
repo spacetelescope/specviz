@@ -1,44 +1,94 @@
 from qtpy.QtWidgets import QApplication
-from qtpy.QtCore import Signal, Slot, QObject
-
-from specutils import Spectrum1D
-from astropy.io import registry as io_registry
-
-from .items import PlotDataItem, DataItem
 
 
-class Hub(QObject):
-    """
-    Centralized event processing for interfacing with signal/slots outside the
-    normal hierarchy of Qt widgets.
-    """
-    plot_added = Signal(PlotDataItem)
-    plot_removed = Signal(PlotDataItem)
-
-    data_added = Signal(DataItem)
-    data_removed = Signal(DataItem)
-
-    def __init__(self, *args, **kwargs):
-        super(Hub, self).__init__(*args, **kwargs)
-
-        self._current_window = self.parent()
+class Hub:
+    def __init__(self, workspace, *args, **kwargs):
+        self._workspace = workspace
 
     @property
-    def current_model(self):
-        """
-        Retrieve the current model of the currently active workspace.
-        """
-        return self.current_window.workspace.proxy_model
+    def workspace(self):
+        """The active workspace."""
+        return self._workspace
 
     @property
-    def current_window(self):
-        """
-        Retrieve the currently active window.
-        """
-        return self._current_window
+    def model(self):
+        """The data item model of the active workspace."""
+        return self.workspace.model
 
-    def load_data(self, path):
-        pass
+    @property
+    def proxy_model(self):
+        """The proxy model of the active workspace."""
+        return self.workspace.proxy_model
 
-    def data_loader_formats(self):
-        return io_registry.get_formats(Spectrum1D)['Format']
+    @property
+    def plot_window(self):
+        """The currently selected plot window of the workspace."""
+        return self.workspace.current_plot_window
+
+    @property
+    def plot_windows(self):
+        """The currently selected plot window of the workspace."""
+        return self.workspace.mdi_area.subWindowList()
+
+    @property
+    def plot_widget(self):
+        """The plot widget of the currently active plot window."""
+        return self.workspace.current_plot_window.plot_widget
+
+    @property
+    def plot_item(self):
+        """The currently selected plot item."""
+        if self.workspace is not None:
+            return self.workspace.current_item
+
+    @property
+    def plot_items(self):
+        """Returns the currently selected plot item."""
+        return self.proxy_model.items
+
+    @property
+    def visible_plot_items(self):
+        """Plotted data that are currently visible."""
+        if self.plot_widget is not None:
+            return self.plot_widget.listDataItems()
+
+    @property
+    def selected_region(self):
+        """The currently active ROI on the plot."""
+        return self.plot_window.plot_widget.selected_region
+
+    @property
+    def selected_region_bounds(self):
+        """The bounds of currently active ROI on the plot."""
+        return self.plot_window.plot_widget.selected_region_bounds
+
+    @property
+    def data_item(self):
+        """The data item of the currently selected plot item."""
+        if self.plot_item is not None:
+            return self.plot_item.data_item
+
+    @property
+    def data_items(self):
+        """List of all data items held in the data item model."""
+        return self.model.items
+
+    def set_active_plugin_bar(self, name=None, index=None):
+        """
+        Sets the currently displayed widget in the plugin side panel.
+
+        Parameters
+        ----------
+        name : str, optional
+            The displayed name of the widget in the tab title.
+        index : int, optional
+            The index of the widget in the plugin tab widget.
+        """
+        if name is None and index is None:
+            return
+        elif index is not None:
+            self.workspace.plugin_tab_widget.setCurrentIndex(index)
+        elif name is not None:
+            for i in range(self.workspace.plugin_tab_widget.count()):
+                if self.workspace.plugin_tab_widget.tabText(i) == name:
+                    self.workspace.plugin_tab_widget.setCurrentIndex(i)

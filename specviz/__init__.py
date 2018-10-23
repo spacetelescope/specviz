@@ -15,6 +15,9 @@ import logging
 import pyqtgraph as pg
 from configparser import ConfigParser
 
+# Import specviz-specific specutils loaders
+from .io.loaders import *
+
 __minimum_python_version__ = "3.5"
 
 class UnsupportedPythonError(Exception):

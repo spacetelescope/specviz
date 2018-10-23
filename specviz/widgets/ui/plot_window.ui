@@ -19,6 +19,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="leftMargin">
@@ -38,13 +41,6 @@
   <widget class="QToolBar" name="tool_bar">
    <property name="windowTitle">
     <string>Plot Tool Bar</string>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QToolBar {
-	border: none;
-	background: rgb(230, 230, 230);
-	border-bottom: 1px solid rgb(179, 179, 179);
-}</string>
    </property>
    <property name="movable">
     <bool>false</bool>
@@ -69,12 +65,19 @@
    </attribute>
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
-   <addaction name="plot_options_action"/>
+   <addaction name="separator"/>
+   <addaction name="change_color_action"/>
+   <addaction name="separator"/>
+   <addaction name="reset_view_action"/>
    <addaction name="export_plot_action"/>
   </widget>
   <action name="linear_region_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/region_add.svg</normaloff>:/icons/region_add.svg</iconset>
+   </property>
    <property name="text">
-    <string>Linear Region</string>
+    <string>Add Region</string>
    </property>
    <property name="toolTip">
     <string>Add a linear selection region</string>
@@ -97,6 +100,10 @@
    </property>
   </action>
   <action name="export_plot_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/export.svg</normaloff>:/icons/export.svg</iconset>
+   </property>
    <property name="text">
     <string>Export Plot</string>
    </property>
@@ -105,6 +112,10 @@
    </property>
   </action>
   <action name="remove_region_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/region_remove.svg</normaloff>:/icons/region_remove.svg</iconset>
+   </property>
    <property name="text">
     <string>Remove Region</string>
    </property>
@@ -112,7 +123,33 @@
     <string>Remove selected region</string>
    </property>
   </action>
+  <action name="change_color_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/color.svg</normaloff>:/icons/color.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Change Color</string>
+   </property>
+   <property name="toolTip">
+    <string>Change the current plot item color</string>
+   </property>
+  </action>
+  <action name="reset_view_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/house.svg</normaloff>:/icons/house.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Reset View</string>
+   </property>
+   <property name="toolTip">
+    <string>Reset the axes to fit the data</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../data/resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

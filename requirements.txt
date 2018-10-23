@@ -12,4 +12,4 @@ PyYAML==3.12
 QtAwesome==0.4.4
 QtPy==1.4.2
 scipy==1.1.0
--e git+https://github.com/nmearl/specutils@0bfe6851a56b2a0409f5abc5fcc76a61e19e37ff#egg=specutils
+specutils==0.4

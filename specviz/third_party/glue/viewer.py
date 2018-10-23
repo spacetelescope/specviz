@@ -9,7 +9,7 @@ import os
 
 from collections import OrderedDict
 
-from qtpy.QtWidgets import QWidget, QMessageBox
+from qtpy.QtWidgets import QWidget, QMessageBox, QApplication
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.core.exceptions import IncompatibleAttribute
@@ -24,7 +24,8 @@ from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.utils.qt import load_ui
 
 from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
-from ...widgets.main_window import MainWindow
+from ...widgets.workspace import Workspace
+from ...app import Application
 
 __all__ = ['SpecvizDataViewer']
 
@@ -80,7 +81,7 @@ class SpecvizLayerArtist(LayerArtist):
         super(SpecvizLayerArtist, self).__init__(*args, **kwargs)
 
         self.specviz_window = specviz_window
-        self.plot_widget = self.specviz_window.workspace.current_plot_window.plot_widget
+        self.plot_widget = self.specviz_window.current_plot_window.plot_widget
 
         self.state.add_callback('attribute', self.update)
         self.state.add_callback('statistic', self.update)
@@ -94,8 +95,9 @@ class SpecvizLayerArtist(LayerArtist):
         self.data_item = None
 
     def remove(self):
-        self.specviz_window.workspace.model.remove_data(self.data_item.identifier)
-        self.data_item = None
+        if self.data_item is not None:
+            self.specviz_window.model.remove_data(self.data_item.identifier)
+            self.data_item = None
 
     def clear(self):
         self.remove()
@@ -135,12 +137,12 @@ class SpecvizLayerArtist(LayerArtist):
         self.enable()
 
         if self.data_item is None:
-            self.data_item = self.specviz_window.workspace.model.add_data(spectrum, name=self.state.layer.label)
+            self.data_item = self.specviz_window.model.add_data(spectrum, name=self.state.layer.label)
             self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
             # FIXME: we shouldn't have to call update_data manually
-            self.plot_data_item.update_data()
+            # self.plot_data_item.update_data()
 
         self.update_visual()
 
@@ -186,8 +188,16 @@ class SpecvizDataViewer(DataViewer):
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
-        self.specviz_window = MainWindow()
-        self.specviz_window.set_embeded(True)
+        # Fake a current_workspace property so that plugins can mount
+        self.specviz_window = Workspace()
+        self.specviz_window.set_embedded(True)
+        QApplication.instance().current_workspace = self.specviz_window
+
+        # Add an intially empty plot window
+        self.specviz_window.add_plot_window()
+
+        # Load specviz plugins
+        Application.load_local_plugins()
 
         self.setCentralWidget(self.specviz_window)
 
@@ -196,7 +206,7 @@ class SpecvizDataViewer(DataViewer):
         # self.setCentralWidget(self.plot_window)
 
         # FIXME: the following shouldn't be needed
-        self.specviz_window.workspace._model.clear()
+        # self.specviz_window._model.clear()
 
     def add_data(self, data):
         if not glue_data_has_spectral_axis(data):
