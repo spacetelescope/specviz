@@ -35,6 +35,7 @@ class UnitChangeDialog(QDialog):
 
     def exec_(self):
         # If there is no plot item, don't even try to process unit info
+        print("self.hub.plot_item", self.hub.plot_item, len(self.hub.visible_plot_items))
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
             message_box.setText("No item plotted, cannot parse unit information.")
@@ -124,6 +125,11 @@ class UnitChangeDialog(QDialog):
         # PlotDataItem.is_data_unit_compatible(data_unit)
         self._spectral_axis_unit_equivalencies_titles.append("Custom")
         self._data_unit_equivalencies_titles.append("Custom")
+
+        print(self._spectral_axis_unit_equivalencies)
+        print(self._spectral_axis_unit_equivalencies_titles)
+        print(self._data_unit_equivalencies)
+        print(self._data_unit_equivalencies_titles)
 
         self.setup_ui()
         self.setup_connections()
