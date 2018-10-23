@@ -190,7 +190,7 @@ class SpecvizDataViewer(DataViewer):
 
         # Fake a current_workspace property so that plugins can mount
         self.specviz_window = Workspace()
-        self.specviz_window.set_embeded(True)
+        self.specviz_window.set_embedded(True)
         QApplication.instance().current_workspace = self.specviz_window
 
         # Add an intially empty plot window

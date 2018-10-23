@@ -15,6 +15,7 @@ from ..core.items import PlotDataItem
 from ..core.models import DataListModel
 from ..core.plugin import plugin
 from ..widgets.delegates import DataItemDelegate
+from ..version import version as specviz_version
 
 from . import resources
 
@@ -47,7 +48,7 @@ class Workspace(QMainWindow):
                             "ui", "workspace.ui"), self)
 
         # Update title
-        self.setWindowTitle(self.name + " — SpecViz")
+        self.setWindowTitle(self.name + " — SpecViz (v{})".format(specviz_version))
 
         # Setup workspace action connections
         self.new_workspace_action.triggered.connect(
@@ -220,10 +221,10 @@ class Workspace(QMainWindow):
                     sub_window.plot_widget.getAxis('bottom').setPen('w')
                     sub_window.plot_widget.getAxis('left').setPen('w')
 
-    def set_embeded(self, embed):
+    def set_embedded(self, embed):
         """
         Toggles the visibility of certain parts of the ui to make it more
-        amenable to being embeded in other applications.
+        amenable to being embedded in other applications.
         """
         if embed:
             self.menu_bar.hide()
