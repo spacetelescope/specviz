@@ -148,6 +148,7 @@ class UnitChangeDialog(QDialog):
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
+        log.debug("checking for dupe elems {} {}".format(self._spectral_axis_unit_equivalencies_titles, self._data_unit_equivalencies_titles))
         # Find the current unit in the list used to fill the combobox and set it as the current text
         self.ui.comboBox_spectral.addItems(self._spectral_axis_unit_equivalencies_titles)
         index = self._spectral_axis_unit_equivalencies_titles.index(self.current_spectral_axis_unit)
