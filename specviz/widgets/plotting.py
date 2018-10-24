@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox)
+                            QMessageBox, QErrorMessage)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity

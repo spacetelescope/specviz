@@ -14,6 +14,7 @@ from qtpy.QtGui import QIcon, QColor, QStandardItem, \
 from qtpy.QtCore import (Signal, QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
+from qtpy.uic import loadUi
 
 from astropy.units import Quantity
 from astropy.units.core import UnitConversionError
@@ -233,9 +234,14 @@ class ClosableMainWindow(QMainWindow):
 
 
 class LineListsWindow(UiLinelistsWindow):
+# class LineListsWindow(ClosableMainWindow):
 
     def __init__(self, plot_window, parent=None):
         super(LineListsWindow, self).__init__()
+        # super(LineListsWindow, self).__init__(plot_window)
+
+        # loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
+        # self.setWindowTitle(str(plot_window._title))
 
         self.plot_window = plot_window
 
