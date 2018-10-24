@@ -1,0 +1,21 @@
+name: H2
+extension: [list]
+filename: 'H2.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 19
+    end: 25
+    units: 'micron'
+  - name: 'Species'
+    index: 1
+    start: 0
+    end: 1
+  - name: 'Transition'
+    index: 2
+    start: 9
+    end: 16
+meta:
+  author: STScI

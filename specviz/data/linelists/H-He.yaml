@@ -1,0 +1,30 @@
+name: H-He
+extension: [list]
+filename: 'H-He.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 13
+    end: 24
+    units: 'micron'
+  - name: 'Species'
+    index: 1
+    start: 0
+    end: 3
+  - name: 'Transition'
+    index: 2
+    start: 5
+    end: 9
+  - name: 'Error'
+    index: 3
+    start: 31
+    end: 37
+    units: 'micron'
+  - name: 'Reference'
+    index: 4
+    start: 39
+    end: 40
+meta:
+  author: STScI
