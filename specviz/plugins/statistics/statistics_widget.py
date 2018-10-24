@@ -40,12 +40,13 @@ def clip_region(spectrum, region):
             region.upper < spectrum.spectral_axis.min():
         return None
 
-    # Clip region:
-    if region.lower < spectrum.spectral_axis.min():
-        region.lower = spectrum.spectral_axis.min()
-    if region.upper > spectrum.spectral_axis.max():
-        region.upper = spectrum.spectral_axis.max()
-    return region
+    # Clip region. There is currently no way to update
+    # SpectralRegion lower and upper so we have to create
+    # a new object here.
+    lower = max(region.lower, spectrum.spectral_axis.min())
+    upper = min(region.upper, spectrum.spectral_axis.max())
+
+    return SpectralRegion(lower, upper)
 
 
 def compute_stats(spectrum):
