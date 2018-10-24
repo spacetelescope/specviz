@@ -199,7 +199,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -266,7 +266,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/050-mask.svg</normaloff>:/icons/050-mask.svg</iconset>
    </property>
    <property name="text">
@@ -281,7 +281,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/015-compass-1.svg</normaloff>:/icons/015-compass-1.svg</iconset>
    </property>
    <property name="text">
@@ -296,7 +296,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/012-file.svg</normaloff>:/icons/012-file.svg</iconset>
    </property>
    <property name="text">
@@ -308,7 +308,7 @@
   </action>
   <action name="new_workspace_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/015-new.svg</normaloff>:/icons/015-new.svg</iconset>
    </property>
    <property name="text">
@@ -320,7 +320,7 @@
   </action>
   <action name="open_workspace_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/folder.svg</normaloff>:/icons/folder.svg</iconset>
    </property>
    <property name="text">
@@ -332,7 +332,7 @@
   </action>
   <action name="save_workspace_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/014-save.svg</normaloff>:/icons/014-save.svg</iconset>
    </property>
    <property name="text">
@@ -344,7 +344,7 @@
   </action>
   <action name="load_data_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/folder-2.svg</normaloff>:/icons/folder-2.svg</iconset>
    </property>
    <property name="text">
@@ -356,7 +356,7 @@
   </action>
   <action name="export_data_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/inbox.svg</normaloff>:/icons/inbox.svg</iconset>
    </property>
    <property name="text">
@@ -368,7 +368,7 @@
   </action>
   <action name="new_plot_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/048-line-chart.svg</normaloff>:/icons/048-line-chart.svg</iconset>
    </property>
    <property name="text">
@@ -380,7 +380,7 @@
   </action>
   <action name="operations_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/005-stats.svg</normaloff>:/icons/005-stats.svg</iconset>
    </property>
    <property name="text">
@@ -392,7 +392,7 @@
   </action>
   <action name="arithmetic_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/014-calculator.svg</normaloff>:/icons/014-calculator.svg</iconset>
    </property>
    <property name="text">
@@ -404,7 +404,7 @@
   </action>
   <action name="delete_data_action">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../data/resources/resources.qrc">
      <normaloff>:/icons/delete-1.svg</normaloff>:/icons/delete-1.svg</iconset>
    </property>
    <property name="text">
@@ -442,6 +442,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../data/resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

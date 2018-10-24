@@ -27,7 +27,7 @@ class Application(QApplication):
     current_workspace_changed = Signal(QMainWindow)
     workspace_added = Signal(Workspace)
 
-    def __init__(self, *args, file_path=None, file_loader=None, embeded=False,
+    def __init__(self, *args, file_path=None, file_loader=None, embedded=False,
                  dev=False, skip_splash=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
 
@@ -44,7 +44,7 @@ class Application(QApplication):
 
         # If specviz is not being embded in another application, go ahead and
         # perform the normal gui setup procedure.
-        if not embeded:
+        if not embedded:
             # Cache a reference to the currently active window
             self.current_workspace = self.add_workspace()
 
@@ -52,7 +52,7 @@ class Application(QApplication):
             self.current_workspace.add_plot_window()
 
             # Set embed mode state
-            self.current_workspace.set_embeded(embeded)
+            self.current_workspace.set_embedded(embedded)
 
         if dev:
             from astropy.modeling.models import Gaussian1D
@@ -165,7 +165,6 @@ class SplashDialog(QDialog):
             self.close()
 
 
-
 @click.command()
 @click.option('--hide_splash', '-H', is_flag=True, help="Hide the startup splash screen.")
 @click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
@@ -180,7 +179,7 @@ def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide
 
     # Start the application, passing in arguments
     app = Application(sys.argv, file_path=file_path, file_loader=loader,
-                      embeded=embed, dev=dev, skip_splash=hide_splash)
+                      embedded=embed, dev=dev, skip_splash=hide_splash)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
