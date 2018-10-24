@@ -129,6 +129,9 @@ class UnitChangeDialog(QDialog):
         self._spectral_axis_unit_equivalencies_titles.append("Custom")
         self._data_unit_equivalencies_titles.append("Custom")
 
+        print(self._spectral_axis_unit_equivalencies_titles)
+        print(self._data_unit_equivalencies_titles)
+
         self.setup_ui()
         self.setup_connections()
 
