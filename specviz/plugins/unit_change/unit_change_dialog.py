@@ -76,9 +76,10 @@ class UnitChangeDialog(QDialog):
         self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
 
         try:
-            log.debug(u.Unit(self.hub.plot_widget.data_unit).long_names)
+            log.debug(u.Unit(self.hub.plot_widget.data_unit))
+            log.debug(hasattr(u.Unit(self.hub.plot_widget.data_unit), "long_names"))
             # Set the current data units to be the ones in plot_widget
-            if u.Unit(self.hub.plot_widget.data_unit).long_names and len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
+            if hasattr(u.Unit(self.hub.plot_widget.data_unit), "long_names") and len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
                 self.current_data_unit = u.Unit(
                     self.hub.plot_widget.data_unit).long_names[0].title()
             else:
@@ -133,7 +134,7 @@ class UnitChangeDialog(QDialog):
 
         print(self._spectral_axis_unit_equivalencies)
         print(self._spectral_axis_unit_equivalencies_titles)
-        print(self._data_unit_equivalencies)
+        #print(self._data_unit_equivalencies)
         print(self._data_unit_equivalencies_titles)
 
         self.setup_ui()
