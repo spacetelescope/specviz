@@ -555,7 +555,6 @@ class LineListsWindow(UiLinelistsWindow):
     def erasePlottedLines(self):
         index_last = self.tabWidget.count() - 1
         self.tabWidget.removeTab(index_last)
-        self.tabWidget.addTab(QWidget(), PLOTTED)
 
     # computes total of rows selected in all table views in all panes
     # and displays result in GUI.

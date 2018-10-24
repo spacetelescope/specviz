@@ -110,6 +110,9 @@ class LineLabelsPlotter(object):
 
             linelists_with_selections.append(new_list)
 
+        if len(linelists_with_selections) == 0:
+            return
+
         # Merge all line lists into a single one.
         merged_linelist = LineList.merge(linelists_with_selections, units)
 
