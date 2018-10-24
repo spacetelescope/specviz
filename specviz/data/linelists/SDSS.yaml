@@ -1,0 +1,29 @@
+name: SDSS
+extension: [list]
+filename: 'SDSS.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 0
+    end:   7
+    units: 'Angstrom'
+  - name: 'Species'
+    index: 1
+    start: 32
+    end: 43
+  - name: 'Type'
+    index:  2
+    start: 20
+    end:   29
+  - name: 'Weight-Galaxy'
+    index: 3
+    start: 9
+    end:  12
+  - name: 'Weight-Quasar'
+    index:  4
+    start: 15
+    end:   17
+meta:
+  author: STScI

@@ -17,7 +17,7 @@ from ...core.hub import Hub
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
 log = logging.getLogger('UnitChangeDialog')
-log.setLevel(logging.WARNING)
+log.setLevel(logging.DEBUG)
 
 
 @plugin("Unit Change Plugin")
@@ -50,6 +50,7 @@ class UnitChangeDialog(QDialog):
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
         if not (self.hub.plot_widget.data_unit
                 and self.hub.plot_widget.spectral_axis_unit):
+            log.debug("hub plot_widget data unit")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         # Gets all possible conversions from current spectral_axis_unit
@@ -75,8 +76,9 @@ class UnitChangeDialog(QDialog):
         self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
 
         try:
+            log.debug(u.Unit(self.hub.plot_widget.data_unit).long_names)
             # Set the current data units to be the ones in plot_widget
-            if len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
+            if u.Unit(self.hub.plot_widget.data_unit).long_names and len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
                 self.current_data_unit = u.Unit(
                     self.hub.plot_widget.data_unit).long_names[0].title()
             else:
@@ -85,14 +87,16 @@ class UnitChangeDialog(QDialog):
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if (u.Unit(self.hub.plot_widget.data_unit) not in self._data_unit_equivalencies
-                and self.current_data_unit not in self._data_unit_equivalencies_titles):
+            if u.Unit(self.hub.plot_widget.data_unit) not in self._data_unit_equivalencies:
                 self._data_unit_equivalencies.append(
                     u.Unit(self.hub.plot_widget.data_unit))
+            if self.current_data_unit not in self._data_unit_equivalencies_titles:
                 self._data_unit_equivalencies_titles.append(
                     self.current_data_unit)
+
         except Exception as e:
             self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
+            log.debug("try except")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
             logging.error(e)
 
@@ -117,6 +121,7 @@ class UnitChangeDialog(QDialog):
                     self.current_spectral_axis_unit)
         except Exception as e:
             self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
+            log.debug("other try except")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
             logging.error(e)
 
