@@ -165,7 +165,6 @@ class SplashDialog(QDialog):
             self.close()
 
 
-
 @click.command()
 @click.option('--hide_splash', '-H', is_flag=True, help="Hide the startup splash screen.")
 @click.option('--file_path', '-F', type=click.Path(exists=True), help="Load the file at the given path on startup.")
