@@ -17,7 +17,7 @@ from ...core.hub import Hub
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
 log = logging.getLogger('UnitChangeDialog')
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.WARNING)
 
 
 @plugin("Unit Change Plugin")
@@ -35,7 +35,6 @@ class UnitChangeDialog(QDialog):
 
     def exec_(self):
         # If there is no plot item, don't even try to process unit info
-        print("self.hub.plot_item", self.hub.plot_item, len(self.hub.visible_plot_items))
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
             message_box.setText("No item plotted, cannot parse unit information.")
@@ -47,10 +46,13 @@ class UnitChangeDialog(QDialog):
             message_box.exec_()
             return
 
+        # Prevents duplicate units from showing up each time this is executed
+        self.ui.comboBox_units.clear()
+        self.ui.comboBox_spectral.clear()
+
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
         if not (self.hub.plot_widget.data_unit
                 and self.hub.plot_widget.spectral_axis_unit):
-            log.debug("hub plot_widget data unit")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         # Gets all possible conversions from current spectral_axis_unit
@@ -76,8 +78,6 @@ class UnitChangeDialog(QDialog):
         self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
 
         try:
-            log.debug(u.Unit(self.hub.plot_widget.data_unit))
-            log.debug(hasattr(u.Unit(self.hub.plot_widget.data_unit), "long_names"))
             # Set the current data units to be the ones in plot_widget
             if hasattr(u.Unit(self.hub.plot_widget.data_unit), "long_names") and len(u.Unit(self.hub.plot_widget.data_unit).long_names) > 0:
                 self.current_data_unit = u.Unit(
@@ -97,13 +97,12 @@ class UnitChangeDialog(QDialog):
 
         except Exception as e:
             self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
-            log.debug("try except")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
             logging.error(e)
 
         try:
             # Set the current spectral_axis unit to be the ones in plot_widget
-            if len(u.Unit(self.hub.plot_widget.spectral_axis_unit).long_names) > 0:
+            if hasattr(u.Unit(self.hub.plot_widget.data_unit), "long_names") and len(u.Unit(self.hub.plot_widget.spectral_axis_unit).long_names) > 0:
                 self.current_spectral_axis_unit = u.Unit(
                     self.hub.plot_widget.spectral_axis_unit).long_names[0].title()
             else:
@@ -112,17 +111,15 @@ class UnitChangeDialog(QDialog):
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if (u.Unit(self.hub.plot_widget.spectral_axis_unit)
-                not in self._spectral_axis_unit_equivalencies
-                and self.current_spectral_axis_unit
-                not in self._spectral_axis_unit_equivalencies_titles):
+            if u.Unit(self.hub.plot_widget.spectral_axis_unit) not in self._spectral_axis_unit_equivalencies:
                 self._spectral_axis_unit_equivalencies.append(
                     u.Unit(self.hub.plot_widget.spectral_axis_unit))
+
+            if self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
                 self._spectral_axis_unit_equivalencies_titles.append(
                     self.current_spectral_axis_unit)
         except Exception as e:
             self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
-            log.debug("other try except")
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
             logging.error(e)
 
@@ -131,11 +128,6 @@ class UnitChangeDialog(QDialog):
         # PlotDataItem.is_data_unit_compatible(data_unit)
         self._spectral_axis_unit_equivalencies_titles.append("Custom")
         self._data_unit_equivalencies_titles.append("Custom")
-
-        print(self._spectral_axis_unit_equivalencies)
-        print(self._spectral_axis_unit_equivalencies_titles)
-        #print(self._data_unit_equivalencies)
-        print(self._data_unit_equivalencies_titles)
 
         self.setup_ui()
         self.setup_connections()
@@ -148,7 +140,6 @@ class UnitChangeDialog(QDialog):
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
-        log.debug("checking for dupe elems {} {}".format(self._spectral_axis_unit_equivalencies_titles, self._data_unit_equivalencies_titles))
         # Find the current unit in the list used to fill the combobox and set it as the current text
         self.ui.comboBox_spectral.addItems(self._spectral_axis_unit_equivalencies_titles)
         index = self._spectral_axis_unit_equivalencies_titles.index(self.current_spectral_axis_unit)
