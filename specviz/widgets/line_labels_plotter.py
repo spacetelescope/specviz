@@ -28,6 +28,8 @@ class LineLabelsPlotter(object):
         self._markers_on_screen = []
 
         self._caller.mouse_enterexit.connect(self._handle_mouse_events)
+        self._caller.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        self._caller.erase_linelabels.connect(self._erase_linelabels)
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
@@ -41,8 +43,7 @@ class LineLabelsPlotter(object):
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._caller._is_selected and self._linelist_window:
             if close:
-                dispatch.on_erase_linelabels.emit(caller=self._caller)
-                dispatch.tear_down(self)
+                self._caller.erase_linelabels.emit(self._caller)
 
                 self._linelist_window.close()
                 self._linelist_window = None
@@ -50,7 +51,6 @@ class LineLabelsPlotter(object):
                 self._linelist_window.hide()
 
     def _erase_linelabels(self, caller, *args, **kwargs):
-
         if caller != self._caller:
             return
 

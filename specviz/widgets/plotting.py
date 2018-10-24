@@ -148,6 +148,8 @@ class PlotWidget(pg.PlotWidget):
     roi_removed = Signal(LinearRegionItem)
 
     mouse_enterexit = Signal(QEvent.Type)
+    dismiss_linelists_window = Signal(bool)
+    erase_linelabels = Signal(pg.PlotWidget)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -194,6 +196,7 @@ class PlotWidget(pg.PlotWidget):
 
         self.plot_added.connect(self.check_plot_compatibility)
         self.plot_removed.connect(self.check_plot_compatibility)
+        self.dismiss_linelists_window.connect(self._dismiss_linelists_window)
 
     @property
     def title(self):
