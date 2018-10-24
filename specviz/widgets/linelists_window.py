@@ -233,38 +233,38 @@ class ClosableMainWindow(QMainWindow):
         self.plot_window.dismiss_linelists_window.emit(False)
 
 
-# class LineListsWindow(UiLinelistsWindow):
-class LineListsWindow(ClosableMainWindow):
+class LineListsWindow(UiLinelistsWindow):
+# class LineListsWindow(ClosableMainWindow):
 
     def __init__(self, plot_window, parent=None):
-        super(LineListsWindow, self).__init__(plot_window)
+        super(LineListsWindow, self).__init__()
+        # super(LineListsWindow, self).__init__(plot_window)
 
-        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
-        self.setWindowTitle(str(plot_window._title))
-
+        # loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
+        # self.setWindowTitle(str(plot_window._title))
 
         self.plot_window = plot_window
 
         # Builds GUI
-        # self._main_window = ClosableMainWindow(plot_window)
-        # self.setupUi(self._main_window, str(plot_window))
-#        self.tabWidget.tabCloseRequested.connect(self.tab_close)
+        self._main_window = ClosableMainWindow(plot_window)
+        self.setupUi(self._main_window, str(plot_window))
+        self.tabWidget.tabCloseRequested.connect(self.tab_close)
 
         # Request that line lists be read from wherever are they sources.
         plot_window.request_linelists()
 
         # Populate line list selector with internal line lists
-#        model = self.line_list_selector.model()
-#        item = QStandardItem("Select line list")
-#        font = QFont("Monospace")
-#        font.setStyleHint(QFont.TypeWriter)
-#        font.setPointSize(12)
-#        item.setFont(font)
-#        model.appendRow(item)
-#        for description in linelist.descriptions():
-#            item = QStandardItem(str(description))
-#            item.setFont(font)
-#            model.appendRow(item)
+        model = self.line_list_selector.model()
+        item = QStandardItem("Select line list")
+        font = QFont("Monospace")
+        font.setStyleHint(QFont.TypeWriter)
+        font.setPointSize(12)
+        item.setFont(font)
+        model.appendRow(item)
+        for description in linelist.descriptions():
+            item = QStandardItem(str(description))
+            item.setFont(font)
+            model.appendRow(item)
 
         #------------ UNCOMMENT TO LOAD LISTS AUTOMATICALLY --------------
         #
@@ -288,18 +288,18 @@ class LineListsWindow(ClosableMainWindow):
         # Dispatch facility, this design decision could likely be modified. We
         # decide to keep the same old design for now, to prevent breaks in logic.
 
-        # self.draw_button.clicked.connect(
-        #     lambda:self.plot_window.line_labels_plotter.plot_linelists(
-        #         table_views=self._getTableViews(),
-        #         panes=self._getPanes(),
-        #         units=self.plot_window.waverange[0].unit,
-        #         caller=self.plot_window))
-        #
-        # self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
-        # self.dismiss_button.clicked.connect(lambda:self.plot_window.dismiss_linelists_window.emit(False))
-        # self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
-        # self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
-        # self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
+        self.draw_button.clicked.connect(
+            lambda:self.plot_window.line_labels_plotter.plot_linelists(
+                table_views=self._getTableViews(),
+                panes=self._getPanes(),
+                units=self.plot_window.waverange[0].unit,
+                caller=self.plot_window))
+
+        self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
+        self.dismiss_button.clicked.connect(lambda:self.plot_window.dismiss_linelists_window.emit(False))
+        self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+        self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
+        self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
@@ -593,8 +593,8 @@ class LineListsWindow(ClosableMainWindow):
                     result.append(widget.widget(index_2))
         return result
 
-    # def show(self):
-    #     self._main_window.show()
+    def show(self):
+        self._main_window.show()
 
     def hide(self):
         self._main_window.hide()
