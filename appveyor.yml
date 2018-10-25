@@ -11,11 +11,13 @@ environment:
                         # of 32 bit and 64 bit builds are needed, move this
                         # to the matrix section.
 
-      
+
       # List other runtime dependencies for the package that are available as
       # conda packages here.
       CONDA_DEPENDENCIES: ""
-      
+
+      PIP_DEPDENDENCIES: "pytest-qt"
+
 
       # Conda packages for affiliated packages are hosted in channel
       # "astropy" while builds for astropy LTS with recent numpy versions
