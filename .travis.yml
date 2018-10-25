@@ -84,8 +84,6 @@ matrix:
         - os: linux
           env: ASTROPY_VERSION=development
                EVENT_TYPE='pull_request push cron'
-        - os: linux
-          env: ASTROPY_VERSION=lts
 
         # Test with glue installed
         - os: linux
