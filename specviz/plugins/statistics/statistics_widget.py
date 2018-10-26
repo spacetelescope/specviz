@@ -5,7 +5,7 @@ from astropy import units as u
 
 from specutils.spectra.spectral_region import SpectralRegion
 from specutils.manipulation import extract_region
-from specutils.analysis.uncertainty import snr
+from specutils.analysis import snr, equivalent_width, fwhm, centroid, line_flux
 
 from qtpy.QtWidgets import QWidget
 from qtpy.uic import loadUi
@@ -63,9 +63,12 @@ def compute_stats(spectrum):
     return {'mean': mean,
             'median': np.median(flux),
             'stddev': flux.std(),
+            'centroid': centroid(spectrum), # we may want to adjust this for continuum subtraction
             'rms': rms,
-            'snr': mean / rms,  # snr(spectrum=spectrum),
-            'total': np.trapz(flux),
+            'snr': snr(spectrum),
+            'fwhm': fwhm(spectrum),
+            'ew': equivalent_width(spectrum),
+            'total': line_flux(spectrum),
             'maxval': flux.max(),
             'minval': flux.min()}
 
