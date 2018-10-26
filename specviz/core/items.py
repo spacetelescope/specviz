@@ -39,6 +39,7 @@ class DataItem(QStandardItem):
 
     @property
     def flux(self):
+        print("&&&&&&&&&&&&&&&&&&&", self.data(self.DataRole).flux)
         return self.data(self.DataRole).flux
 
     @property
@@ -114,6 +115,9 @@ class PlotDataItem(pg.PlotDataItem):
 
     @data_unit.setter
     def data_unit(self, value):
+        print("in data_unit")
+        print("old unit", self._data_unit, type(self.data_unit))
+        print("new unit", value, type(value))
         self._data_unit = value
         self.data_unit_changed.emit(self._data_unit)
 
@@ -164,6 +168,11 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def flux(self):
+        print("@@@@@@@@@@@@@@@@@@@@@@@@", self.data_item.flux, self.data_unit, self.spectral_axis)
+        # print("**************", self.data_item.flux.to(self.data_unit or "",
+        #                               equivalencies=spectral_density(
+        #                                   self.spectral_axis)).value)
+
         return self.data_item.flux.to(self.data_unit or "",
                                       equivalencies=spectral_density(
                                           self.spectral_axis)).value
@@ -229,6 +238,10 @@ class PlotDataItem(pg.PlotDataItem):
         if self.opts.get('stepMode'):
             spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
 
+        import traceback
+        traceback.print_stack()
+
+        print("!!!!!!!!!!!!!!!!!!", self, type(self))
         self.setData(spectral_axis, self.flux, connect="finite")
 
 

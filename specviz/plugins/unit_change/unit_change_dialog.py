@@ -66,11 +66,11 @@ class UnitChangeDialog(QDialog):
 
         # Gets all possible conversions for flux from current spectral axis and corresponding units
         self._data_unit_equivalencies = u.Unit(
-            self.hub.plot_widget.spectral_axis_unit).find_equivalent_units(
-                equivalencies=u.spectral_density(self.hub.data_item.spectral_axis))
+            self.hub.plot_widget.data_unit).find_equivalent_units(
+                equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]), include_prefix_units=False)
         self._data_unit_equivalencies_titles = [
             u.Unit(unit).long_names[0].title()
-            if len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
             for unit in self._data_unit_equivalencies]
 
         # Holder values for current data unit and spectral axis unit
@@ -288,6 +288,8 @@ class UnitChangeDialog(QDialog):
                     return False
 
             # Set new units
+            print("Old Units", self.hub.plot_widget.data_unit, type(self.hub.plot_widget.data_unit))
+            print("New Units", data_unit_formatted, type(data_unit_formatted))
             self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":

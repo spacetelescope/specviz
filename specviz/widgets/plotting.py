@@ -217,12 +217,15 @@ class PlotWidget(pg.PlotWidget):
     @data_unit.setter
     def data_unit(self, value):
         for plot_data_item in self.listDataItems():
+            print("plot_data_item", plot_data_item, plot_data_item.data_unit, plot_data_item.flux)
             if plot_data_item.is_data_unit_compatible(value):
+                print("value", value)
                 plot_data_item.data_unit = value
 
                 # Re-initialize plot to update the displayed values and
                 # adjust ranges of the displayed axes
-                self.initialize_plot(spectral_axis_unit=value)
+                # TODO: Changed this to data_unit from spectral_axis_unit
+                self.initialize_plot(data_unit=value)
             else:
                 # Technically, this should not occur, but in the unforseen
                 # case that it does, remove the plot and log an error
@@ -230,7 +233,7 @@ class PlotWidget(pg.PlotWidget):
                 logging.error("Removing plot '%s' due to incompatible units "
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
-                              plot_data_item.spectral_axis_unit, value)
+                              plot_data_item.data_unit, value)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
