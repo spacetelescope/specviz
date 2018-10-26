@@ -38,7 +38,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="min_text">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -87,7 +87,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="max_text">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -121,7 +121,7 @@
      <item>
       <widget class="QLabel" name="nlines_label">
        <property name="text">
-        <string>TextLabel</string>
+        <string>0</string>
        </property>
       </widget>
      </item>
@@ -160,5 +160,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>184</x>
+     <y>199</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>184</x>
+     <y>109</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>184</x>
+     <y>199</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>184</x>
+     <y>109</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

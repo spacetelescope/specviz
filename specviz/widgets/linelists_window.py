@@ -255,91 +255,30 @@ class LineListsWindow(ClosableMainWindow):
 
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_waverange.ui"), dialog)
 
-        # dialog.setWindowTitle("Wavelength range")
-        # dialog.setWindowModality(Qt.ApplicationModal)
-        # dialog.resize(370, 250)
-        #
-        # button_ok = QPushButton("OK")
-        # button_ok.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # button_cancel = QPushButton("Cancel")
-        # button_cancel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        #
-        # button_ok.clicked.connect(dialog.accept)
-        # button_cancel.clicked.connect(dialog.reject)
-        #
-        # min_text = QLineEdit("%.2f" % wave_range[0].value)
-        # max_text = QLineEdit("%.2f" % wave_range[1].value)
-        #
-        # validator = QDoubleValidator()
-        # validator.setBottom(0.0)
-        # validator.setDecimals(2)
-        # min_text.setValidator(validator)
-        # max_text.setValidator(validator)
-        #
-        # min_text.setFixedWidth(150)
-        # max_text.setFixedWidth(150)
-        # min_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # max_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        # min_text.setToolTip("Minimum wavelength to read from list.")
-        # max_text.setToolTip("Maximum wavelength to read from list.")
-        #
-        # nlines_label = self._compute_nlines_in_waverange(line_list, min_text, max_text)
-        #
-        # min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-        #                                          min_text, max_text, label=nlines_label))
-        # max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-        #                                          min_text, max_text, label=nlines_label))
-        #
-        # # set up layouts and widgets for the dialog.
-        # text_pane = QWidget()
-        # text_layout = QGridLayout()
-        #
-        # text_layout.addWidget(min_text, 1, 0)
-        # text_layout.addWidget(QLabel("Minimum wavelength"), 0, 0)
-        # text_layout.addWidget(max_text, 1, 1)
-        # text_layout.addWidget(QLabel("Maximum wavelength"), 0, 1)
-        #
-        # spacerItem = QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        # text_layout.addItem(spacerItem, 1, 2)
-        # text_pane.setLayout(text_layout)
-        #
-        # label_pane = QWidget()
-        # label_layout = QHBoxLayout()
-        # label_layout.addWidget(nlines_label)
-        # label_layout.addWidget(QLabel(" lines included in range."))
-        # label_layout.addStretch()
-        # label_pane.setLayout(label_layout)
-        #
-        # button_pane = QWidget()
-        # button_layout = QHBoxLayout()
-        #
-        # button_layout.addStretch()
-        # button_layout.addWidget(button_cancel)
-        # button_layout.addWidget(button_ok)
-        # button_pane.setLayout(button_layout)
-        #
-        # dialog_layout = QVBoxLayout()
-        # dialog_layout.setSizeConstraint(QLayout.SetMaximumSize)
-        #
-        # dialog_layout.addWidget(text_pane)
-        # dialog_layout.addWidget(label_pane)
-        # dialog_layout.addStretch()
-        # dialog_layout.addWidget(button_pane)
-        #
-        # dialog.setLayout(dialog_layout)
-        #
-        # button_ok.setDefault(True)
-        # button_cancel.setDefault(False)
-        #
-        accepted = dialog.exec_() > 0
-        #
-        # amin = amax = None
-        # if accepted:
-        #     return self._get_range_from_textfields(min_text, max_text)
-        #
-        # return (amin, amax)
+        dialog.min_text.setText("%.2f" % wave_range[0].value)
+        dialog.max_text.setText("%.2f" % wave_range[1].value)
 
-        return (Quantity(1100., "Angstrom"), Quantity(1400., "Angstrom"))
+        validator = QDoubleValidator()
+        validator.setBottom(0.0)
+        validator.setDecimals(2)
+        dialog.min_text.setValidator(validator)
+        dialog.max_text.setValidator(validator)
+
+        dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
+                                                                dialog.nlines_label)
+
+        dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
+        dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
+
+        accepted = dialog.exec_() > 0
+
+        amin = amax = None
+        if accepted:
+            return self._get_range_from_textfields(dialog.min_text, dialog.max_text)
+
+        return (amin, amax)
 
     def _get_range_from_textfields(self, min_text, max_text):
         amin = amax = None
@@ -359,7 +298,7 @@ class LineListsWindow(ClosableMainWindow):
     # fall within the supplied wavelength range. The
     # result populates the supplied label. Or, it
     # builds a fresh QLabel with the result.
-    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label=None):
+    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label):
 
         amin, amax = self._get_range_from_textfields(min_text, max_text)
 
@@ -368,11 +307,8 @@ class LineListsWindow(ClosableMainWindow):
             extracted = line_list.extract_range(r)
             nlines = len(extracted[WAVELENGTH_COLUMN].data)
 
-            if label == None:
-                label = QLabel(str(nlines))
-            else:
-                label.setText(str(nlines))
-            color = 'black' if nlines < NLINES_WARN else 'red'
+            label.setText(str(nlines))
+            color = 'black' if nlines < NLINES_WARN else 'reg   d'
             label.setStyleSheet('color:' + color)
 
         return label
