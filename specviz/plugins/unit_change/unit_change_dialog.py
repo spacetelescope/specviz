@@ -88,12 +88,15 @@ class UnitChangeDialog(QDialog):
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if u.Unit(self.hub.plot_widget.data_unit) not in self._data_unit_equivalencies:
+            if u.Unit(self.hub.plot_widget.data_unit) not in self._data_unit_equivalencies or \
+                    self.current_data_unit not in self._data_unit_equivalencies_titles:
                 self._data_unit_equivalencies.append(
                     u.Unit(self.hub.plot_widget.data_unit))
-            if self.current_data_unit not in self._data_unit_equivalencies_titles:
                 self._data_unit_equivalencies_titles.append(
                     self.current_data_unit)
+            # if self.current_data_unit not in self._data_unit_equivalencies_titles:
+            #     self._data_unit_equivalencies_titles.append(
+            #         self.current_data_unit)
 
         except Exception as e:
             self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
@@ -111,13 +114,16 @@ class UnitChangeDialog(QDialog):
 
             # Add current unit used by PlotWidget to the list of equivalencies
             # that fills the combobox
-            if u.Unit(self.hub.plot_widget.spectral_axis_unit) not in self._spectral_axis_unit_equivalencies:
+            if u.Unit(self.hub.plot_widget.spectral_axis_unit) not in self._spectral_axis_unit_equivalencies or \
+                    self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
                 self._spectral_axis_unit_equivalencies.append(
                     u.Unit(self.hub.plot_widget.spectral_axis_unit))
-
-            if self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
                 self._spectral_axis_unit_equivalencies_titles.append(
                     self.current_spectral_axis_unit)
+            #
+            # if self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
+            #     self._spectral_axis_unit_equivalencies_titles.append(
+            #         self.current_spectral_axis_unit)
         except Exception as e:
             self.current_spectral_axis_unit = self._spectral_axis_unit_equivalencies_titles[0]
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)

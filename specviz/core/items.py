@@ -3,6 +3,7 @@ from itertools import cycle
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
+import astropy.units as u
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem
 
@@ -119,6 +120,7 @@ class PlotDataItem(pg.PlotDataItem):
         print("old unit", self._data_unit, type(self.data_unit))
         print("new unit", value, type(value))
         self._data_unit = value
+        print("data unit", self.data_unit, type(self.data_unit))
         self.data_unit_changed.emit(self._data_unit)
 
     @property
@@ -130,6 +132,8 @@ class PlotDataItem(pg.PlotDataItem):
         if self.opts.get('stepMode'):
             diff = np.diff(spectral_axis)
             spectral_axis += np.append(diff, diff[-1]) * 0.5
+
+        print("error_bar_item", self.flux)
 
         self._error_bar_item.setData(x=spectral_axis,
                                      y=self.flux,
@@ -168,14 +172,16 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def flux(self):
-        print("@@@@@@@@@@@@@@@@@@@@@@@@", self.data_item.flux, self.data_unit, self.spectral_axis)
+        print("@@@@@@@@@@@@@@@@@@@@@@@@", self.data_item.flux, type(self.data_item.flux), self.data_unit, self.spectral_axis, self.spectral_axis_unit)
         # print("**************", self.data_item.flux.to(self.data_unit or "",
         #                               equivalencies=spectral_density(
         #                                   self.spectral_axis)).value)
 
-        return self.data_item.flux.to(self.data_unit or "",
-                                      equivalencies=spectral_density(
-                                          self.spectral_axis)).value
+        x = self.data_item.flux.to(self.data_unit,
+                                   equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit)))
+        print("flux?", x, type(x), type(x.value))
+
+        return x.value
 
     @property
     def spectral_axis(self):
@@ -234,6 +240,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def set_data(self):
         spectral_axis = self.spectral_axis
+        print("^^^^^^^^^^^^^^", spectral_axis, type(spectral_axis))
 
         if self.opts.get('stepMode'):
             spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
@@ -241,7 +248,7 @@ class PlotDataItem(pg.PlotDataItem):
         import traceback
         traceback.print_stack()
 
-        print("!!!!!!!!!!!!!!!!!!", self, type(self))
+        print("!!!!!!!!!!!!!!!!!!", self, type(self), hasattr(self, "flux"), self.data_item.flux)
         self.setData(spectral_axis, self.flux, connect="finite")
 
 
