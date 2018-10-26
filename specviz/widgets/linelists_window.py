@@ -308,7 +308,7 @@ class LineListsWindow(ClosableMainWindow):
             nlines = len(extracted[WAVELENGTH_COLUMN].data)
 
             label.setText(str(nlines))
-            color = 'black' if nlines < NLINES_WARN else 'reg   d'
+            color = 'black' if nlines < NLINES_WARN else 'red'
             label.setStyleSheet('color:' + color)
 
         return label
@@ -430,6 +430,14 @@ class LineListPane(QWidget):
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(panel_layout)
+
+        # GUI cannot be completely defined in a .ui file.
+        # It has to be built on-the-fly here.
+        self.button_pane = QWidget()
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_panel_buttons.ui"), self.button_pane)
+        self.button_pane.create_set_button.clicked.connect(self._createSet)
+        self.button_pane.deselect_button.clicked.connect(table_view.clearSelection)
+
         # header with line list metadata.
         info = QTextBrowser()
         info.setMaximumHeight(100)
@@ -438,87 +446,31 @@ class LineListPane(QWidget):
         for comment in linelist.meta['comments']:
             info.append(comment)
 
-        # buttons and selectors dedicated to the specific list
-        # displayed in this pane.
-        button_pane = QWidget()
-        hlayout = QGridLayout()
-
-        # 'add set' button
-        self.create_set_button = QPushButton(self)
-        self.create_set_button.setObjectName("add_set_button")
-        _translate = QCoreApplication.translate
-        self.create_set_button.setText(_translate("MainWindow", "Create set"))
-        self.create_set_button.setToolTip("Create new line set from selected lines.")
-        self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(self.create_set_button, 1, 0)
-
-        # the create_set button is enabled/disabled by logic elsewhere
-        self.create_set_button.setEnabled(False)
-        self.create_set_button.clicked.connect(lambda: self._createSet())
-
-        # 'deselect all' button
-        deselect_button = QPushButton(self)
-        deselect_button.setObjectName("deselect_button")
-        _translate = QCoreApplication.translate
-        deselect_button.setText(_translate("MainWindow", "Deselect"))
-        deselect_button.setToolTip("Un-select everything on this set.")
-        deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(deselect_button, 1, 1)
-        deselect_button.clicked.connect(lambda: table_view.clearSelection())
-
-        # color picker
-        self.combo_box_color = QComboBox(self)
-        self.combo_box_color.setObjectName("color_selector")
-        self.combo_box_color.setToolTip("Color for selected lines in this set.")
-        model = self.combo_box_color.model()
+        # populate color picker
+        model = self.button_pane.combo_box_color.model()
         for cname in ID_COLORS:
             item = QStandardItem(cname)
             item.setForeground(ID_COLORS[cname])
             item.setData(QColor(ID_COLORS[cname]), role=Qt.UserRole)
             model.appendRow(item)
-        hlayout.addWidget(self.combo_box_color, 1, 2)
-        hlayout.addWidget(QLabel("Color"), 0, 2)
 
-        # plotting height
-        self.height_textbox = QLineEdit(str(DEFAULT_HEIGHT))
+        # set validators
         validator = QDoubleValidator()
         validator.setRange(0.05, 0.95, decimals=2)
-        self.height_textbox.setValidator(validator)
-        self.height_textbox.setFixedWidth(50)
-        self.height_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.height_textbox.setToolTip("Relative height to plot.")
-        hlayout.addWidget(self.height_textbox, 1, 3)
-        hlayout.addWidget(QLabel("Height"), 0, 3)
-
-        # redshift
-        self.redshift_textbox = QLineEdit(str(0.0))
+        self.button_pane.height_textbox.setValidator(validator)
         validator = QDoubleValidator()
         validator.setRange(-1.e5, 1.e10, decimals=4)
-        self.redshift_textbox.setValidator(validator)
-        self.redshift_textbox.setFixedWidth(70)
-        self.redshift_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.redshift_textbox.setToolTip("Redshift lines by")
-        hlayout.addWidget(self.redshift_textbox, 1, 4)
-        hlayout.addWidget(QLabel("Redshift"), 0, 4)
+        self.button_pane.redshift_textbox.setValidator(validator)
 
-        # redshift units
-        self.combo_box_z_units = QComboBox(self)
-        self.combo_box_z_units.setObjectName("redshift_units")
-        self.combo_box_z_units.setToolTip("Redshift units.")
-        model = self.combo_box_z_units.model()
+        model = self.button_pane.combo_box_z_units.model()
         for uname in ['z', 'km/s']:
             item = QStandardItem(uname)
             model.appendRow(item)
-        hlayout.addWidget(self.combo_box_z_units, 1, 5)
 
-        # put it all together.
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        hlayout.addItem(spacerItem, 1, 6)
-        button_pane.setLayout(hlayout)
-
+        # put it all together
         panel_layout.addWidget(info)
         panel_layout.addWidget(table_view)
-        panel_layout.addWidget(button_pane)
+        panel_layout.addWidget(self.button_pane)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -558,7 +510,7 @@ class LineListPane(QWidget):
 
     def handle_button_activation(self):
         nselected = len(self.table_view.selectionModel().selectedRows())
-        self.create_set_button.setEnabled(nselected > 0)
+        self.button_pane.create_set_button.setEnabled(nselected > 0)
 
 
 class PlottedLinesPane(QWidget):
@@ -600,7 +552,7 @@ class PlottedLinesPane(QWidget):
         if table_model.rowCount() > 0:
             table_view = QTableView()
 
-            # disabling sorting will significantly speed up the
+            # disabling sorting will significantly speed up theWidget
             # plot. This is because the table view must be re-built
             # every time a new set of markers is drawn on the plot
             # surface. Alternate approaches are worth examining. It
