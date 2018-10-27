@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>748</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>300</width>
+    <height>350</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
+      </property>
+      <item>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <property name="tabsClosable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>Tab 1</string>
+         </attribute>
+        </widget>
+        <widget class="QWidget" name="tab_2">
+         <attribute name="title">
+          <string>Tab 2</string>
+         </attribute>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
+      </property>
+      <property name="leftMargin">
+       <number>11</number>
+      </property>
+      <property name="topMargin">
+       <number>11</number>
+      </property>
+      <property name="rightMargin">
+       <number>11</number>
+      </property>
+      <property name="bottomMargin">
+       <number>11</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="lines_selected_label">
+        <property name="text">
+         <string>0</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>selected lines</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="draw_button">
+        <property name="toolTip">
+         <string>Draw labels from selected lines.</string>
+        </property>
+        <property name="text">
+         <string>Draw</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="erase_button">
+        <property name="toolTip">
+         <string>Erase all line labels</string>
+        </property>
+        <property name="text">
+         <string>Erase</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="dismiss_button">
+        <property name="toolTip">
+         <string>Dismiss (hide) this window</string>
+        </property>
+        <property name="text">
+         <string>Dismiss</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="windowTitle">
+    <string>Main Tool Bar</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::NoToolBarArea</set>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>24</width>
+     <height>24</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionExport"/>
+   <addaction name="separator"/>
+  </widget>
+  <action name="mask_editor_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/050-mask.svg</normaloff>:/icons/050-mask.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mask Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the mask editor</string>
+   </property>
+  </action>
+  <action name="statistics_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/015-compass-1.svg</normaloff>:/icons/015-compass-1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Statistics</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the data statistics</string>
+   </property>
+  </action>
+  <action name="model_editor_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/012-file.svg</normaloff>:/icons/012-file.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Model Editor</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide the model editor interface</string>
+   </property>
+  </action>
+  <action name="new_workspace_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/015-new.svg</normaloff>:/icons/015-new.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new workspace</string>
+   </property>
+  </action>
+  <action name="open_workspace_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/folder.svg</normaloff>:/icons/folder.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a previously saved workspace</string>
+   </property>
+  </action>
+  <action name="save_workspace_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/014-save.svg</normaloff>:/icons/014-save.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>Save current workspace</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/folder-2.svg</normaloff>:/icons/folder-2.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Read</string>
+   </property>
+   <property name="toolTip">
+    <string>Read line list </string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/inbox.svg</normaloff>:/icons/inbox.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Export</string>
+   </property>
+   <property name="toolTip">
+    <string>Export selected rows</string>
+   </property>
+  </action>
+  <action name="new_plot_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/048-line-chart.svg</normaloff>:/icons/048-line-chart.svg</iconset>
+   </property>
+   <property name="text">
+    <string>New Plot</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a new plot in the workspace</string>
+   </property>
+  </action>
+  <action name="operations_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/005-stats.svg</normaloff>:/icons/005-stats.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Operations</string>
+   </property>
+   <property name="toolTip">
+    <string>Operations to be applied to data</string>
+   </property>
+  </action>
+  <action name="arithmetic_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/014-calculator.svg</normaloff>:/icons/014-calculator.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Arithmetic</string>
+   </property>
+   <property name="toolTip">
+    <string>Perform arithmetic between data</string>
+   </property>
+  </action>
+  <action name="delete_data_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/delete-1.svg</normaloff>:/icons/delete-1.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Delete Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete the selected data item</string>
+   </property>
+  </action>
+  <action name="default_theme_action">
+   <property name="text">
+    <string>Native</string>
+   </property>
+   <property name="toolTip">
+    <string>Switch application to native theme</string>
+   </property>
+  </action>
+  <action name="dark_theme_action">
+   <property name="text">
+    <string>Dark</string>
+   </property>
+   <property name="toolTip">
+    <string>Switch application to dark theme</string>
+   </property>
+  </action>
+  <action name="tabbed_view_toggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tabbed View</string>
+   </property>
+   <property name="toolTip">
+    <string>Toggle between tabbed view and subwindow view</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="../../data/resources/resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
