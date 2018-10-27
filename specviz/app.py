@@ -38,7 +38,7 @@ class Application(QApplication):
         self.load_local_plugins()
 
         # cache the line lists for speedier access
-        from .core import linelist
+        from .plugins.line_labels import linelist
         linelist.populate_linelists_cache()
 
         # Show splash

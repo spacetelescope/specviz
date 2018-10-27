@@ -8,6 +8,7 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import glob
 import yaml
+from os import path
 
 import numpy as np
 
@@ -77,7 +78,8 @@ def populate_linelists_cache():
     # see the benefits, since the reading of even the largest line
     # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
-    linelist_path +=  '/../data/linelists/'
+    s = path.sep
+    linelist_path +=  s + '..' + s + '..' + s + 'data' + s + 'linelist' + s
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
