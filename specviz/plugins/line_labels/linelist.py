@@ -8,11 +8,9 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import glob
 import yaml
-from os import path
 
 import numpy as np
 
-from astropy import units as u
 from astropy.io import ascii
 from astropy.table import Table, vstack
 from astropy import constants
@@ -79,9 +77,7 @@ def populate_linelists_cache():
     # see the benefits, since the reading of even the largest line
     # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
-    s = path.sep
-    linelist_path +=  s + '..' + s + '..' + s + 'data' + s + 'linelists' + s
-
+    linelist_path +=  '/../data/linelists/'
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
@@ -271,7 +267,7 @@ class LineList(Table):
             # to the raw Table instances.
 
             internal_table = linelist._table
-            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units, equivalencies=u.spectral())
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
 
             # add columns to hold color and height attributes
             color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
@@ -328,7 +324,7 @@ class LineList(Table):
 
         # convert wavelenghts in line list to whatever
         # units the wavelength range is expressed in.
-        new_wavelengths = wavelengths.to(wmin.unit, equivalencies=u.spectral())
+        new_wavelengths = wavelengths.to(wmin.unit)
 
         # add some leeway at the short and long end points.
         # For now, we extend both ends by 10%. This might
