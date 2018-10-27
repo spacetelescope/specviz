@@ -3,16 +3,12 @@ Define all the line list-based windows and dialogs
 """
 import os
 
-from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
-                            QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
-                            QSizePolicy, QToolBar, QLineEdit, QTabBar,
-                            QAction, QTableView, QMainWindow, QHeaderView,
-                            QAbstractItemView, QLayout, QTextBrowser, QComboBox,
+from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
+                            QTableView, QMainWindow, QAbstractItemView,
+                            QLayout, QTextBrowser, QComboBox,
                             QDialog, QErrorMessage)
-from qtpy.QtGui import QIcon, QColor, QStandardItem, \
-                       QDoubleValidator, QFont
-from qtpy.QtCore import (Signal, QSize, QCoreApplication, QMetaObject, Qt,
-                         QAbstractTableModel, QVariant, QSortFilterProxyModel)
+from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont
+from qtpy.QtCore import (Qt,QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 from qtpy.uic import loadUi
 
@@ -20,9 +16,9 @@ from astropy.units import Quantity
 from astropy.units.core import UnitConversionError
 from astropy.io import ascii
 
-from ..core import linelist
-from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
-from ..core.linelist import columns_to_remove
+from ...core import linelist
+from ...core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
+from ...core.linelist import columns_to_remove
 
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          '..', 'data', 'qt', 'resources'))
@@ -103,6 +99,7 @@ class ClosableMainWindow(QMainWindow):
         self.plot_window = plot_window
 
     def closeEvent(self, event):
+        # TODO replace direct references to plot_window with references to the Hub machinery.
         self.plot_window.dismiss_linelists_window.emit(False)
 
 
@@ -164,15 +161,17 @@ class LineListsWindow(ClosableMainWindow):
         # Dispatch facility, this design decision could likely be modified. We
         # decide to keep the same old design for now, to prevent breaks in logic.
 
+        # TODO replace direct references to plot_window with references to the Hub machinery.
         self.draw_button.clicked.connect(
             lambda:self.plot_window.line_labels_plotter.plot_linelists(
                 table_views=self._getTableViews(),
                 panes=self._getPanes(),
                 units=self.plot_window.waverange[0].unit,
                 caller=self.plot_window))
-
         self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
         self.dismiss_button.clicked.connect(lambda:self.plot_window.dismiss_linelists_window.emit(False))
+
+        # internal signals do not use Hub infrastructure.
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
@@ -267,6 +266,7 @@ class LineListsWindow(ClosableMainWindow):
         dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
                                                                 dialog.nlines_label)
 
+        # internal signals do not use Hub infrastructure.
         dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
                                                  dialog.min_text, dialog.max_text, dialog.nlines_label))
         dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
@@ -331,9 +331,11 @@ class LineListsWindow(ClosableMainWindow):
             lineset_tabbed_pane.addTab(pane, "Original")
             pane.setLineSetsTabbedPane(lineset_tabbed_pane)
 
-            # connect signals
-            table_view.selectionModel().selectionChanged.connect(self._countSelections)
+            # TODO replace direct reference to pane with references to the Hub machinery.
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+
+            # internal signals do not use Hub infrastructure.
+            table_view.selectionModel().selectionChanged.connect(self._countSelections)
 
             # now we add this "line set tabbed pane" to the main tabbed
             # pane, with name taken from the list model.
@@ -435,6 +437,8 @@ class LineListPane(QWidget):
         # It has to be built on-the-fly here.
         self.button_pane = QWidget()
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_panel_buttons.ui"), self.button_pane)
+
+        # internal signals do not use Hub infrastructure.
         self.button_pane.create_set_button.clicked.connect(self._createSet)
         self.button_pane.deselect_button.clicked.connect(table_view.clearSelection)
 
@@ -480,7 +484,8 @@ class LineListPane(QWidget):
 
         # this must be set only once per tabbed pane, otherwise multiple
         # signal handlers can result in more than one tab being closed
-        # when just one closing request is posted.
+        # when just one closing request is posted. Internal signals do
+        # not use Hub infrastructure.
         self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
 
     def _createSet(self):
@@ -500,7 +505,10 @@ class LineListPane(QWidget):
             pane, table_view = _createLineListPane(local_list, table_model, self._caller)
 
             pane._sets_tabbed_pane = self._sets_tabbed_pane
+            # Internal signals do not use Hub infrastructure.
             table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+
+            # TODO replace direct reference to pane with references to the Hub machinery.
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
             self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
