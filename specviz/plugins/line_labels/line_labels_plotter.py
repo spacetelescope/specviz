@@ -2,8 +2,8 @@ import numpy as np
 
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
-from ..core.annotation import LineIDMarker, LineIDMarkerProxy
-from ..core.linelist import LineList, \
+from ...core.annotation import LineIDMarker, LineIDMarkerProxy
+from ...core.linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 
@@ -27,6 +27,7 @@ class LineLabelsPlotter(object):
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
+        # TODO replace direct references to _caller with references to the Hub machinery.
         self._caller.mouse_enterexit.connect(self._handle_mouse_events)
         self._caller.dismiss_linelists_window.connect(self._dismiss_linelists_window)
         self._caller.erase_linelabels.connect(self._erase_linelabels)
@@ -43,6 +44,7 @@ class LineLabelsPlotter(object):
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._caller._is_selected and self._linelist_window:
             if close:
+                # TODO replace direct references to _caller with references to the Hub machinery.
                 self._caller.erase_linelabels.emit(self._caller)
 
                 self._linelist_window.close()
