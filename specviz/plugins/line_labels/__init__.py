@@ -1,1 +1,1 @@
-from .linelists_window import LineListsPlugin
+__author__ = 'busko'
