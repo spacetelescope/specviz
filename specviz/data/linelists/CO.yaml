@@ -1,0 +1,21 @@
+name: CO
+extension: [list]
+filename: 'CO.list'
+type: 'line_list'
+format: 'fixed_width_no_header'
+columns:
+  - name: 'Wavelength'
+    index: 0
+    start: 32
+    end: 40
+    units: 'micron'
+  - name: 'Species'
+    index: 1
+    start: 0
+    end: 10
+  - name: 'Transition'
+    index: 2
+    start: 12
+    end: 25
+meta:
+  author: STScI
