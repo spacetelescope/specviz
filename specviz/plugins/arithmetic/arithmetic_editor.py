@@ -7,7 +7,8 @@ from PyQt5.uic import loadUi
 from PyQt5.QtCore import Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (QMainWindow,QInputDialog,QApplication, QDialog,
-                            QComboBox, QPushButton, QTreeWidget, QTreeWidgetItem)
+                            QComboBox, QPushButton, QTreeWidget, QTreeWidgetItem,
+                            QMessageBox)
 from specutils import Spectrum1D
 import sys
 import uuid
@@ -28,15 +29,20 @@ class EquationEditor(QDialog):
             Dictionary of spectrum 1D objects.
         """
         super().__init__(parent=None)
-        loadUi('/Users/mfix/Desktop/specviz/specviz/plugins/arithmetic/arithmetic_editor.ui', self)
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "arithmetic_editor.ui")), self)
         
-        self.model = self.hub.data_items
+        
         self.button_add_derived.clicked.connect(self.showDialog)
         self.button_edit_derived.clicked.connect(self.edit_expression)
         self.button_remove_derived.clicked.connect(self.remove_expression)
+        
+        self.setModal(True)
 
-    @plugin.tool_bar(name="Arithmetic 2", icon=QIcon(":/icons/012-file.svg"))
+    @plugin.tool_bar(name="Arithmetic", icon=QIcon(":/icons/014-calculator.svg"))
     def on_action_triggerd(self):
+        self.model_items = self.hub.data_items
         self.show()
 
 
@@ -122,38 +128,45 @@ class Editor(QDialog):
             Expression text
         """
         super(Editor, self).__init__(parent)
-        loadUi('/Users/mfix/Desktop/specviz/specviz/plugins/arithmetic/equation_editor.ui', self)
-        
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "equation_editor.ui")), self)
+    
         self._equation_editor = equation_editor
-        self.is_addmode = label is None
-
-        if label is not None:
-            self.text_label.setText(label)
-            self.text_label.setDisabled(True)
-        else:
-            self.text_label.setPlaceholderText("New attribute name")
-        if equation is not None:
-            self.expression.insertPlainText(equation)
-        else:
-            self.expression.setPlaceholderText(self.placeholder_text)
-
-        # Set options for spec1d objects to select.        
-        self.combosel_data.addItems([item.name for item in model])
-        # Set options for spec1d attributes.
-        self.combosel_component.addItems(['wavelength', 'velocity',
-                                          'frequency', 'flux'])
-
-        self.button_insert.clicked.connect(self._insert_component)
         
-        self.button_ok.clicked.connect(self._assign_components)
-        self.button_cancel.clicked.connect(self._close_dialog)
+        if not self._equation_editor.model_items:
+            self.msgbox = QMessageBox.warning(self._equation_editor, "No Spectrum1D Objects", 
+                                "There are currently no Spectrum1D objects in the data collection")
+        else:
+            self.is_addmode = label is None
 
-        self.text_label.textChanged.connect(self._update_status)
-        self.expression.textChanged.connect(self._update_status)
-        self._update_status()
+            if label is not None:
+                self.text_label.setText(label)
+                self.text_label.setDisabled(True)
+            else:
+                self.text_label.setPlaceholderText("New attribute name")
+            if equation is not None:
+                self.expression.insertPlainText(equation)
+            else:
+                self.expression.setPlaceholderText(self.placeholder_text)
 
-        self.setModal(True)
-        self.show()
+            # Set options for spec1d objects to select.        
+            self.combosel_data.addItems([item.name for item in self._equation_editor.model_items])
+            # Set options for spec1d attributes.
+            self.combosel_component.addItems(['wavelength', 'velocity',
+                                            'frequency', 'flux'])
+
+            self.button_insert.clicked.connect(self._insert_component)
+            
+            self.button_ok.clicked.connect(self._assign_components)
+            self.button_cancel.clicked.connect(self._close_dialog)
+
+            self.text_label.textChanged.connect(self._update_status)
+            self.expression.textChanged.connect(self._update_status)
+            self._update_status()
+
+            self.setModal(True)
+            self.show()
 
     def _get_eq_name(self):
         return self.text_label.text().strip()
@@ -177,7 +190,7 @@ class Editor(QDialog):
         self.close()
 
     def _item_from_name(self, name):
-        return next((x.spectrum for x in model if x.name == name))
+        return next((x.spectrum for x in self._equation_editor.model_items if x.name == name))
     
     def _update_status(self):
         # If the text hasn't changed, no need to check again
@@ -202,9 +215,8 @@ class Editor(QDialog):
         
         else:
             try:
-                dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in model}
+                dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.model_items}
                 raw_str = self._get_raw_command()
-                print(raw_str.format(**dict_map))
                 print(eval(raw_str.format(**dict_map)))
             except SyntaxError:
                 self.label_status.setStyleSheet('color: red')
@@ -221,17 +233,17 @@ class Editor(QDialog):
         
         self._cache = self.text_label.text(), self._get_raw_command()
 
-def launch_arithmetic_ui(self):
+# def launch_arithmetic_ui(self):
     
-    # model = [DataItem("My Data Item", data=Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)), 
-    #                                   identifier=uuid.uuid4()),
-    #          DataItem("My Data Item 2", data=Spectrum1D(spectral_axis=np.arange(50, 100) * u.nm, flux=np.random.sample(49)), 
-    #                                   identifier=uuid.uuid4())]
+#     # model = [DataItem("My Data Item", data=Spectrum1D(spectral_axis=np.arange(1, 50) * u.nm, flux=np.random.sample(49)), 
+#     #                                   identifier=uuid.uuid4()),
+#     #          DataItem("My Data Item 2", data=Spectrum1D(spectral_axis=np.arange(50, 100) * u.nm, flux=np.random.sample(49)), 
+#     #                                   identifier=uuid.uuid4())]
 
-    spec = self.hub.data_items if self.hub.data_items is not None else None
-    app = QApplication(sys.argv)
-    m = QMainWindow()
-    m.button = QPushButton("Arithmetic", parent=m)
-    m.button.pressed.connect(lambda: EquationEditor(spec).exec_())
-    m.show()
-    sys.exit(app.exec_())
+#     spec = self.hub.data_items if self.hub.data_items is not None else None
+#     app = QApplication(sys.argv)
+#     m = QMainWindow()
+#     m.button = QPushButton("Arithmetic", parent=m)
+#     m.button.pressed.connect(lambda: EquationEditor(spec).exec_())
+#     m.show()
+#     sys.exit(app.exec_())
