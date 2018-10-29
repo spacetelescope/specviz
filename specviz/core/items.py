@@ -172,6 +172,10 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def flux(self):
+        """
+        Converts data_item.flux - which consists of the flux axis with units - into the new flux unit
+        :return:
+        """
         print("@@@@@@@@@@@@@@@@@@@@@@@@", self.data_item.flux, type(self.data_item.flux), self.data_unit, self.spectral_axis, self.spectral_axis_unit)
         # print("**************", self.data_item.flux.to(self.data_unit or "",
         #                               equivalencies=spectral_density(
@@ -190,6 +194,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def uncertainty(self):
+        print("in uncertainty")
         if self.data_item.uncertainty is None:
             return
 
@@ -216,6 +221,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @width.setter
     def width(self, value):
+        print("in width")
         self._width = value
         self.width_changed.emit(self._width)
         self.data_item.emitDataChanged()
@@ -239,6 +245,10 @@ class PlotDataItem(pg.PlotDataItem):
         self.visibility_changed.emit(self._visible)
 
     def set_data(self):
+        """
+        Sets the spectral_axis and flux. self.flux is called to convert flux units if they had been changed
+        :return:
+        """
         spectral_axis = self.spectral_axis
         print("^^^^^^^^^^^^^^", spectral_axis, type(spectral_axis))
 
