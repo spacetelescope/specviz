@@ -41,8 +41,14 @@ class ModelEditor(QWidget):
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
 
+        # Initially hide the model editor tools until user has selected an
+        # editable model spectrum object
+        self.editor_holder_widget.setHidden(True)
+        self.setup_holder_widget.setHidden(False)
+
         self.equation_edit_button.clicked.connect(
             self._on_equation_edit_button_clicked)
+        self.new_model_button.clicked.connect(self._create_new_model)
 
         # When a plot data item is select, get its model editor model
         # representation
@@ -51,6 +57,9 @@ class ModelEditor(QWidget):
 
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
+        self._create_new_model()
+
+    def _create_new_model(self):
         if self.hub.data_item is None:
             message_box = QMessageBox()
             message_box.setText("No item selected, cannot create model.")
@@ -124,7 +133,12 @@ class ModelEditor(QWidget):
     def _on_plot_item_selected(self, plot_data_item):
         if not isinstance(plot_data_item.data_item, ModelDataItem):
             self.model_tree_view.setModel(None)
+            self.editor_holder_widget.setHidden(True)
+            self.setup_holder_widget.setHidden(False)
             return
+
+        self.editor_holder_widget.setHidden(False)
+        self.setup_holder_widget.setHidden(True)
 
         model_data_item = plot_data_item.data_item
 
