@@ -50,7 +50,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>Create a new model-based spectrum object before addings sub models.</string>
+           <string>Create a new model-based spectrum object before adding sub models.</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
