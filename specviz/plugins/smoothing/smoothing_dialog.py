@@ -61,22 +61,17 @@ class SmoothingDialog(QDialog):
         self.function = None  # function from `~specutils.manipulation.smoothing`
         self.data = None  # Current `~specviz.core.items.DataItem`
         self.size = None  # Current kernel size
+        self._already_loaded = False
 
-    @plugin.tool_bar("Smoothing", location="Operations")
-    def on_action_triggered(self):
-        # Update the current list of available data items
-        self.model_items = self.hub.data_items
-        self._load_ui()
-        self.exec_()
-
-    def _load_ui(self):
-        # Load UI form .ui file
+        #
+        # Do the first-time loading and initialization of the GUI
+        #
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "smoothing.ui")), self)
 
-        for index, data in enumerate(self.model_items):
-            self.data_combo.addItem(data.name, index)
+        self.smooth_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.close)
         self.data_combo.currentIndexChanged.connect(self._on_data_change)
 
         for key in KERNEL_REGISTRY:
@@ -84,13 +79,28 @@ class SmoothingDialog(QDialog):
             self.kernel_combo.addItem(kernel["name"], key)
         self.kernel_combo.currentIndexChanged.connect(self._on_kernel_change)
 
-        self.smooth_button.clicked.connect(self.accept)
-        self.cancel_button.clicked.connect(self.close)
+    @plugin.tool_bar("Smoothing", location="Operations")
+    def on_action_triggered(self):
+        # Update the current list of available data items
+        self.model_items = self.hub.data_items
+
+        self._display_ui()
+        self.exec_()
+
+    def _display_ui(self):
+        """
+        Things to do each time the Smoothing GUI is re-displayed.
+        """
+        self.data_combo.clear()
+        for index, data in enumerate(self.model_items):
+            self.data_combo.addItem(data.name, index)
 
         self._on_data_change(0)
         self._on_kernel_change(0)
 
         self.set_to_current_selection()
+        self.smooth_button.setEnabled(True)
+        self.cancel_button.setEnabled(True)
 
     def set_to_current_selection(self):
         """Sets Data selection to currently active data"""
@@ -115,7 +125,7 @@ class SmoothingDialog(QDialog):
         """Callback for data combo index change"""
         data_index = self.data_combo.currentData()
 
-        if len(self.model_items) > 0:
+        if data_index is not None and len(self.model_items) > 0:
             self.data = self.model_items[data_index]
 
     def _generate_output_name(self):
