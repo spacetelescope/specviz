@@ -398,6 +398,7 @@ class PlotWidget(pg.PlotWidget):
         """
         # We need to be careful here to explicitly check the data_unit against
         # None since it may also be '' which is a valid dimensionless unit.
+        print("in intialize_plot", data_unit, spectral_axis_unit)
         self._data_unit = self._data_unit if data_unit is None else data_unit
         self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
 
@@ -422,6 +423,7 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
+        print("after autoRange")
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """

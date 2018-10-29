@@ -181,11 +181,8 @@ class PlotDataItem(pg.PlotDataItem):
         #                               equivalencies=spectral_density(
         #                                   self.spectral_axis)).value)
 
-        x = self.data_item.flux.to(self.data_unit,
-                                   equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit)))
-        print("flux?", x, type(x), type(x.value))
-
-        return x.value
+        return self.data_item.flux.to(self.data_unit,
+                                   equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit))).value
 
     @property
     def spectral_axis(self):

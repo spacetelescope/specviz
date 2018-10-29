@@ -94,9 +94,6 @@ class UnitChangeDialog(QDialog):
                     u.Unit(self.hub.plot_widget.data_unit))
                 self._data_unit_equivalencies_titles.append(
                     self.current_data_unit)
-            # if self.current_data_unit not in self._data_unit_equivalencies_titles:
-            #     self._data_unit_equivalencies_titles.append(
-            #         self.current_data_unit)
 
         except Exception as e:
             self.current_data_unit = self._spectral_axis_unit_equivalencies_titles[0]
@@ -120,7 +117,7 @@ class UnitChangeDialog(QDialog):
                     u.Unit(self.hub.plot_widget.spectral_axis_unit))
                 self._spectral_axis_unit_equivalencies_titles.append(
                     self.current_spectral_axis_unit)
-            #
+
             # if self.current_spectral_axis_unit not in self._spectral_axis_unit_equivalencies_titles:
             #     self._spectral_axis_unit_equivalencies_titles.append(
             #         self.current_spectral_axis_unit)
