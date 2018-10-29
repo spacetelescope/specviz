@@ -19,17 +19,13 @@ from astropy import units as u
 from astropy.wcs import WCS
 from qtpy import compat
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QFont
+from qtpy.QtGui import QFont, QIcon
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
+from ...core.plugin import plugin
 
-from ..core.events import dispatch
-from ..core.data import Spectrum1DRef
-from ..interfaces.loaders import load_yaml_reader
-from ..widgets.utils import UI_PATH
-
-from ..utils.parse_fits import simplify_arrays, parse_fits
-from ..utils.parse_ecsv import parse_ecsv, parse_ascii
+from .parse_fits import simplify_arrays, parse_fits
+from .parse_ecsv import parse_ecsv, parse_ascii
 
 
 def represent_dict_order(self, data):
@@ -277,7 +273,8 @@ class BaseImportWizard(QDialog):
 
         self.datasets = datasets
 
-        self.ui = loadUi(os.path.join(UI_PATH, 'wizard.ui'), self)
+        self.ui = loadUi(os.path.abspath(
+               os.path.join(os.path.dirname(__file__), "loader_wizard.ui")), self)
 
         for label in [self.ui.label_dispersion_dataset,
                       self.ui.label_data_dataset,
@@ -577,55 +574,58 @@ class ECSVImportWizard(ASCIIImportWizard):
         yaml_dict['extension'] = ['ecsv']
 
 
-def open_wizard():
+@plugin("Loader Wizard")
+class LoaderWizard(QDialog):
+    @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
+    def open_wizard(self):
 
-    filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt)"]
-    filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
+        filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt)"]
+        filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 
-    if filename == '':
-        return
-
-    if filename.lower().endswith('fits'):
-        dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
-
-    elif filename.lower().endswith('ecsv'):
-        dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
-
-    elif filename.lower().endswith('dat') or filename.lower().endswith('txt'):
-        dialog = ASCIIImportWizard(simplify_arrays(parse_ascii(filename)))
-
-    else:
-        raise NotImplementedError(file_filter)
-
-    val = dialog.exec_()
-
-    if val == 0:
-        return
-
-    # Make temporary YAML file
-    yaml_file = tempfile.mktemp()
-    with open(yaml_file, 'w') as f:
-        f.write(dialog.as_yaml(name=str(uuid.uuid4())))
-
-    # Temporarily load YAML file
-    yaml_filter = load_yaml_reader(yaml_file)
-
-    def remove_yaml_filter(data):
-
-        # Just some checking in the edge case where a user is simultaneously loading another file...
-        if data.name != os.path.basename(filename).split('.')[0]:
+        if filename == '':
             return
 
-        io_registry._readers.pop((yaml_filter, Spectrum1DRef))
-        io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
+        if filename.lower().endswith('fits'):
+            dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
 
-        dispatch.unregister_listener("on_added_data", remove_yaml_filter)
+        elif filename.lower().endswith('ecsv'):
+            dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
 
-    dispatch.register_listener("on_added_data", remove_yaml_filter)
+        elif filename.lower().endswith('dat') or filename.lower().endswith('txt'):
+            dialog = ASCIIImportWizard(simplify_arrays(parse_ascii(filename)))
 
-    # Emit signal to indicate that file should be read
-    dispatch.on_file_read.emit(file_name=filename,
-                               file_filter=yaml_filter)
+        else:
+            raise NotImplementedError(file_filter)
+
+        val = dialog.exec_()
+
+        if val == 0:
+            return
+
+        # Make temporary YAML file
+        yaml_file = tempfile.mktemp()
+        with open(yaml_file, 'w') as f:
+            f.write(dialog.as_yaml(name=str(uuid.uuid4())))
+
+        # Temporarily load YAML file
+        # yaml_filter = load_yaml_reader(yaml_file)
+
+        def remove_yaml_filter(data):
+
+            # Just some checking in the edge case where a user is simultaneously loading another file...
+            if data.name != os.path.basename(filename).split('.')[0]:
+                return
+
+            # io_registry._readers.pop((yaml_filter, Spectrum1DRef))
+            # io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
+
+            # dispatch.unregister_listener("on_added_data", remove_yaml_filter)
+
+        # dispatch.register_listener("on_added_data", remove_yaml_filter)
+        #
+        # # Emit signal to indicate that file should be read
+        # dispatch.on_file_read.emit(file_name=filename,
+        #                            file_filter=yaml_filter)
 
 
 if __name__ == "__main__":
