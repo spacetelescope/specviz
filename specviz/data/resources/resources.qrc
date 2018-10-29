@@ -3,7 +3,9 @@
     <file>title.png</file>
     <file>005-stats.svg</file>
     <file>006-invisible.svg</file>
+    <file>icon.png</file>
     <file>007-visibility.png</file>
+    <file>icon.png</file>
     <file>007-visibility.svg</file>
     <file>012-file.svg</file>
     <file>014-calculator.svg</file>
@@ -17,8 +19,6 @@
     <file>export.svg</file>
     <file>folder-2.svg</file>
     <file>folder.svg</file>
-    <file>icon.png</file>
-    <file>icon.svg</file>
     <file>inbox.svg</file>
     <file>minus.svg</file>
     <file>plus.svg</file>
@@ -26,5 +26,6 @@
     <file>region_remove.svg</file>
     <file>selection.svg</file>
     <file>house.svg</file>
+    <file>icon.ico</file>
   </qresource>
 </RCC>

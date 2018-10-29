@@ -1,4 +1,3 @@
---- !CustomLoader
 name: SDSS-IV
 extension: [list]
 filename: 'SDSS-IV.list'

@@ -262,8 +262,6 @@ class Workspace(QMainWindow):
         # holds onto *proxy* models defined by the plot window
         self.list_view.selectionModel().currentChanged.connect(
             plot_window._on_current_item_changed)
-        self.list_view.selectionModel().selectionChanged.connect(
-            self._on_current_selected_changed)
 
         # Fire a signal letting everyone know a new plot window has been added
         self.plot_window_added.emit(plot_window)
@@ -278,7 +276,7 @@ class Workspace(QMainWindow):
         # Disconnect all plot widgets from the core model's item changed event
         for sub_window in self.mdi_area.subWindowList():
             try:
-                self._model.itemChanged.disconnect(
+                self.model.itemChanged.disconnect(
                     sub_window.plot_widget.on_item_changed)
             except TypeError:
                 pass
@@ -291,6 +289,8 @@ class Workspace(QMainWindow):
 
         # Connect the current window's plot widget to the item changed event
         self.model.itemChanged.connect(window.plot_widget.on_item_changed)
+        self.list_view.selectionModel().selectionChanged.connect(
+            self._on_current_selected_changed)
 
         # Re-evaluate plot unit compatibilities
         window.plot_widget.check_plot_compatibility()
@@ -316,13 +316,20 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        filters = [x['Format'] + " (*)"
+        # This ensures that users actively have to select a file type before
+        # being able to select a file. This should make it harder to
+        # accidentally load a file using the wrong type, which results in weird
+        # errors.
+        default_filter = '-- Select file type --'
+
+        filters = [default_filter] + [x['Format'] + " (*)"
                    for x in io_registry.get_formats(Spectrum1D)
                    if x['Read'] == 'Yes']
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
-                                                filters=";;".join(filters))
+                                                filters=";;".join(filters),
+                                                selectedfilter=default_filter)
 
         if not file_path:
             return

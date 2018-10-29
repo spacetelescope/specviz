@@ -12,12 +12,6 @@ import os
 import sys
 import logging
 
-import pyqtgraph as pg
-from configparser import ConfigParser
-
-# Import specviz-specific specutils loaders
-from .io.loaders import *
-
 __minimum_python_version__ = "3.5"
 
 class UnsupportedPythonError(Exception):
@@ -27,49 +21,53 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     raise UnsupportedPythonError("specviz does not support Python < {}".format(__minimum_python_version__))
 
 if not _ASTROPY_SETUP_:
-    # For egg_info test builds to pass, put package imports here.
-    pass
 
-# Setup logging level and display
-logging.basicConfig(format='specviz [%(levelname)-8s]: %(message)s',
-                    level=logging.INFO)
+    import pyqtgraph as pg
+    from configparser import ConfigParser
 
-def load_settings():
-    # Get the path relative to the user's home directory
-    path = os.path.expanduser("~/.specviz")
+    # Import specviz-specific specutils loaders
+    from .io.loaders import *
 
-    # If the directory doesn't exist, create it
-    if not os.path.exists(path):
-        os.mkdir(path)
+    # Setup logging level and display
+    logging.basicConfig(format='specviz [%(levelname)-8s]: %(message)s',
+                        level=logging.INFO)
 
-    # Parse user settings
-    parser = ConfigParser()
-    parser['PyQtGraph'] = {}
+    def load_settings():
+        # Get the path relative to the user's home directory
+        path = os.path.expanduser("~/.specviz")
 
-    # Check if there already exists a pyqtgraph settings file
-    user_settings_path = os.path.join(path, "user_settings.ini")
+        # If the directory doesn't exist, create it
+        if not os.path.exists(path):
+            os.mkdir(path)
 
-    if os.path.exists(user_settings_path):
-        parser.read(user_settings_path)
+        # Parse user settings
+        parser = ConfigParser()
+        parser['PyQtGraph'] = {}
 
-    pyqtgraph_settings = {
-        'leftButtonPan': parser['PyQtGraph'].getboolean('leftbuttonpan', True),
-        'foreground': parser['PyQtGraph'].get('foreground', 'k'),
-        'background': parser['PyQtGraph'].get('background', 'w'),
-        'antialias': parser['PyQtGraph'].getboolean('antialias', False),
-        'imageAxisOrder': parser['PyQtGraph'].get('imageaxisorder', 'col-major'),
-        'useWeave': parser['PyQtGraph'].getboolean('useweave', False),
-        'weaveDebug': parser['PyQtGraph'].getboolean('weavedebug', False),
-        'useOpenGL': parser['PyQtGraph'].getboolean('useopengl', False),
-    }
+        # Check if there already exists a pyqtgraph settings file
+        user_settings_path = os.path.join(path, "user_settings.ini")
 
-    if not os.path.exists(user_settings_path):
-        parser['PyQtGraph'] = pyqtgraph_settings
+        if os.path.exists(user_settings_path):
+            parser.read(user_settings_path)
 
-        with open(user_settings_path, 'w') as config_file:
-            parser.write(config_file)
+        pyqtgraph_settings = {
+            'leftButtonPan': parser['PyQtGraph'].getboolean('leftbuttonpan', True),
+            'foreground': parser['PyQtGraph'].get('foreground', 'k'),
+            'background': parser['PyQtGraph'].get('background', 'w'),
+            'antialias': parser['PyQtGraph'].getboolean('antialias', False),
+            'imageAxisOrder': parser['PyQtGraph'].get('imageaxisorder', 'col-major'),
+            'useWeave': parser['PyQtGraph'].getboolean('useweave', False),
+            'weaveDebug': parser['PyQtGraph'].getboolean('weavedebug', False),
+            'useOpenGL': parser['PyQtGraph'].getboolean('useopengl', False),
+        }
 
-    # Set the pyqtgraph options
-    pg.setConfigOptions(**pyqtgraph_settings)
+        if not os.path.exists(user_settings_path):
+            parser['PyQtGraph'] = pyqtgraph_settings
 
-load_settings()
+            with open(user_settings_path, 'w') as config_file:
+                parser.write(config_file)
+
+        # Set the pyqtgraph options
+        pg.setConfigOptions(**pyqtgraph_settings)
+
+    load_settings()
