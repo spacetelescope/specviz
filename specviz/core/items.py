@@ -75,7 +75,7 @@ class PlotDataItem(pg.PlotDataItem):
         self._data_unit = self._data_item.flux.unit.to_string()
         self._spectral_axis_unit = self._data_item.spectral_axis.unit.to_string()
         self._color = color or next(flatui)
-        self._width = 1
+        self._width = 2
         self._visible = False
 
         # Include error bar item
