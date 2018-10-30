@@ -5,7 +5,7 @@ from specutils import Spectrum1D
 from glue.core.subset import Subset
 from glue.core.coordinates import WCSCoordinates
 
-__all__ = ['is_glue_data_1d_spectrum', 'glue_data_to_spectrum1d']
+__all__ = ['glue_data_has_spectral_axis', 'glue_data_to_spectrum1d']
 
 
 def glue_data_has_spectral_axis(data):
@@ -17,8 +17,12 @@ def glue_data_has_spectral_axis(data):
     data : `glue.core.data.Data`
         The data to check
     """
+
     if isinstance(data, Subset):
         data = data.data
+
+    if not isinstance(data.coords, WCSCoordinates):
+        return False
 
     spec_axis = data.coords.wcs.naxis - 1 - data.coords.wcs.wcs.spec
 
@@ -67,6 +71,6 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
     else:
         values = values * u.Unit(component.units)
 
-    spec1d = Spectrum1D(values, wcs=data.coords.wcs)
+    wcs_spec = data.coords.wcs.sub([WCSSUB_SPECTRAL])
 
-    return spec1d
+    return Spectrum1D(values, wcs=wcs_spec)
