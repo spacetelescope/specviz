@@ -1,4 +1,6 @@
-.. _specviz_launching:
+.. highlight:: console
+
+.. _specviz-launching:
 
 Launching SpecViz
 =================
@@ -8,8 +10,7 @@ Once you've installed SpecViz, you can launch it via the command line::
     $ specviz
 
 
-If you only wish to inspect a single FITS or ASCII file using the default
-:ref:`doc_custom_loaders` file formatting, you can also pass in the filename
+If you only wish to inspect a single file, you can also pass in the filename
 as a command line argument, as follows::
 
     $ specviz filename

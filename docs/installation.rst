@@ -1,3 +1,5 @@
+.. highlight:: console
+
 .. _specviz_installation:
 
 Installation
