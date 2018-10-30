@@ -168,7 +168,7 @@ class LineListsWindow(ClosableMainWindow):
             lambda:self.plot_window.line_labels_plotter.plot_linelists(
                 table_views=self._getTableViews(),
                 panes=self._getPanes(),
-                units=self.plot_window.waverange[0].unit,
+                units=self.plot_window.spectral_axis_unit,
                 caller=self.plot_window))
 
         self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
