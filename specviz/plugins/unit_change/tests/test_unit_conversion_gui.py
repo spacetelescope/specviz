@@ -10,13 +10,14 @@ def test_uc_dialog(specviz_gui):
         else:
             print("NOT HERE", workspace.plugin_tab_widget.tabText(i))
 
-    for i in range(workspace.plugin_tab_widget.count()):
-        if workspace.plugin_tab_widget.tabText(i) == "Unit Change Dialog":
+    print(workspace.current_plot_window.tool_bar.children)
+    for i in range(len(workspace.current_plot_window.tool_bar.children)):
+        if workspace.current_plot_window.tool_bar.tabText(i) == "Unit Change Dialog":
             print("HERE", workspace.plugin_tab_widget.tabText(i))
-            workspace.plugin_tab_widget.widget(i).triggered
+            workspace.current_plot_window.tool_bar.widget(i).triggered
             assert workspace.plugin_tab_widget.widget(i).ui.comboBox_spectral.currentText() == "Angstrom"
         else:
-            print("NOT HERE", workspace.plugin_tab_widget.tabText(i))
+            print("NOT HERE", workspace.current_plot_window.tool_bar.tabText(i))
 
     print(dir(specviz_gui.current_workspace.current_item))
 
