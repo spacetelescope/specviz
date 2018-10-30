@@ -44,14 +44,14 @@ DATA_UNITS = [u.uJy, u.mJy, u.Jy, u.erg / u.cm**2 / u.s / u.Hz,
               u.erg / u.cm**2 / u.s / u.um, u.erg / u.cm**2 / u.s]
 
 
-class YAMLPreviewWidget(QWidget):
+class OutputPreviewWidget(QWidget):
     """
     A YAML preview widget that appears as a drawer on the side of the main
     import widget.
     """
 
     def __init__(self, parent=None):
-        super(YAMLPreviewWidget, self).__init__(parent=parent)
+        super(OutputPreviewWidget, self).__init__(parent=parent)
         self.setWindowFlags(Qt.Sheet)
         self.text_editor = QPlainTextEdit()
         self.close_button = QPushButton('Close')
@@ -309,9 +309,9 @@ class BaseImportWizard(QDialog):
                                            self.ui.combo_mask_component,
                                            allow_wcs=False)
 
-        self.yaml_preview = YAMLPreviewWidget(self)
-        self.yaml_preview.hide()
-        self.ui.button_yaml.clicked.connect(self._toggle_yaml_preview)
+        self.output_preview = OutputPreviewWidget(self)
+        self.output_preview.hide()
+        self.ui.button_yaml.clicked.connect(self._toggle_output_preview)
 
         self.ui.button_ok.clicked.connect(self.accept)
         self.ui.button_cancel.clicked.connect(self.reject)
@@ -350,7 +350,7 @@ class BaseImportWizard(QDialog):
         self.ui.combo_dispersion_units.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_data_units.currentIndexChanged.connect(self._update_preview)
 
-        self.ui.button_save_yaml.clicked.connect(self.save_yaml)
+        self.ui.button_save_yaml.clicked.connect(self.save_loader_script)
 
         # Force a preview update in case initial guess is good
         self._update_preview()
@@ -436,42 +436,49 @@ class BaseImportWizard(QDialog):
             err = pg.ErrorBarItem(x=x, y=y, height=yerr, pen=pen)
             self.plot_widget.addItem(err)
 
-    def _toggle_yaml_preview(self, event):
-        self.yaml_preview.set_text(self.as_yaml())
-        self.yaml_preview.show()
+    def _toggle_output_preview(self, event):
+        self.output_preview.set_text(self.as_yaml())
+        self.output_preview.show()
 
     def as_yaml_dict(self):
         raise NotImplementedError()
 
     def as_yaml(self, name=None):
         yaml_dict = self.as_yaml_dict(name=name)
-        string = yaml.dump(yaml_dict, default_flow_style=False)
-        string = '--- !CustomLoader\n' + string
-        return string
+
+        print(yaml_dict)
+
+        template_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__),
+                         ".", "template.py"))
+
+        with open(template_path, 'r') as f:
+            filled_template = f.read()#.format(**yaml_dict)
+
+        return filled_template
 
     def _clear_loader_name_status(self):
         self.ui.label_loader_name_status.setText('')
         self.ui.label_loader_name_status.setStyleSheet('')
 
-    def save_yaml(self, event=None):
-
+    def save_loader_script(self, event=None):
         if self.ui.loader_name.text() == "":
             self.ui.label_loader_name_status.setText('Enter a name for the loader')
             self.ui.label_loader_name_status.setStyleSheet('color: red')
             return
 
-        specviz_dir = os.path.join(os.path.expanduser('~'), '.specviz')
-        if not os.path.exists(specviz_dir):
-            os.mkdir(specviz_dir)
+        specutils_dir = os.path.join(os.path.expanduser('~'), '.specutils')
+        if not os.path.exists(specutils_dir):
+            os.mkdir(specutils_dir)
 
         filename = compat.getsavefilename(parent=self,
-                                          caption='Export loader to .yaml file',
-                                          basedir=specviz_dir)[0]
+                                          caption='Export loader to .py file',
+                                          basedir=specutils_dir)[0]
 
         if filename == '':
             return
 
-        filename = "{}.yaml".format(filename) if not filename.endswith(".yaml") else filename
+        filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
         string = self.as_yaml()
         with open(filename, 'w') as f:
