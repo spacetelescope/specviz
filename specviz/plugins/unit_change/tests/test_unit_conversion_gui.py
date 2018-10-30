@@ -1,9 +1,26 @@
-import pytest
+def test_uc_dialog(specviz_gui):
+    # specviz_gui.load_local_plugins
+    specviz_gui.current_workspace.load_data("/Users/javerbukh/Documents/data_for_specviz/COS_FUV.fits", "HST/COS")
+    workspace = specviz_gui.current_workspace
+    for i in range(workspace.plugin_tab_widget.count()):
+        if workspace.plugin_tab_widget.tabText(i) == "Unit Change Dialog":
+            print("HERE", workspace.plugin_tab_widget.tabText(i))
+            workspace.plugin_tab_widget.widget(i).triggered
+            assert workspace.plugin_tab_widget.widget(i).ui.comboBox_spectral.currentText() == "Angstrom"
+        else:
+            print("NOT HERE", workspace.plugin_tab_widget.tabText(i))
 
-from qtpy import QtCore
-from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
+    for i in range(workspace.plugin_tab_widget.count()):
+        if workspace.plugin_tab_widget.tabText(i) == "Unit Change Dialog":
+            print("HERE", workspace.plugin_tab_widget.tabText(i))
+            workspace.plugin_tab_widget.widget(i).triggered
+            assert workspace.plugin_tab_widget.widget(i).ui.comboBox_spectral.currentText() == "Angstrom"
+        else:
+            print("NOT HERE", workspace.plugin_tab_widget.tabText(i))
 
-from ..unit_change_dialog import UnitChangeDialog
+    print(dir(specviz_gui.current_workspace.current_item))
+
+
 
 
 # def test_custom_units_correct(qtbot):
