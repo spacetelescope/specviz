@@ -14,6 +14,7 @@ from qtpy.QtGui import QIcon, QColor, QStandardItem, \
 from qtpy.QtCore import (Signal, QSize, QCoreApplication, QMetaObject, Qt,
                          QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
+from qtpy.uic import loadUi
 
 from astropy.units import Quantity
 from astropy.units.core import UnitConversionError
@@ -94,133 +95,6 @@ def _createLineListPane(linelist, table_model, caller):
 # importance. Lets try to treat this as a window for now, and see how
 # it goes.
 
-class UiLinelistsWindow(object):
-
-    # this code was taken as-is from the Designer.
-    # Cleaning it up sounds like a lower priority
-    # task for now.
-    def setupUi(self, MainWindow, title):
-        MainWindow.setWindowTitle(title)
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(600, 850)
-        MainWindow.setMinimumSize(QSize(300, 350))
-        self.centralWidget = QWidget(MainWindow)
-        self.centralWidget.setObjectName("centralWidget")
-        self.gridLayout = QGridLayout(self.centralWidget)
-        self.gridLayout.setContentsMargins(11, 11, 11, 11)
-        self.gridLayout.setSpacing(6)
-        self.gridLayout.setObjectName("gridLayout")
-        self.horizontalLayout_5 = QHBoxLayout()
-        self.horizontalLayout_5.setContentsMargins(11, 11, 11, 11)
-        self.horizontalLayout_5.setSpacing(6)
-        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.lines_selected_label = QLabel(self.centralWidget)
-        self.lines_selected_label.setObjectName("lines_selected_label")
-        self.horizontalLayout_5.addWidget(self.lines_selected_label)
-        self.label = QLabel(self.centralWidget)
-        self.label.setObjectName("label")
-        self.horizontalLayout_5.addWidget(self.label)
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_5.addItem(spacerItem)
-        self.draw_button = QPushButton(self.centralWidget)
-        self.draw_button.setObjectName("draw_button")
-        self.horizontalLayout_5.addWidget(self.draw_button)
-        self.erase_button = QPushButton(self.centralWidget)
-        self.erase_button.setObjectName("erase_button")
-        self.horizontalLayout_5.addWidget(self.erase_button)
-        self.dismiss_button = QPushButton(self.centralWidget)
-        self.dismiss_button.setObjectName("dismiss_button")
-        self.horizontalLayout_5.addWidget(self.dismiss_button)
-        self.gridLayout.addLayout(self.horizontalLayout_5, 4, 0, 1, 1)
-        self.verticalLayout_11 = QVBoxLayout()
-        self.verticalLayout_11.setContentsMargins(11, 11, 11, 11)
-        self.verticalLayout_11.setSpacing(6)
-        self.verticalLayout_11.setObjectName("verticalLayout_11")
-        self.tabWidget = QTabWidget(self.centralWidget)
-        self.tabWidget.setObjectName("tabWidget")
-        self.tabWidget.setTabsClosable(True)
-        self.verticalLayout_11.addWidget(self.tabWidget)
-        self.gridLayout.addLayout(self.verticalLayout_11, 0, 0, 1, 1)
-        self.horizontalLayout_7 = QHBoxLayout()
-        self.horizontalLayout_7.setContentsMargins(11, 11, 11, 11)
-        self.horizontalLayout_7.setSpacing(6)
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout_7.addItem(spacerItem)
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.gridLayout.addLayout(self.horizontalLayout_7, 2, 0, 2, 1)
-        MainWindow.setCentralWidget(self.centralWidget)
-
-        # self.menuBar = QMenuBar(MainWindow)
-        # self.menuBar.setGeometry(QRect(0, 0, 767, 22))
-        # self.menuBar.setObjectName("menuBar")
-        #
-        # self.menuFile = QMenu(self.menuBar)
-        # self.menuFile.setObjectName("menuFile")
-        #
-        # MainWindow.setMenuBar(self.menuBar)
-
-        self.mainToolBar = QToolBar(MainWindow)
-        self.mainToolBar.setMovable(False)
-        self.mainToolBar.setFloatable(False)
-        self.mainToolBar.setObjectName("mainToolBar")
-        MainWindow.addToolBar(Qt.TopToolBarArea, self.mainToolBar)
-
-        # self.statusBar = QStatusBar(MainWindow)
-        # self.statusBar.setObjectName("statusBar")
-        # MainWindow.setStatusBar(self.statusBar)
-
-        self.actionOpen = QAction(MainWindow)
-        icon = QIcon(os.path.join(ICON_PATH, "Open Folder-48.png"))
-        self.actionOpen.setIcon(icon)
-        self.actionOpen.setObjectName("actionOpen")
-
-        self.actionExport = QAction(MainWindow)
-        icon = QIcon(os.path.join(ICON_PATH, "Export-48.png"))
-        self.actionExport.setIcon(icon)
-        self.actionExport.setObjectName("actionExport")
-
-        self.line_list_selector = QComboBox()
-        self.line_list_selector.setToolTip("Select line list from internal library")
-
-        self.actionExit = QAction(MainWindow)
-        self.actionExit.setObjectName("actionExit")
-        self.actionRemove = QAction(MainWindow)
-        self.actionRemove.setObjectName("actionRemove")
-        self.actionChange_Color = QAction(MainWindow)
-        self.actionChange_Color.setObjectName("actionChange_Color")
-        # self.menuFile.addAction(self.actionOpen)
-        # self.menuFile.addSeparator()
-        # self.menuFile.addAction(self.actionExit)
-        # self.menuBar.addAction(self.menuFile.menuAction())
-        self.mainToolBar.addAction(self.actionOpen)
-        self.mainToolBar.addAction(self.actionExport)
-        self.mainToolBar.addSeparator()
-        self.mainToolBar.addWidget(self.line_list_selector)
-        self.retranslateUi(MainWindow)
-        QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        _translate = QCoreApplication.translate
-        self.lines_selected_label.setText(_translate("MainWindow", "0"))
-        self.lines_selected_label.setToolTip("Total number of lines selected in all sets.")
-        self.label.setText(_translate("MainWindow", "lines selected"))
-        self.label.setToolTip("Total number of lines selected in all sets.")
-        self.draw_button.setText(_translate("MainWindow", "Draw"))
-        self.draw_button.setToolTip("Plot markers for all selected lines in all sets.")
-        self.erase_button.setText(_translate("MainWindow", "Erase"))
-        self.erase_button.setToolTip("Erase all markers")
-        self.dismiss_button.setText(_translate("MainWindow", "Dismiss"))
-        self.dismiss_button.setToolTip("Dismiss this window")
-        # self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.actionOpen.setText(_translate("MainWindow", "Open"))
-        self.actionExport.setText(_translate("MainWindow", "Export plotted lines"))
-        self.actionExit.setText(_translate("MainWindow", "Exit"))
-        self.actionRemove.setText(_translate("MainWindow", "Remove"))
-        self.actionRemove.setToolTip(_translate("MainWindow", "Removes the selected layer"))
-        self.actionChange_Color.setText(_translate("MainWindow", "Change Color"))
-        self.actionChange_Color.setToolTip(_translate("MainWindow", "Change the line color selected layer"))
-
-
 class ClosableMainWindow(QMainWindow):
     # This class exists just to ensure that a window closing event
     # that is generated by the OS itself, gets properly handled.
@@ -232,17 +106,25 @@ class ClosableMainWindow(QMainWindow):
         self.plot_window.dismiss_linelists_window.emit(False)
 
 
-class LineListsWindow(UiLinelistsWindow):
+class LineListsWindow(ClosableMainWindow):
 
     def __init__(self, plot_window, parent=None):
-        super(LineListsWindow, self).__init__()
+        super(LineListsWindow, self).__init__(plot_window)
 
         self.plot_window = plot_window
 
-        # Builds GUI
-        self._main_window = ClosableMainWindow(plot_window)
-        self.setupUi(self._main_window, str(plot_window))
-        self.tabWidget.tabCloseRequested.connect(self.tab_close)
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
+        self.setWindowTitle(str(self.plot_window._title))
+
+        # QtDesigner can't add a combo box to a tool bar...
+        self.line_list_selector = QComboBox()
+        self.line_list_selector.setToolTip("Select line list from internal library")
+        self.mainToolBar.addWidget(self.line_list_selector)
+
+        # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
+        # removing then in the designer itself. Remove in here then.
+        while self.tabWidget.count() > 0:
+            self.tabWidget.removeTab(0)
 
         # Request that line lists be read from wherever are they sources.
         plot_window.request_linelists()
@@ -294,6 +176,7 @@ class LineListsWindow(UiLinelistsWindow):
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
+        self.tabWidget.tabCloseRequested.connect(self.tab_close)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
@@ -369,87 +252,31 @@ class LineListsWindow(UiLinelistsWindow):
     def _build_waverange_dialog(self, wave_range, line_list):
 
         dialog = QDialog(parent=self.centralWidget)
-        dialog.setWindowTitle("Wavelength range")
-        dialog.setWindowModality(Qt.ApplicationModal)
-        dialog.resize(370, 250)
 
-        button_ok = QPushButton("OK")
-        button_ok.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        button_cancel = QPushButton("Cancel")
-        button_cancel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_waverange.ui"), dialog)
 
-        button_ok.clicked.connect(dialog.accept)
-        button_cancel.clicked.connect(dialog.reject)
-
-        min_text = QLineEdit("%.2f" % wave_range[0].value)
-        max_text = QLineEdit("%.2f" % wave_range[1].value)
+        dialog.min_text.setText("%.2f" % wave_range[0].value)
+        dialog.max_text.setText("%.2f" % wave_range[1].value)
 
         validator = QDoubleValidator()
         validator.setBottom(0.0)
         validator.setDecimals(2)
-        min_text.setValidator(validator)
-        max_text.setValidator(validator)
+        dialog.min_text.setValidator(validator)
+        dialog.max_text.setValidator(validator)
 
-        min_text.setFixedWidth(150)
-        max_text.setFixedWidth(150)
-        min_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        max_text.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        min_text.setToolTip("Minimum wavelength to read from list.")
-        max_text.setToolTip("Maximum wavelength to read from list.")
+        dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
+                                                                dialog.nlines_label)
 
-        nlines_label = self._compute_nlines_in_waverange(line_list, min_text, max_text)
-
-        min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-                                                 min_text, max_text, label=nlines_label))
-        max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-                                                 min_text, max_text, label=nlines_label))
-
-        # set up layouts and widgets for the dialog.
-        text_pane = QWidget()
-        text_layout = QGridLayout()
-
-        text_layout.addWidget(min_text, 1, 0)
-        text_layout.addWidget(QLabel("Minimum wavelength"), 0, 0)
-        text_layout.addWidget(max_text, 1, 1)
-        text_layout.addWidget(QLabel("Maximum wavelength"), 0, 1)
-
-        spacerItem = QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        text_layout.addItem(spacerItem, 1, 2)
-        text_pane.setLayout(text_layout)
-
-        label_pane = QWidget()
-        label_layout = QHBoxLayout()
-        label_layout.addWidget(nlines_label)
-        label_layout.addWidget(QLabel(" lines included in range."))
-        label_layout.addStretch()
-        label_pane.setLayout(label_layout)
-
-        button_pane = QWidget()
-        button_layout = QHBoxLayout()
-
-        button_layout.addStretch()
-        button_layout.addWidget(button_cancel)
-        button_layout.addWidget(button_ok)
-        button_pane.setLayout(button_layout)
-
-        dialog_layout = QVBoxLayout()
-        dialog_layout.setSizeConstraint(QLayout.SetMaximumSize)
-
-        dialog_layout.addWidget(text_pane)
-        dialog_layout.addWidget(label_pane)
-        dialog_layout.addStretch()
-        dialog_layout.addWidget(button_pane)
-
-        dialog.setLayout(dialog_layout)
-
-        button_ok.setDefault(True)
-        button_cancel.setDefault(False)
+        dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
+        dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
 
         accepted = dialog.exec_() > 0
 
         amin = amax = None
         if accepted:
-            return self._get_range_from_textfields(min_text, max_text)
+            return self._get_range_from_textfields(dialog.min_text, dialog.max_text)
 
         return (amin, amax)
 
@@ -471,7 +298,7 @@ class LineListsWindow(UiLinelistsWindow):
     # fall within the supplied wavelength range. The
     # result populates the supplied label. Or, it
     # builds a fresh QLabel with the result.
-    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label=None):
+    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label):
 
         amin, amax = self._get_range_from_textfields(min_text, max_text)
 
@@ -480,10 +307,7 @@ class LineListsWindow(UiLinelistsWindow):
             extracted = line_list.extract_range(r)
             nlines = len(extracted[WAVELENGTH_COLUMN].data)
 
-            if label == None:
-                label = QLabel(str(nlines))
-            else:
-                label.setText(str(nlines))
+            label.setText(str(nlines))
             color = 'black' if nlines < NLINES_WARN else 'red'
             label.setStyleSheet('color:' + color)
 
@@ -587,15 +411,6 @@ class LineListsWindow(UiLinelistsWindow):
                     result.append(widget.widget(index_2))
         return result
 
-    def show(self):
-        self._main_window.show()
-
-    def hide(self):
-        self._main_window.hide()
-
-    def close(self):
-        self._main_window.close()
-
 
 class LineListPane(QWidget):
 
@@ -615,6 +430,14 @@ class LineListPane(QWidget):
         panel_layout = QVBoxLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(panel_layout)
+
+        # GUI cannot be completely defined in a .ui file.
+        # It has to be built on-the-fly here.
+        self.button_pane = QWidget()
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_panel_buttons.ui"), self.button_pane)
+        self.button_pane.create_set_button.clicked.connect(self._createSet)
+        self.button_pane.deselect_button.clicked.connect(table_view.clearSelection)
+
         # header with line list metadata.
         info = QTextBrowser()
         info.setMaximumHeight(100)
@@ -623,87 +446,31 @@ class LineListPane(QWidget):
         for comment in linelist.meta['comments']:
             info.append(comment)
 
-        # buttons and selectors dedicated to the specific list
-        # displayed in this pane.
-        button_pane = QWidget()
-        hlayout = QGridLayout()
-
-        # 'add set' button
-        self.create_set_button = QPushButton(self)
-        self.create_set_button.setObjectName("add_set_button")
-        _translate = QCoreApplication.translate
-        self.create_set_button.setText(_translate("MainWindow", "Create set"))
-        self.create_set_button.setToolTip("Create new line set from selected lines.")
-        self.create_set_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(self.create_set_button, 1, 0)
-
-        # the create_set button is enabled/disabled by logic elsewhere
-        self.create_set_button.setEnabled(False)
-        self.create_set_button.clicked.connect(lambda: self._createSet())
-
-        # 'deselect all' button
-        deselect_button = QPushButton(self)
-        deselect_button.setObjectName("deselect_button")
-        _translate = QCoreApplication.translate
-        deselect_button.setText(_translate("MainWindow", "Deselect"))
-        deselect_button.setToolTip("Un-select everything on this set.")
-        deselect_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        hlayout.addWidget(deselect_button, 1, 1)
-        deselect_button.clicked.connect(lambda: table_view.clearSelection())
-
-        # color picker
-        self.combo_box_color = QComboBox(self)
-        self.combo_box_color.setObjectName("color_selector")
-        self.combo_box_color.setToolTip("Color for selected lines in this set.")
-        model = self.combo_box_color.model()
+        # populate color picker
+        model = self.button_pane.combo_box_color.model()
         for cname in ID_COLORS:
             item = QStandardItem(cname)
             item.setForeground(ID_COLORS[cname])
             item.setData(QColor(ID_COLORS[cname]), role=Qt.UserRole)
             model.appendRow(item)
-        hlayout.addWidget(self.combo_box_color, 1, 2)
-        hlayout.addWidget(QLabel("Color"), 0, 2)
 
-        # plotting height
-        self.height_textbox = QLineEdit(str(DEFAULT_HEIGHT))
+        # set validators
         validator = QDoubleValidator()
         validator.setRange(0.05, 0.95, decimals=2)
-        self.height_textbox.setValidator(validator)
-        self.height_textbox.setFixedWidth(50)
-        self.height_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.height_textbox.setToolTip("Relative height to plot.")
-        hlayout.addWidget(self.height_textbox, 1, 3)
-        hlayout.addWidget(QLabel("Height"), 0, 3)
-
-        # redshift
-        self.redshift_textbox = QLineEdit(str(0.0))
+        self.button_pane.height_textbox.setValidator(validator)
         validator = QDoubleValidator()
         validator.setRange(-1.e5, 1.e10, decimals=4)
-        self.redshift_textbox.setValidator(validator)
-        self.redshift_textbox.setFixedWidth(70)
-        self.redshift_textbox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.redshift_textbox.setToolTip("Redshift lines by")
-        hlayout.addWidget(self.redshift_textbox, 1, 4)
-        hlayout.addWidget(QLabel("Redshift"), 0, 4)
+        self.button_pane.redshift_textbox.setValidator(validator)
 
-        # redshift units
-        self.combo_box_z_units = QComboBox(self)
-        self.combo_box_z_units.setObjectName("redshift_units")
-        self.combo_box_z_units.setToolTip("Redshift units.")
-        model = self.combo_box_z_units.model()
+        model = self.button_pane.combo_box_z_units.model()
         for uname in ['z', 'km/s']:
             item = QStandardItem(uname)
             model.appendRow(item)
-        hlayout.addWidget(self.combo_box_z_units, 1, 5)
 
-        # put it all together.
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        hlayout.addItem(spacerItem, 1, 6)
-        button_pane.setLayout(hlayout)
-
+        # put it all together
         panel_layout.addWidget(info)
         panel_layout.addWidget(table_view)
-        panel_layout.addWidget(button_pane)
+        panel_layout.addWidget(self.button_pane)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -743,7 +510,7 @@ class LineListPane(QWidget):
 
     def handle_button_activation(self):
         nselected = len(self.table_view.selectionModel().selectedRows())
-        self.create_set_button.setEnabled(nselected > 0)
+        self.button_pane.create_set_button.setEnabled(nselected > 0)
 
 
 class PlottedLinesPane(QWidget):
@@ -767,7 +534,10 @@ class PlottedLinesPane(QWidget):
     # lines shown in the plot). Given the slowness of it, it
     # would be good to have feedback on this in order to try
     # alternate implementation approaches (a simple ASCII table
-    # might suffice, perhaps).
+    # might suffice, perhaps). An alternate approach would be to
+    # use some timing algorithm that will prevent the view to be
+    # rebuilt rigth after a previous rebuilt. A time delay of sorts
+    # could take care of that.
 
     def __init__(self, plotted_lines, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
@@ -782,7 +552,7 @@ class PlottedLinesPane(QWidget):
         if table_model.rowCount() > 0:
             table_view = QTableView()
 
-            # disabling sorting will significantly speed up the
+            # disabling sorting will significantly speed up theWidget
             # plot. This is because the table view must be re-built
             # every time a new set of markers is drawn on the plot
             # surface. Alternate approaches are worth examining. It
@@ -816,7 +586,7 @@ class LineListTableModel(QAbstractTableModel):
         # the net suggest:
         # http://www.qtforum.org/article/30638/qsortfilterproxymodel-qtreeview-sort-performance.html).
         # Bummer... this is C++ only; PyQt never went to the trouble
-        # of converting QVector it to python.
+        # of converting QVector to python.
         #
         # get rid entirely of astropy table and store its contents in
         # a 2-D list of lists. By using python lists instead of an

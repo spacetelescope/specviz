@@ -91,21 +91,21 @@ class LineLabelsPlotter(object):
             # redshift correction for plotting the specific lines
             # defined in this list. Defined by the text content
             # and combo box setting.
-            if pane.redshift_textbox.hasAcceptableInput():
-                redshift = float(pane.redshift_textbox.text())
-                z_units = pane.combo_box_z_units.currentText()
+            if pane.button_pane.redshift_textbox.hasAcceptableInput():
+                redshift = float(pane.button_pane.redshift_textbox.text())
+                z_units = pane.button_pane.combo_box_z_units.currentText()
                 new_list.setRedshift(redshift, z_units)
 
             # color for plotting the specific lines defined in
             # this list, is defined by the itemData property.
-            index = pane.combo_box_color.currentIndex()
-            color = pane.combo_box_color.itemData(index, role=Qt.UserRole)
+            index = pane.button_pane.combo_box_color.currentIndex()
+            color = pane.button_pane.combo_box_color.itemData(index, role=Qt.UserRole)
             new_list.setColor(color)
 
             # height for plotting the specific lines defined in
             # this list. Defined by the line edit text.
-            if pane.height_textbox.hasAcceptableInput():
-                height = float(pane.height_textbox.text())
+            if pane.button_pane.height_textbox.hasAcceptableInput():
+                height = float(pane.button_pane.height_textbox.text())
                 new_list.setHeight(height)
 
             linelists_with_selections.append(new_list)

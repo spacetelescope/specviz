@@ -23,6 +23,7 @@ class DataItem(QStandardItem):
         self.setData(name, self.NameRole)
         self.setData(identifier, self.IdRole)
         self.setData(data, self.DataRole)
+        self.setToolTip(name)
 
         self.setCheckable(True)
 
