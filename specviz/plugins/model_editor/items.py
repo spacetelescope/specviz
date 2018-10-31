@@ -1,5 +1,6 @@
+import numpy as np
+
 from ...core.items import DataItem
-import astropy.units as u
 
 
 class ModelDataItem(DataItem):
@@ -15,7 +16,10 @@ class ModelDataItem(DataItem):
 
         result = self.model_editor_model.evaluate()
 
-        return result(self.spectral_axis.value) * self.data(self.DataRole).flux.unit
+        if result is not None:
+            return result(self.spectral_axis.value) * self.data(self.DataRole).flux.unit
+
+        return np.zeros(self.spectral_axis.size) * self.data(self.DataRole).flux.unit
 
     @property
     def model_editor_model(self):
