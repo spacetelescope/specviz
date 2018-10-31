@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage)
+                            QMessageBox, QErrorMessage, QWidget)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -422,6 +422,8 @@ class PlotWidget(pg.PlotWidget):
         else:
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
+        print("children", self.children())
+        print([child.rect() for child in self.children() if isinstance(child, QWidget)])
         self.autoRange()
         print("after autoRange")
 
