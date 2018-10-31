@@ -79,7 +79,8 @@ def populate_linelists_cache():
     # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
     s = path.sep
-    linelist_path +=  s + '..' + s + '..' + s + 'data' + s + 'linelist' + s
+    linelist_path +=  s + '..' + s + '..' + s + 'data' + s + 'linelists' + s
+
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
