@@ -47,6 +47,11 @@ def cos_spectrum_loader(file_name, **kwargs):
         dispersion = hdu[1].data['wavelength'].flatten() * disp_unit
         uncertainty = StdDevUncertainty(hdu[1].data["ERROR"].flatten() * unit)
 
+        sort_idx = dispersion.argsort()
+        dispersion = dispersion[sort_idx]
+        data = data[sort_idx]
+        uncertainty = uncertainty[sort_idx]
+
     return Spectrum1D(flux=data,
                       spectral_axis=dispersion,
                       uncertainty=uncertainty,

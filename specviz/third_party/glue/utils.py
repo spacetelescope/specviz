@@ -1,11 +1,39 @@
+import numpy as np
+
 from astropy import units as u
 from astropy.wcs import WCSSUB_SPECTRAL
 
 from specutils import Spectrum1D
 from glue.core.subset import Subset
-from glue.core.coordinates import WCSCoordinates
+from glue.core.coordinates import Coordinates, WCSCoordinates
 
-__all__ = ['is_glue_data_1d_spectrum', 'glue_data_to_spectrum1d']
+__all__ = ['glue_data_has_spectral_axis', 'glue_data_to_spectrum1d']
+
+
+class SpectralCoordinates(Coordinates):
+    """
+    This is a sub-class of Coordinates that is intended for 1-d spectral axes
+    given by a :class:`~astropy.units.Quantity` array.
+    """
+
+    def __init__(self, values):
+        self._index = np.arange(len(values))
+        self._values = values
+
+    @property
+    def spectral_axis(self):
+        return self._values
+
+    def world2pixel(self, *world):
+        return tuple(np.interp(world, self._values.value, self._index,
+                               left=np.nan, right=np.nan))
+
+    def pixel2world(self, *pixel):
+        return tuple(np.interp(pixel, self._index, self._values.value,
+                               left=np.nan, right=np.nan))
+
+    def dependent_axes(self, axis):
+        return (axis,)
 
 
 def glue_data_has_spectral_axis(data):
@@ -17,8 +45,15 @@ def glue_data_has_spectral_axis(data):
     data : `glue.core.data.Data`
         The data to check
     """
+
     if isinstance(data, Subset):
         data = data.data
+
+    if isinstance(data.coords, SpectralCoordinates):
+        return True
+
+    if not isinstance(data.coords, WCSCoordinates):
+        return False
 
     spec_axis = data.coords.wcs.naxis - 1 - data.coords.wcs.wcs.spec
 
@@ -47,11 +82,24 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
         data = data_or_subset
         subset_state = None
 
-    # Find spectral axis
-    spec_axis = data.coords.wcs.naxis - 1 - data.coords.wcs.wcs.spec
+    if isinstance(data.coords, WCSCoordinates):
 
-    # Find non-spectral axes
-    axes = tuple(i for i in range(data.ndim) if i != spec_axis)
+        # Find spectral axis
+        spec_axis = data.coords.wcs.naxis - 1 - data.coords.wcs.wcs.spec
+
+        # Find non-spectral axes
+        axes = tuple(i for i in range(data.ndim) if i != spec_axis)
+
+        kwargs = {'wcs': data.coords.wcs.sub([WCSSUB_SPECTRAL])}
+
+    elif isinstance(data.coords, SpectralCoordinates):
+
+        kwargs = {'spectral_axis': data.coords.spectral_axis}
+
+    else:
+
+        raise TypeError('data.coords should be an instance of WCSCoordinates or SpectralCoordinates')
+
     component = data.get_component(attribute)
 
     # Collapse values to profile
@@ -67,6 +115,4 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
     else:
         values = values * u.Unit(component.units)
 
-    spec1d = Spectrum1D(values, wcs=data.coords.wcs)
-
-    return spec1d
+    return Spectrum1D(values, **kwargs)

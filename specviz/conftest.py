@@ -55,3 +55,14 @@ from astropy.tests.helper import enable_deprecations_as_exceptions
 #     TESTED_VERSIONS[packagename] = version
 # except NameError:   # Needed to support Astropy <= 1.0.0
 #     pass
+
+import pytest
+from .app import Application
+@pytest.fixture(scope='session')
+def specviz_gui():
+    """
+    for testing of specviz gui
+    :return:
+    """
+    spec_app = Application([])
+    return spec_app
