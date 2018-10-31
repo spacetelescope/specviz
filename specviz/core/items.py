@@ -143,7 +143,7 @@ class PlotDataItem(pg.PlotDataItem):
         return (self.data_item.flux.unit == "" or
                 unit is not None and
                 self.data_item.flux.unit.is_equivalent(
-                    unit, equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit))))
+                    unit, equivalencies=spectral_density(self.data_item.spectral_axis)))
 
     def is_spectral_axis_unit_compatible(self, unit):
         return (self.data_item.spectral_axis.unit == "" or
@@ -168,11 +168,10 @@ class PlotDataItem(pg.PlotDataItem):
     def flux(self):
         """
         Converts data_item.flux - which consists of the flux axis with units - into the new flux unit
-        :return:
         """
         return self.data_item.flux.to(self.data_unit,
                                       equivalencies=spectral_density(
-                                          self.spectral_axis*u.Unit(self.spectral_axis_unit))).value
+                                          self.data_item.spectral_axis)).value
 
     @property
     def spectral_axis(self):
@@ -189,7 +188,7 @@ class PlotDataItem(pg.PlotDataItem):
 
         return uncertainty.to(self.data_unit or "",
                               equivalencies=spectral_density(
-                                  self.spectral_axis*u.Unit(self.spectral_axis_unit))).value
+                                  self.data_item.spectral_axis)).value
 
     @property
     def color(self):
@@ -232,7 +231,6 @@ class PlotDataItem(pg.PlotDataItem):
     def set_data(self):
         """
         Sets the spectral_axis and flux. self.flux is called to convert flux units if they had been changed
-        :return:
         """
         spectral_axis = self.spectral_axis
 
