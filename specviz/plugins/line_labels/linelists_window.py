@@ -16,10 +16,11 @@ from astropy.units import Quantity
 from astropy.units.core import UnitConversionError
 from astropy.io import ascii
 
-from ...core import linelist
-from ...core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
-from ...core.linelist import columns_to_remove
 from ...core.plugin import plugin
+
+from . import linelist
+from .linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
+from .linelist import columns_to_remove
 
 
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -109,6 +110,49 @@ class LineListsPlugin(QMainWindow):
         # removing then in the designer itself. Remove in here then.
         while self.tabWidget.count() > 0:
             self.tabWidget.removeTab(0)
+
+        # When a plot data item is selected, get the line lists for it.
+        self.hub.workspace.current_selected_changed.connect(
+            self._on_plot_item_selected)
+
+    def _on_plot_item_selected(self):
+
+        self.data_item = self.hub.plot_item.data_item
+
+        # Request that line lists be read from wherever are they sources.
+        if not hasattr(self, 'linelists'):
+            self._request_linelists()
+
+            # Populate line list selector with internal line lists
+            model = self.line_list_selector.model()
+            item = QStandardItem("Select line list")
+            font = QFont("Monospace")
+            font.setStyleHint(QFont.TypeWriter)
+            font.setPointSize(12)
+            item.setFont(font)
+            model.appendRow(item)
+            for description in linelist.descriptions():
+                item = QStandardItem(str(description))
+                item.setFont(font)
+                model.appendRow(item)
+
+    def _request_linelists(self):
+        self.waverange = self._find_wavelength_range()
+
+        self.linelists = linelist.ingest(self.waverange)
+
+        if len(self.linelists) == 0:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage('Units conversion not possible. '
+                                     'Or, no line lists in internal library '
+                                     'match wavelength range.')
+            error_dialog.exec_()
+
+    def _find_wavelength_range(self):
+        amin = self.data_item.spectral_axis[0]
+        amax = self.data_item.spectral_axis[-1]
+
+        return (amin, amax)
 
 
 class ClosableMainWindow(QMainWindow):
