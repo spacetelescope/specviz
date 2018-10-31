@@ -1,16 +1,26 @@
-Documentation
-=============
+Specviz
+=======
 
-This is the documentation for specviz.
-An gui-based interactive analysis tool for one dimensional astronomical data
-using Python.
+This is the documentation for specviz, a qt-based interactive GUI for
+visualizing astronomical spectra.  It is written in the Python programming
+language, and therefore leverages the `specutils` package, and can be run
+anywhere Python is supported (See .
+
+
+Installation and Setup
+----------------------
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
 
-  specviz/index.rst
+   installation
+   launching
 
-.. note:: The layout of this directory is simply a suggestion.  To follow
-          traditional practice, do *not* edit this page, but instead place
-          all documentation for the package inside ``specviz/``.
-          You can follow this practice or choose your own layout.
+
+Using SpecViz
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   getting-started
