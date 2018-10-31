@@ -11,7 +11,8 @@ import tempfile
 import uuid
 from collections import OrderedDict
 
-import astropy.io.registry as io_registry
+
+import specutils
 import numpy as np
 import pyqtgraph as pg
 import yaml
@@ -272,6 +273,7 @@ class BaseImportWizard(QDialog):
         super(BaseImportWizard, self).__init__(parent=parent)
 
         self.datasets = datasets
+        self.new_loader_dict = OrderedDict()
 
         self.ui = loadUi(os.path.abspath(
                os.path.join(os.path.dirname(__file__), "loader_wizard.ui")), self)
@@ -437,23 +439,25 @@ class BaseImportWizard(QDialog):
             self.plot_widget.addItem(err)
 
     def _toggle_output_preview(self, event):
-        self.output_preview.set_text(self.as_yaml())
+        self.output_preview.set_text(self.as_new_loader())
         self.output_preview.show()
 
-    def as_yaml_dict(self):
+    def as_new_loader_dict(self):
         raise NotImplementedError()
 
-    def as_yaml(self, name=None):
-        yaml_dict = self.as_yaml_dict(name=name)
+    def get_template(self):
+        raise NotImplementedError()
 
-        print(yaml_dict)
+    def as_new_loader(self, name=None):
 
-        template_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__),
-                         ".", "template.py"))
+        self.as_new_loader_dict(name=name)
+
+        print(self.new_loader_dict)
+
+        template_path = self.get_template()
 
         with open(template_path, 'r') as f:
-            filled_template = f.read()#.format(**yaml_dict)
+            filled_template = f.read().format(**self.new_loader_dict)
 
         return filled_template
 
@@ -480,105 +484,111 @@ class BaseImportWizard(QDialog):
 
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
-        string = self.as_yaml()
+        string = self.as_new_loader()
         with open(filename, 'w') as f:
             f.write(string)
 
+        # Refresh loaders so new loader shows up
+        # specutils.io.registers._load_user_io()
+
 # --------- Helper methods for subclasses ------------
 
-    def yaml_dispersion(self, yaml_dict):
-        yaml_dict['dispersion'] = {
-            'hdu': self.helper_disp.hdu_index,
-            'col': self.helper_disp.component_name,
-            'unit': self.helper_disp.unit
-        }
+    def new_loader_dispersion(self):
+        self.new_loader_dict['dispersion_hdu'] = self.helper_disp.hdu_index
+        self.new_loader_dict['dispersion_col'] = self.helper_disp.component_name
+        self.new_loader_dict['dispersion_unit'] = self.helper_disp.unit
 
-    def yaml_data(self, yaml_dict):
-        yaml_dict['data'] = {
-            'hdu': self.helper_data.hdu_index,
-            'col': self.helper_data.component_name,
-            'unit': self.helper_data.unit
-        }
+    def new_loader_data(self):
+        self.new_loader_dict['data_hdu'] = self.helper_data.hdu_index
+        self.new_loader_dict['data_col'] = self.helper_data.component_name
+        self.new_loader_dict['data_unit'] = self.helper_data.unit
 
-    def yaml_uncertainty(self, yaml_dict):
+    def new_loader_uncertainty(self):
         if self.ui.bool_uncertainties.isChecked():
-            yaml_dict['uncertainty'] = {
-                'hdu': self.helper_unce.hdu_index,
-                'col': self.helper_unce.component_name,
-                'type': self.ui.combo_uncertainty_type.currentData()
-            }
+            self.new_loader_dict['uncertainty_hdu'] = self.helper_unce.hdu_index
+            self.new_loader_dict['uncertainty_col'] = self.helper_unce.component_name
+            self.new_loader_dict['uncertainty_type'] = self.ui.combo_uncertainty_type.currentData()
 
 
 class FITSImportWizard(BaseImportWizard):
     dataset_label = 'HDU'
 
-    def as_yaml_dict(self, name=None):
+    def as_new_loader_dict(self, name=None):
         """
         Convert the current configuration to a dictionary that can then be
-        serialized to YAML
+        serialized to a python loader template
         """
-        yaml_dict = OrderedDict()
-        yaml_dict['name'] = name or self.ui.loader_name.text()
-        yaml_dict['extension'] = ['fits']
+
+        self.new_loader_dict['name'] = name or self.ui.loader_name.text()
+        self.new_loader_dict['extension'] = ['fits']
 
         if self.helper_disp.component_name.startswith('WCS::'):
-            yaml_dict['wcs'] = {
-                'hdu': self.helper_disp.hdu_index,
-            }
+            self.new_loader_dict['wcs_hdu'] = self.helper_disp.hdu_index
+
         else:
-            self.yaml_dispersion(yaml_dict)
-            yaml_dict['wcs'] = {
-                'hdu': self.helper_disp.hdu_index,
-            }
+            self.new_loader_dispersion()
+            self.new_loader_dict['wcs_hdu'] = self.helper_disp.hdu_index
 
-        self.yaml_data(yaml_dict)
+        self.new_loader_data()
 
-        self.yaml_uncertainty(yaml_dict)
+        self.new_loader_uncertainty()
 
         if self.ui.bool_mask.isChecked():
-            yaml_dict['mask'] = OrderedDict()
-            yaml_dict['mask']['hdu'] = self.helper_mask.hdu_index
-            yaml_dict['mask']['col'] = self.helper_mask.component_name
+            # if going to use this, might need to change this to single
+            # dict items
+            self.new_loader_dict['mask'] = OrderedDict()
+            self.new_loader_dict['mask']['hdu'] = self.helper_mask.hdu_index
+            self.new_loader_dict['mask']['col'] = self.helper_mask.component_name
             definition = self.ui.combo_bit_mask_definition.currentData()
             if definition != 'custom':
-                yaml_dict['mask']['definition'] = definition
+                self.new_loader_dict['mask']['definition'] = definition
 
-        yaml_dict['meta'] = {'author': 'Wizard'}
+        self.new_loader_dict['meta_author'] = 'Wizard'
 
-        return yaml_dict
+
+    def get_template(self):
+        if "uncertainty_hdu" in self.new_loader_dict.keys():
+            template_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), ".",
+                             "new_loader_fits_uncer_py.tmpl"))
+
+        else:
+            template_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), ".",
+                             "new_loader_fits_py.tmpl"))
+
+        return template_path
 
 
 class ASCIIImportWizard(BaseImportWizard):
     dataset_label = 'Table'
 
-    def as_yaml_dict(self, name=None):
+    def as_new_loader_dict(self, name=None):
         """
         Convert the current configuration to a dictionary
         that can then be serialized to YAML
         """
-        yaml_dict = OrderedDict()
-        yaml_dict['name'] = name or self.ui.loader_name.text()
+        self.new_loader_dict['name'] = name or self.ui.loader_name.text()
 
-        self.yaml_dispersion(yaml_dict)
+        self.new_loader_dispersion()
 
-        self.yaml_data(yaml_dict)
+        self.new_loader_data()
 
-        self.yaml_uncertainty(yaml_dict)
+        self.new_loader_uncertainty()
 
-        yaml_dict['meta'] = {'author': 'Wizard'}
+        self.new_loader_dict['meta_author'] = 'Wizard'
 
-        self.add_extension(yaml_dict)
+        self.add_extension()
 
-        return yaml_dict
 
-    def add_extension(self, yaml_dict):
-        yaml_dict['extension'] = ['dat']
+    def add_extension(self):
+        self.new_loader_dict['extension'] = ['dat']
 
 
 class ECSVImportWizard(ASCIIImportWizard):
 
-    def add_extension(self, yaml_dict):
-        yaml_dict['extension'] = ['ecsv']
+    def add_extension(self):
+        self.new_loader_dict['extension'] = ['ecsv']
 
 
 @plugin("Loader Wizard")
@@ -612,7 +622,7 @@ class LoaderWizard(QDialog):
         # Make temporary YAML file
         yaml_file = tempfile.mktemp()
         with open(yaml_file, 'w') as f:
-            f.write(dialog.as_yaml(name=str(uuid.uuid4())))
+            f.write(dialog.as_new_loader(name=str(uuid.uuid4())))
 
         # Temporarily load YAML file
         # yaml_filter = load_yaml_reader(yaml_file)

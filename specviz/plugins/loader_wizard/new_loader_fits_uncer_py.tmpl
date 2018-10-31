@@ -1,0 +1,52 @@
+import os
+
+from astropy.io import fits
+from astropy.wcs import WCS
+from astropy.units import Unit
+from astropy.nddata.nduncertainty import StdDevUncertainty
+
+from specutils.io.registers import data_loader
+from specutils import Spectrum1D
+
+
+def fits_identify(file_name, *args, **kwargs):
+    # This function ensures that the file that's trying to be read by this
+    # loader is in fact a fits file, or something that can be understood
+    # by Astropy's fits loader.
+    return (isinstance(file_name, str) and
+            args[0].lower().split('.')[-1] in ['fits', 'fit', 'fits.gz'])
+
+
+@data_loader(label="{name}", identifier=fits_identify)
+def simple_generic_loader(file_name, **kwargs):
+    # Use name of the file for the spectra object that's created
+    # when the data is loaded.
+    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
+
+    # Now, open the fits file
+    with fits.open(file_name, **kwargs) as hdulist:
+        # We grab the entire header object. We'll stick this in the spectrum's meta
+        # data dictionary so we can always have it inside SpecViz. This is useful
+        # when we want to export a spectrum created using this data, for example.
+        # note: Leaving this in.. but do we really still want it...
+        header = hdulist[0].header
+
+        flux = hdulist[{data_hdu}].data['{data_col}'].flatten()
+        wavelength = hdulist[{dispersion_hdu}].data['{dispersion_col}'].flatten()
+
+        # Uncertainty assignment
+        uncertainty = hdulist[{uncertainty_hdu}].data['{uncertainty_col}'].flatten()
+
+    # Try and parse the WCS information from the header
+    # note: Still need to implement this
+    # wcs = WCS(header)
+
+    # Set units
+    unit = Unit("{data_unit}")
+    disp_unit = Unit("{dispersion_unit}")
+
+
+    # A new spectrum object is returned, which specviz understands
+    return Spectrum1D(data=flux*unit,
+                      spectral_axis=wavelength*disp_unit,
+                      uncertainty=StdDevUncertainty(uncertainty), meta=header)
