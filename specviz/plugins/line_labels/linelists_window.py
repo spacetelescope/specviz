@@ -6,7 +6,7 @@ import os
 from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
                             QTableView, QMainWindow, QAbstractItemView,
                             QLayout, QTextBrowser, QComboBox,
-                            QDialog, QErrorMessage)
+                            QDialog, QErrorMessage, QSizePolicy)
 from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont, QIcon
 from qtpy.QtCore import (Qt,QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
@@ -103,6 +103,8 @@ class LineListsPlugin(QMainWindow):
 
         # QtDesigner can't add a combo box to a tool bar...
         self.line_list_selector = QComboBox()
+        self.line_list_selector.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.line_list_selector.setMinimumWidth(230)
         self.line_list_selector.setToolTip("Select line list from internal library")
         self.mainToolBar.addWidget(self.line_list_selector)
 
