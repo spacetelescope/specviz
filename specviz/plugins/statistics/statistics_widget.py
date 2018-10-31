@@ -63,7 +63,7 @@ def compute_stats(spectrum):
     return {'mean': mean,
             'median': np.median(flux),
             'stddev': flux.std(),
-            'centroid': centroid(spectrum), # we may want to adjust this for continuum subtraction
+            'centroid': centroid(spectrum, region=None),  # we may want to adjust this for continuum subtraction
             'rms': rms,
             'snr': snr(spectrum),
             'fwhm': fwhm(spectrum),
@@ -109,15 +109,28 @@ class StatisticsWidget(QWidget):
 
         # A dict of display `QLineEdit` and their stat keys:
         self.stat_widgets = {
-            'minval': self.min_val_line_edit,
-            'maxval': self.max_val_line_edit,
-            'mean': self.mean_line_edit,
-            'median': self.median_line_edit,
-            'stddev': self.std_dev_line_edit,
-            'rms': self.rms_line_edit,
-            'snr': self.snr_line_edit,
-            'total': self.count_total_line_edit
+            'mean': self.mean_text_edit,
+            'median': self.median_text_edit,
+            'stddev': self.std_dev_text_edit,
+            'centroid': self.centroid_text_edit,
+            'rms': self.rms_text_edit,
+            'snr': self.snr_text_edit,
+            'fwhm': self.fwhm_text_edit,
+            'ew': self.eqwidth_text_edit,
+            'minval': self.min_val_text_edit,
+            'maxval': self.max_val_text_edit,
+            'total': self.count_total_text_edit
         }
+
+        # Set ui line height based on the current platform's qfont info
+        for widget in self.stat_widgets.values():
+            doc = widget.document()
+            fm = widget.fontMetrics()
+            margins = widget.contentsMargins()
+            n_height = (fm.lineSpacing() +
+                        (doc.documentMargin() + widget.frameWidth()) * 2 +
+                        margins.top() + margins.bottom())
+            widget.setFixedHeight(n_height)
 
     def _connect_plot_window(self, plot_window):
         plot_window.plot_widget.plot_added.connect(self.update_statistics)
@@ -147,14 +160,14 @@ class StatisticsWidget(QWidget):
         for key in stats:
             if key in self.stat_widgets:
                 text = format_float_text(stats[key])
-                self.stat_widgets[key].setText(text)
+                self.stat_widgets[key].document().setPlainText(text)
 
     def _clear_stat_widgets(self):
         """
         Clears all widgets in `StatisticsWidget.stat_widgets`
         """
         for key in self.stat_widgets:
-            self.stat_widgets[key].setText("")
+            self.stat_widgets[key].document().clear()
 
     @staticmethod
     def pos_to_spectral_region(pos):
