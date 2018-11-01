@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage)
+                            QMessageBox, QErrorMessage, QWidget)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -217,9 +217,7 @@ class PlotWidget(pg.PlotWidget):
     @data_unit.setter
     def data_unit(self, value):
         for plot_data_item in self.listDataItems():
-            print("plot_data_item", plot_data_item, plot_data_item.data_unit, plot_data_item.flux)
             if plot_data_item.is_data_unit_compatible(value):
-                print("value", value)
                 plot_data_item.data_unit = value
 
                 # Re-initialize plot to update the displayed values and
@@ -398,7 +396,6 @@ class PlotWidget(pg.PlotWidget):
         """
         # We need to be careful here to explicitly check the data_unit against
         # None since it may also be '' which is a valid dimensionless unit.
-        print("in intialize_plot", data_unit, spectral_axis_unit)
         self._data_unit = self._data_unit if data_unit is None else data_unit
         self._spectral_axis_unit = spectral_axis_unit or self._spectral_axis_unit
 
@@ -423,7 +420,6 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
-        print("after autoRange")
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """
@@ -622,9 +618,3 @@ class PlotWidget(pg.PlotWidget):
                 self.linelist_window = None
             else:
                 self.linelist_window.hide()
-
-
-
-
-
-

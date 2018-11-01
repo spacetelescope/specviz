@@ -20,15 +20,6 @@ class ModelFittingModel(QStandardItemModel):
 
         self.setHorizontalHeaderLabels(["Name", "Value", "Unit", "Fixed"])
 
-        from astropy.modeling.models import Gaussian1D, Linear1D
-
-        a = Gaussian1D()
-        l = Linear1D()
-
-        self.add_model(a)
-        self.add_model(l)
-        self.add_model(Gaussian1D())
-
     @property
     def items(self):
         return [self.item(idx) for idx in range(self.rowCount())]

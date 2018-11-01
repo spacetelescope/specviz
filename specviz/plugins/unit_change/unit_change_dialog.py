@@ -1,4 +1,3 @@
-
 import logging
 import os
 
@@ -131,9 +130,6 @@ class UnitChangeDialog(QDialog):
         # PlotDataItem.is_data_unit_compatible(data_unit)
         self._spectral_axis_unit_equivalencies_titles.append("Custom")
         self._data_unit_equivalencies_titles.append("Custom")
-
-        print(self._spectral_axis_unit_equivalencies_titles)
-        print(self._data_unit_equivalencies_titles)
 
         self.setup_ui()
         self.setup_connections()
@@ -291,8 +287,6 @@ class UnitChangeDialog(QDialog):
                     return False
 
             # Set new units
-            print("Old Units", self.hub.plot_widget.data_unit, type(self.hub.plot_widget.data_unit))
-            print("New Units", data_unit_formatted, type(data_unit_formatted))
             self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":

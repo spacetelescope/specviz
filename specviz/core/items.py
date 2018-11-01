@@ -41,7 +41,6 @@ class DataItem(QStandardItem):
 
     @property
     def flux(self):
-        print("&&&&&&&&&&&&&&&&&&&", self.data(self.DataRole).flux)
         return self.data(self.DataRole).flux
 
     @property
@@ -117,11 +116,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @data_unit.setter
     def data_unit(self, value):
-        print("in data_unit")
-        print("old unit", self._data_unit, type(self.data_unit))
-        print("new unit", value, type(value))
         self._data_unit = value
-        print("data unit", self.data_unit, type(self.data_unit))
         self.data_unit_changed.emit(self._data_unit)
 
     @property
@@ -133,8 +128,6 @@ class PlotDataItem(pg.PlotDataItem):
         if self.opts.get('stepMode'):
             diff = np.diff(spectral_axis)
             spectral_axis += np.append(diff, diff[-1]) * 0.5
-
-        print("error_bar_item", self.flux)
 
         self._error_bar_item.setData(x=spectral_axis,
                                      y=self.flux,
@@ -175,15 +168,10 @@ class PlotDataItem(pg.PlotDataItem):
     def flux(self):
         """
         Converts data_item.flux - which consists of the flux axis with units - into the new flux unit
-        :return:
         """
-        print("@@@@@@@@@@@@@@@@@@@@@@@@", self.data_item.flux, type(self.data_item.flux), self.data_unit, self.spectral_axis, self.spectral_axis_unit)
-        # print("**************", self.data_item.flux.to(self.data_unit or "",
-        #                               equivalencies=spectral_density(
-        #                                   self.spectral_axis)).value)
-
         return self.data_item.flux.to(self.data_unit,
-                                   equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit))).value
+                                      equivalencies=spectral_density(
+                                          self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
 
     @property
     def spectral_axis(self):
@@ -192,7 +180,6 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def uncertainty(self):
-        print("in uncertainty")
         if self.data_item.uncertainty is None:
             return
 
@@ -201,7 +188,7 @@ class PlotDataItem(pg.PlotDataItem):
 
         return uncertainty.to(self.data_unit or "",
                               equivalencies=spectral_density(
-                                  self.spectral_axis*u.Unit(self.spectral_axis_unit))).value
+                                  self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
 
     @property
     def color(self):
@@ -219,7 +206,6 @@ class PlotDataItem(pg.PlotDataItem):
 
     @width.setter
     def width(self, value):
-        print("in width")
         self._width = value
         self.width_changed.emit(self._width)
         self.data_item.emitDataChanged()
@@ -245,19 +231,19 @@ class PlotDataItem(pg.PlotDataItem):
     def set_data(self):
         """
         Sets the spectral_axis and flux. self.flux is called to convert flux units if they had been changed
-        :return:
         """
         spectral_axis = self.spectral_axis
-        print("^^^^^^^^^^^^^^", spectral_axis, type(spectral_axis))
 
         if self.opts.get('stepMode'):
             spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
 
-        import traceback
-        traceback.print_stack()
-
-        print("!!!!!!!!!!!!!!!!!!", self, type(self), hasattr(self, "flux"), self.data_item.flux)
         self.setData(spectral_axis, self.flux, connect="finite")
+
+        # Without this call, the plot tries to do autoRange based on DataItem (which does not change), when it should
+        # instead be doing autoRange based on PlotDataItem, which updates based on what units are being used
+        self._error_bar_item.setData(x=self.spectral_axis,
+                                     y=self.flux,
+                                     height=self.uncertainty)
 
 
 class ModelItem(QStandardItem):
