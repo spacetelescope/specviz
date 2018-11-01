@@ -109,8 +109,8 @@ release = package.__version__
 
 # Please update these texts to match the name of your package.
 html_theme_options = {
-    'logotext1': 'package',  # white,  semi-bold
-    'logotext2': '-template',  # orange, light
+    'logotext1': 'spec',  # white,  semi-bold
+    'logotext2': 'viz',  # orange, light
     'logotext3': ':docs'   # white,  light
     }
 
@@ -120,7 +120,7 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = ''
+html_logo = '_static/specviz_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -198,3 +198,7 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 #     dtype, target = line.split(None, 1)
 #     target = target.strip()
 #     nitpick_ignore.append((dtype, six.u(target)))
+
+
+# add custom intersphinx
+intersphinx_mapping['specutils'] = ('https://specutils.readthedocs.io/en/latest/', None)

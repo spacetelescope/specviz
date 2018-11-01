@@ -1,4 +1,6 @@
-from qtpy.QtWidgets import QApplication
+import logging
+
+from .items import DataItem
 
 
 class Hub:
@@ -72,6 +74,41 @@ class Hub:
     def data_items(self):
         """List of all data items held in the data item model."""
         return self.model.items
+
+    def append_data_item(self, data_item):
+        """
+        Adds a new data item object to appear in the left data list view.
+
+        Parameters
+        ----------
+        data_item : :class:`~specviz.core.items.PlotDataItem`
+            The data item to be added to the list view.
+        """
+        if isinstance(data_item, DataItem):
+            self.workspace.model.appendRow(data_item)
+        else:
+            logging.error("Data item model only accepts items of class "
+                          "'DataItem', received '{}'.".format(type(data_item)))
+
+    def plot_data_item_from_data_item(self, data_item):
+        """
+        Returns the PlotDataItem associated with the provided DataItem.
+
+        Parameters
+        ----------
+        data_item : :class:`~specviz.core.items.PlotDataItem`
+            The DataItem from which the associated PlotDataItem will be
+            returned.
+
+        Returns
+        -------
+        plot_data_item : :class:`~specviz.core.items.PlotDataItem`
+            The PlotDataItem wrapping the DataItem.
+        """
+        plot_data_item = self.workspace.proxy_model.item_from_id(
+            data_item.identifier)
+
+        return plot_data_item
 
     def set_active_plugin_bar(self, name=None, index=None):
         """
