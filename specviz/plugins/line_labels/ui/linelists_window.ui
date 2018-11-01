@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>700</height>
+    <height>732</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,35 +31,8 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralWidget">
+  <widget class="QWidget" name="main_widget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <property name="sizeConstraint">
-       <enum>QLayout::SetMaximumSize</enum>
-      </property>
-      <item>
-       <widget class="QTabWidget" name="tabWidget">
-        <property name="currentIndex">
-         <number>0</number>
-        </property>
-        <property name="tabsClosable">
-         <bool>true</bool>
-        </property>
-        <widget class="QWidget" name="tab">
-         <attribute name="title">
-          <string>Tab 1</string>
-         </attribute>
-        </widget>
-        <widget class="QWidget" name="tab_2">
-         <attribute name="title">
-          <string>Tab 2</string>
-         </attribute>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </item>
     <item row="1" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0">
       <property name="sizeConstraint">
@@ -136,9 +109,36 @@
       </item>
      </layout>
     </item>
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMaximumSize</enum>
+      </property>
+      <item>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <property name="tabsClosable">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>Tab 1</string>
+         </attribute>
+        </widget>
+        <widget class="QWidget" name="tab_2">
+         <attribute name="title">
+          <string>Tab 2</string>
+         </attribute>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
-  <widget class="QToolBar" name="mainToolBar">
+  <widget class="QToolBar" name="main_toolbar">
    <property name="windowTitle">
     <string>Main Tool Bar</string>
    </property>
