@@ -598,10 +598,14 @@ class PlotWidget(pg.PlotWidget):
                 amin = min(amin, item.spectral_axis[0])
                 amax = max(amax, item.spectral_axis[-1])
 
-        amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
-        amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
+        if len(self.listDataItems()) > 0:
+            amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
+            amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
 
-        return (amin, amax)
+            return (amin, amax)
+
+        else:
+            return
 
     def request_linelists(self, *args, **kwargs):
         self.waverange = self._find_wavelength_range()
