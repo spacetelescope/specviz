@@ -56,7 +56,7 @@ class UnitChangeDialog(QDialog):
 
         # Gets all possible conversions from current spectral_axis_unit
         self._spectral_axis_unit_equivalencies = u.Unit(
-            self.hub.plot_widget.spectral_axis_unit).find_equivalent_units(
+            self.hub.data_item.spectral_axis[0]).find_equivalent_units(
                 equivalencies=u.spectral())
         self._spectral_axis_unit_equivalencies_titles = [
             u.Unit(unit).long_names[0].title()
