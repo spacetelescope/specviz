@@ -316,25 +316,24 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        # This ensures that users actively have to select a file type before
-        # being able to select a file. This should make it harder to
-        # accidentally load a file using the wrong type, which results in weird
-        # errors.
-        default_filter = '-- Select file type --'
-
-        filters = [default_filter] + [x['Format'] + " (*)"
+        filters = [x['Format'] + " (*)"
                    for x in io_registry.get_formats(Spectrum1D)
                    if x['Read'] == 'Yes']
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
-                                                filters=";;".join(filters),
-                                                selectedfilter=default_filter)
+                                                filters=";;".join(filters))
 
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
+        data_item = self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
+
+        if data_item is not None \
+                and self.model.rowCount() == 1:
+            source_index = self.model.indexFromItem(data_item)
+            idx = self.list_view.model().mapFromSource(source_index)
+            self.list_view.setCurrentIndex(idx)
 
     def load_data(self, file_path, file_loader, display=False):
         """
