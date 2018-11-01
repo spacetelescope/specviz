@@ -3,7 +3,7 @@ import os
 import sys
 
 from astropy.io import registry as io_registry
-from astropy.io.registry import IORegistryError, identify_format
+from astropy.io.registry import IORegistryError, identify_format, get_reader
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
@@ -323,10 +323,15 @@ class Workspace(QMainWindow):
         # errors.
         default_filter = 'Select file loader'
 
-        filters = [default_filter] + [x['Format'] + " (*)"
-                   for x in io_registry.get_formats(Spectrum1D)
-                   if x['Read'] == 'Yes']
-        filters.append('All (*)')
+        filters = [default_filter]
+
+        filters += [
+            '{} ({})'.format(x['Format'], ' '.join(['*.{}'.format(y) for y in
+                get_reader(x['Format'], Spectrum1D).extensions])
+                if get_reader(x['Format'], Spectrum1D).extensions is not None else '*')
+            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes']
+
+        filters.append('Auto (*)')
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
@@ -367,13 +372,14 @@ class Workspace(QMainWindow):
             except IORegistryError:
                 # In this case, assume that the registry has found several
                 # loaders that fit the same identifier, choose the highest
-                # priority one
-                fmts = identify_format('read', Spectrum1D, file_path)
-                spec = Spectrum1D.read(file_path, format=fmts[0])
+                # priority one.
+                fmts = identify_format('read', Spectrum1D, file_path, None, [], {})
 
-                logging.warning("Several loaders matched for this data set. "
+                logging.warning("Loaders for '{}' matched for this data set. "
                                 "Choosing '{}' with highest priority."
-                                "".format(fmts[0]))
+                                "".format(', '.join(fmts), fmts[0]))
+
+                spec = Spectrum1D.read(file_path, format=fmts[0])
 
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
