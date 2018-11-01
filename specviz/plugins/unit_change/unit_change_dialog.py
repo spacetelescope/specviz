@@ -276,7 +276,6 @@ class UnitChangeDialog(QDialog):
             self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":
-
             # Try to enter the custom units
             try:
                 u.Unit(self.ui.line_custom_spectral.text())
