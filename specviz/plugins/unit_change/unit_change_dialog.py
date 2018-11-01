@@ -94,14 +94,18 @@ class UnitChangeDialog(QDialog):
         self.spectral_axis_unit_equivalencies = sorted(self.spectral_axis_unit_equivalencies, key=lambda x: x.to_string())
         self.data_unit_equivalencies = sorted(self.data_unit_equivalencies, key=lambda y: y.to_string())
 
-        # Create lists with the "pretty" versions of unit names (except for Angstrom, astropy does not like Angstrom)
+        # Create lists with the "pretty" versions of unit names
         self.spectral_axis_unit_equivalencies_titles = [
-            u.Unit(unit).long_names[0].title()
-            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            u.Unit(unit).name
+            if u.Unit(unit) == u.Unit("Angstrom")
+            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
+            else u.Unit(unit).to_string()
             for unit in self.spectral_axis_unit_equivalencies]
         self.data_unit_equivalencies_titles = [
-            u.Unit(unit).long_names[0].title()
-            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            u.Unit(unit).name
+            if u.Unit(unit) == u.Unit("Angstrom")
+            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
+            else u.Unit(unit).to_string()
             for unit in self.data_unit_equivalencies]
 
         # This gives the user the option to use their own units. These units are checked by u.Unit()
