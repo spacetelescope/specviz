@@ -3,6 +3,7 @@ import os
 import sys
 
 from astropy.io import registry as io_registry
+from astropy.io.registry import IORegistryError, identify_format
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
@@ -320,11 +321,12 @@ class Workspace(QMainWindow):
         # being able to select a file. This should make it harder to
         # accidentally load a file using the wrong type, which results in weird
         # errors.
-        default_filter = '-- Select file type --'
+        default_filter = 'Select file loader'
 
         filters = [default_filter] + [x['Format'] + " (*)"
                    for x in io_registry.get_formats(Spectrum1D)
                    if x['Read'] == 'Yes']
+        filters.append('All (*)')
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
@@ -334,9 +336,11 @@ class Workspace(QMainWindow):
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
+        format = " ".join(fmt.split()[:-1]) if fmt != 'Auto (*)' else None
 
-    def load_data(self, file_path, file_loader, display=False):
+        self.load_data(file_path, file_loader=format)
+
+    def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
 
@@ -354,8 +358,23 @@ class Workspace(QMainWindow):
         : :class:`~specviz.core.items.DataItem`
             The `DataItem` instance that has been added to the internal model.
         """
+        # In the case that the user has selected auto load, loop through every
+        # available loader and choose the one that 1) the registry identifier
+        # function allows, and 2) is the highest priority.
         try:
-            spec = Spectrum1D.read(file_path, format=file_loader)
+            try:
+                spec = Spectrum1D.read(file_path, format=file_loader)
+            except IORegistryError:
+                # In this case, assume that the registry has found several
+                # loaders that fit the same identifier, choose the highest
+                # priority one
+                fmts = identify_format('read', Spectrum1D, file_path)
+                spec = Spectrum1D.read(file_path, format=fmts[0])
+
+                logging.warning("Several loaders matched for this data set. "
+                                "Choosing '{}' with highest priority."
+                                "".format(fmts[0]))
+
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
 
