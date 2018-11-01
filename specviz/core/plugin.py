@@ -217,8 +217,5 @@ class Plugin(DecoratorRegistry):
         return plot_bar_decorator
 
 
-<<<<<<< HEAD
 plugin = Plugin()
-=======
-plugin = Plugin()
->>>>>>> Initial setup (still with yaml generator)
+

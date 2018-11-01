@@ -1,0 +1,33 @@
+import os
+
+from astropy.table import Table
+from astropy.wcs import WCS
+from astropy.units import Unit
+from astropy.nddata.nduncertainty import StdDevUncertainty
+
+from specutils.io.registers import data_loader
+from specutils import Spectrum1D
+
+
+@data_loader(label="{name}")
+def simple_generic_loader(file_name):
+    # Use name of the file for the spectra object that's created
+    # when the data is loaded.
+    name = os.path.basename(file_name.rstrip(os.sep)).rsplit('.', 1)[0]
+
+    ast_table = Table.read(file_name{table_read_kwargs})
+
+    flux = ast_table['{data_col}'].flatten()
+    wcs = WCS(ast_table.meta)
+
+    # Uncertainty assignment, this is for inverse variance so we change to
+    # standard deviation
+    uncertainty = ast_table['{uncertainty_col}'].flatten()
+
+    # Set units
+    unit = Unit("{data_unit}")
+
+    # A new spectrum object is returned, which specviz understands
+    return Spectrum1D(flux=flux*unit, wcs=wcs,
+                      uncertainty=StdDevUncertainty(uncertainty))
+

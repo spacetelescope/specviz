@@ -9,24 +9,25 @@ import os
 import sys
 import tempfile
 import uuid
+import importlib
 from collections import OrderedDict
 
 
-import specutils
 import numpy as np
 import pyqtgraph as pg
 import yaml
 from astropy import units as u
 from astropy.wcs import WCS
+from astropy.io import registry
 from qtpy import compat
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFont, QIcon
 from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
 from qtpy.uic import loadUi
 from ...core.plugin import plugin
+from specutils import Spectrum1D
 
-from .parse_fits import simplify_arrays, parse_fits
-from .parse_ecsv import parse_ecsv, parse_ascii
+from .parse_initial_file import simplify_arrays, parse_ascii
 
 
 def represent_dict_order(self, data):
@@ -90,21 +91,8 @@ class ComponentHelper(object):
         self.label_status = label_status
         self.allow_wcs = allow_wcs
 
-        # Initialize combo box of datasets. We don't expect this to change
-        # so we can just do it here.
-
-        self.combo_dataset.clear()
-
-        for dataset_name, dataset in self.datasets.items():
-            self.combo_dataset.addItem(dataset_name)
-
-        # Similarly, we set up the combo of pre-defined units
-
-        if self.combo_units is not None:
-            self.combo_units.clear()
-            for unit in valid_units:
-                self.combo_units.addItem(str(unit), userData=unit)
-            self.combo_units.addItem('Custom', userData='Custom')
+        # Initialize combo box of datasets.
+        self._set_data()
 
         # Set up callbacks for various events
 
@@ -165,6 +153,24 @@ class ComponentHelper(object):
             return None
         else:
             return self.dataset[self.component]['index']
+
+    def datasets_update(self, new_datasets):
+        self.datasets = new_datasets
+        self._set_data()
+
+    def _set_data(self):
+        self.combo_dataset.clear()
+
+        for dataset_name, dataset in self.datasets.items():
+            self.combo_dataset.addItem(dataset_name)
+
+        # Similarly, we set up the combo of pre-defined units
+
+        if self.combo_units is not None:
+            self.combo_units.clear()
+            for unit in self.valid_units:
+                self.combo_units.addItem(str(unit), userData=unit)
+            self.combo_units.addItem('Custom', userData='Custom')
 
     def _dataset_changed(self, event=None):
 
@@ -268,10 +274,11 @@ class BaseImportWizard(QDialog):
 
     dataset_label = 'Dataset'
 
-    def __init__(self, datasets, parent=None):
+    def __init__(self, filename, datasets, parent=None):
 
         super(BaseImportWizard, self).__init__(parent=parent)
 
+        self.filename = filename
         self.datasets = datasets
         self.new_loader_dict = OrderedDict()
 
@@ -321,12 +328,21 @@ class BaseImportWizard(QDialog):
         self.ui.combo_uncertainty_type.addItem('Standard Deviation', userData='std')
         self.ui.combo_uncertainty_type.addItem('Inverse Variance', userData='ivar')
 
+        # Set callback for line_table_read callback
+        self.ui.button_refresh_data.clicked.connect(self._update_data)
+
+        # Set the astropy.table.Table.read() comboBox and other ui elements
+        self.ui.line_table_read.text()
+
         pg.setConfigOption('foreground', 'k')
 
         self.plot_widget = pg.PlotWidget(title="Spectrum preview",
                                          parent=self,
                                          background=None)
         self.layout_preview.addWidget(self.plot_widget)
+
+        self.ui.wcs_check_box.setChecked(False)
+        self.ui.wcs_check_box.toggled.connect(self.set_dispersion_enabled)
 
         self.ui.bool_uncertainties.setChecked(False)
         self.set_uncertainties_enabled(False)
@@ -357,6 +373,30 @@ class BaseImportWizard(QDialog):
         # Force a preview update in case initial guess is good
         self._update_preview()
         self._clear_loader_name_status()
+
+    def set_dispersion_enabled(self, enabled):
+
+        self.combo_dispersion_dataset.blockSignals(enabled)
+        self.combo_dispersion_component.blockSignals(enabled)
+        self.combo_dispersion_units.blockSignals(enabled)
+        self.value_dispersion_units.blockSignals(enabled)
+
+        self.combo_dispersion_dataset.setEnabled(not enabled)
+        self.combo_dispersion_component.setEnabled(not enabled)
+        self.combo_dispersion_units.setEnabled(not enabled)
+
+
+
+        if not enabled:
+            self.combo_dispersion_dataset.setCurrentIndex(0)
+        else:
+            self.combo_dispersion_dataset.setCurrentIndex(-1)
+            self.combo_dispersion_component.setCurrentIndex(-1)
+
+        self._update_preview()
+
+        self.value_dispersion_units.setEnabled(not enabled)
+
 
     def set_uncertainties_enabled(self, enabled):
 
@@ -400,8 +440,22 @@ class BaseImportWizard(QDialog):
     def uncertainties_enabled(self):
         return self.bool_uncertainties.isChecked()
 
+    @property
+    def wcs_enabled(self):
+        return self.ui.wcs_check_box.isChecked()
+
     def accept(self, event=None):
         super(BaseImportWizard, self).accept()
+
+    def _update_data(self):
+
+        self.datasets = simplify_arrays(parse_ascii(self.filename,
+                                                    self.ui.line_table_read.text()))
+        self.helper_disp.datasets_update(self.datasets)
+        self.helper_data.datasets_update(self.datasets)
+        self.helper_unce.datasets_update(self.datasets)
+        self.helper_mask.datasets_update(self.datasets)
+
 
     def _update_preview(self, event=None):
 
@@ -452,8 +506,6 @@ class BaseImportWizard(QDialog):
 
         self.as_new_loader_dict(name=name)
 
-        print(self.new_loader_dict)
-
         template_path = self.get_template()
 
         with open(template_path, 'r') as f:
@@ -488,8 +540,15 @@ class BaseImportWizard(QDialog):
         with open(filename, 'w') as f:
             f.write(string)
 
-        # Refresh loaders so new loader shows up
-        # specutils.io.registers._load_user_io()
+        # If a loader by this name exists, delete it
+        if self.new_loader_dict['name'] in registry.get_formats()['Format']:
+            registry.unregister_reader(self.new_loader_dict['name'], Spectrum1D)
+
+        # Add new loader to registry
+        spec = importlib.util.spec_from_file_location(os.path.basename(filename)[:-3], filename)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
 
 # --------- Helper methods for subclasses ------------
 
@@ -510,24 +569,22 @@ class BaseImportWizard(QDialog):
             self.new_loader_dict['uncertainty_type'] = self.ui.combo_uncertainty_type.currentData()
 
 
-class FITSImportWizard(BaseImportWizard):
-    dataset_label = 'HDU'
+class ASCIIImportWizard(BaseImportWizard):
+    dataset_label = 'Table'
 
     def as_new_loader_dict(self, name=None):
         """
-        Convert the current configuration to a dictionary that can then be
-        serialized to a python loader template
+        Convert the current configuration to a dictionary
+        that can then be serialized to YAML
         """
-
         self.new_loader_dict['name'] = name or self.ui.loader_name.text()
-        self.new_loader_dict['extension'] = ['fits']
 
-        if self.helper_disp.component_name.startswith('WCS::'):
-            self.new_loader_dict['wcs_hdu'] = self.helper_disp.hdu_index
-
+        if self.ui.line_table_read.text() == "":
+            self.new_loader_dict['table_read_kwargs'] = ', format="ascii"'
         else:
-            self.new_loader_dispersion()
-            self.new_loader_dict['wcs_hdu'] = self.helper_disp.hdu_index
+            self.new_loader_dict['table_read_kwargs'] = ", "+self.ui.line_table_read.text()
+
+        self.new_loader_dispersion()
 
         self.new_loader_data()
 
@@ -545,39 +602,6 @@ class FITSImportWizard(BaseImportWizard):
 
         self.new_loader_dict['meta_author'] = 'Wizard'
 
-
-    def get_template(self):
-        if "uncertainty_hdu" in self.new_loader_dict.keys():
-            template_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), ".",
-                             "new_loader_fits_uncer_py.tmpl"))
-
-        else:
-            template_path = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), ".",
-                             "new_loader_fits_py.tmpl"))
-
-        return template_path
-
-
-class ASCIIImportWizard(BaseImportWizard):
-    dataset_label = 'Table'
-
-    def as_new_loader_dict(self, name=None):
-        """
-        Convert the current configuration to a dictionary
-        that can then be serialized to YAML
-        """
-        self.new_loader_dict['name'] = name or self.ui.loader_name.text()
-
-        self.new_loader_dispersion()
-
-        self.new_loader_data()
-
-        self.new_loader_uncertainty()
-
-        self.new_loader_dict['meta_author'] = 'Wizard'
-
         self.add_extension()
 
 
@@ -585,10 +609,25 @@ class ASCIIImportWizard(BaseImportWizard):
         self.new_loader_dict['extension'] = ['dat']
 
 
-class ECSVImportWizard(ASCIIImportWizard):
+    def get_template(self):
+        template_string = "new_loader_"
 
-    def add_extension(self):
-        self.new_loader_dict['extension'] = ['ecsv']
+        if self.wcs_enabled:
+            template_string += "wcs_"
+
+        if "uncertainty_hdu" in self.new_loader_dict.keys():
+            if self.new_loader_dict['uncertainty_type'] == 'std':
+                template_string += "uncer_stddev_"
+
+            else:
+                template_string += "uncer_ivar_"
+
+        template_string += "py.tmpl"
+
+        template_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".", template_string))
+
+        return template_path
 
 
 @plugin("Loader Wizard")
@@ -596,23 +635,15 @@ class LoaderWizard(QDialog):
     @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
     def open_wizard(self):
 
-        filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt)"]
+        filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt *.*)"]
         filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 
         if filename == '':
             return
 
-        if filename.lower().endswith('fits'):
-            dialog = FITSImportWizard(simplify_arrays(parse_fits(filename)))
+        dialog = ASCIIImportWizard(filename,
+                                   simplify_arrays(parse_ascii(filename, 'format = "ascii"')))
 
-        elif filename.lower().endswith('ecsv'):
-            dialog = ECSVImportWizard(simplify_arrays(parse_ecsv(filename)))
-
-        elif filename.lower().endswith('dat') or filename.lower().endswith('txt'):
-            dialog = ASCIIImportWizard(simplify_arrays(parse_ascii(filename)))
-
-        else:
-            raise NotImplementedError(file_filter)
 
         val = dialog.exec_()
 
@@ -624,29 +655,11 @@ class LoaderWizard(QDialog):
         with open(yaml_file, 'w') as f:
             f.write(dialog.as_new_loader(name=str(uuid.uuid4())))
 
-        # Temporarily load YAML file
-        # yaml_filter = load_yaml_reader(yaml_file)
 
-        def remove_yaml_filter(data):
-
-            # Just some checking in the edge case where a user is simultaneously loading another file...
-            if data.name != os.path.basename(filename).split('.')[0]:
-                return
-
-            # io_registry._readers.pop((yaml_filter, Spectrum1DRef))
-            # io_registry._identifiers.pop((yaml_filter, Spectrum1DRef))
-
-            # dispatch.unregister_listener("on_added_data", remove_yaml_filter)
-
-        # dispatch.register_listener("on_added_data", remove_yaml_filter)
-        #
-        # # Emit signal to indicate that file should be read
-        # dispatch.on_file_read.emit(file_name=filename,
-        #                            file_filter=yaml_filter)
 
 
 if __name__ == "__main__":
 
     app = QApplication([])
-    dialog = FITSImportWizard(simplify_arrays(parse_fits(sys.argv[1])))
+    dialog = FITSImportWizard(simplify_arrays(parse_ascii(sys.argv[1])))
     dialog.exec_()
