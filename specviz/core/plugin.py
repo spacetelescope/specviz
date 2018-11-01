@@ -37,22 +37,22 @@ class DecoratorRegistry:
                     button.setMenu(menu)
 
                 return menu
-        else:
-            action = QAction(parent)
-            action.setText(level)
+            else:
+                action = QAction(parent)
+                action.setText(level)
 
-            if isinstance(parent, QToolBar):
-                parent.addAction(action)
-                button = parent.widgetForAction(action)
-                button.setPopupMode(QToolButton.InstantPopup)
-            elif isinstance(parent, QMenu):
-                parent.addAction(action)
-                button = action
+                if isinstance(parent, QToolBar):
+                    parent.addAction(action)
+                    button = parent.widgetForAction(action)
+                    button.setPopupMode(QToolButton.InstantPopup)
+                elif isinstance(parent, QMenu):
+                    parent.addAction(action)
+                    button = action
 
-            menu = QMenu(parent)
-            button.setMenu(menu)
+                menu = QMenu(parent)
+                button.setMenu(menu)
 
-            return menu
+                return menu
 
 
 class Plugin(DecoratorRegistry):
