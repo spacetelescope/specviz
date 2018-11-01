@@ -60,12 +60,18 @@ def compute_stats(spectrum):
     flux = spectrum.flux
     mean = flux.mean()
     rms = np.sqrt(flux.dot(flux) / len(flux))
+
+    try:
+        snr_val = snr(spectrum)
+    except Exception as e:
+        snr_val = "N/A"
+
     return {'mean': mean,
             'median': np.median(flux),
             'stddev': flux.std(),
             'centroid': centroid(spectrum, region=None),  # we may want to adjust this for continuum subtraction
             'rms': rms,
-            'snr': snr(spectrum),
+            'snr': snr_val,
             'fwhm': fwhm(spectrum),
             'ew': equivalent_width(spectrum),
             'total': line_flux(spectrum),
@@ -159,7 +165,7 @@ class StatisticsWidget(QWidget):
             return
         for key in stats:
             if key in self.stat_widgets:
-                text = format_float_text(stats[key])
+                text = stats[key] if stats[key] == "N/A" else format_float_text(stats[key])
                 self.stat_widgets[key].document().setPlainText(text)
 
     def _clear_stat_widgets(self):
