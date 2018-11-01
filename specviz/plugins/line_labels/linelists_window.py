@@ -89,10 +89,9 @@ def _createLineListPane(linelist, table_model, caller):
 
 
 # The line list window must be a full fledged window and not a dialog.
-# Dialogs do not support things like menu bars and central widgets.
-# They are also a bit cumbersome to use when modal behavior is of no
-# importance. Lets try to treat this as a window for now, and see how
-# it goes.
+# The choice of QMainWindow over QWidget is a leftover from the old
+# implementation. Perhaps it can be made into a QWidget, but that
+# requires that the .ui file be re-done.
 
 @plugin.plugin_bar("Line Labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
 class LineListsPlugin(QMainWindow):
@@ -106,16 +105,52 @@ class LineListsPlugin(QMainWindow):
         self.line_list_selector.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.line_list_selector.setMinimumWidth(230)
         self.line_list_selector.setToolTip("Select line list from internal library")
-        self.mainToolBar.addWidget(self.line_list_selector)
+        self.main_toolbar.addWidget(self.line_list_selector)
 
         # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
         # removing then in the designer itself. Remove in here then.
         while self.tabWidget.count() > 0:
             self.tabWidget.removeTab(0)
 
-        # When a plot data item is selected, get the line lists for it.
-        self.hub.workspace.current_selected_changed.connect(
-            self._on_plot_item_selected)
+        # Initially hide the line lists GUI until
+        # user has selected a plot window.
+        self.main_widget.setHidden(True)
+        self.main_toolbar.setHidden(True)
+
+        # self.hub.workspace.plot_window_added.connect(
+        #     self.test1)
+
+        self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_selected_window)
+
+    def _on_selected_window(self, window):
+
+        # TODO this is called when the plot widget is firstly created and added to the
+        # mdi area. Even when it's data item is empty. We have to force a selection event
+        # on the _plot_widget object so as to bypass this bogus call and have it forcibly
+        # initialized.
+
+        print ('@@@@@@     line: 136  - ', window)
+        print ('@@@@@@     line: 136  - ', window._plot_widget._find_wavelength_range())
+
+        # if not isinstance(plot_data_item.data_item, ModelDataItem):
+        self.main_widget.setHidden(False)
+        self.main_toolbar.setHidden(False)
+
+
+        # if window is None:
+        #     all_sws = self.mdi_area.subWindowList(order=self.mdi_area.ActivationHistoryOrder)
+        #
+        #     if len(all_sws) > 0:
+        #         window = all_sws[-1]
+        #     else:
+        #         window = None
+        #
+        # dispatch.on_activated_window.emit(
+        #     window=window.widget() if window is not None else None)
+
+
+
+
 
     def _on_plot_item_selected(self):
 
