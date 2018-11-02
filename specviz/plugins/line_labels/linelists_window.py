@@ -109,47 +109,79 @@ class LineListsPlugin(QMainWindow):
 
         # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
         # removing then in the designer itself. Remove in here then.
-        while self.tabWidget.count() > 0:
-            self.tabWidget.removeTab(0)
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
 
         # Initially hide the line lists GUI until
         # user has selected a plot window.
         self.main_widget.setHidden(True)
         self.main_toolbar.setHidden(True)
 
-        # self.hub.workspace.plot_window_added.connect(
-        #     self.test1)
+        # storage for plot widgets and their associated tabbed panes
+        self._widgets = {}
 
         self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_selected_window)
 
-
     def _on_selected_window(self, window):
-        print("@@@@@@  file linelists_window.py; line 126 -   window selected")
+        # When a given plot is selected, this slot handles the logic
+        # for associating signals from the plot frame with signal handlers
+        # in the plugin. So the plugin only responds to signals sent  by
+        # the currently visible plot.
+        if hasattr(window, '_plot_widget'):
 
-        window._plot_widget.plot_added.connect(self._on_plot_added)
-        window._plot_widget.plot_removed.connect(self._on_plot_removed)
+            key = window._plot_widget.__hash__()
 
+            if key in self._widgets:
+                # disconnect signals from current plot widget.
+                self._current_plot_widget.plot_added.disconnect()
+                self._current_plot_widget.plot_removed.disconnect()
+                self._current_plot_widget.destroyed.disconnect()
+
+                self._current_plot_widget, self.tab_widget = self._widgets[key]
+            else:
+                # store new plot widget and associated new tabbed pane widget.
+                self._current_plot_widget = window._plot_widget
+                self._widgets[key] = (self._current_plot_widget, self.tab_widget)
+
+            # connect signals to enable detection of events in the plot frame.
+            self._current_plot_widget.plot_added.connect(self._on_plot_added)
+            self._current_plot_widget.plot_removed.connect(self._on_plot_removed)
+            self._current_plot_widget.destroyed.connect(self._on_plot_quit)
+
+            #TODO handle the tab widget.
+
+            #TODO add functionality on _on_plot_item_selected and afterwards
+            # But only on the first call. After that, the tabbed pane should be
+            # done for good.
+
+
+
+    def _on_plot_quit(self):
+        print("@@@@@@  file linelists_window.py; line 131 -    quit plot")
+
+
+    # These two slots are called whenever the user selects or unselects a data item,
+    # causing it to be displayed or disappear from the current plot.
 
     def _on_plot_removed(self, data_item):
-        print("@@@@@@  file linelists_window.py; line 126    plot remved -   ", data_item)
+        # TODO
+        # this slot should check for the condition of a entirely empty plot.
+        # The signal will always come from the _current_plot_widget instance.
+        # If empty plot, it should discard the corresponding entry in _widgets,
+        # as well as the tab_widget from the GUI. Revert GUI to hidden status.
+
+        print("@@@@@@  file linelists_window.py; line 126    plot removed -   ", data_item)
 
 
     def _on_plot_added(self, data_item):
+        # TODO
+        # this probably shouldn't do anything.
 
-        print("@@@@@@  file linelists_window.py; line 133 -    plot added  ",  data_item)
-
-        # TODO this is called when the plot widget is firstly created and added to the
-        # mdi area. Even when it's data item is empty. We have to force a selection event
-        # on the _plot_widget object so as to bypass this bogus call and have it forcibly
-        # initialized.
-
-        # print ('@@@@@@     line: 136  -    plot added')
-        # print ('@@@@@@     line: 136  - ', window._plot_widget._find_wavelength_range())
+        print("@@@@@@  file linelists_window.py; line 133 -    plot added  ", data_item)
 
         # if window._plot_widget._find_wavelength_range():
         #     self.main_widget.setHidden(False)
         #     self.main_toolbar.setHidden(False)
-
 
         # if window is None:
         #     all_sws = self.mdi_area.subWindowList(order=self.mdi_area.ActivationHistoryOrder)
@@ -235,8 +267,8 @@ class LineListsWindow(QMainWindow):
 
         # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
         # removing then in the designer itself. Remove in here then.
-        while self.tabWidget.count() > 0:
-            self.tabWidget.removeTab(0)
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
 
         # Request that line lists be read from wherever are they sources.
         plot_window.request_linelists()
@@ -290,7 +322,7 @@ class LineListsWindow(QMainWindow):
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
-        self.tabWidget.tabCloseRequested.connect(self.tab_close)
+        self.tab_widget.tabCloseRequested.connect(self.tab_close)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
@@ -439,7 +471,7 @@ class LineListsWindow(QMainWindow):
             # here we add the first pane (the one with the entire
             # original line list), to the tabbed pane that contains
             # the line sets corresponding to the current line list.
-            lineset_tabbed_pane = QTabWidget()
+            lineset_tabbed_pane = Qtab_widget()
             lineset_tabbed_pane.setTabsClosable(True)
 
             pane, table_view = _createLineListPane(line_list, table_model, self)
@@ -454,8 +486,8 @@ class LineListsWindow(QMainWindow):
 
             # now we add this "line set tabbed pane" to the main tabbed
             # pane, with name taken from the list model.
-            self.tabWidget.insertTab(index, lineset_tabbed_pane, table_model.getName())
-            self.tabWidget.setCurrentIndex(index)
+            self.tab_widget.insertTab(index, lineset_tabbed_pane, table_model.getName())
+            self.tab_widget.setCurrentIndex(index)
 
             # store for use down stream.
             # self.table_views.append(table_view)
@@ -471,31 +503,31 @@ class LineListsWindow(QMainWindow):
             self._build_view(linelist, index)
 
         # add extra tab to hold the plotted lines view.
-        widget_count = self.tabWidget.count()
+        widget_count = self.tab_widget.count()
         if widget_count > 0:
-            self.tabWidget.addTab(QWidget(), PLOTTED)
-            self.tabWidget.tabBar().setTabButton(widget_count-1, QTabBar.LeftSide, None)
+            self.tab_widget.addTab(QWidget(), PLOTTED)
+            self.tab_widget.tabBar().setTabButton(widget_count-1, QTabBar.LeftSide, None)
 
     def tab_close(self, index):
-        self.tabWidget.removeTab(index)
+        self.tab_widget.removeTab(index)
 
     def displayPlottedLines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
 
-        for index in range(self.tabWidget.count()):
-            tab_text = self.tabWidget.tabText(index)
+        for index in range(self.tab_widget.count()):
+            tab_text = self.tab_widget.tabText(index)
             if tab_text == PLOTTED:
-                self.tabWidget.removeTab(index)
-                self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
+                self.tab_widget.removeTab(index)
+                self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
                 return
 
         # if no plotted pane yet, create one.
-        index = self.tabWidget.count()
-        self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
+        index = self.tab_widget.count()
+        self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
     def erasePlottedLines(self):
-        index_last = self.tabWidget.count() - 1
-        self.tabWidget.removeTab(index_last)
+        index_last = self.tab_widget.count() - 1
+        self.tab_widget.removeTab(index_last)
 
     # computes total of rows selected in all table views in all panes
     # and displays result in GUI.
@@ -520,9 +552,9 @@ class LineListsWindow(QMainWindow):
 
     def _getPanes(self):
         result = []
-        for index_1 in range(self.tabWidget.count()):
-            widget = self.tabWidget.widget(index_1)
-            if isinstance(widget, QTabWidget) and self.tabWidget.tabText(index_1) != PLOTTED:
+        for index_1 in range(self.tab_widget.count()):
+            widget = self.tab_widget.widget(index_1)
+            if isinstance(widget, QTabWidget) and self.tab_widget.tabText(index_1) != PLOTTED:
                 # do not use list comprehension here!
                 for index_2 in range(widget.count()):
                     result.append(widget.widget(index_2))
