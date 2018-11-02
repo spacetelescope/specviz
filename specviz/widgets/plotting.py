@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage)
+                            QMessageBox, QErrorMessage, QWidget)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -168,7 +168,10 @@ class PlotWidget(pg.PlotWidget):
         self._region_text_item = pg.TextItem(color="k")
         self.addItem(self._region_text_item, ignoreBounds=True)
         self._region_text_item.setParentItem(self.getViewBox())
+
+        # Removes ability to automatically change units to match science notation
         self.getAxis('bottom').enableAutoSIPrefix(False)
+        self.getAxis('left').enableAutoSIPrefix(False)
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt
@@ -222,7 +225,8 @@ class PlotWidget(pg.PlotWidget):
 
                 # Re-initialize plot to update the displayed values and
                 # adjust ranges of the displayed axes
-                self.initialize_plot(spectral_axis_unit=value)
+                # TODO: Changed this to data_unit from spectral_axis_unit
+                self.initialize_plot(data_unit=value)
             else:
                 # Technically, this should not occur, but in the unforseen
                 # case that it does, remove the plot and log an error
@@ -230,7 +234,7 @@ class PlotWidget(pg.PlotWidget):
                 logging.error("Removing plot '%s' due to incompatible units "
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
-                              plot_data_item.spectral_axis_unit, value)
+                              plot_data_item.data_unit, value)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
@@ -617,9 +621,3 @@ class PlotWidget(pg.PlotWidget):
                 self.linelist_window = None
             else:
                 self.linelist_window.hide()
-
-
-
-
-
-
