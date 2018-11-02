@@ -23,7 +23,6 @@ class EquationEditor(QDialog):
     def __init__(self, *args, **kwargs):
         """Equation editor main dialog. From this view you can add, edit, and remove
         arithmetic attributes."""
-
         super().__init__(parent=None)
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
@@ -58,7 +57,6 @@ class EquationEditor(QDialog):
     
     def edit_expression(self):
         """Edit selected expression in main dialog"""
-        
         if not self.list_derived_components.currentItem():
             QMessageBox.warning(self, "No Spectrum1D Objects", 
                                 "No selected expression to edit!")
@@ -104,7 +102,8 @@ class Editor(QDialog):
     placeholder_text = ("Type any mathematical expression here - "
                         "you can include attribute names from the "
                         "drop-down below by selecting them and "
-                        "clicking 'Insert'.")
+                        "clicking 'Insert'. Note: Arithmeric Editor "
+                        "must return a Spectrum1D object!")
     
     def __init__(self, equation_editor, label=None, equation=None, parent=None):
         """Dialog where you specify equation names and expressions."""
@@ -188,7 +187,7 @@ class Editor(QDialog):
         # If the text hasn't changed, no need to check again
         if hasattr(self, '_cache') and self._cache == (self.text_label.text(), self._get_raw_command()):
             return
-
+        
         if self.text_label.text() == "":
             self.label_status.setStyleSheet('color: red')
             self.label_status.setText("Component name not set")
@@ -200,7 +199,7 @@ class Editor(QDialog):
             self.label_status.setStyleSheet('color: red')
             self.label_status.setText("Component name already exists.")
             self.button_ok.setEnabled(False)
-
+       
         elif self._get_raw_command() == "":
             self.label_status.setText("")
             self.button_ok.setEnabled(False)
@@ -210,19 +209,19 @@ class Editor(QDialog):
                 dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.model_items}
                 raw_str = self._get_raw_command()
                 self.evaluated_arith = eval(raw_str.format(**dict_map))
-                if not isinstance(self.evaluated_arith, specutils.spectra.spectrum1d.Spectrum1D):
-                    raise ValueError("Arithmetic Editor must return Spectrum1D object not {}".format(type(self.evaluated_arith)))
-            
+                if not isinstance(self.evaluated_arith, 
+                                    specutils.spectra.spectrum1d.Spectrum1D):
+                    raise ValueError("Arithmetic Editor must return ", 
+                                     "Spectrum1D object not {}".\
+                                     format(type(self.evaluated_arith)))
             except SyntaxError:
                 self.label_status.setStyleSheet('color: red')
                 self.label_status.setText("Incomplete or invalid syntax")
                 self.button_ok.setEnabled(False)
-            
             except Exception as exc:
                 self.label_status.setStyleSheet('color: red')
                 self.label_status.setText(str(exc))
                 self.button_ok.setEnabled(False)
-            
             else:
                 self.label_status.setStyleSheet('color: green')
                 self.label_status.setText("Valid expression")
