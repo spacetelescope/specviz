@@ -3,6 +3,7 @@ from itertools import cycle
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
+import astropy.units as u
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem
 
@@ -142,7 +143,7 @@ class PlotDataItem(pg.PlotDataItem):
         return (self.data_item.flux.unit == "" or
                 unit is not None and
                 self.data_item.flux.unit.is_equivalent(
-                    unit, equivalencies=spectral_density(self.spectral_axis)))
+                    unit, equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit))))
 
     def is_spectral_axis_unit_compatible(self, unit):
         return (self.data_item.spectral_axis.unit == "" or
@@ -165,9 +166,12 @@ class PlotDataItem(pg.PlotDataItem):
 
     @property
     def flux(self):
-        return self.data_item.flux.to(self.data_unit or "",
+        """
+        Converts data_item.flux - which consists of the flux axis with units - into the new flux unit
+        """
+        return self.data_item.flux.to(self.data_unit,
                                       equivalencies=spectral_density(
-                                          self.spectral_axis)).value
+                                          self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
 
     @property
     def spectral_axis(self):
@@ -184,7 +188,7 @@ class PlotDataItem(pg.PlotDataItem):
 
         return uncertainty.to(self.data_unit or "",
                               equivalencies=spectral_density(
-                                  self.spectral_axis)).value
+                                  self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
 
     @property
     def color(self):
@@ -225,12 +229,21 @@ class PlotDataItem(pg.PlotDataItem):
         self.visibility_changed.emit(self._visible)
 
     def set_data(self):
+        """
+        Sets the spectral_axis and flux. self.flux is called to convert flux units if they had been changed
+        """
         spectral_axis = self.spectral_axis
 
         if self.opts.get('stepMode'):
             spectral_axis = np.append(self.spectral_axis, self.spectral_axis[-1])
 
         self.setData(spectral_axis, self.flux, connect="finite")
+
+        # Without this call, the plot tries to do autoRange based on DataItem (which does not change), when it should
+        # instead be doing autoRange based on PlotDataItem, which updates based on what units are being used
+        self._error_bar_item.setData(x=self.spectral_axis,
+                                     y=self.flux,
+                                     height=self.uncertainty)
 
 
 class ModelItem(QStandardItem):
