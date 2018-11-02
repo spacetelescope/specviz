@@ -317,12 +317,6 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
-        # This ensures that users actively have to select a file type before
-        # being able to select a file. This should make it harder to
-        # accidentally load a file using the wrong type, which results in weird
-        # errors.
-        default_filter = 'Select file loader'
-
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
         def compose_filter_string(reader):
@@ -339,12 +333,15 @@ class Workspace(QMainWindow):
         # most appropriate loader to use
         loader_name_map['Auto (*)'] = None
 
-        filters = ['Select file loader'] + list(loader_name_map.keys())
+        # This ensures that users actively have to select a file type before
+        # being able to select a file. This should make it harder to
+        # accidentally load a file using the wrong type, which results in weird
+        # errors.
+        filters = ['Select loader...'] + list(loader_name_map.keys())
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
-                                                filters=";;".join(filters),
-                                                selectedfilter=default_filter)
+                                                filters=";;".join(filters))
 
         if not file_path:
             return
