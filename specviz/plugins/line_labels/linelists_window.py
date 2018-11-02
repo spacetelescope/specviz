@@ -122,19 +122,33 @@ class LineListsPlugin(QMainWindow):
 
         self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_selected_window)
 
+
     def _on_selected_window(self, window):
+        print("@@@@@@  file linelists_window.py; line 126 -   window selected")
+
+        window._plot_widget.plot_added.connect(self._on_plot_added)
+        window._plot_widget.plot_removed.connect(self._on_plot_removed)
+
+
+    def _on_plot_removed(self, data_item):
+        print("@@@@@@  file linelists_window.py; line 126    plot remved -   ", data_item)
+
+
+    def _on_plot_added(self, data_item):
+
+        print("@@@@@@  file linelists_window.py; line 133 -    plot added  ",  data_item)
 
         # TODO this is called when the plot widget is firstly created and added to the
         # mdi area. Even when it's data item is empty. We have to force a selection event
         # on the _plot_widget object so as to bypass this bogus call and have it forcibly
         # initialized.
 
-        print ('@@@@@@     line: 136  - ', window)
-        print ('@@@@@@     line: 136  - ', window._plot_widget._find_wavelength_range())
+        # print ('@@@@@@     line: 136  -    plot added')
+        # print ('@@@@@@     line: 136  - ', window._plot_widget._find_wavelength_range())
 
-        # if not isinstance(plot_data_item.data_item, ModelDataItem):
-        self.main_widget.setHidden(False)
-        self.main_toolbar.setHidden(False)
+        # if window._plot_widget._find_wavelength_range():
+        #     self.main_widget.setHidden(False)
+        #     self.main_toolbar.setHidden(False)
 
 
         # if window is None:
