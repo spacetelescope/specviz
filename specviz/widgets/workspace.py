@@ -323,15 +323,23 @@ class Workspace(QMainWindow):
         # errors.
         default_filter = 'Select file loader'
 
-        filters = [default_filter]
+        # Create a dictionary mapping the registry loader names to the
+        # qt-specified loader names
+        def compose_filter_string(reader):
+            return ' '.join(['*.{}'.format(y) for y in reader.extensions]
+                            if reader.extensions is not None else '*')
 
-        filters += [
-            '{} ({})'.format(x['Format'], ' '.join(['*.{}'.format(y) for y in
-                get_reader(x['Format'], Spectrum1D).extensions])
-                if get_reader(x['Format'], Spectrum1D).extensions is not None else '*')
-            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes']
+        loader_name_map = {
+            '{} ({})'.format(
+                x['Format'], compose_filter_string(
+                    get_reader(x['Format'], Spectrum1D))): x['Format']
+            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes'}
 
-        filters.append('Auto (*)')
+        # Include an auto load function that lets the io machinery find the
+        # most appropriate loader to use
+        loader_name_map['Auto (*)'] = None
+
+        filters = ['Select file loader'] + list(loader_name_map.keys())
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
@@ -341,9 +349,7 @@ class Workspace(QMainWindow):
         if not file_path:
             return
 
-        format = " ".join(fmt.split()[:-1]) if fmt != 'Auto (*)' else None
-
-        self.load_data(file_path, file_loader=format)
+        self.load_data(file_path, file_loader=loader_name_map[fmt])
 
     def load_data(self, file_path, file_loader=None, display=False):
         """
@@ -369,17 +375,23 @@ class Workspace(QMainWindow):
         try:
             try:
                 spec = Spectrum1D.read(file_path, format=file_loader)
-            except IORegistryError:
+            except IORegistryError as e:
                 # In this case, assume that the registry has found several
                 # loaders that fit the same identifier, choose the highest
                 # priority one.
                 fmts = identify_format('read', Spectrum1D, file_path, None, [], {})
 
-                logging.warning("Loaders for '{}' matched for this data set. "
-                                "Choosing '{}' with highest priority."
-                                "".format(', '.join(fmts), fmts[0]))
+                logging.warning(e)
+                logging.warning("Loaders for '%s' matched for this data set. "
+                                "Iterating based on priority."
+                                "", ', '.join(fmts))
 
-                spec = Spectrum1D.read(file_path, format=fmts[0])
+                for fmt in fmts:
+                    try:
+                        spec = Spectrum1D.read(file_path, format=fmt)
+                    except:
+                        logging.warning("Attempted load with '%s' failed, "
+                                        "trying next loader.", fmt)
 
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
