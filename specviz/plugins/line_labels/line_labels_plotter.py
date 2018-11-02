@@ -2,8 +2,8 @@ import numpy as np
 
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
-from ...core.annotation import LineIDMarker, LineIDMarkerProxy
-from ...core.linelist import LineList, \
+from .annotation import LineIDMarker, LineIDMarkerProxy
+from .linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 
