@@ -94,7 +94,7 @@ class UnitChangeDialog(QDialog):
         self.spectral_axis_unit_equivalencies = sorted(self.spectral_axis_unit_equivalencies, key=lambda x: x.to_string())
         self.data_unit_equivalencies = sorted(self.data_unit_equivalencies, key=lambda y: y.to_string())
 
-        # Create lists with the "pretty" versions of unit names (except for Angstrom)
+        # Create lists with the "pretty" versions of unit names (Angstrom is too difficult to format for now)
         self.spectral_axis_unit_equivalencies_titles = [
             u.Unit(unit).long_names[0].title()
             if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
