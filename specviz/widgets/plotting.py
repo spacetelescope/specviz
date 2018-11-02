@@ -168,7 +168,10 @@ class PlotWidget(pg.PlotWidget):
         self._region_text_item = pg.TextItem(color="k")
         self.addItem(self._region_text_item, ignoreBounds=True)
         self._region_text_item.setParentItem(self.getViewBox())
+
+        # Removes ability to automatically change units to match science notation
         self.getAxis('bottom').enableAutoSIPrefix(False)
+        self.getAxis('left').enableAutoSIPrefix(False)
 
         # Store the unit information for this plot. This is defined by the
         # first data set that gets plotted. All other data sets will attempt

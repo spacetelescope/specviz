@@ -363,6 +363,7 @@ class Workspace(QMainWindow):
             plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
             plot_data_item.visible = True
             self.current_plot_window.plot_widget.on_item_changed(data_item)
+            self._on_item_changed(item=plot_data_item.data_item)
 
             return data_item
         except:
