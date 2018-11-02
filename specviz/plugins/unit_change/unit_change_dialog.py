@@ -94,18 +94,14 @@ class UnitChangeDialog(QDialog):
         self.spectral_axis_unit_equivalencies = sorted(self.spectral_axis_unit_equivalencies, key=lambda x: x.to_string())
         self.data_unit_equivalencies = sorted(self.data_unit_equivalencies, key=lambda y: y.to_string())
 
-        # Create lists with the "pretty" versions of unit names
+        # Create lists with the "pretty" versions of unit names (except for Angstrom)
         self.spectral_axis_unit_equivalencies_titles = [
-            u.Unit(unit).name
-            if u.Unit(unit) == u.Unit("Angstrom")
-            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
-            else u.Unit(unit).to_string()
+            u.Unit(unit).long_names[0].title()
+            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
             for unit in self.spectral_axis_unit_equivalencies]
         self.data_unit_equivalencies_titles = [
-            u.Unit(unit).name
-            if u.Unit(unit) == u.Unit("Angstrom")
-            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
-            else u.Unit(unit).to_string()
+            u.Unit(unit).long_names[0].title()
+            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
             for unit in self.data_unit_equivalencies]
 
         # This gives the user the option to use their own units. These units are checked by u.Unit()
@@ -276,6 +272,7 @@ class UnitChangeDialog(QDialog):
             self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":
+
             # Try to enter the custom units
             try:
                 u.Unit(self.ui.line_custom_spectral.text())
