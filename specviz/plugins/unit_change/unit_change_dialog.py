@@ -94,14 +94,18 @@ class UnitChangeDialog(QDialog):
         self.spectral_axis_unit_equivalencies = sorted(self.spectral_axis_unit_equivalencies, key=lambda x: x.to_string())
         self.data_unit_equivalencies = sorted(self.data_unit_equivalencies, key=lambda y: y.to_string())
 
-        # Create lists with the "pretty" versions of unit names (Angstrom is too difficult to format for now)
+        # Create lists with the "pretty" versions of unit names
         self.spectral_axis_unit_equivalencies_titles = [
-            u.Unit(unit).long_names[0].title()
-            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            u.Unit(unit).name
+            if u.Unit(unit) == u.Unit("Angstrom")
+            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
+            else u.Unit(unit).to_string()
             for unit in self.spectral_axis_unit_equivalencies]
         self.data_unit_equivalencies_titles = [
-            u.Unit(unit).long_names[0].title()
-            if hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0 else u.Unit(unit).to_string()
+            u.Unit(unit).name
+            if u.Unit(unit) == u.Unit("Angstrom")
+            else u.Unit(unit).long_names[0].title() if (hasattr(u.Unit(unit), "long_names") and len(u.Unit(unit).long_names) > 0)
+            else u.Unit(unit).to_string()
             for unit in self.data_unit_equivalencies]
 
         # This gives the user the option to use their own units. These units are checked by u.Unit()
@@ -240,7 +244,6 @@ class UnitChangeDialog(QDialog):
                 return False
 
             # Converts the data_unit to something that can be used by PlotWidget
-            # self.current_data_unit = self.line_custom_units.text()
             data_unit_formatted = u.Unit(self.line_custom_units.text()).to_string()
 
             # Checks to make sure data_unit is compatible
@@ -255,7 +258,6 @@ class UnitChangeDialog(QDialog):
 
         else:
             # Converts the data_unit to something that can be used by PlotWidget
-            # self.current_data_unit = self.ui.comboBox_units.currentText()
             current_data_unit_in_u = \
                 self.data_unit_equivalencies[self.data_unit_equivalencies_titles.index(
                     self.ui.comboBox_units.currentText())]
@@ -288,7 +290,6 @@ class UnitChangeDialog(QDialog):
                 return False
 
             # Converts the spectral_axis_unit to something that can be used by PlotWidget
-            # self.current_spectral_axis_unit = self.line_custom_spectral.text()
             spectral_axis_unit_formatted = u.Unit(self.line_custom_spectral.text()).to_string()
 
             # Checks to make sure spectral_axis_unit is compatible
@@ -303,7 +304,6 @@ class UnitChangeDialog(QDialog):
 
         else:
             # Converts the spectral_axis_unit to something that can be used by PlotWidget
-            # self.current_spectral_axis_unit = self.ui.comboBox_spectral.currentText()
             current_spectral_axis_unit_in_u = \
                 self.spectral_axis_unit_equivalencies[self.spectral_axis_unit_equivalencies_titles.index(
                     self.ui.comboBox_spectral.currentText())]
