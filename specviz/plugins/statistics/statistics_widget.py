@@ -3,6 +3,7 @@ import numpy as np
 
 from astropy import units as u
 
+from specutils.spectra.spectrum1d import Spectrum1D
 from specutils.spectra.spectral_region import SpectralRegion
 from specutils.manipulation import extract_region
 from specutils.analysis import snr, equivalent_width, fwhm, centroid, line_flux
@@ -91,6 +92,7 @@ class StatisticsWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._current_spectrum = None  # Current `Spectrum1D`
+        self._current_plot_item = None  # Current plot item
         self.stats = None  # dict with stats
 
         self._init_ui()
@@ -232,6 +234,38 @@ class StatisticsWidget(QWidget):
         self._clear_stat_widgets()
         self.stats = None
 
+    def _reconnect_item_signals(self):
+        if self.hub.plot_item is self._current_plot_item:
+            return
+
+        if isinstance(self._current_plot_item, PlotDataItem):
+            self._current_plot_item.spectral_axis_unit_changed.disconnect(self.update_statistics)
+            self._current_plot_item.data_unit_changed.disconnect(self.update_statistics)
+
+        self._current_plot_item = self.hub.plot_item
+
+        if isinstance(self._current_plot_item, PlotDataItem):
+            self._current_plot_item.spectral_axis_unit_changed.connect(self.update_statistics)
+            self._current_plot_item.data_unit_changed.connect(self.update_statistics)
+
+    def _spectrum_with_plot_units(self, spec):
+        """
+        Make a new spectrum object with the plotted units.
+
+        Returns
+        -------
+        spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        """
+        if self._current_plot_item is None:
+            return spec
+
+        data_unit = self._current_plot_item.data_unit
+        spectral_axis_unit = self._current_plot_item.spectral_axis_unit
+
+        new_spec = spec.with_spectral_unit(u.Unit(spectral_axis_unit))
+        new_spec = new_spec.new_flux_unit(u.Unit(data_unit))
+        return new_spec
+
     def update_statistics(self):
         if self.hub.workspace is None or self.hub.plot_item is None:
             return self.clear_statistics()
@@ -244,12 +278,19 @@ class StatisticsWidget(QWidget):
         spectral_region = self._get_workspace_region()
 
         self._current_spectrum = spec
+        self._reconnect_item_signals()
 
         # Check for issues and extract
         # region from input spectra:
         if spec is None:
             self.set_status("No data selected.")
             return self.clear_statistics()
+        elif not isinstance(spec, Spectrum1D):
+            self.set_status("Spectrum was not found.")
+            return self.clear_statistics()
+        else:
+            spec = self._spectrum_with_plot_units(spec)
+
         if spectral_region is not None:
             if not check_unit_compatibility(spec, spectral_region):
                 self.set_status("Region units are not compatible with "
