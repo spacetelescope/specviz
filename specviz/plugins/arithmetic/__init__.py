@@ -1,2 +1,2 @@
+from .arithmetic_editor import Arithmetic
 from .arithmetic_editor import EquationEditor
-from .arithmetic_editor import Editor

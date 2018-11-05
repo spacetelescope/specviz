@@ -17,7 +17,7 @@ from ...core.items import DataItem
 from ...core.plugin import plugin
 
 @plugin('Arithmetic')
-class EquationEditor(QDialog):
+class Arithmetic(QDialog):
     def __init__(self, *args, **kwargs):
         """Equation editor main dialog. From this view you can add, edit, and remove
         arithmetic attributes."""
@@ -62,7 +62,7 @@ class EquationEditor(QDialog):
             current_item = self.list_derived_components.currentItem()
             label = current_item.text(0)
             equation = current_item.text(1)
-            self.editor = Editor(self, label=label, equation=equation, parent=self)
+            self.editor = EquationEditor(self, label=label, equation=equation, parent=self)
 
     def remove_expression(self):    
         """Remove selected expression in main diaglog"""
@@ -78,7 +78,7 @@ class EquationEditor(QDialog):
 
     def showDialog(self):  
         """Show arithmetic editor""" 
-        self.editor = Editor(self, parent=self)     
+        self.editor = EquationEditor(self, parent=self)     
 
     def find_matches(self, eq_name):
         """Checks for matching names"""
@@ -86,8 +86,8 @@ class EquationEditor(QDialog):
         matches = [item.text(0) for item in matches]
         return matches
     
-class Editor(QDialog):
-    tip_text = ("<b>Note:</b> DataItem names in the expression should be surrounded "
+class EquationEditor(QDialog):
+    tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
                 "by {{ }} brackets (e.g. {{{example}}}), and you <br>" 
                 "you can use libraries imported in the namespace (numpy, specutils, etc). "
                 "Objects returned from editor must be type Spectrum1D!<br><br>"
@@ -104,7 +104,7 @@ class Editor(QDialog):
     
     def __init__(self, equation_editor, label=None, equation=None, parent=None):
         """Dialog where you specify equation names and expressions."""
-        super(Editor, self).__init__(parent)
+        super(EquationEditor, self).__init__(parent)
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "equation_editor.ui")), self)
@@ -214,7 +214,8 @@ class Editor(QDialog):
                 raw_str = self._get_raw_command()
                 self.evaluated_arith = eval(raw_str.format(**dict_map))
                 if not isinstance(self.evaluated_arith, 
-                                    specutils.spectra.spectrum1d.Spectrum1D):
+                                  specutils.spectra.spectrum1d.Spectrum1D):
+                    
                     raise ValueError("Arithmetic Editor must return ", 
                                      "Spectrum1D object not {}".\
                                      format(type(self.evaluated_arith)))
