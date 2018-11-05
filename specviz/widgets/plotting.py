@@ -61,6 +61,8 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.line_labels_action.triggered.connect(
             self._on_line_labels)
 
+        self._central_widget.line_labels_action.setVisible(False)
+
         self._central_widget.reset_view_action.triggered.connect(
             self._on_reset_view)
 
