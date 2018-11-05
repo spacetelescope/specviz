@@ -1,38 +1,9 @@
-def test_uc_dialog(specviz_gui):
-    # specviz_gui.load_local_plugins
-    specviz_gui.current_workspace.load_data("/Users/javerbukh/Documents/data_for_specviz/COS_FUV.fits", "HST/COS")
-    workspace = specviz_gui.current_workspace
-    for i in range(workspace.plugin_tab_widget.count()):
-        if workspace.plugin_tab_widget.tabText(i) == "Unit Change Dialog":
-            print("HERE", workspace.plugin_tab_widget.tabText(i))
-            workspace.plugin_tab_widget.widget(i).triggered
-            assert workspace.plugin_tab_widget.widget(i).ui.comboBox_spectral.currentText() == "Angstrom"
-        else:
-            print("NOT HERE", workspace.plugin_tab_widget.tabText(i))
+import pytest
 
-    # print(workspace.current_plot_window.tool_bar.children)
-    # for child in workspace.current_plot_window.tool_bar.children:
-    #     print("child", child)
-    #     if child.tabText(i) == "Unit Change Dialog":
-    #         print("HERE", workspace.plugin_tab_widget.tabText(i))
-    #         workspace.current_plot_window.tool_bar.widget(i).triggered
-    #         assert workspace.plugin_tab_widget.widget(i).ui.comboBox_spectral.currentText() == "Angstrom"
-    #     else:
-    #         print("NOT HERE", workspace.current_plot_window.tool_bar.tabText(i))
+from qtpy import QtCore
+from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
 
-    print("main_tool_bar", workspace.main_tool_bar, type(workspace.main_tool_bar))
-    print("plugin bar", workspace.current_plot_window.tool_bar)
-    for child in workspace.current_plot_window.tool_bar.actions():
-        if child.text() == "Change Units":
-            print("HERE", child.text())
-            child.trigger()
-            assert child.ui.comboBox_spectral.currentText() == "Angstrom"
-        else:
-            print("NOT HERE", child.text())
-
-    # print(dir(specviz_gui.current_workspace.current_item))
-
-
+from ..unit_change_dialog import UnitChangeDialog
 
 
 # def test_custom_units_correct(qtbot):

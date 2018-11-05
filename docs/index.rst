@@ -24,3 +24,4 @@ Using SpecViz
    :maxdepth: 2
 
    getting-started
+   unit_conversion
