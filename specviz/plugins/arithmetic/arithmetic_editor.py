@@ -38,7 +38,6 @@ class EquationEditor(QDialog):
     @plugin.tool_bar(name="Arithmetic", icon=QIcon(":/icons/014-calculator.svg"))
     def on_action_triggerd(self):
         """Trigger the arithmetic UI when button is clicked."""
-        self.model_items = self.hub.data_items
         self.show()
 
     def set_equation(self, eq_name=None, eq_expression=None):
@@ -94,8 +93,8 @@ class Editor(QDialog):
                 "Objects returned from editor must be type Spectrum1D!<br><br>"
                 "<b>Example expressions:</b><br><br>"
                 "  - Double the flux of '{example}': {{{example}}} * 2<br>"
-                "  - Add two Spectrum1D objects: {{{example}}}*2-{{{example}}}<br>"
-                "  - Subtract two Spectrum1D objects: {{{example}}}*2-{{{example}}}<br>"
+                "  - Add two Spectrum1D objects: {{{example}}}*2 + {{{example}}}<br>"
+                "  - Subtract two Spectrum1D objects: {{{example}}}*2 - {{{example}}}<br>"
                 "  - Use Spectrum1D API: Spectrum1D(spectral_axis={{{example}}}.wavelength,flux={{{example}}}.flux)")
     
     placeholder_text = ("Type any mathematical expression here - "
@@ -114,7 +113,7 @@ class Editor(QDialog):
 
         self._equation_editor = equation_editor
 
-        if not self._equation_editor.model_items:
+        if not self._equation_editor.hub.data_items:
             self.msgbox = QMessageBox.warning(self._equation_editor, "No Spectrum1D Objects", 
                                 "There is no data loaded into your SpecViz session!")
         else:
@@ -133,9 +132,8 @@ class Editor(QDialog):
             else:
                 self.expression.setPlaceholderText(self.placeholder_text)
 
-            # Set options for spec1d objects to select.        
-            self.combosel_data.addItems([item.name for item in self._equation_editor.model_items])
-            # Set options for spec1d attributes.
+            self.combosel_data.addItems([item.name for item in self._equation_editor.hub.data_items])
+            
             self.combosel_component.addItems(['wavelength', 'velocity',
                                               'frequency', 'flux'])
 
@@ -180,7 +178,7 @@ class Editor(QDialog):
 
     def _item_from_name(self, name):
         """Get data item based on name"""
-        return next((x.spectrum for x in self._equation_editor.model_items if x.name == name))
+        return next((x.spectrum for x in self._equation_editor.hub.data_items if x.name == name))
     
     def _update_status(self):
         """Check status of entered arithmetic"""
@@ -190,7 +188,7 @@ class Editor(QDialog):
         
         if self.text_label.text() == "":
             self.label_status.setStyleSheet('color: red')
-            self.label_status.setText("Component name not set")
+            self.label_status.setText("Attribute name not set")
             self.button_ok.setEnabled(False)
         
         elif (self.is_addmode and
@@ -206,7 +204,7 @@ class Editor(QDialog):
         
         else:
             try:
-                dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.model_items}
+                dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.hub.data_items}
                 raw_str = self._get_raw_command()
                 self.evaluated_arith = eval(raw_str.format(**dict_map))
                 if not isinstance(self.evaluated_arith, 
