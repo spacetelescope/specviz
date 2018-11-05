@@ -14,6 +14,7 @@ import numpy as np
 from astropy.io import ascii
 from astropy.table import Table, vstack
 from astropy import constants
+from astropy import units as u
 from astropy.units.core import UnitConversionError
 
 
@@ -267,7 +268,7 @@ class LineList(Table):
             # to the raw Table instances.
 
             internal_table = linelist._table
-            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units, equivalencies=u.spectral())
 
             # add columns to hold color and height attributes
             color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
@@ -324,7 +325,7 @@ class LineList(Table):
 
         # convert wavelenghts in line list to whatever
         # units the wavelength range is expressed in.
-        new_wavelengths = wavelengths.to(wmin.unit)
+        new_wavelengths = wavelengths.to(wmin.unit, equivalencies=u.spectral())
 
         # add some leeway at the short and long end points.
         # For now, we extend both ends by 10%. This might
@@ -342,6 +343,12 @@ class LineList(Table):
         # that lie outside the wavelength range.
         indices_to_remove = np.where((new_wavelengths.value < wmin) |
                                      (new_wavelengths.value > wmax))
+
+        # if using frequency units, the test above fails. We have to
+        # test for the opposite condition then.
+        if len(indices_to_remove[0]) == len(new_wavelengths):
+            indices_to_remove = np.where((new_wavelengths.value > wmin) |
+                                         (new_wavelengths.value < wmax))
 
         result = self._remove_lines(indices_to_remove)
 
