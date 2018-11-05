@@ -8,6 +8,7 @@ How Unit Conversion Works
 
 Unit Conversion uses the `astropy.units <http://docs.astropy.org/en/v0.2.1/units/index.html>` module in order to convert spectral
 axis and flux units.
+
 import astropy.units as u
 potential_X_axis_units = u.Unit(original_spectral_units).find_equivalent_units(equivalencies=u.spectral())
 potential_Y_axis_units = u.Unit(original_spectral_units).find_equivalent_units(equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]))
