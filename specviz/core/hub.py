@@ -55,6 +55,11 @@ class Hub:
             return self.plot_widget.listDataItems()
 
     @property
+    def list_all_regions(self):
+        """The currently active ROI on the plot."""
+        return self.plot_window.plot_widget.list_all_regions()
+
+    @property
     def selected_region(self):
         """The currently active ROI on the plot."""
         return self.plot_window.plot_widget.selected_region

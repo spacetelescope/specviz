@@ -13,7 +13,9 @@ from qtpy.QtGui import QIcon
 
 from ...core.items import PlotDataItem
 from ...utils import UI_PATH
-from ...utils.helper_functions import format_float_text
+from ...utils.helper_functions import (format_float_text, clip_region,
+                                       check_region_unit_compatibility,
+                                       pos_to_spectral_region)
 from ...core.plugin import plugin
 from ...core.hub import Hub
 
@@ -23,32 +25,6 @@ The next three functions are place holders while specutils is updated to handle
 these computations internally. They will be moved into the StatisticsWidget
 once they are updated.
 """
-def check_unit_compatibility(spec, region):
-    spec_unit = spec.spectral_axis.unit
-    if region.lower is not None:
-        region_unit = region.lower.unit
-    elif region.upper is not None:
-        region_unit = region.upper.unit
-    else:
-        return False
-    return spec_unit.is_equivalent(region_unit)
-
-
-def clip_region(spectrum, region):
-    # If the region is out of data range return None:
-    if region.lower > spectrum.spectral_axis.max() or \
-            region.upper < spectrum.spectral_axis.min():
-        return None
-
-    # Clip region. There is currently no way to update
-    # SpectralRegion lower and upper so we have to create
-    # a new object here.
-    lower = max(region.lower, spectrum.spectral_axis.min())
-    upper = min(region.upper, spectrum.spectral_axis.max())
-
-    return SpectralRegion(lower, upper)
-
-
 def compute_stats(spectrum):
     """
     Compute basic statistics for a spectral region.
@@ -153,36 +129,12 @@ class StatisticsWidget(QWidget):
         for key in self.stat_widgets:
             self.stat_widgets[key].setText("")
 
-    @staticmethod
-    def pos_to_spectral_region(pos):
-        """
-        Vet input region position and construct
-        a `~specutils.utils.SpectralRegion`.
-        Parameters
-        ----------
-        pos : `~astropy.units.Quantity`
-            A tuple `~astropy.units.Quantity` with
-            (min, max) range of roi.
-
-        Returns
-        -------
-        None or `~specutils.utils.SpectralRegion`
-        """
-        if not isinstance(pos, u.Quantity):
-            return None
-        elif pos.unit == u.Unit("") or \
-                pos[0] == pos[1]:
-            return None
-        elif pos[0] > pos[1]:
-            pos = [pos[1], pos[0]] * pos.unit
-        return SpectralRegion(*pos)
-
     def _get_workspace_region(self):
         """Get current widget region."""
         pos = self.hub.selected_region_bounds
 
         if pos is not None:
-            return self.pos_to_spectral_region(pos)
+            return pos_to_spectral_region(pos)
 
     def _workspace_has_region(self):
         """True if there is an active region"""
@@ -229,7 +181,7 @@ class StatisticsWidget(QWidget):
             self.set_status("No data selected.")
             return self.clear_statistics()
         if spectral_region is not None:
-            if not check_unit_compatibility(spec, spectral_region):
+            if not check_region_unit_compatibility(spec, spectral_region):
                 self.set_status("Region units are not compatible with "
                                 "selected data's spectral axis units.")
                 return self.clear_statistics()

@@ -2,13 +2,16 @@ import os
 import uuid
 
 import numpy as np
-from astropy.modeling import models
+from astropy import units as u
+from astropy.modeling import models, fitting, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget
+from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget, QDialog
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
 from specutils.spectra import Spectrum1D
+from specutils.manipulation import extract_region
+from specutils.spectra.spectral_region import SpectralRegion
 
 from .equation_editor_dialog import ModelEquationEditorDialog
 from .items import ModelDataItem
@@ -21,11 +24,28 @@ MODELS = {
     'Gaussian1D': models.Gaussian1D,
 }
 
+FITTERS = {
+    "Levenberg-Marquardt": fitting.LevMarLSQFitter,
+    "SLSQP Optimization": fitting.SLSQPLSQFitter,
+    "Simplex": fitting.SimplexLSQFitter,
+}
+
 
 @plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
 class ModelEditor(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fitting_options = {
+            "fitter": "Levenberg-Marquardt",
+            "max_iterations": optimizers.DEFAULT_MAXITER,
+            "relative_error": optimizers.DEFAULT_ACC,
+            "epsilon": optimizers.DEFAULT_EPS,
+        }
+
+        self._init_ui()
+
+    def _init_ui(self):
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "model_editor.ui")), self)
@@ -51,10 +71,27 @@ class ModelEditor(QWidget):
         self.new_model_button.clicked.connect(self._on_create_new_model)
         self.remove_model_button.clicked.connect(self._on_remove_model)
 
+        self.advanced_settings_button.clicked.connect(
+            lambda: ModelAdvancedSettingsDialog(self, self).exec())
+
+        self.data_selection_combo.setModel(self.hub.model)
+
         # When a plot data item is select, get its model editor model
         # representation
         self.hub.workspace.current_selected_changed.connect(
             self._on_plot_item_selected)
+
+        # Connect the fit model button
+        self.fit_button.clicked.connect(self._on_fit_clicked)
+
+    def new_message_box(self, text, info=None, icon=QMessageBox.Warning):
+        message_box = QMessageBox()
+        message_box.setText(text)
+        message_box.setIcon(icon)
+        if info is not None:
+            message_box.setInformativeText(info)
+        message_box.exec()
+        return
 
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
@@ -62,14 +99,10 @@ class ModelEditor(QWidget):
 
     def _on_create_new_model(self):
         if self.hub.data_item is None:
-            message_box = QMessageBox()
-            message_box.setText("No item selected, cannot create model.")
-            message_box.setIcon(QMessageBox.Warning)
-            message_box.setInformativeText(
-                "There is currently no item selected. Please select an item "
-                "before attempting to create a new model.")
-
-            message_box.exec()
+            self.new_message_box(text="No item selected, cannot create model.",
+                                 info="There is currently no item selected. "
+                                      "Please select an item before attempting"
+                                      " to create a new model.")
             return
 
         # Set the currently displayed plugin panel widget to the model editor
@@ -123,14 +156,10 @@ class ModelEditor(QWidget):
         model_data_item = self.hub.data_item
 
         if not isinstance(model_data_item, ModelDataItem):
-            message_box = QMessageBox()
-            message_box.setText("No model available.")
-            message_box.setIcon(QMessageBox.Warning)
-            message_box.setInformativeText(
-                "The currently selected item does not contain a fittable model."
-                " Create a new one, or select an item containing a model.")
-
-            message_box.exec()
+            self.new_message_box(text="No model available.",
+                                 info="The currently selected item does not"
+                                      " contain a fittable model. Create a new"
+                                      " one, or select an item containing a model.")
             return
 
         equation_editor_dialog = ModelEquationEditorDialog(
@@ -157,21 +186,109 @@ class ModelEditor(QWidget):
         for i in range(0, 3):
             self.model_tree_view.resizeColumnToContents(i)
 
-    def _on_fit_clicked(self, model_plot_data_item):
-        fit_mod = fit_lines(self.hub.data_item.spectrum, result)
-        flux = fit_mod(self.hub.data_item.spectrum.spectral_axis)
+    def _combine_all_workspace_regions(self):
+        """Get current widget region."""
+        regions = self.hub.list_all_regions
+        if len(regions) == 0:
+            return None
 
-        new_spec = Spectrum1D(flux=flux,
-                              spectral_axis=self.hub.data_item.spectrum.spectral_axis)
-        # self.hub.model.add_data(new_spec, "Fitted Model Spectrum")
+        units = u.Unit(self.hub.plot_window.plot_widget.spectral_axis_unit or "")
 
-        # Update the stored plot data item object for this model editor model
-        # self._model_editor_model.plot_data_item.data_item.set_data(new_spec)
+        positions = []
+        for region in regions:
+            pos = (region.getRegion()[0] * units,
+                   region.getRegion()[1] * units)
+            if pos is not None:
+                positions.append(pos)
+
+        return SpectralRegion(positions)
+
+    @staticmethod
+    def _astropy_fit(spec, model, fitter):
+        if isinstance(spec, list):
+            x = []
+            y = []
+            for i in range(len(spec)):
+                if spec[i] is None:
+                    continue
+                x += list(spec[i].spectral_axis.value)
+                y += list(spec[i].flux.value)
+            x = np.array(x)
+            y = np.array(y)
+        else:
+            if spec is None:
+                return
+            x = spec.spectral_axis.value
+            y = spec.flux.value
+
+        if len(x) == 0:
+            return
+
+        return fitter(model, x, y)
+
+    def _on_fit_clicked(self, spectrum_data_item=None):
+        # The spectrum_data_item would be the data item that this model is to
+        # be fit to. This selection is done via the data_selection_combo.
+        combo_index = self.data_selection_combo.currentIndex()
+        spectrum_data_item = self.data_selection_combo.itemData(combo_index)
+
+        # If user chooses a model instead of a data item, notify and return
+        if isinstance(spectrum_data_item, ModelDataItem):
+            return self.new_message_box(text="Selected data is a model.",
+                                        info="The currently selected data "
+                                             "is a model. Please select a "
+                                             "data item containing spectra.")
+
+        # Grab the currntly selected plot data item from the data list
+        plot_data_item = self.hub.plot_item
+
+        # If this item is not a model data item, bail
+        if not isinstance(plot_data_item.data_item, ModelDataItem):
+            return
+
+        # Compose the compound model from the model editor sub model tree view
+        model_editor_model = plot_data_item.data_item.model_editor_model
+        result = model_editor_model.evaluate()
+
+        if result is None:
+            return self.new_message_box(text="Please add models to fit.",
+                                        info="Models can be added by clicking the"
+                                             " green \"add\" button and selecting a"
+                                             " model from the drop-down menu")
+
+        spectrum = spectrum_data_item.spectrum
+        spectral_region = self._combine_all_workspace_regions()
+
+        if spectral_region is not None:
+            try:
+                idx1, idx2 = spectral_region.bounds
+                if not idx1 == idx2:
+                    spectrum = extract_region(spectrum, spectral_region)
+            except ValueError as e:
+                return
+
+        # Load options
+        fitter = FITTERS[self.fitting_options["fitter"]]
+
+        # Run the compound model through the specutils fitting routine
+        """
+        # Uncomment for when specutils function is working
+        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter())
+        """
+        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter())
+
+        fit_mod = self._astropy_fit(spectrum, result, fitter())
+        print(fit_mod)
+        if fit_mod is None:
+            return
 
         # Fitted quantity models do not preserve the names of the sub models
         # which are used to relate the fitted sub models back to the displayed
         # models in the model editor. Go through and hope that their order is
         # preserved.
+
+        """
+        # Uncomment for when specutils function is working
         if result.n_submodels() > 1:
             for i, x in enumerate(result):
                 fit_mod.unitless_model._submodels[i].name = x.name
@@ -179,7 +296,17 @@ class ModelEditor(QWidget):
         else:
             fit_mod.unitless_model.name = result.name
             sub_mods = [fit_mod.unitless_model]
+        """
 
+        if result.n_submodels() > 1:
+            sub_mods = [x for x in fit_mod._submodels]
+            for i, x in enumerate(result):
+                fit_mod._submodels[i].name = x.name
+        else:
+            fit_mod.name = result.name
+            sub_mods = [fit_mod]
+
+        # Get a list of the displayed name for each sub model in the tree view
         disp_mods = {item.text(): item for item in model_editor_model.items}
 
         for i, sub_mod in enumerate(sub_mods):
@@ -196,10 +323,98 @@ class ModelEditor(QWidget):
                 else:
                     parameter = getattr(fit_mod, param_name)
 
-                model_item.child(cidx, 1).setText("{:.4g}".format(parameter.value))
+                model_item.child(cidx, 1).setText(str(parameter.value))
                 model_item.child(cidx, 1).setData(parameter.value, Qt.UserRole + 1)
-
                 model_item.child(cidx, 3).setData(parameter.fixed, Qt.UserRole + 1)
 
         for i in range(0, 3):
             self.model_tree_view.resizeColumnToContents(i)
+
+        # Update the displayed data on the plot
+        plot_data_item.set_data()
+
+
+class ModelAdvancedSettingsDialog(QDialog):
+    def __init__(self, model_editor, parent=None):
+        super().__init__(parent)
+
+        self.model_editor = model_editor
+        self._init_ui()
+
+    def _init_ui(self):
+        loadUi(os.path.abspath(
+            os.path.join(os.path.dirname(__file__), ".",
+                         "model_advanced_settings.ui")), self)
+
+        self.fitting_type_combo_box.addItems(list(FITTERS.keys()))
+
+        self.buttonBox.accepted.connect(self.apply_settings)
+        self.buttonBox.rejected.connect(self.cancel)
+
+        fitting_options = self.model_editor.fitting_options
+
+        self.max_iterations_line_edit.setText(str(fitting_options["max_iterations"]))
+        self.relative_error_line_edit.setText(str(fitting_options["relative_error"]))
+        self.epsilon_line_edit.setText(str(fitting_options["epsilon"]))
+        index = self.fitting_type_combo_box.findText(fitting_options["fitter"],
+                                                     Qt.MatchFixedString)
+        if index >= 0:
+            self.fitting_type_combo_box.setCurrentIndex(index)
+
+        # This section disables some of the options
+        # until specutils fitting functions have been
+        # updated to take them into account:
+        self.max_iterations_line_edit.setDisabled(True)
+        self.relative_error_line_edit.setDisabled(True)
+        self.epsilon_line_edit.setDisabled(True)
+
+    def _validate_inputs(self):
+        """
+        Check if user inputs are valid.
+        return
+        ------
+        success : bool
+            True if all input boxes are valid.
+        """
+        red = "background-color: rgba(255, 0, 0, 128);"
+        success = True
+
+        for widget in [self.max_iterations_line_edit]:
+            try:
+                int(widget.text())
+                widget.setStyleSheet("")
+            except ValueError:
+                widget.setStyleSheet(red)
+                success = False
+
+        for widget in [self.relative_error_line_edit,
+                       self.epsilon_line_edit]:
+            try:
+                float(widget.text())
+                widget.setStyleSheet("")
+            except ValueError:
+                widget.setStyleSheet(red)
+                success = False
+
+        return success
+
+    def apply_settings(self):
+        if not self._validate_inputs():
+            return
+
+        fitting_type = self.fitting_type_combo_box.currentText()
+        max_iterations = int(self.max_iterations_line_edit.text())
+        relative_error = float(self.relative_error_line_edit.text())
+        epsilon = float(self.epsilon_line_edit.text())
+
+        self.model_editor.fitting_options = {
+            "fitter": fitting_type,
+            "max_iterations": max_iterations,
+            "relative_error": relative_error,
+            "epsilon": epsilon,
+        }
+
+        self.close()
+
+    def cancel(self):
+        self.close()
