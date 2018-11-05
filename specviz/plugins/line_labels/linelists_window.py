@@ -93,8 +93,10 @@ def _createLineListPane(linelist, table_model, caller):
 # implementation. Perhaps it can be made into a QWidget, but that
 # requires that the .ui file be re-done.
 
-@plugin.plugin_bar("Line Labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+@plugin("Line Labels")
 class LineListsPlugin(QMainWindow):
+
+    # @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -154,45 +156,14 @@ class LineListsPlugin(QMainWindow):
             # But only on the first call. After that, the tabbed pane should be
             # done for good.
 
+    @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+    def on_action_triggered(self):
+        self.show()
+        print("@@@@@@  file linelists_window.py; line 173 - ")
 
 
     def _on_plot_quit(self):
         print("@@@@@@  file linelists_window.py; line 131 -    quit plot")
-
-
-    # These two slots are called whenever the user selects or unselects a data item,
-    # causing it to be displayed or disappear from the current plot.
-
-    def _on_plot_removed(self, data_item):
-        # TODO
-        # this slot should check for the condition of a entirely empty plot.
-        # The signal will always come from the _current_plot_widget instance.
-        # If empty plot, it should discard the corresponding entry in _widgets,
-        # as well as the tab_widget from the GUI. Revert GUI to hidden status.
-
-        print("@@@@@@  file linelists_window.py; line 126    plot removed -   ", data_item)
-
-
-    def _on_plot_added(self, data_item):
-        # TODO
-        # this probably shouldn't do anything.
-
-        print("@@@@@@  file linelists_window.py; line 133 -    plot added  ", data_item)
-
-        # if window._plot_widget._find_wavelength_range():
-        #     self.main_widget.setHidden(False)
-        #     self.main_toolbar.setHidden(False)
-
-        # if window is None:
-        #     all_sws = self.mdi_area.subWindowList(order=self.mdi_area.ActivationHistoryOrder)
-        #
-        #     if len(all_sws) > 0:
-        #         window = all_sws[-1]
-        #     else:
-        #         window = None
-        #
-        # dispatch.on_activated_window.emit(
-        #     window=window.widget() if window is not None else None)
 
 
 
