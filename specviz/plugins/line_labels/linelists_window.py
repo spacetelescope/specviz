@@ -125,6 +125,8 @@ class LineListsPlugin(QMainWindow):
         self.plot_window = self.hub.plot_window
         self.data_item = self.hub.plot_item.data_item
 
+        self.setWindowTitle(str(self.plot_window.plot_widget.title))
+
         # Request that line lists be read from wherever are they sources.
         if not hasattr(self, 'linelists'):
             self._request_linelists()
@@ -142,6 +144,8 @@ class LineListsPlugin(QMainWindow):
                 item.setFont(font)
                 model.appendRow(item)
 
+        self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+        self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
         self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
 
@@ -341,7 +345,44 @@ class LineListsPlugin(QMainWindow):
     def _on_tab_close(self, index):
         self.tab_widget.removeTab(index)
 
+    def _open_linelist_file(self, file_name=None):
+        if file_name is None:
 
+            filters = ['Line list (*.yaml *.ecsv)']
+            file_name, _file_filter = compat.getopenfilenames(filters=";;".join(filters))
+
+            # For now, lets assume both the line list itself, and its
+            # associated YAML descriptor file, live in the same directory.
+            # Not an issue for self-contained ecsv files.
+            if file_name is not None and len(file_name) > 0:
+                name = file_name[0]
+                line_list = linelist.get_from_file(os.path.dirname(name), name)
+
+                if line_list:
+                    self._get_waverange_from_dialog(line_list)
+                    global wave_range
+                    if wave_range[0] and wave_range[1]:
+                        line_list = self._build_view(line_list, 0, waverange=wave_range)
+                        self.plot_window.linelists.append(line_list)
+
+    def _export_to_file(self, file_name=None):
+        if file_name is None:
+
+            if hasattr(self, '_plotted_lines_pane') and self._plotted_lines_pane:
+
+                filters = ['Line list (*.ecsv)']
+                file_name, _file_filter = compat.getsavefilename(filters=";;".join(filters))
+
+                if not file_name.endswith('.ecsv'):
+                    file_name += '.ecsv'
+
+                output_table = self._plotted_lines_pane.plotted_lines.table
+
+                for colum_name in columns_to_remove:
+                    if colum_name in output_table.colnames:
+                        output_table.remove_column(colum_name)
+
+                ascii.write(output_table, output=file_name, format='ecsv')
 
 
 
@@ -438,45 +479,6 @@ class LineListsWindow(QMainWindow):
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
         self.tab_widget.tabCloseRequested.connect(self.tab_close)
-
-    def _open_linelist_file(self, file_name=None):
-        if file_name is None:
-
-            filters = ['Line list (*.yaml *.ecsv)']
-            file_name, _file_filter = compat.getopenfilenames(filters=";;".join(filters))
-
-            # For now, lets assume both the line list itself, and its
-            # associated YAML descriptor file, live in the same directory.
-            # Not an issue for self-contained ecsv files.
-            if file_name is not None and len(file_name) > 0:
-                name = file_name[0]
-                line_list = linelist.get_from_file(os.path.dirname(name), name)
-
-                if line_list:
-                    self._get_waverange_from_dialog(line_list)
-                    global wave_range
-                    if wave_range[0] and wave_range[1]:
-                        line_list = self._build_view(line_list, 0, waverange=wave_range)
-                        self.plot_window.linelists.append(line_list)
-
-    def _export_to_file(self, file_name=None):
-        if file_name is None:
-
-            if hasattr(self, '_plotted_lines_pane') and self._plotted_lines_pane:
-
-                filters = ['Line list (*.ecsv)']
-                file_name, _file_filter = compat.getsavefilename(filters=";;".join(filters))
-
-                if not file_name.endswith('.ecsv'):
-                    file_name += '.ecsv'
-
-                output_table = self._plotted_lines_pane.plotted_lines.table
-
-                for colum_name in columns_to_remove:
-                    if colum_name in output_table.colnames:
-                        output_table.remove_column(colum_name)
-
-                ascii.write(output_table, output=file_name, format='ecsv')
 
     def displayPlottedLines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
