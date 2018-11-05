@@ -4,7 +4,7 @@ Unit Conversion
 ===============
 
 How Unit Conversion Works
-------------------------
+-------------------------
 
 Unit Conversion uses the `astropy.units <http://docs.astropy.org/en/v0.2.1/units/index.html>` module in order to convert spectral
 axis and flux units.
