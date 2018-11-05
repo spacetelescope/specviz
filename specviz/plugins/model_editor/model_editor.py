@@ -41,8 +41,15 @@ class ModelEditor(QWidget):
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
 
+        # Initially hide the model editor tools until user has selected an
+        # editable model spectrum object
+        self.editor_holder_widget.setHidden(True)
+        self.setup_holder_widget.setHidden(False)
+
         self.equation_edit_button.clicked.connect(
             self._on_equation_edit_button_clicked)
+        self.new_model_button.clicked.connect(self._on_create_new_model)
+        self.remove_model_button.clicked.connect(self._on_remove_model)
 
         # When a plot data item is select, get its model editor model
         # representation
@@ -51,6 +58,9 @@ class ModelEditor(QWidget):
 
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
+        self._on_create_new_model()
+
+    def _on_create_new_model(self):
         if self.hub.data_item is None:
             message_box = QMessageBox()
             message_box.setText("No item selected, cannot create model.")
@@ -74,15 +84,22 @@ class ModelEditor(QWidget):
                                         identifier=uuid.uuid4(),
                                         data=new_spec)
 
-        self.hub.workspace.model.appendRow(model_data_item)
+        self.hub.append_data_item(model_data_item)
 
-        plot_data_item = self.hub.workspace.proxy_model.item_from_id(
-            model_data_item.identifier)
+        plot_data_item = self.hub.plot_data_item_from_data_item(model_data_item)
 
         # Connect data change signals so that the plot updates when the user
         # changes a parameter in the model view model
         model_data_item.model_editor_model.dataChanged.connect(
             lambda tl, br, r, pi=plot_data_item: self._on_model_data_changed(tl, br, pi))
+
+    def _on_remove_model(self):
+        """Remove an astropy model from the model editor tree view."""
+        indexes = self.model_tree_view.selectionModel().selectedIndexes()
+
+        if len(indexes) > 0:
+            selected_idx = indexes[0]
+            self.model_tree_view.model().removeRow(selected_idx.row())
 
     def _add_fittable_model(self, model):
         idx = self.model_tree_view.model().add_model(model())
@@ -124,7 +141,12 @@ class ModelEditor(QWidget):
     def _on_plot_item_selected(self, plot_data_item):
         if not isinstance(plot_data_item.data_item, ModelDataItem):
             self.model_tree_view.setModel(None)
+            self.editor_holder_widget.setHidden(True)
+            self.setup_holder_widget.setHidden(False)
             return
+
+        self.editor_holder_widget.setHidden(False)
+        self.setup_holder_widget.setHidden(True)
 
         model_data_item = plot_data_item.data_item
 
