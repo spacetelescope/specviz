@@ -11,12 +11,10 @@ from qtpy.QtWidgets import (QMainWindow,QInputDialog,QApplication, QDialog,
                             QMessageBox)
 import specutils
 from specutils import Spectrum1D
-import sys
 import uuid
 
 from ...core.items import DataItem
 from ...core.plugin import plugin
-from ...utils import UI_PATH
 
 @plugin('Arithmetic')
 class EquationEditor(QDialog):
@@ -28,6 +26,7 @@ class EquationEditor(QDialog):
             os.path.join(os.path.dirname(__file__),
                          ".", "arithmetic_editor.ui")), self)
         
+        self.setWindowTitle("Arithmetic")
         self.button_add_derived.clicked.connect(self.showDialog)
         self.button_edit_derived.clicked.connect(self.edit_expression)
         self.button_remove_derived.clicked.connect(self.remove_expression)
@@ -89,21 +88,20 @@ class EquationEditor(QDialog):
         return matches
     
 class Editor(QDialog):
-    tip_text = ("<b>Note:</b> Attribute names in the expression should be surrounded "
-                "by {{ }} brackets (e.g. {{{example}}}), and you can use "
-                "Numpy functions using np.&lt;function&gt;, as well as any "
-                "other function defined in your config.py file.<br><br>"
+    tip_text = ("<b>Note:</b> DataItem names in the expression should be surrounded "
+                "by {{ }} brackets (e.g. {{{example}}}), and you <br>" 
+                "you can use libraries imported in the namespace (numpy, specutils, etc). "
+                "Objects returned from editor must be type Spectrum1D!<br><br>"
                 "<b>Example expressions:</b><br><br>"
-                "  - Subtract 10 from '{example}': {{{example}}} - 10<br>"
-                "  - Scale '{example}' to [0:1]: ({{{example}}} - np.min({{{example}}})) / np.ptp({{{example}}})<br>"
-                "  - Multiply '{example}' by pi: {{{example}}} * np.pi<br>"
-                "  - Use masking: {{{example}}} * ({{{example}}} &lt; 1)<br>")
-
+                "  - Double the flux of '{example}': {{{example}}} * 2<br>"
+                "  - Add two Spectrum1D objects: {{{example}}}*2-{{{example}}}<br>"
+                "  - Subtract two Spectrum1D objects: {{{example}}}*2-{{{example}}}<br>"
+                "  - Use Spectrum1D API: Spectrum1D(spectral_axis={{{example}}}.wavelength,flux={{{example}}}.flux)")
+    
     placeholder_text = ("Type any mathematical expression here - "
                         "you can include attribute names from the "
                         "drop-down below by selecting them and "
-                        "clicking 'Insert'. Note: Arithmeric Editor "
-                        "must return a Spectrum1D object!")
+                        "clicking 'Insert'.")
     
     def __init__(self, equation_editor, label=None, equation=None, parent=None):
         """Dialog where you specify equation names and expressions."""
@@ -111,7 +109,9 @@ class Editor(QDialog):
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "equation_editor.ui")), self)
-    
+
+        self.setWindowTitle("Equation Editor")
+
         self._equation_editor = equation_editor
 
         if not self._equation_editor.model_items:
@@ -120,8 +120,8 @@ class Editor(QDialog):
         else:
             self.is_addmode = label is None
 
-            # example=self._equation_editor.model_items
-            # self.label.setText(self.tip_text.format(example=example[0]))
+            example = self._equation_editor.hub.data_items[0].name
+            self.example_label.setText(self.tip_text.format(example=example))
 
             if label is not None:
                 self.text_label.setText(label)
