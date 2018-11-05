@@ -53,7 +53,7 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>250</width>
+         <width>16777215</width>
          <height>16777215</height>
         </size>
        </property>
@@ -73,7 +73,7 @@
         <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
        <property name="dragDropMode">
-        <enum>QAbstractItemView::DragOnly</enum>
+        <enum>QAbstractItemView::NoDragDrop</enum>
        </property>
       </widget>
       <widget class="QMdiArea" name="mdi_area">

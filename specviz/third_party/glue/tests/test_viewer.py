@@ -13,7 +13,6 @@ from glue.core.coordinates import WCSCoordinates
 from ..viewer import SpecvizDataViewer
 
 
-@pytest.mark.xfail(run=False, reason="at this point, unknown reason")
 class TestSpecvizDataViewer(object):
 
     def setup_method(self, method):
