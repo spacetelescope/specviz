@@ -143,6 +143,7 @@ class LineListsPlugin(QMainWindow):
                 model.appendRow(item)
 
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
+        self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
 
         self.show()
 
@@ -335,9 +336,15 @@ class LineListsPlugin(QMainWindow):
         color = 'black' if count < NLINES_WARN else 'red'
         self.lines_selected_label.setStyleSheet('color:' + color)
 
+        self.lines_selected_label.repaint()
 
-    def _on_plot_quit(self):
-        print("@@@@@@  file linelists_window.py; line 131 -    quit plot")
+    def _on_tab_close(self, index):
+        self.tab_widget.removeTab(index)
+
+
+
+
+
 
 
 
@@ -471,11 +478,6 @@ class LineListsWindow(QMainWindow):
 
                 ascii.write(output_table, output=file_name, format='ecsv')
 
-
-
-    def tab_close(self, index):
-        self.tab_widget.removeTab(index)
-
     def displayPlottedLines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
 
@@ -494,19 +496,6 @@ class LineListsWindow(QMainWindow):
         index_last = self.tab_widget.count() - 1
         self.tab_widget.removeTab(index_last)
 
-    # computes total of rows selected in all table views in all panes
-    # and displays result in GUI.
-    def _countSelections(self):
-        panes = self._getPanes()
-        sizes = [len(pane.table_view.selectionModel().selectedRows()) for pane in panes]
-        import functools
-        count = functools.reduce(lambda x,y: x+y, sizes)
-
-        # display total selected rows, with eventual warning.
-        self.lines_selected_label.setText(str(count))
-        color = 'black' if count < NLINES_WARN else 'red'
-        self.lines_selected_label.setStyleSheet('color:'+color)
-
     # these two methods below return a flat rendering of the panes
     # and table views stored in the two-tiered tabbed window. These
     # flat renderings are required by the drawing code.
@@ -515,15 +504,11 @@ class LineListsWindow(QMainWindow):
         panes = self._getPanes()
         return [pane.table_view for pane in panes]
 
-    def _getPanes(self):
-        result = []
-        for index_1 in range(self.tab_widget.count()):
-            widget = self.tab_widget.widget(index_1)
-            if isinstance(widget, QTabWidget) and self.tab_widget.tabText(index_1) != PLOTTED:
-                # do not use list comprehension here!
-                for index_2 in range(widget.count()):
-                    result.append(widget.widget(index_2))
-        return result
+
+
+
+
+
 
 
 class LineListPane(QWidget):
