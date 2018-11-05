@@ -58,26 +58,49 @@ def compute_stats(spectrum):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
     region: `~specutils.utils.SpectralRegion`
     """
-    flux = spectrum.flux
-    mean = flux.mean()
-    rms = np.sqrt(flux.dot(flux) / len(flux))
+
+    try:
+        cent = centroid(spectrum, region=None)  # we may want to adjust this for continuum subtraction
+    except Exception as e:
+        print("centroid err: ",e)
+        cent = "Error"
+
+    try:
+        rms = np.sqrt(spectrum.flux.dot(spectrum.flux) / len(spectrum.flux))
+    except Exception as e:
+        rms = "Error"
 
     try:
         snr_val = snr(spectrum)
     except Exception as e:
         snr_val = "N/A"
 
-    return {'mean': mean,
-            'median': np.median(flux),
-            'stddev': flux.std(),
-            'centroid': centroid(spectrum, region=None),  # we may want to adjust this for continuum subtraction
+    try:
+        fwhm_val = fwhm(spectrum)
+    except Exception as e:
+        fwhm_val = "Error"
+
+    try:
+        ew = equivalent_width(spectrum)
+    except Exception as e:
+        ew = "Error"
+
+    try:
+        total = line_flux(spectrum)
+    except Exception as e:
+        total = "Error"
+
+    return {'mean': spectrum.flux.mean(),
+            'median': np.median(spectrum.flux),
+            'stddev': spectrum.flux.std(),
+            'centroid': cent,
             'rms': rms,
             'snr': snr_val,
-            'fwhm': fwhm(spectrum),
-            'ew': equivalent_width(spectrum),
-            'total': line_flux(spectrum),
-            'maxval': flux.max(),
-            'minval': flux.min()}
+            'fwhm': fwhm_val,
+            'ew': ew,
+            'total': total,
+            'maxval': spectrum.flux.max(),
+            'minval': spectrum.flux.min()}
 
 
 @plugin.plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"), priority=1)
@@ -167,7 +190,9 @@ class StatisticsWidget(QWidget):
             return
         for key in stats:
             if key in self.stat_widgets:
-                text = stats[key] if stats[key] == "N/A" else format_float_text(stats[key])
+                print(key, " ", stats[key])
+                text = stats[key] if (stats[key] == "N/A" or stats[key] == "Error") \
+                    else format_float_text(stats[key])
                 self.stat_widgets[key].document().setPlainText(text)
 
     def _clear_stat_widgets(self):
