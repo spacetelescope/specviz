@@ -282,10 +282,11 @@ class LineListsWindow(ClosableMainWindow):
 
     def _get_range_from_textfields(self, min_text, max_text):
         amin = amax = None
+
         if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
-            if amax > amin:
+            if amax != amin:
                 units = self.plot_window.listDataItems()[0].spectral_axis_unit
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
