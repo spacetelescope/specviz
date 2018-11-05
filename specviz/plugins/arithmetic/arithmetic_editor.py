@@ -137,7 +137,8 @@ class Editor(QDialog):
             self.combosel_component.addItems(['wavelength', 'velocity',
                                               'frequency', 'flux'])
 
-            self.button_insert.clicked.connect(self._insert_component)
+            self.button_insert_spectrum.clicked.connect(self._insert_spectrum)
+            self.button_insert_component.clicked.connect(self._insert_component)
             
             self.button_ok.clicked.connect(self._assign_components)
             self.button_cancel.clicked.connect(self._close_dialog)
@@ -159,9 +160,14 @@ class Editor(QDialog):
 
     def _insert_component(self):
         """Insert data item components into editor"""
-        label = self.combosel_data.currentText()
-        self.expression.insertPlainText('{' + label + '}' + '.' + self.combosel_component.currentText())
+        label = self.combosel_component.currentText()
+        self.expression.insertPlainText('.' + self.combosel_component.currentText())
     
+    def _insert_spectrum(self):
+        """Insert data item components into editor"""
+        label = self.combosel_data.currentText()
+        self.expression.insertPlainText('{' + label + '}')
+
     def _assign_components(self):
         """Assign arithmetic components to UI"""
         self.eq_name = self._get_eq_name()
