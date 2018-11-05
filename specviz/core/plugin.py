@@ -162,6 +162,10 @@ class Plugin(DecoratorRegistry):
                 action = QAction(parent)
                 action.setText(name)
 
+                # Store a reference to the plugin in the ui-added action
+                # TODO: come up with better solution...
+                action.plugin = plugin
+
                 if icon is not None:
                     action.setIcon(icon)
 
@@ -193,6 +197,10 @@ class Plugin(DecoratorRegistry):
 
                 parent = workspace.current_plot_window.tool_bar
                 action = QAction(parent)
+
+                # Store a reference to the plugin in the ui-added action
+                # TODO: come up with better solution...
+                action.plugin = plugin
 
                 action.setText(name)
 
