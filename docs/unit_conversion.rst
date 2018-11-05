@@ -1,4 +1,4 @@
-.. _specviz-start:
+.. _specviz-unit-conversion:
 
 Unit Conversion
 ===============
@@ -8,10 +8,9 @@ How Unit Conversion Works
 
 Unit Conversion uses the `astropy.units <http://docs.astropy.org/en/v0.2.1/units/index.html>` module in order to convert spectral
 axis and flux units.
-    import astropy.units as u
-    potential_X_axis_units = u.Unit(original_spectral_units).find_equivalent_units(equivalencies=u.spectral())
-    potential_Y_axis_units = u.Unit(original_spectral_units).find_equivalent_units(
-        equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]))
+import astropy.units as u
+potential_X_axis_units = u.Unit(original_spectral_units).find_equivalent_units(equivalencies=u.spectral())
+potential_Y_axis_units = u.Unit(original_spectral_units).find_equivalent_units(equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]))
 
 The GUI comboboxes are then populated by potential_X_axis_units and potential_Y_axis_units, respectively.
 The user can then select any of those options - as well as a "Custom" option - and the changes
