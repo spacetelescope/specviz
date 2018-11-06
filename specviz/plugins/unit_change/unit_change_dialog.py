@@ -38,7 +38,7 @@ class UnitChangeDialog(QDialog):
         self.current_data_unit = None
         self.current_spectral_axis_unit = None
 
-    def exec_(self):
+    def show(self):
         # If there is no plot item, don't even try to process unit info
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
@@ -117,11 +117,11 @@ class UnitChangeDialog(QDialog):
         self.setup_ui()
         self.setup_connections()
 
-        super().exec_()
+        super().show()
 
     @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
     def on_action_triggered(self):
-        self.exec_()
+        self.show()
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
