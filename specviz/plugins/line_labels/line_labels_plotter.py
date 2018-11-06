@@ -12,28 +12,27 @@ class LineLabelsPlotter(object):
     Class that encapsulates and handles the gory details of line label
     plotting, and especially, zooming.
     """
-    def __init__(self, linelist_window, linelists, plot_item, *args, **kwargs):
+    # def __init__(self, linelist_window, linelists, plot_item, *args, **kwargs):
+    def __init__(self, linelist_window, *args, **kwargs):
         super(LineLabelsPlotter, self).__init__(*args, **kwargs)
 
         # When porting code to this new class, we kept references
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
-        # self._caller = caller
-        # self._linelist_window = caller.linelist_window
-        # self._linelists = caller.linelists
-        # self._plot_item = caller._plot_item
         self._linelist_window = linelist_window
-        self._linelists = linelists
-        self._plot_item = plot_item
+        self._linelists = self._linelist_window.linelists
+        self._plot_item = self._linelist_window.hub.plot_widget
 
         # create a new, empty list that will store and help track down
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
-        # TODO replace direct references to _caller with references to the Hub machinery.
-        self._plot_item.mouse_enterexit.connect(self._handle_mouse_events)
-        self._plot_item.dismiss_linelists_window.connect(self._dismiss_linelists_window)
-        self._plot_item.erase_linelabels.connect(self._erase_linelabels)
+        # self._plot_item.mouse_enterexit.connect(self._handle_mouse_events)
+        # self._plot_item.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        # self._plot_item.erase_linelabels.connect(self._erase_linelabels)
+        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
+        self._linelist_window.hub.plot_widget.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        self._linelist_window.hub.plot_widget.erase_linelabels.connect(self._erase_linelabels)
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
