@@ -12,25 +12,28 @@ class LineLabelsPlotter(object):
     Class that encapsulates and handles the gory details of line label
     plotting, and especially, zooming.
     """
-    def __init__(self, caller, *args, **kwargs):
+    def __init__(self, linelist_window, linelists, plot_item, *args, **kwargs):
         super(LineLabelsPlotter, self).__init__(*args, **kwargs)
 
         # When porting code to this new class, we kept references
         # that explicitly point to objects in the caller code. A better
         # approach to encapsulation would be an improvement here.
-        self._caller = caller
-        self._linelist_window = caller.linelist_window
-        self._linelists = caller.linelists
-        self._plot_item = caller._plot_item
+        # self._caller = caller
+        # self._linelist_window = caller.linelist_window
+        # self._linelists = caller.linelists
+        # self._plot_item = caller._plot_item
+        self._linelist_window = linelist_window
+        self._linelists = linelists
+        self._plot_item = plot_item
 
         # create a new, empty list that will store and help track down
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
         # TODO replace direct references to _caller with references to the Hub machinery.
-        self._caller.mouse_enterexit.connect(self._handle_mouse_events)
-        self._caller.dismiss_linelists_window.connect(self._dismiss_linelists_window)
-        self._caller.erase_linelabels.connect(self._erase_linelabels)
+        self._plot_item.mouse_enterexit.connect(self._handle_mouse_events)
+        self._plot_item.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        self._plot_item.erase_linelabels.connect(self._erase_linelabels)
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
@@ -42,10 +45,10 @@ class LineLabelsPlotter(object):
 #--------  Slots.
 
     def _dismiss_linelists_window(self, close, **kwargs):
-        if self._caller._is_selected and self._linelist_window:
+        if self._plot_item._is_selected and self._linelist_window:
             if close:
                 # TODO replace direct references to _caller with references to the Hub machinery.
-                self._caller.erase_linelabels.emit(self._caller)
+                self._caller.erase_linelabels.emit(self._plot_item)
 
                 self._linelist_window.close()
                 self._linelist_window = None
@@ -53,10 +56,10 @@ class LineLabelsPlotter(object):
                 self._linelist_window.hide()
 
     def _erase_linelabels(self, caller, *args, **kwargs):
-        if caller != self._caller:
+        if caller != self._plot_item:
             return
 
-        if self._linelist_window and self._caller._is_selected:
+        if self._linelist_window and self._plot_item._is_selected:
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
 
@@ -65,7 +68,7 @@ class LineLabelsPlotter(object):
     # Main method for drawing line labels on the plot surface.
     def plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
-        if caller != self._caller or not self._caller._is_selected:
+        if caller != self._plot_item or not self._plot_item._is_selected:
             return
 
         # Get a list of the selected indices in each line list.

@@ -17,11 +17,6 @@ from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 
-from .linelists_window import LineListsWindow
-from ..core.linelist import ingest
-from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from .line_labels_plotter import LineLabelsPlotter
-
 
 class PlotWindow(QMdiSubWindow):
     """
@@ -568,38 +563,25 @@ class PlotWidget(pg.PlotWidget):
     def leaveEvent(self, event):
         self.mouse_enterexit.emit(event.type())
 
-    def _find_wavelength_range(self):
-        # increasing dispersion values!
-        amin = sys.float_info.max
-        amax = 0.0
+    # def _find_wavelength_range(self):
+    #     # increasing dispersion values!
+    #     amin = sys.float_info.max
+    #     amax = 0.0
+    #
+    #     for item in self.listDataItems():
+    #         if isinstance(item, PlotDataItem):
+    #             amin = min(amin, item.spectral_axis[0])
+    #             amax = max(amax, item.spectral_axis[-1])
+    #
+    #     if len(self.listDataItems()) > 0:
+    #         amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
+    #         amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
+    #
+    #         return (amin, amax)
+    #
+    #     else:
+    #         return
 
-        for item in self.listDataItems():
-            if isinstance(item, PlotDataItem):
-                amin = min(amin, item.spectral_axis[0])
-                amax = max(amax, item.spectral_axis[-1])
-
-        if len(self.listDataItems()) > 0:
-            amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
-            amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
-
-            return (amin, amax)
-
-        else:
-            return
-
-    def request_linelists(self, *args, **kwargs):
-        self.waverange = self._find_wavelength_range()
-
-        self.linelists = ingest(self.waverange)
-
-        if len(self.linelists) == 0:
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage('Units conversion not possible. '
-                                     'Or, no line lists in internal library '
-                                     'match wavelength range.')
-            error_dialog.exec_()
-
-    # @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):
         self._is_selected = window == self
 
@@ -609,15 +591,15 @@ class PlotWidget(pg.PlotWidget):
             else:
                 self.linelist_window.hide()
 
-    def _show_linelists_window(self, *args, **kwargs):
-        if self._is_selected:
-            if self.linelist_window is None:
-                self.linelist_window = LineListsWindow(self)
-                self.line_labels_plotter = LineLabelsPlotter(self)
-
-                self.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
-
-            self.linelist_window.show()
+    # def _show_linelists_window(self, *args, **kwargs):
+    #     if self._is_selected:
+    #         if self.linelist_window is None:
+    #             self.linelist_window = LineListsWindow(self)
+    #             self.line_labels_plotter = LineLabelsPlotter(self)
+    #
+    #             self.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
+    #
+    #         self.linelist_window.show()
 
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._is_selected and self.linelist_window:
