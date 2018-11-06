@@ -8,7 +8,9 @@ from ..unit_change_dialog import UnitChangeDialog
 from specviz.plugins.unit_change.unit_change_dialog import UnitChangeDialog
 
 def test_ucd(specviz_gui, qtbot):
-    ucd = UnitChangeDialog(specviz_gui.current_workspace)
+    specviz_gui.current_workspace.load_data("/Users/javerbukh/Documents/data_for_specviz/COS_FUV.fits", "HST/COS")
+    workspace = specviz_gui.current_workspace
+    ucd = UnitChangeDialog(workspace)
     uc = ucd
     uc.show()
     qtbot.addWidget(uc)
@@ -18,8 +20,6 @@ def test_ucd(specviz_gui, qtbot):
     uc.ui.comboBox_spectral.setCurrentIndex(uc.ui.comboBox_spectral.count()-1)
     assert uc.ui.comboBox_spectral.currentText() == "Custom"
 
-    uc.ui.line_custom_spectral.setText("fT")
-    assert uc.ui.on_accepted() == True
 
 
 # def test_custom_units_correct(qtbot):
