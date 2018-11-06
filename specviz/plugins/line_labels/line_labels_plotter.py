@@ -27,11 +27,11 @@ class LineLabelsPlotter(object):
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
-        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
-        self._linelist_window.hub.plot_widget.dismiss_linelists_window.connect(self._dismiss_linelists_window)
-        self._linelist_window.hub.plot_widget.erase_linelabels.connect(self._erase_linelabels)
+        # connect signals
+        self._linelist_window.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        self._linelist_window.erase_linelabels.connect(self._erase_linelabels)
 
-        # zoom signal
+        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
         self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self.process_zoom_signal)
 
     # Buffering of zoom events.
