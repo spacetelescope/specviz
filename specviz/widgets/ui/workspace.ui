@@ -191,7 +191,6 @@
    <addaction name="separator"/>
    <addaction name="new_plot_action"/>
    <addaction name="operations_action"/>
-   <addaction name="arithmetic_action"/>
   </widget>
   <widget class="QMenuBar" name="menu_bar">
    <property name="geometry">
@@ -388,18 +387,6 @@
    </property>
    <property name="toolTip">
     <string>Operations to be applied to data</string>
-   </property>
-  </action>
-  <action name="arithmetic_action">
-   <property name="icon">
-    <iconset resource="../../data/resources/resources.qrc">
-     <normaloff>:/icons/014-calculator.svg</normaloff>:/icons/014-calculator.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Arithmetic</string>
-   </property>
-   <property name="toolTip">
-    <string>Perform arithmetic between data</string>
    </property>
   </action>
   <action name="delete_data_action">
