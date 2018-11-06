@@ -5,6 +5,22 @@ from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDi
 
 from ..unit_change_dialog import UnitChangeDialog
 
+from specviz.plugins.unit_change.unit_change_dialog import UnitChangeDialog
+
+def test_ucd(specviz_gui, qtbot):
+    ucd = UnitChangeDialog(specviz_gui.current_workspace)
+    uc = ucd
+    uc.show()
+    qtbot.addWidget(uc)
+
+    assert uc.ui.comboBox_spectral.currentText() == "Angstrom"
+
+    uc.ui.comboBox_spectral.setCurrentIndex(uc.ui.comboBox_spectral.count()-1)
+    assert uc.ui.comboBox_spectral.currentText() == "Custom"
+
+    uc.ui.line_custom_spectral.setText("fT")
+    assert uc.ui.on_accepted() == True
+
 
 # def test_custom_units_correct(qtbot):
 #     uc = UnitChangeDialog()
