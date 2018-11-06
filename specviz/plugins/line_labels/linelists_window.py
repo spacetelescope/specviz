@@ -194,9 +194,7 @@ class LineListsWindow(ClosableMainWindow):
         #---------------------------------------------------------------
 
 
-        self.line_labels_plotter = LineLabelsPlotter(self,
-                                                     self.linelists,
-                                                     self.hub.plot_widget)
+        self.line_labels_plotter = LineLabelsPlotter(self)
 
 
 
@@ -441,6 +439,10 @@ class LineListsWindow(ClosableMainWindow):
                     global wave_range
                     if wave_range[0] and wave_range[1]:
                         line_list = self._build_view(line_list, 0, waverange=wave_range)
+
+                        if not hasattr(self.plot_window, 'linelists'):
+                            self.plot_window.linelists = []
+
                         self.plot_window.linelists.append(line_list)
 
     def _export_to_file(self, file_name=None):
