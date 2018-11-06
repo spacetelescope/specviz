@@ -2,22 +2,21 @@ import importlib
 import logging
 import os
 import pkgutil
-import sys, inspect
-import time
 import random
+import sys
 
+import astropy.units as u
 import click
-from qtpy.QtCore import Qt, Signal, QRectF
-from qtpy.QtGui import QIcon, QPainterPath, QRegion
-from qtpy.QtWidgets import QApplication, QMainWindow, QWidget
-
-from . import plugins, __version__
-from .core.plugin import plugin
-from .utils import DATA_PATH
-from .widgets.workspace import Workspace
-from qtpy.QtWidgets import QDialog
+import numpy as np
+from astropy.modeling.models import Gaussian1D
+from qtpy.QtCore import QTimer, Qt, Signal
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QApplication, QDialog, QMainWindow
 from qtpy.uic import loadUi
-from qtpy.QtCore import Qt, QTimer, QThread
+from specutils import Spectrum1D
+
+from . import __version__, plugins
+from .widgets.workspace import Workspace
 
 
 class Application(QApplication):
@@ -59,11 +58,6 @@ class Application(QApplication):
             self.current_workspace.set_embedded(embedded)
 
         if dev:
-            from astropy.modeling.models import Gaussian1D
-            import numpy as np
-            from specutils import Spectrum1D
-            import astropy.units as u
-
             y = Gaussian1D(mean=50, stddev=10)(np.arange(100)) + np.random.sample(100) * 0.1
 
             spec1 = Spectrum1D(flux=y * u.Jy,
@@ -73,13 +67,12 @@ class Application(QApplication):
             spec3 = Spectrum1D(flux=np.random.sample(100) * u.erg,
                             spectral_axis=np.arange(100) * u.Hz)
 
-            # data_item = DataItem("My Data 1", identifier=uuid.uuid4(), data=spec1)
-            # data_item2 = DataItem("My Data 2", identifier=uuid.uuid4(), data=spec2)
-            # data_item3 = DataItem("My Data 3", identifier=uuid.uuid4(), data=spec3)
-
-            self.current_workspace.model.add_data(spec1, "Spectrum 1")
+            data_item = self.current_workspace.model.add_data(spec1, "Spectrum 1")
             self.current_workspace.model.add_data(spec2, "Spectrum 2")
             self.current_workspace.model.add_data(spec3, "Spectrum 3")
+
+            # Set the first item as selected
+            self.current_workspace.force_plot(data_item)
 
         # If a file path has been given, automatically add data
         if file_path is not None:
