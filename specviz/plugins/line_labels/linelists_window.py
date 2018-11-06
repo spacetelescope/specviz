@@ -117,7 +117,7 @@ class LineListsPlugin(object):
         #                                              self.hub.plot_widget)
         #
 
-        # self.hub.plot_widget.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
+        self.hub.plot_widget.sigRangeChanged.connect(self.linelist_window.line_labels_plotter.process_zoom_signal)
 
         self.linelist_window.show()
 
