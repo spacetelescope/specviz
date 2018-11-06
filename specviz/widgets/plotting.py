@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage, QApplication)
+                            QMessageBox, QErrorMessage, QWidget)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -16,11 +16,6 @@ from astropy.units import Quantity
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
-
-from .linelists_window import LineListsWindow
-from ..core.linelist import ingest
-from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from .line_labels_plotter import LineLabelsPlotter
 
 
 class PlotWindow(QMdiSubWindow):
@@ -62,7 +57,7 @@ class PlotWindow(QMdiSubWindow):
         self._central_widget.line_labels_action.setVisible(False)
 
         self._central_widget.reset_view_action.triggered.connect(
-            self._on_reset_view)
+            lambda: self.plot_widget.autoRange())
 
     @property
     def tool_bar(self):
@@ -83,17 +78,6 @@ class PlotWindow(QMdiSubWindow):
 
     def _on_current_item_changed(self, current_idx, prev_idx):
         self._current_item_index = current_idx
-
-    def _on_reset_view(self):
-        """
-        Resets the visible range of the plot taking into consideration only the
-        PlotDataItem objects currently attached.
-        """
-        self.plot_widget.autoRange(
-                items=[item for item in self.plot_widget.listDataItems()
-                       if isinstance(item, PlotDataItem)])
-
-        self.plot_widget.sigRangeChanged.emit(*self.plot_widget.viewRange())
 
     def _on_change_color(self):
         """
@@ -170,10 +154,6 @@ class PlotWidget(pg.PlotWidget):
         self._plot_item = self.getPlotItem()
         self._visible = visible
 
-        # Performance enhancements
-        # self.setDownsampling(auto=False)
-        # self.setClipToView(True)
-
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='')
         self._plot_item.setLabel('left', text='')
@@ -210,7 +190,7 @@ class PlotWidget(pg.PlotWidget):
         self._is_selected = True
 
         # Listen for model events to add/remove items from the plot
-        self.proxy_model.sourceModel().data_added.connect(self._check_unit_compatibility)
+        self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(
             lambda idx: self.remove_plot(index=idx))
 
@@ -349,12 +329,15 @@ class PlotWidget(pg.PlotWidget):
                 plot_data_item.visible = False
                 plot_data_item.data_item.setEnabled(False)
 
-    def _check_unit_compatibility(self, item):
-        plot_data_item = self.proxy_model.item_from_id(item.identifier)
+    def _check_unit_compatibility(self, index, first=None, last=None):
+        if not index.isValid():
+            return
+
+        plot_data_item = self.proxy_model.item_from_index(index)
 
         if not plot_data_item.are_units_compatible(self.spectral_axis_unit,
                                                    self.data_unit):
-            plot_data_item.data_item.setEnabled(False)
+            plot_data_item.setEnabled(False)
 
     def add_plot(self, item=None, index=None, visible=True, initialize=False):
         """
@@ -437,7 +420,6 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
-        self.setDownsampling(auto=False)
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """
@@ -457,6 +439,7 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
+                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
@@ -568,16 +551,6 @@ class PlotWidget(pg.PlotWidget):
         self._region_text_item.setText("")
         self.roi_removed.emit(roi)
 
-    def list_all_regions(self):
-        """Get all region items in plot"""
-        regions = []
-
-        for item in self.items():
-            if isinstance(item, LinearRegionItem):
-                regions.append(item)
-
-        return regions
-
     # --------  Line lists and line labels handling.
 
     # Finds the wavelength range spanned by the spectrum (or spectra)
@@ -590,38 +563,25 @@ class PlotWidget(pg.PlotWidget):
     def leaveEvent(self, event):
         self.mouse_enterexit.emit(event.type())
 
-    def _find_wavelength_range(self):
-        # increasing dispersion values!
-        amin = sys.float_info.max
-        amax = 0.0
+    # def _find_wavelength_range(self):
+    #     # increasing dispersion values!
+    #     amin = sys.float_info.max
+    #     amax = 0.0
+    #
+    #     for item in self.listDataItems():
+    #         if isinstance(item, PlotDataItem):
+    #             amin = min(amin, item.spectral_axis[0])
+    #             amax = max(amax, item.spectral_axis[-1])
+    #
+    #     if len(self.listDataItems()) > 0:
+    #         amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
+    #         amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
+    #
+    #         return (amin, amax)
+    #
+    #     else:
+    #         return
 
-        for item in self.listDataItems():
-            if isinstance(item, PlotDataItem):
-                amin = min(amin, item.spectral_axis[0])
-                amax = max(amax, item.spectral_axis[-1])
-
-        if len(self.listDataItems()) > 0:
-            amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
-            amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
-
-            return (amin, amax)
-
-        else:
-            return
-
-    def request_linelists(self, *args, **kwargs):
-        self.waverange = self._find_wavelength_range()
-
-        self.linelists = ingest(self.waverange)
-
-        if len(self.linelists) == 0:
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage('Units conversion not possible. '
-                                     'Or, no line lists in internal library '
-                                     'match wavelength range.')
-            error_dialog.exec_()
-
-    # @dispatch.register_listener("on_activated_window")
     def _set_selection_state(self, window):
         self._is_selected = window == self
 
@@ -631,19 +591,15 @@ class PlotWidget(pg.PlotWidget):
             else:
                 self.linelist_window.hide()
 
-    def _show_linelists_window(self, *args, **kwargs):
-        if self._is_selected:
-            if self.linelist_window is None:
-                self.linelist_window = LineListsWindow(self)
-                self.line_labels_plotter = LineLabelsPlotter(self)
-
-                self.sigRangeChanged.connect(
-                    self.line_labels_plotter.process_zoom_signal)
-                self.sigRangeChanged.connect(
-                    lambda: self.line_labels_plotter._handle_mouse_events(
-                        QEvent.Enter))
-
-            self.linelist_window.show()
+    # def _show_linelists_window(self, *args, **kwargs):
+    #     if self._is_selected:
+    #         if self.linelist_window is None:
+    #             self.linelist_window = LineListsWindow(self)
+    #             self.line_labels_plotter = LineLabelsPlotter(self)
+    #
+    #             self.sigRangeChanged.connect(self.line_labels_plotter.process_zoom_signal)
+    #
+    #         self.linelist_window.show()
 
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._is_selected and self.linelist_window:
