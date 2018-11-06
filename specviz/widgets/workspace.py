@@ -10,7 +10,7 @@ from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
                             QMessageBox, QTabBar, QToolButton)
 from qtpy.uic import loadUi
-from specutils import Spectrum1D
+from specutils import SpectrumList
 
 from .plotting import PlotWindow
 from ..core.items import PlotDataItem
@@ -331,8 +331,8 @@ class Workspace(QMainWindow):
         """
         When the user loads a data file, this method is triggered. It provides
         a file open dialog and from the dialog attempts to create a new
-        :class:`~specutils.Spectrum1D` object and thereafter adds it to the
-        data model.
+        :class:`~specutils.SpectrumList` object and thereafter adds the
+        contents to the data model.
         """
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
@@ -343,8 +343,8 @@ class Workspace(QMainWindow):
         loader_name_map = {
             '{} ({})'.format(
                 x['Format'], compose_filter_string(
-                    get_reader(x['Format'], Spectrum1D))): x['Format']
-            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes'}
+                    get_reader(x['Format'], SpectrumList))): x['Format']
+            for x in io_registry.get_formats(SpectrumList) if x['Read'] == 'Yes'}
 
         # Include an auto load function that lets the io machinery find the
         # most appropriate loader to use
@@ -460,8 +460,8 @@ class Workspace(QMainWindow):
         # function allows, and 2) is the highest priority.
         try:
             try:
-                spec = Spectrum1D.read(file_path, format=file_loader)
-            except:
+                spec = SpectrumList.read(file_path, format=file_loader)[0]
+            except IORegistryError as e:
                 # In this case, assume that the registry has found several
                 # loaders that fit the same identifier, choose the highest
                 # priority one.
@@ -473,7 +473,7 @@ class Workspace(QMainWindow):
 
                 for fmt in fmts:
                     try:
-                        spec = Spectrum1D.read(file_path, format=fmt)
+                        spec = SpectrumList.read(file_path, format=fmt)[0]
                     except:
                         logging.warning("Attempted load with '%s' failed, "
                                         "trying next loader.", fmt)
