@@ -168,7 +168,7 @@ class LineListsWindow(ClosableMainWindow):
             lambda:self.plot_window.line_labels_plotter.plot_linelists(
                 table_views=self._getTableViews(),
                 panes=self._getPanes(),
-                units=self.plot_window.waverange[0].unit,
+                units=self.plot_window.spectral_axis_unit,
                 caller=self.plot_window))
 
         self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
@@ -282,10 +282,11 @@ class LineListsWindow(ClosableMainWindow):
 
     def _get_range_from_textfields(self, min_text, max_text):
         amin = amax = None
+
         if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
-            if amax > amin:
+            if amax != amin:
                 units = self.plot_window.listDataItems()[0].spectral_axis_unit
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
