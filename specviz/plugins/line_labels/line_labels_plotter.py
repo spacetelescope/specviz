@@ -27,12 +27,12 @@ class LineLabelsPlotter(object):
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
-        # self._plot_item.mouse_enterexit.connect(self._handle_mouse_events)
-        # self._plot_item.dismiss_linelists_window.connect(self._dismiss_linelists_window)
-        # self._plot_item.erase_linelabels.connect(self._erase_linelabels)
         self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
         self._linelist_window.hub.plot_widget.dismiss_linelists_window.connect(self._dismiss_linelists_window)
         self._linelist_window.hub.plot_widget.erase_linelabels.connect(self._erase_linelabels)
+
+        # zoom signal
+        self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self.process_zoom_signal)
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
@@ -203,7 +203,7 @@ class LineLabelsPlotter(object):
         # The pinning of the Y coordinate is handled by the handle_zoom method
         # that in turn relies in the storage of marker instances row-wise in the
         # line list table.
-        plot_item = self._plot_item
+        plot_item = self._plot_item.plotItem
 
         height = self._compute_height(merged_linelist, plot_item)
 
