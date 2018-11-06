@@ -68,8 +68,8 @@ class LineLabelsPlotter(object):
     # Main method for drawing line labels on the plot surface.
     def plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
-        if caller != self._plot_item or not self._plot_item._is_selected:
-            return
+        # if caller != self._plot_item or not self._plot_item._is_selected:
+        #     return
 
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
