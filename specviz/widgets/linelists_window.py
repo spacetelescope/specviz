@@ -113,6 +113,9 @@ class LineListsWindow(ClosableMainWindow):
 
         self.plot_window = plot_window
 
+        global wave_range
+        wave_range = (None, None)
+
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
         self.setWindowTitle(str(self.plot_window._title))
 
