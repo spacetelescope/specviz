@@ -108,22 +108,8 @@ class LineListsPlugin(object):
 
     @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
     def on_action_triggered(self):
-
         self.linelist_window = LineListsWindow(self.hub)
-
-
-        # self.line_labels_plotter = LineLabelsPlotter(self.linelist_window,
-        #                                              self.linelist_window.linelists,
-        #                                              self.hub.plot_widget)
-        #
-
-        self.hub.plot_widget.sigRangeChanged.connect(self.linelist_window.line_labels_plotter.process_zoom_signal)
-
         self.linelist_window.show()
-
-
-
-
 
 
 class ClosableMainWindow(QMainWindow):
@@ -133,7 +119,6 @@ class ClosableMainWindow(QMainWindow):
     #     super(ClosableMainWindow, self).__init__()
 
     def closeEvent(self, event):
-        # TODO replace direct references to plot_window with references to the Hub machinery.
         self.hub.plot_window.dismiss_linelists_window.emit(False)
 
 
@@ -193,24 +178,9 @@ class LineListsWindow(ClosableMainWindow):
 
         #---------------------------------------------------------------
 
-
         self.line_labels_plotter = LineLabelsPlotter(self)
 
-
-
-
-
         # Connect controls to appropriate signals.
-        #
-        # Note that, for the Draw operation, we have to pass the table views to
-        # the handler, even though it would be better to handle the row selections
-        # all in here for the sake of encapsulation. This used to be necessary
-        # because this class is not a QWidget or one of its subclasses, thus it
-        # cannot implement a DispatchHandle signal handler. Once we gt rid of the
-        # Dispatch facility, this design decision could likely be modified. We
-        # decide to keep the same old design for now, to prevent breaks in logic.
-
-        # TODO replace direct references to plot_window with references to the Hub machinery.
 
         self.draw_button.clicked.connect(
             lambda:self.line_labels_plotter.plot_linelists(
@@ -489,12 +459,6 @@ class LineListsWindow(ClosableMainWindow):
     def _getTableViews(self):
         panes = self._getPanes()
         return [pane.table_view for pane in panes]
-
-
-
-
-
-
 
 
 class LineListPane(QWidget):
