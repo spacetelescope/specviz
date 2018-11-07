@@ -287,8 +287,8 @@ class StatisticsWidget(QWidget):
         data_unit = self._current_plot_item.data_unit
         spectral_axis_unit = self._current_plot_item.spectral_axis_unit
 
-        new_spec = spec.with_spectral_unit(u.Unit(spectral_axis_unit))
-        new_spec = new_spec.new_flux_unit(u.Unit(data_unit))
+        new_spec = spec.new_flux_unit(u.Unit(data_unit))
+        new_spec = new_spec.with_spectral_unit(u.Unit(spectral_axis_unit))
         return new_spec
 
     def update_statistics(self):
