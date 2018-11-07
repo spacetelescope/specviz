@@ -110,6 +110,8 @@ class Plugin(DecoratorRegistry):
                 cls.hub = Hub(workspace)
                 plugin = cls()
 
+                workspace._plugin_bars[name] = plugin
+
                 if workspace is not None:
                     # Check if this plugin already exists as a tab
                     for i in range(workspace.plugin_tab_widget.count()):
