@@ -81,6 +81,9 @@ class ModelEditor(QWidget):
         self.hub.workspace.current_selected_changed.connect(
             self._on_plot_item_selected)
 
+        # When the plot window changes, reset model editor
+        self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_new_plot_activated)
+
         # Connect the fit model button
         self.fit_button.clicked.connect(self._on_fit_clicked)
 
@@ -167,12 +170,21 @@ class ModelEditor(QWidget):
         equation_editor_dialog.accepted.connect(self.hub.plot_item.set_data)
         equation_editor_dialog.exec_()
 
+    def _clear_tree_view(self):
+        self.model_tree_view.setModel(None)
+        self.editor_holder_widget.setHidden(True)
+        self.setup_holder_widget.setHidden(False)
+
+    def _on_new_plot_activated(self):
+        plot_data_item = self.hub.plot_item
+        if plot_data_item is not None:
+            if isinstance(plot_data_item.data_item, ModelDataItem):
+                return self._on_plot_item_selected(plot_data_item)
+        self._clear_tree_view()
+
     def _on_plot_item_selected(self, plot_data_item):
         if not isinstance(plot_data_item.data_item, ModelDataItem):
-            self.model_tree_view.setModel(None)
-            self.editor_holder_widget.setHidden(True)
-            self.setup_holder_widget.setHidden(False)
-            return
+            return self._clear_tree_view()
 
         self.editor_holder_widget.setHidden(False)
         self.setup_holder_widget.setHidden(True)
@@ -227,6 +239,7 @@ class ModelEditor(QWidget):
         return fitter(model, x, y)
 
     def _on_fit_clicked(self, spectrum_data_item=None):
+        self._on_equation_edit_button_clicked()
         # The spectrum_data_item would be the data item that this model is to
         # be fit to. This selection is done via the data_selection_combo.
         combo_index = self.data_selection_combo.currentIndex()
@@ -269,15 +282,30 @@ class ModelEditor(QWidget):
 
         # Load options
         fitter = FITTERS[self.fitting_options["fitter"]]
+        max_iterations = self.fitting_options["max_iterations"]
+        relative_error = self.fitting_options["relative_error"]
+        epsilon = self.fitting_options["epsilon"]
 
         # Run the compound model through the specutils fitting routine
         """
         # Uncomment for when specutils function is working
         fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter())
         """
-        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter())
 
-        fit_mod = self._astropy_fit(spectrum, result, fitter())
+        print("spectral_region", spectral_region)
+
+        # fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter(),
+        #                     window=spectral_region,
+        #                     ignore_units=True)
+
+        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter(),
+                            window=spectral_region,
+                            ignore_units=True,
+                            maxiter=max_iterations,
+                            acc=relative_error,
+                            epsilon=epsilon)
+
+        #fit_mod = self._astropy_fit(spectrum, result, fitter())
         print(fit_mod)
         if fit_mod is None:
             return
@@ -364,9 +392,9 @@ class ModelAdvancedSettingsDialog(QDialog):
         # This section disables some of the options
         # until specutils fitting functions have been
         # updated to take them into account:
-        self.max_iterations_line_edit.setDisabled(True)
-        self.relative_error_line_edit.setDisabled(True)
-        self.epsilon_line_edit.setDisabled(True)
+        # self.max_iterations_line_edit.setDisabled(True)
+        # self.relative_error_line_edit.setDisabled(True)
+        # self.epsilon_line_edit.setDisabled(True)
 
     def _validate_inputs(self):
         """
