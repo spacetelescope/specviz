@@ -185,6 +185,13 @@ class EquationEditor(QDialog):
     def _item_from_name(self, name):
         """Get data item based on name"""
         return next((x.spectrum for x in self._equation_editor.hub.data_items if x.name == name))
+    def _duplicate_component(self, compname):
+        if compname in self._equation_editor.find_matches(compname):
+            return True
+        if compname in [x.name for x in self._equation_editor.hub.data_items]:
+            return True
+
+        return False
 
     def _update_status(self):
         """Check status of entered arithmetic"""
@@ -197,9 +204,7 @@ class EquationEditor(QDialog):
             self.label_status.setText("Attribute name not set")
             self.button_ok.setEnabled(False)
 
-        elif (self.is_addmode and
-              self.text_label.text() in self._equation_editor.find_matches(self.text_label.text())
-        ):
+        elif self.is_addmode and self._duplicate_component(self.text_label.text()):
             self.label_status.setStyleSheet('color: red')
             self.label_status.setText("Component name already exists.")
             self.button_ok.setEnabled(False)
