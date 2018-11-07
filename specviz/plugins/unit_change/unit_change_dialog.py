@@ -62,13 +62,14 @@ class UnitChangeDialog(QDialog):
 
         # Gets all possible conversions from current spectral_axis_unit
         self.spectral_axis_unit_equivalencies = u.Unit(
-            self.hub.data_item.spectral_axis[0]).find_equivalent_units(
+            self.hub.data_item.spectral_axis.unit).find_equivalent_units(
                 equivalencies=u.spectral())
 
         # Gets all possible conversions for flux from current spectral axis and corresponding units
+        # np.sum for spectral_axis so that it does not return a Quantity with zero scale
         self.data_unit_equivalencies = u.Unit(
             self.hub.plot_widget.data_unit).find_equivalent_units(
-                equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]), include_prefix_units=False)
+                equivalencies=u.spectral_density(np.sum(self.hub.data_item.spectral_axis)), include_prefix_units=False)
 
         # Current data unit and spectral axis unit
         self.current_data_unit = self.hub.plot_widget.data_unit

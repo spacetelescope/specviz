@@ -1,75 +1,137 @@
-import pytest
-
 from qtpy import QtCore
-from qtpy.QtWidgets import QMainWindow, QMdiSubWindow, QListWidget, QAction, QDialog, QDialogButtonBox
-
-from ..unit_change_dialog import UnitChangeDialog
+from qtpy.QtWidgets import QDialogButtonBox
 
 from specviz.plugins.unit_change.unit_change_dialog import UnitChangeDialog
 
-def test_ucd(specviz_gui, qtbot):
-    specviz_gui.current_workspace.load_data("/Users/javerbukh/Documents/data_for_specviz/COS_FUV.fits", "HST/COS")
-    workspace = specviz_gui.current_workspace
-    ucd = UnitChangeDialog(workspace)
-    uc = ucd
-    uc.show()
-    qtbot.addWidget(uc)
 
-    assert uc.ui.comboBox_spectral.currentText() == "Angstrom"
-
-    uc.ui.comboBox_spectral.setCurrentIndex(uc.ui.comboBox_spectral.count()-1)
-    assert uc.ui.comboBox_spectral.currentText() == "Custom"
+def get_ucd(specviz_gui):
+    ucd = UnitChangeDialog(specviz_gui.current_workspace)
+    ucd.show()
+    return ucd
 
 
+def test_spectral_custom_units_correct(specviz_gui, qtbot):
+    """
+    Accept valid custom units
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
 
-# def test_custom_units_correct(qtbot):
-#     uc = UnitChangeDialog()
-#     uc.show()
-#     qtbot.addWidget(uc)
-#
-#     uc.ui.comboBox_spectral.setCurrentIndex(2)
-#     assert uc.ui.comboBox_spectral.currentText() == uc._units_titles[2]
-#
-#     uc.ui.comboBox_spectral.setCurrentIndex(uc.ui.comboBox_spectral.count()-1)
-#     assert uc.ui.comboBox_spectral.currentText() == "Custom"
-#
-#     uc.ui.line_custom_spectral.setText("fT")
-#     assert uc.ui.on_accepted() == True
-#
-#
-# def test_custom_units_incorrect(qtbot):
-#     uc = UnitChangeDialog()
-#     uc.show()
-#     qtbot.addWidget(uc)
-#
-#     uc.ui.comboBox_spectral.setCurrentIndex(uc.ui.comboBox_spectral.count() - 1)
-#     assert uc.ui.comboBox_spectral.currentText() == "Custom"
-#
-#     uc.ui.line_custom_spectral.setText("feet")
-#     assert uc.ui.on_accepted() == False
-#
-#
-# def test_accept_works_correctly(qtbot):
-#     uc = UnitChangeDialog()
-#     uc.show()
-#     qtbot.addWidget(uc)
-#
-#     uc.ui.comboBox_spectral.setCurrentIndex(4)
-#     assert uc.ui.comboBox_spectral.currentText() == uc._units_titles[4]
-#
-#     qtbot.mouseClick(uc.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
-#     assert uc.current_units == uc._units_titles[4]
-#
-#
-# def test_cancel_works_correctly(qtbot):
-#     uc = UnitChangeDialog()
-#     uc.show()
-#     qtbot.addWidget(uc)
-#
-#     old_units = uc.current_units
-#
-#     uc.ui.comboBox_spectral.setCurrentIndex(3)
-#     assert uc.ui.comboBox_spectral.currentText() == uc._units_titles[3]
-#
-#     qtbot.mouseClick(uc.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
-#     assert uc.current_units == old_units
+    ucd.ui.comboBox_spectral.setCurrentIndex(0)
+    assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[0]
+
+    ucd.ui.comboBox_spectral.setCurrentIndex(ucd.ui.comboBox_spectral.count()-1)
+    assert ucd.ui.comboBox_spectral.currentText() == "Custom"
+
+    ucd.ui.line_custom_spectral.setText("m")
+    assert ucd.on_accepted() == True
+
+
+def test_spectral_custom_units_incorrect(specviz_gui, qtbot):
+    """
+    Reject invalid custom units
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    ucd.ui.comboBox_spectral.setCurrentIndex(ucd.ui.comboBox_spectral.count() - 1)
+    assert ucd.ui.comboBox_spectral.currentText() == "Custom"
+
+    ucd.ui.line_custom_spectral.setText("feet")
+    assert ucd.on_accepted() == False
+
+
+def test_spectral_accept_works_correctly(specviz_gui, qtbot):
+    """
+    Accept works for units in combobox
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+    
+    if ucd.ui.comboBox_spectral.count() > 4:
+        ucd.ui.comboBox_spectral.setCurrentIndex(4)
+        assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[4]
+    else:
+        ucd.ui.comboBox_spectral.setCurrentIndex(0)
+        assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[0]
+
+    qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+
+
+def test_spectral_cancel_works_correctly(specviz_gui, qtbot):
+    """
+    Make sure units are not changed after cancel
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    original_spectral_unit = ucd.hub.plot_widget.spectral_axis_unit
+
+    ucd.ui.comboBox_spectral.setCurrentIndex(ucd.ui.comboBox_spectral.count() - 1)
+    assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[
+        ucd.ui.comboBox_spectral.count() - 1]
+
+    qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
+    assert ucd.hub.plot_widget.spectral_axis_unit == original_spectral_unit
+
+
+def test_flux_custom_units_correct(specviz_gui, qtbot):
+    """
+    Accept valid custom units
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    ucd.ui.comboBox_units.setCurrentIndex(0)
+    assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
+
+    ucd.ui.comboBox_units.setCurrentIndex(ucd.ui.comboBox_units.count() - 1)
+    assert ucd.ui.comboBox_units.currentText() == "Custom"
+
+    ucd.ui.line_custom_units.setText("Jy")
+    assert ucd.on_accepted() == True
+
+
+def test_flux_custom_units_incorrect(specviz_gui, qtbot):
+    """
+    Reject invalid custom units
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    ucd.ui.comboBox_units.setCurrentIndex(ucd.ui.comboBox_units.count() - 1)
+    assert ucd.ui.comboBox_units.currentText() == "Custom"
+
+    ucd.ui.line_custom_units.setText("feet")
+    assert ucd.on_accepted() == False
+
+
+def test_flux_accept_works_correctly(specviz_gui, qtbot):
+    """
+    Accept works for units in combobox
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    if ucd.ui.comboBox_units.count() > 0:
+        ucd.ui.comboBox_units.setCurrentIndex(0)
+        assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
+
+    qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+
+
+def test_flux_cancel_works_correctly(specviz_gui, qtbot):
+    """
+    Make sure units are not changed after cancel
+    """
+    ucd = get_ucd(specviz_gui)
+    qtbot.addWidget(ucd)
+
+    original_spectral_unit = ucd.hub.plot_widget.data_unit
+
+    ucd.ui.comboBox_units.setCurrentIndex(ucd.ui.comboBox_units.count() - 1)
+    assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[
+        ucd.ui.comboBox_units.count() - 1]
+
+    qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
+    assert ucd.hub.plot_widget.data_unit == original_spectral_unit
