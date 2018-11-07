@@ -456,8 +456,10 @@ class LineListsWindow(ClosableMainWindow):
         self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
     def erasePlottedLines(self):
-        index_last = self.tab_widget.count() - 1
-        self.tab_widget.removeTab(index_last)
+        for index in range(self.tab_widget.count()):
+            tab_text = self.tab_widget.tabText(index)
+            if tab_text == PLOTTED:
+                self.tab_widget.removeTab(index)
 
     # these two methods below return a flat rendering of the panes
     # and table views stored in the two-tiered tabbed window. These

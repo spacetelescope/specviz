@@ -46,7 +46,6 @@ class LineLabelsPlotter(object):
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._plot_item._is_selected and self._linelist_window:
             if close:
-                # TODO replace direct references to _caller with references to the Hub machinery.
                 self._caller.erase_linelabels.emit(self._plot_item)
 
                 self._linelist_window.close()
