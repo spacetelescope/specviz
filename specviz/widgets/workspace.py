@@ -101,6 +101,7 @@ class Workspace(QMainWindow):
         # access to various plugins from the workspace (rather than having to
         # go through the toolbar).
         self._plugins = {}
+        self._plugin_bars = {}
 
         # Mount plugins
         plugin.mount(self)
