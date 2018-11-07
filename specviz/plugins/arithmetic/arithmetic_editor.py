@@ -36,7 +36,7 @@ class Arithmetic(QDialog):
         self.setModal(True)
 
     @plugin.tool_bar(name="Arithmetic", icon=QIcon(":/icons/014-calculator.svg"))
-    def on_action_triggerd(self):
+    def on_action_triggered(self):
         """Trigger the arithmetic UI when button is clicked."""
         self.show()
 
