@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 from pyqtgraph import functions, TextItem
 
-from qtpy.QtCore import QPointF
+from qtpy.QtCore import QPointF, QRectF
 from qtpy.QtGui import QPolygonF, QPen, QColor
 
 orientations = {
@@ -91,7 +91,10 @@ class LineIDMarker(TextItem):
 
         self.setFlag(self.ItemIsMovable)
 
-    # Repositioning the line labels on the fly, as the data is  zoomed in and out,
+    def __str__(self):
+        return str(self._text)
+
+    # Repositioning the line labels on the fly, as the data is zoomed or panned,
     # does not work. The behavior that is described in the PyQt documentation is not
     # observed. It appears that the setFlags(ItemSendsGeometryChanges) does not work.
     # I am using pyqt version 4.8, so support for this flag should be there. The
@@ -100,14 +103,11 @@ class LineIDMarker(TextItem):
     # issue. We give up on this approach and let the caller handle the zoom requests and
     # the repainting.
 
-    def __str__(self):
-        return str(self._text)
-
     def paint(self, p, *args):
         ''' Overrides the default implementation so as
-            to draw a vertical marker.
+            to draw a vertical marker below the text.
         '''
-        # draw the text
+        # draw the text first.
         #
         # Note that this actually doesn't work. Commenting out this call to the base
         # class doesn't prevent the text to be painted on screen regardless. Tests with
@@ -121,7 +121,9 @@ class LineIDMarker(TextItem):
         # Add marker. Geometry depends on the
         # text being vertical or horizontal.
         points = []
-        bounding_rect = self.boundingRect()
+
+        # get the text-only bounding rectangle.
+        bounding_rect = super(LineIDMarker, self).boundingRect()
 
         if self._orientation == 'vertical':
             x = bounding_rect.x()
@@ -141,5 +143,18 @@ class LineIDMarker(TextItem):
         pen = QPen(QColor(functions.mkColor(self._color)))
         p.setPen(pen)
         p.drawPolygon(polygon)
+
+    # This accounts for the fact that the modified text item has an extra
+    # appendage (the marker) that makes its bounding rectangle be a bit higher
+    # than the text-only rectangle. This is called whenever erasing or
+    # redrawing a line label.
+    def boundingRect(self):
+
+        base_rect = super(LineIDMarker, self).boundingRect()
+
+        if self._orientation == 'vertical':
+            return QRectF(base_rect.x() - 20, base_rect.y(), base_rect.width(), base_rect.height())
+        else:
+            return QRectF(base_rect.x(), base_rect.y() - 20, base_rect.width(), base_rect.height())
 
 
