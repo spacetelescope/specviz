@@ -361,10 +361,7 @@ class Workspace(QMainWindow):
 
             # If there are any current plots, attempt to add the data to the
             # plot
-            plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
-            plot_data_item.visible = True
-            self.current_plot_window.plot_widget.on_item_changed(data_item)
-            self._on_item_changed(item=plot_data_item.data_item)
+            self.force_plot(data_item)
 
             return data_item
         except:
@@ -377,6 +374,21 @@ class Workspace(QMainWindow):
             )
 
             message_box.exec()
+
+    def force_plot(self, data_item):
+        """
+        Enabled checkbox and highlight row of the `PlotDataItem` representing
+        the provided data_item instance.
+
+        Parameters
+        ----------
+        data_item : :class:`~specviz.core.items.DataItem`
+            The data item for which specviz will force render the plot.
+        """
+        plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
+        plot_data_item.visible = True
+        self.current_plot_window.plot_widget.on_item_changed(data_item)
+        self._on_item_changed(item=plot_data_item.data_item)
 
     def _on_delete_data(self):
         """
