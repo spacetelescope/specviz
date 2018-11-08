@@ -40,7 +40,8 @@ class ModelDataItem(DataItem):
             model_spectral_units = self.data(self.DataRole).spectral_axis.unit
         else:
             model_spectral_units = u.Unit(self._plot_data_item.spectral_axis_unit)
-        return self.spectral_axis.to(model_spectral_units)
+        return self.spectral_axis.to(model_spectral_units,
+                                     equivalencies=u.equivalencies.spectral())
 
     @property
     def model_editor_model(self):
