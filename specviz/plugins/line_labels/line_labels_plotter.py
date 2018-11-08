@@ -44,10 +44,9 @@ class LineLabelsPlotter(object):
 #--------  Slots.
 
     def _dismiss_linelists_window(self, close, **kwargs):
-        if self._plot_item._is_selected and self._linelist_window:
+        if self._linelist_window:
             if close:
-                self._caller.erase_linelabels.emit(self._plot_item)
-
+                self._erase_linelabels(self._plot_item)
                 self._linelist_window.close()
                 self._linelist_window = None
             else:
@@ -57,7 +56,7 @@ class LineLabelsPlotter(object):
         if caller != self._plot_item:
             return
 
-        if self._linelist_window and self._plot_item._is_selected:
+        if self._linelist_window:
             self._remove_linelabels_from_plot()
             self._linelist_window.erasePlottedLines()
 
@@ -65,9 +64,6 @@ class LineLabelsPlotter(object):
 
     # Main method for drawing line labels on the plot surface.
     def plot_linelists(self, table_views, panes, units, caller, **kwargs):
-
-        # if caller != self._plot_item or not self._plot_item._is_selected:
-        #     return
 
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
