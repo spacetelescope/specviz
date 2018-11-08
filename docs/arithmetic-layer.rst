@@ -25,7 +25,7 @@ Once the Arithmetic widget is launched, spectra and their components can be adde
 here by typing the names directly surrounded by '{}' or by selecting the spectrum
 in the dropdown bar and clicking insert. We are going to take the preloaded spectrum 
 (``science_spectrum``) and create a new spectrum that is double the flux of ``science_spectrum``
-and call it ``Double science_spectrum``.
+and call it ``double science_spectrum``.
 
 .. image:: _static/valid_expression.png
 
@@ -33,18 +33,16 @@ To validate arithmetic, click the OK button located at the bottom right hand cor
 dialog box. 
 
 .. warning::
-    If the python syntax is invalid, the editor will not allow you to continue).
+    If the python syntax is invalid, the editor will not allow you to continue! The editor
+    can only return `SpecUtils Spectrum1D <https://specutils.readthedocs.io/en/latest/api/specutils.Spectrum1D.html>`_
+    objects.
 
-Now, there will be a new data item located in the data collection called ``Double science_spectrum``.
+Now, there will be a new data item located in the data collection called ``double science_spectrum``.
 
 .. image:: _static/new_expression.png
 
-To show the result in the plotting window, select the data item by clicking the box next ``Double science_spectrum``.
+To show the result in the plotting window, select the data item by clicking the box next ``double science_spectrum``.
 
 .. image:: _static/plotted_expression.png
 
 This is a very simple example of the arithmetic you can perform with the SpecViz arithmetic editor.
-
-.. note::
-    Any valid python expression can be parsed by the editor as long as the result of the expression is
-    a `SpecUtils Spectrum1D <https://specutils.readthedocs.io/en/latest/api/specutils.Spectrum1D.html>`_ object.
