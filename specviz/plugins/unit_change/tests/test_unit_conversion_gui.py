@@ -1,11 +1,18 @@
 from qtpy import QtCore
 from qtpy.QtWidgets import QDialogButtonBox
 
+from specviz.core.hub import Hub
 from specviz.plugins.unit_change.unit_change_dialog import UnitChangeDialog
 
 
 def get_ucd(specviz_gui):
-    ucd = UnitChangeDialog(specviz_gui.current_workspace)
+
+    # hub = Hub(workspace=specviz_gui.current_workspace)
+    # # Make sure that there are only 3 data items currently
+    # assert len(hub.data_items) == 3
+    # ucd = UnitChangeDialog(specviz_gui.current_workspace)
+    ucd = specviz_gui.current_workspace._plugins['Unit Change Plugin']
+
     ucd.show()
     return ucd
 
@@ -127,11 +134,11 @@ def test_flux_cancel_works_correctly(specviz_gui, qtbot):
     ucd = get_ucd(specviz_gui)
     qtbot.addWidget(ucd)
 
-    original_spectral_unit = ucd.hub.plot_widget.data_unit
+    original_flux_unit = ucd.hub.plot_widget.data_unit
 
     ucd.ui.comboBox_units.setCurrentIndex(ucd.ui.comboBox_units.count() - 1)
     assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[
         ucd.ui.comboBox_units.count() - 1]
 
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
-    assert ucd.hub.plot_widget.data_unit == original_spectral_unit
+    assert ucd.hub.plot_widget.data_unit == original_flux_unit
