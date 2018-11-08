@@ -66,7 +66,6 @@
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
    <addaction name="separator"/>
-   <addaction name="line_labels_action"/>
    <addaction name="change_color_action"/>
    <addaction name="separator"/>
    <addaction name="reset_view_action"/>
@@ -124,22 +123,10 @@
     <string>Remove selected region</string>
    </property>
   </action>
-  <action name="line_labels_action">
-   <property name="icon">
-    <iconset resource="../../data/resources/resources.qrc">
-     <normaloff>:/icons/folder-2.svg</normaloff>:/icons/folder-2.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Line Labels</string>
-   </property>
-   <property name="toolTip">
-    <string>Line labels tool</string>
-   </property>
-  </action>
   <action name="change_color_action">
    <property name="icon">
     <iconset resource="../../data/resources/resources.qrc">
-     <normaloff>:/icons/color.svg</normaloff>:/icons/line_labels.svg</iconset>
+     <normaloff>:/icons/color.svg</normaloff>:/icons/color.svg</iconset>
    </property>
    <property name="text">
     <string>Change Color</string>
