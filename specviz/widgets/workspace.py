@@ -97,6 +97,12 @@ class Workspace(QMainWindow):
         # When a new data item is added to the model, select that item
         # self._model.rowsInserted.connect(self._on_row_inserted)
 
+        # This is used purely for testing purposes in order to enable easy
+        # access to various plugins from the workspace (rather than having to
+        # go through the toolbar).
+        self._plugins = {}
+        self._plugin_bars = {}
+
         # Mount plugins
         plugin.mount(self)
 
