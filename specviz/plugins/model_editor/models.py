@@ -42,6 +42,10 @@ class ModelFittingModel(QStandardItemModel):
         for model_item in self.items:
             model_kwargs = {'name': model_item.text(), 'fixed': {}}
 
+            special_args = model_item._special_args
+            if special_args:
+                model_kwargs.update(special_args)
+
             # For each of the children `StandardItem`s, parse out their
             # individual stored values
             for cidx in range(model_item.rowCount()):
@@ -58,7 +62,7 @@ class ModelFittingModel(QStandardItemModel):
 
         return fittable_models
 
-    def add_model(self, model):
+    def add_model(self, model, special_args={}):
         model_name = model.__class__.name
 
         model_count = len([self.item(idx) for idx in range(self.rowCount())
@@ -67,6 +71,7 @@ class ModelFittingModel(QStandardItemModel):
         model_name = model_name + str(model_count) if model_count > 0 else model_name
 
         model_item = QStandardItem(model_name)
+        model_item._special_args = special_args
         model_item.setData(model, Qt.UserRole + 1)
 
         for para_name in model.param_names:

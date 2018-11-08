@@ -6,7 +6,7 @@ from astropy import units as u
 from astropy.modeling import models, fitting, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget, QDialog
+from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget, QDialog, QInputDialog
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
 from specutils.spectra import Spectrum1D
@@ -21,6 +21,7 @@ from ...core.plugin import plugin
 MODELS = {
     'Const1D': models.Const1D,
     'Linear1D': models.Linear1D,
+    'Polynomial1D': models.Polynomial1D,
     'Gaussian1D': models.Gaussian1D,
     'Voigt': models.Voigt1D,
     'Lorentzian': models.Lorentz1D,
@@ -144,8 +145,18 @@ class ModelEditor(QWidget):
             selected_idx = indexes[0]
             self.model_tree_view.model().removeRow(selected_idx.row())
 
-    def _add_fittable_model(self, model):
-        idx = self.model_tree_view.model().add_model(model())
+    def _add_fittable_model(self, model_type):
+        if model_type in [MODELS['Polynomial1D']]:
+            text, ok = QInputDialog.getInt(self, 'Text Input Dialog', 'Enter your name:')
+            if ok:
+                model = model_type(int(text))
+                special_args = {'degree': int(text)}
+            else:
+                return
+        else:
+            model = model_type()
+            special_args = {}
+        idx = self.model_tree_view.model().add_model(model, special_args=special_args)
         self.model_tree_view.setExpanded(idx, True)
 
         for i in range(0, 3):

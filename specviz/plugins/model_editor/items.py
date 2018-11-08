@@ -10,6 +10,8 @@ class ModelDataItem(DataItem):
 
         self._plot_data_item = None
 
+        self._special_args = {}
+
         super().__init__(*args, **kwargs)
 
     @property
