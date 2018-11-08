@@ -78,6 +78,7 @@ def test_spectral_cancel_works_correctly(specviz_gui, qtbot):
     assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[
         ucd.ui.comboBox_spectral.count() - 1]
 
+    # Press cancel
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Cancel), QtCore.Qt.LeftButton)
     assert ucd.hub.plot_widget.spectral_axis_unit == original_spectral_unit
 
