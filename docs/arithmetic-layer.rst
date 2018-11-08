@@ -1,7 +1,10 @@
 .. _specviz-arithmetic:
 
-Basic Arithmetic
-================
+Arithmetic Widget
+=================
+The Arithmetic widget allows users to perform basic arithmetic on their spectra
+that are loaded into specviz.
+
 
 Launching Arithmetic Editor
 ---------------------------
@@ -45,4 +48,5 @@ To show the result in the plotting window, select the data item by clicking the 
 
 .. image:: _static/plotted_expression.png
 
-This is a very simple example of the arithmetic you can perform with the SpecViz arithmetic editor.
+This is a very simple example of the arithmetic you can perform with the SpecViz arithmetic editor. There are more example
+expressions located at the bottom of the ``equation editor`` dialog.
