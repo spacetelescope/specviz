@@ -25,6 +25,7 @@ Using SpecViz
 
    getting-started
    unit_conversion
+   model_fitting.rst
    arithmetic-layer
    model_fitting
    stats_sidebar
