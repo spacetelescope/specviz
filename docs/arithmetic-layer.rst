@@ -1,4 +1,4 @@
-.. _specviz-start:
+.. _specviz-arithmetic:
 
 Basic Arithmetic
 ================
@@ -9,14 +9,14 @@ Launching Arithmetic Editor
 Lets start by loading the arithmetic layer widget located on the tool bar.
 Upon clicking you will be prompted with the arithmetic dialog
 
-.. image:: arithmetic-layer.png
+.. image:: _static/arithmetic-layer.png
 
 From this dialog you can add, edit or remove arithmetic items from the
 editor. We will start by clicking the New Arithmetic Attribute button located in 
 top left hand corner of the Editor dialog. Upon clicking you will be prompted with
 the editor dialog
 
-.. image:: equation_editor.png
+.. image:: _static/equation_editor.png
 
 Editing Arithmetic
 ------------------
@@ -27,18 +27,18 @@ in the dropdown bar and clicking insert. We are going to take the preloaded spec
 (Name of Spectrum) and create a new spectrum that is double the flux of Name of Spectrum 
 and call it Double Name of Spectrum.
 
-.. image:: valid_expression.png
+.. image:: _static/valid_expression.png
 
 To validate arithmetic, click the OK button located at the bottom right hand corner of the
 dialog box. Warning(If the python syntax is invalid, the editor will not allow you to continue).
 Now, there will be a new data item located in the data collection called Double Name of Spectrum.
 
-.. image:: new_expression.png
+.. image:: _static/new_expression.png
 
 To show the result in the plotting window, select the data item by clicking the box next Double
 Name of Spectrum.
 
-.. image:: plotted_expression.png
+.. image:: _static/plotted_expression.png
 
 This is a very simple example of the arithmetic you can perform with the SpecViz arithmetic editor.
 Any valid python expression can be parsed by the editor as long as the result of the expression is
