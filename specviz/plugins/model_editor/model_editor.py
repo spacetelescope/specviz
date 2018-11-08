@@ -261,8 +261,9 @@ class ModelEditor(QWidget):
 
         return Spectrum1D(flux=flux, spectral_axis=spectral_axis)
 
-    def _on_fit_clicked(self, spectrum_data_item=None):
-        self._on_equation_edit_button_clicked()
+    def _on_fit_clicked(self, spectrum_data_item=None, eq_pop_up=True):
+        if eq_pop_up:
+            self._on_equation_edit_button_clicked()
 
         # Grab the currntly selected plot data item from the data list
         plot_data_item = self.hub.plot_item
