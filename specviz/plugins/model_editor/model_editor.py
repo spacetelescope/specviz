@@ -147,7 +147,8 @@ class ModelEditor(QWidget):
 
     def _add_fittable_model(self, model_type):
         if model_type in [MODELS['Polynomial1D']]:
-            text, ok = QInputDialog.getInt(self, 'Text Input Dialog', 'Enter your name:')
+            text, ok = QInputDialog.getInt(self, 'Polynomial1D',
+                                           'Enter Polynomial1D degree:')
             if ok:
                 model = model_type(int(text))
                 special_args = {'degree': int(text)}
