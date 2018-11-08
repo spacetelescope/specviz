@@ -129,6 +129,11 @@ class ModelEditor(QWidget):
         model_data_item.model_editor_model.dataChanged.connect(
             lambda tl, br, r, pi=plot_data_item: self._on_model_data_changed(tl, br, pi))
 
+        # plot_data_item = self.hub.workspace.proxy_model.item_from_id(model_data_item.identifier)
+        plot_data_item.visible = True
+        self.hub.workspace.current_plot_window.plot_widget.on_item_changed(model_data_item)
+        self.hub.workspace._on_item_changed(item=plot_data_item.data_item)
+
     def _on_remove_model(self):
         """Remove an astropy model from the model editor tree view."""
         indexes = self.model_tree_view.selectionModel().selectedIndexes()
@@ -215,31 +220,55 @@ class ModelEditor(QWidget):
 
         return SpectralRegion(positions)
 
-    @staticmethod
-    def _astropy_fit(spec, model, fitter):
-        if isinstance(spec, list):
-            x = []
-            y = []
-            for i in range(len(spec)):
-                if spec[i] is None:
-                    continue
-                x += list(spec[i].spectral_axis.value)
-                y += list(spec[i].flux.value)
-            x = np.array(x)
-            y = np.array(y)
-        else:
-            if spec is None:
-                return
-            x = spec.spectral_axis.value
-            y = spec.flux.value
+    def _get_selected_plot_data_item(self):
+        workspace = self.hub.workspace
 
-        if len(x) == 0:
+        if self.hub.proxy_model is None:
+            raise Exception("Workspace proxy_model is None")
+
+        row = self.data_selection_combo.currentIndex()
+        idx = workspace.list_view.model().index(row, 0)
+
+        return self.hub.proxy_model.data(idx, role=Qt.UserRole)
+
+    def _on_fitting_target_changed(self):
+        # Grab the currntly selected plot data item from the data list
+        model_plot_data_item = self.hub.plot_item
+
+        # If this item is not a model data item, bail
+        if not isinstance(model_plot_data_item.data_item, ModelDataItem):
             return
 
-        return fitter(model, x, y)
+        plot_data_item = self._get_selected_plot_data_item()
+
+        model_data_item = model_plot_data_item.data_item
+        model_data_item._plot_data_item = plot_data_item
+
+    def _spectrum_with_plot_units(self):
+        """
+        Make a new spectrum object with the plotted units.
+
+        Returns
+        -------
+        spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        """
+        plot_data_item = self._get_selected_plot_data_item()
+
+        flux = plot_data_item.flux * u.Unit(plot_data_item.data_unit)
+        spectral_axis = plot_data_item.spectral_axis * u.Unit(plot_data_item.spectral_axis_unit)
+
+        return Spectrum1D(flux=flux, spectral_axis=spectral_axis)
 
     def _on_fit_clicked(self, spectrum_data_item=None):
         self._on_equation_edit_button_clicked()
+
+        # Grab the currntly selected plot data item from the data list
+        plot_data_item = self.hub.plot_item
+
+        # If this item is not a model data item, bail
+        if not isinstance(plot_data_item.data_item, ModelDataItem):
+            return
+
         # The spectrum_data_item would be the data item that this model is to
         # be fit to. This selection is done via the data_selection_combo.
         combo_index = self.data_selection_combo.currentIndex()
@@ -252,14 +281,12 @@ class ModelEditor(QWidget):
                                              "is a model. Please select a "
                                              "data item containing spectra.")
 
-        # Grab the currntly selected plot data item from the data list
-        plot_data_item = self.hub.plot_item
-
-        # If this item is not a model data item, bail
-        if not isinstance(plot_data_item.data_item, ModelDataItem):
-            return
+        # spectrum = plot_data_item.data_item.spectrum  # spectrum_data_item.spectrum
+        spectrum = self._spectrum_with_plot_units()
+        spectral_region = self._combine_all_workspace_regions()
 
         # Compose the compound model from the model editor sub model tree view
+        self._on_fitting_target_changed()
         model_editor_model = plot_data_item.data_item.model_editor_model
         result = model_editor_model.evaluate()
 
@@ -269,17 +296,6 @@ class ModelEditor(QWidget):
                                              " green \"add\" button and selecting a"
                                              " model from the drop-down menu")
 
-        spectrum = spectrum_data_item.spectrum
-        spectral_region = self._combine_all_workspace_regions()
-
-        if spectral_region is not None:
-            try:
-                idx1, idx2 = spectral_region.bounds
-                if not idx1 == idx2:
-                    spectrum = extract_region(spectrum, spectral_region)
-            except ValueError as e:
-                return
-
         # Load options
         fitter = FITTERS[self.fitting_options["fitter"]]
         max_iterations = self.fitting_options["max_iterations"]
@@ -287,26 +303,12 @@ class ModelEditor(QWidget):
         epsilon = self.fitting_options["epsilon"]
 
         # Run the compound model through the specutils fitting routine
-        """
-        # Uncomment for when specutils function is working
-        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter())
-        """
-
-        print("spectral_region", spectral_region)
-
-        # fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter(),
-        #                     window=spectral_region,
-        #                     ignore_units=True)
-
-        fit_mod = fit_lines(spectrum_data_item.spectrum, result, fitter=fitter(),
+        fit_mod = fit_lines(spectrum, result, fitter=fitter(),
                             window=spectral_region,
-                            ignore_units=True,
                             maxiter=max_iterations,
                             acc=relative_error,
                             epsilon=epsilon)
 
-        #fit_mod = self._astropy_fit(spectrum, result, fitter())
-        print(fit_mod)
         if fit_mod is None:
             return
 
@@ -316,7 +318,7 @@ class ModelEditor(QWidget):
         # preserved.
 
         """
-        # Uncomment for when specutils function is working
+        # Uncomment for when specutils function is working with units
         if result.n_submodels() > 1:
             for i, x in enumerate(result):
                 fit_mod.unitless_model._submodels[i].name = x.name
