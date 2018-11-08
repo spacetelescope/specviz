@@ -70,10 +70,10 @@ class LineLabelsPlotter(object):
 
             self._go_plot_markers(self._merged_linelist)
 
+            self._process_zoom_signal()
 
-
-
-
+            # self._linelist_window.hub.plot_widget.autoRange()
+            # self._linelist_window.hub.plot_widget.setRange(xRange=(-1., 1.), update=True)
 
 
 
@@ -232,7 +232,9 @@ class LineLabelsPlotter(object):
         # The pinning of the Y coordinate is handled by the handle_zoom method
         # that in turn relies in the storage of marker instances row-wise in the
         # line list table.
-        plot_item = self._plot_item.plotItem
+
+        # plot_item = self._plot_item.plotItem
+        plot_item = self._plot_item
 
         height = self._compute_height(merged_linelist, plot_item)
 
@@ -275,8 +277,7 @@ class LineLabelsPlotter(object):
         # new_markers = self._declutter(markers)
         new_markers = markers
 
-
-
+        # self._linelist_window.hub.plot_widget.enableAutoRange()
 
         print ('@@@@@@     line: 261  - ', self._plot_item.viewRange())
 
@@ -290,13 +291,23 @@ class LineLabelsPlotter(object):
                 print ('@@@@@@     line: 263  - x0, y0:  ', marker_proxy.x0, marker_proxy.y0)
 
                 self._plot_item.addItem(real_marker)
+
+                print ('@@@@@@     line: 294  -  after setPos:  ', real_marker.x0, real_marker.y0)
+
                 self._markers_on_screen.append(real_marker)
 
-        print ('@@@@@@     line: 275  - ', self._plot_item.viewRange())
+        self._plot_item.update()
 
-        plot_item.update()
+        # self._linelist_window.hub.plot_widget.enableAutoRange()
 
-        print('@@@@@@     line: 279  - ', self._plot_item.viewRange())
+        # self._linelist_window.hub.plot_widget.setRange(xRange=(0.1, 0.2), update=True)
+
+
+        for marker_ in self._markers_on_screen:
+            print ('@@@@@@     line: 305  - after update:  ', marker_.x0, marker_.y0)
+
+
+        print('@@@@@@     line: 279  - ', self._linelist_window.hub.plot_widget.viewRange())
 
     # Slot called by the zoom control thread.
     def _handle_zoom(self):
