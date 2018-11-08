@@ -22,6 +22,8 @@ MODELS = {
     'Const1D': models.Const1D,
     'Linear1D': models.Linear1D,
     'Gaussian1D': models.Gaussian1D,
+    'Voigt' : models.Voigt1D,
+    'Lorentzian' : models.Lorentz1D,
 }
 
 FITTERS = {
