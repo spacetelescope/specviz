@@ -12,6 +12,7 @@ from os import path
 
 import numpy as np
 
+from astropy import units as u
 from astropy.io import ascii
 from astropy.table import Table, vstack
 from astropy import constants
@@ -270,7 +271,7 @@ class LineList(Table):
             # to the raw Table instances.
 
             internal_table = linelist._table
-            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units)
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units, equivalencies=u.spectral())
 
             # add columns to hold color and height attributes
             color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
