@@ -36,7 +36,7 @@ To use a model:
 #. Select the layer you wish to operate on from the combination box at the
    bottom of the fitting window. For example, you can choose the layer containing your emission
    or absorption line.
-#. Create and position a region of interest (ROI).
+#. Create and position a region of interest (ROI). Multiple ROIs can be used. SpecViz fits the data under all the ROIs.
 #. Select the desired model from the green ``Add Model`` drop-down box to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
 
