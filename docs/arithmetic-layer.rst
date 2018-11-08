@@ -30,7 +30,11 @@ and call it ``Double science_spectrum``.
 .. image:: _static/valid_expression.png
 
 To validate arithmetic, click the OK button located at the bottom right hand corner of the
-dialog box. Warning(If the python syntax is invalid, the editor will not allow you to continue).
+dialog box. 
+
+.. warning::
+    If the python syntax is invalid, the editor will not allow you to continue).
+
 Now, there will be a new data item located in the data collection called ``Double science_spectrum``.
 
 .. image:: _static/new_expression.png
@@ -41,6 +45,6 @@ To show the result in the plotting window, select the data item by clicking the 
 
 This is a very simple example of the arithmetic you can perform with the SpecViz arithmetic editor.
 
-.. NOTE::
+.. note::
     Any valid python expression can be parsed by the editor as long as the result of the expression is
     a `SpecUtils Spectrum1D <https://specutils.readthedocs.io/en/latest/api/specutils.Spectrum1D.html>`_ object.
