@@ -12,8 +12,6 @@ from specviz.core.hub import Hub
 def test_statistics_gui_full_spectrum(specviz_gui):
 
     hub = Hub(workspace=specviz_gui.current_workspace)
-    # Make sure that there are only 3 data items currently
-    assert len(hub.data_items) == 3
 
     # pull out stats dictionary
     stats_dict = specviz_gui.current_workspace._plugin_bars['Statistics'].stats
@@ -39,8 +37,6 @@ def test_statistics_gui_full_spectrum(specviz_gui):
 def test_statistics_gui_roi_spectrum(specviz_gui):
 
     hub = Hub(workspace=specviz_gui.current_workspace)
-    # Make sure that there are only 3 data items currently
-    assert len(hub.data_items) == 3
 
     # Make region of interest cutout, using default cutout at .3 from the
     # middle in either direction
