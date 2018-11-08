@@ -54,7 +54,7 @@ def test_spectral_accept_works_correctly(specviz_gui, qtbot):
     """
     ucd = get_ucd(specviz_gui)
     qtbot.addWidget(ucd)
-    
+
     if ucd.ui.comboBox_spectral.count() > 4:
         ucd.ui.comboBox_spectral.setCurrentIndex(4)
         assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[4]
@@ -62,6 +62,7 @@ def test_spectral_accept_works_correctly(specviz_gui, qtbot):
         ucd.ui.comboBox_spectral.setCurrentIndex(0)
         assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[0]
 
+    # Press accept
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
 
 
