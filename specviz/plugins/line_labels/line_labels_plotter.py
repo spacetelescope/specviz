@@ -2,9 +2,11 @@ import numpy as np
 
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
 
+from astropy import units as u
+
 from .annotation import LineIDMarker, LineIDMarkerProxy
-from .linelist import LineList, \
-    REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
+from .linelist import LineList, WAVELENGTH_COLUMN, REDSHIFTED_WAVELENGTH_COLUMN, \
+    MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 
 class LineLabelsPlotter(object):
@@ -31,17 +33,49 @@ class LineLabelsPlotter(object):
         self._linelist_window.dismiss_linelists_window.connect(self._dismiss_linelists_window)
         self._linelist_window.erase_linelabels.connect(self._erase_linelabels)
 
-        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
-        self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self.process_zoom_signal)
+        # self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
+        # self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self._process_zoom_signal)
+
+        # self._linelist_window.hub.plot_item.data_unit_changed.connect(self._test1)
+        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(lambda:self._test1(self._linelist_window.hub.plot_item.spectral_axis_unit))
+
+    # --------  Slots.
 
     # Buffering of zoom events.
-    def process_zoom_signal(self):
+    def _process_zoom_signal(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             # for now, any object can be used as a zoom message.
             self._zoom_event_buffer.put(1)
 
-#--------  Slots.
+    def _test1(self, units):
+
+
+        # if self._linelist_window:
+        #     self.plot_linelists(
+        #         table_views=self._linelist_window._getTableViews(),
+        #         panes=self._linelist_window._getPanes(),
+        #         units=self._linelist_window.hub.plot_item.spectral_axis_unit,
+        #         caller=self)
+
+        if hasattr(self, "_merged_linelist"):
+
+            self._remove_linelabels_from_plot()
+
+            self._merged_linelist[WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
+            self._merged_linelist[REDSHIFTED_WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
+
+
+            print ('@@@@@@     line: 68  - ', self._merged_linelist)
+
+            self._go_plot_markers(self._merged_linelist)
+
+
+
+
+
+
+
 
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._linelist_window:
@@ -231,23 +265,38 @@ class LineLabelsPlotter(object):
                                        color=color_column[row_index],
                                        orientation='vertical')
 
+            print ('@@@@@@     line: 267  wave column:  - ',  wave_column[row_index])
+
+
             markers[row_index] = marker
 
         # after all markers are created, check their positions
         # and disable some to de-clutter the plot.
-        new_markers = self._declutter(markers)
+        # new_markers = self._declutter(markers)
+        new_markers = markers
+
+
+
+
+        print ('@@@@@@     line: 261  - ', self._plot_item.viewRange())
 
         # place markers on screen
         for marker_proxy in new_markers:
             if marker_proxy:
                 # build eal, full-fledged marker from proxy.
                 real_marker = LineIDMarker(marker_proxy)
-                real_marker.setPos(real_marker.x0, real_marker.y0)
+                real_marker.setPos(marker_proxy.x0, marker_proxy.y0)
+
+                print ('@@@@@@     line: 263  - x0, y0:  ', marker_proxy.x0, marker_proxy.y0)
 
                 self._plot_item.addItem(real_marker)
                 self._markers_on_screen.append(real_marker)
 
+        print ('@@@@@@     line: 275  - ', self._plot_item.viewRange())
+
         plot_item.update()
+
+        print('@@@@@@     line: 279  - ', self._plot_item.viewRange())
 
     # Slot called by the zoom control thread.
     def _handle_zoom(self):
