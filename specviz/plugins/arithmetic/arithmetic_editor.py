@@ -25,24 +25,24 @@ class Arithmetic(QDialog):
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),
                          ".", "arithmetic_editor.ui")), self)
-        
+
         self.setWindowTitle("Arithmetic")
         self.button_add_derived.clicked.connect(self.showDialog)
         self.button_edit_derived.clicked.connect(self.edit_expression)
         self.button_remove_derived.clicked.connect(self.remove_expression)
-        
+
         self.is_editmode=False
 
         self.setModal(True)
-        
+
     @plugin.tool_bar(name="Arithmetic", icon=QIcon(":/icons/014-calculator.svg"))
-    def on_action_triggerd(self):
+    def on_action_triggered(self):
         """Trigger the arithmetic UI when button is clicked."""
         self.show()
 
     def set_equation(self, eq_name=None, eq_expression=None):
         """Place equation in main dialog."""
-       
+
         current_item = self.list_derived_components.currentItem()
         if current_item and eq_name == current_item.text(0):
             current_item.setText(1, eq_expression)
@@ -52,11 +52,11 @@ class Arithmetic(QDialog):
             new_row.setText(1, eq_expression)
 
             self.list_derived_components.addTopLevelItem(new_row)
-    
+
     def edit_expression(self):
         """Edit selected expression in main dialog"""
         if not self.list_derived_components.currentItem():
-            QMessageBox.warning(self, "No Spectrum1D Objects", 
+            QMessageBox.warning(self, "No Spectrum1D Objects",
                                 "No selected expression to edit!")
         else:
             current_item = self.list_derived_components.currentItem()
@@ -64,7 +64,7 @@ class Arithmetic(QDialog):
             equation = current_item.text(1)
             self.editor = EquationEditor(self, label=label, equation=equation, parent=self)
 
-    def remove_expression(self):    
+    def remove_expression(self):
         """Remove selected expression in main diaglog"""
         if not self.list_derived_components.currentItem():
             QMessageBox.warning(self, "No Spectrum1D Objects", 
@@ -73,22 +73,22 @@ class Arithmetic(QDialog):
             # Get current selected item and it's index in the QTreeWidget.
             current_item = self.list_derived_components.currentItem()
             index = self.list_derived_components.indexOfTopLevelItem(current_item)
-            
+
             self.list_derived_components.takeTopLevelItem(index)
 
-    def showDialog(self):  
-        """Show arithmetic editor""" 
-        self.editor = EquationEditor(self, parent=self)     
+    def showDialog(self):
+        """Show arithmetic editor"""
+        self.editor = EquationEditor(self, parent=self)
 
     def find_matches(self, eq_name):
         """Checks for matching names"""
         matches = self.list_derived_components.findItems(eq_name, Qt.MatchExactly, 0)
         matches = [item.text(0) for item in matches]
         return matches
-    
+
 class EquationEditor(QDialog):
     tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
-                "by {{ }} brackets (e.g. {{{example}}}), and you <br>" 
+                "by {{ }} brackets (e.g. {{{example}}}), and you <br>"
                 "you can use libraries imported in the namespace (numpy, specutils, etc). "
                 "Objects returned from editor must be type Spectrum1D!<br><br>"
                 "<b>Example expressions:</b><br><br>"
@@ -96,12 +96,12 @@ class EquationEditor(QDialog):
                 "  - Add two Spectrum1D objects: {{{example}}}*2 + {{{example}}}<br>"
                 "  - Subtract two Spectrum1D objects: {{{example}}}*2 - {{{example}}}<br>"
                 "  - Use Spectrum1D API: Spectrum1D(spectral_axis={{{example}}}.wavelength,flux={{{example}}}.flux)")
-    
+
     placeholder_text = ("Type any mathematical expression here - "
                         "you can include attribute names from the "
                         "drop-down below by selecting them and "
                         "clicking 'Insert'.")
-    
+
     def __init__(self, equation_editor, label=None, equation=None, parent=None):
         """Dialog where you specify equation names and expressions."""
         super(EquationEditor, self).__init__(parent)
@@ -133,13 +133,13 @@ class EquationEditor(QDialog):
                 self.expression.setPlaceholderText(self.placeholder_text)
 
             self.combosel_data.addItems([item.name for item in self._equation_editor.hub.data_items])
-            
+
             self.combosel_component.addItems(['wavelength', 'velocity',
                                               'frequency', 'flux'])
 
             self.button_insert_spectrum.clicked.connect(self._insert_spectrum)
             self.button_insert_component.clicked.connect(self._insert_component)
-            
+
             self.button_ok.clicked.connect(self._assign_components)
             self.button_cancel.clicked.connect(self._close_dialog)
 
@@ -156,13 +156,13 @@ class EquationEditor(QDialog):
 
     def _get_raw_command(self):
         """Return text entered into the editor"""
-        return self.expression.toPlainText().strip() 
+        return self.expression.toPlainText().strip()
 
     def _insert_component(self):
         """Insert data item components into editor"""
         label = self.combosel_component.currentText()
         self.expression.insertPlainText('.' + self.combosel_component.currentText())
-    
+
     def _insert_spectrum(self):
         """Insert data item components into editor"""
         label = self.combosel_data.currentText()
@@ -172,51 +172,56 @@ class EquationEditor(QDialog):
         """Assign arithmetic components to UI"""
         self.eq_name = self._get_eq_name()
         self.eq_expression = self._get_raw_command()
-        
+
         self._equation_editor.set_equation(self.eq_name, self.eq_expression)
 
         self._equation_editor.hub.workspace.model.add_data(spec=self.evaluated_arith, name=self.eq_name)
-        
+
         self._close_dialog()
-    
+
     def _close_dialog(self):
         self.close()
 
     def _item_from_name(self, name):
         """Get data item based on name"""
         return next((x.spectrum for x in self._equation_editor.hub.data_items if x.name == name))
-    
+    def _duplicate_component(self, compname):
+        if compname in self._equation_editor.find_matches(compname):
+            return True
+        if compname in [x.name for x in self._equation_editor.hub.data_items]:
+            return True
+
+        return False
+
     def _update_status(self):
         """Check status of entered arithmetic"""
         # If the text hasn't changed, no need to check again
         if hasattr(self, '_cache') and self._cache == (self.text_label.text(), self._get_raw_command()):
             return
-        
+
         if self.text_label.text() == "":
             self.label_status.setStyleSheet('color: red')
             self.label_status.setText("Attribute name not set")
             self.button_ok.setEnabled(False)
-        
-        elif (self.is_addmode and
-              self.text_label.text() in self._equation_editor.find_matches(self.text_label.text())
-        ):
+
+        elif self.is_addmode and self._duplicate_component(self.text_label.text()):
             self.label_status.setStyleSheet('color: red')
             self.label_status.setText("Component name already exists.")
             self.button_ok.setEnabled(False)
-       
+
         elif self._get_raw_command() == "":
             self.label_status.setText("")
             self.button_ok.setEnabled(False)
-        
+
         else:
             try:
                 dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.hub.data_items}
                 raw_str = self._get_raw_command()
                 self.evaluated_arith = eval(raw_str.format(**dict_map))
-                if not isinstance(self.evaluated_arith, 
+                if not isinstance(self.evaluated_arith,
                                   specutils.spectra.spectrum1d.Spectrum1D):
-                    
-                    raise ValueError("Arithmetic Editor must return ", 
+
+                    raise ValueError("Arithmetic Editor must return ",
                                      "Spectrum1D object not {}".\
                                      format(type(self.evaluated_arith)))
             except SyntaxError:
@@ -231,5 +236,5 @@ class EquationEditor(QDialog):
                 self.label_status.setStyleSheet('color: green')
                 self.label_status.setText("Valid expression")
                 self.button_ok.setEnabled(True)
-        
+
         self._cache = self.text_label.text(), self._get_raw_command()

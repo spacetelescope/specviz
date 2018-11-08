@@ -44,9 +44,6 @@ ID_COLORS = {
 PLOTTED = "Plotted"
 NLINES_WARN = 150
 
-wave_range = (None, None)
-
-
 # Function that creates one single tabbed pane with one single view of a line list.
 
 def _createLineListPane(linelist, table_model, caller):
@@ -113,6 +110,8 @@ class LineListsWindow(ClosableMainWindow):
 
         self.plot_window = plot_window
 
+        self.wave_range = (None, None)
+
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
         self.setWindowTitle(str(self.plot_window._title))
 
@@ -168,7 +167,7 @@ class LineListsWindow(ClosableMainWindow):
             lambda:self.plot_window.line_labels_plotter.plot_linelists(
                 table_views=self._getTableViews(),
                 panes=self._getPanes(),
-                units=self.plot_window.waverange[0].unit,
+                units=self.plot_window.spectral_axis_unit,
                 caller=self.plot_window))
 
         self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
@@ -183,13 +182,12 @@ class LineListsWindow(ClosableMainWindow):
         # the user definition from call to call. At the initial
         # call, the wave range is initialized with whatever range
         # is being displayed in the spectrum plot window.
-        global wave_range
-        if wave_range[0] == None or wave_range[1] == None:
-            wave_range = self.plot_window._find_wavelength_range()
+        if self.wave_range[0] == None or self.wave_range[1] == None:
+            self.wave_range = self.plot_window._find_wavelength_range()
 
-        wrange = self._build_waverange_dialog(wave_range, line_list)
+        wrange = self._build_waverange_dialog(self.wave_range, line_list)
 
-        wave_range = wrange
+        self.wave_range = wrange
 
     def _open_linelist_file(self, file_name=None):
         if file_name is None:
@@ -206,9 +204,8 @@ class LineListsWindow(ClosableMainWindow):
 
                 if line_list:
                     self._get_waverange_from_dialog(line_list)
-                    global wave_range
-                    if wave_range[0] and wave_range[1]:
-                        line_list = self._build_view(line_list, 0, waverange=wave_range)
+                    if self.wave_range[0] and self.wave_range[1]:
+                        line_list = self._build_view(line_list, 0, waverange=self.wave_range)
                         self.plot_window.linelists.append(line_list)
 
     def _export_to_file(self, file_name=None):
@@ -238,9 +235,8 @@ class LineListsWindow(ClosableMainWindow):
 
             try:
                 self._get_waverange_from_dialog(line_list)
-                global wave_range
-                if wave_range[0] and wave_range[1]:
-                    self._build_view(line_list, 0, waverange=wave_range)
+                if self.wave_range[0] and self.wave_range[1]:
+                    self._build_view(line_list, 0, waverange=self.wave_range)
 
                 self.line_list_selector.setCurrentIndex(0)
 
@@ -282,10 +278,11 @@ class LineListsWindow(ClosableMainWindow):
 
     def _get_range_from_textfields(self, min_text, max_text):
         amin = amax = None
+
         if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
             amin = float(min_text.text())
             amax = float(max_text.text())
-            if amax > amin:
+            if amax != amin:
                 units = self.plot_window.listDataItems()[0].spectral_axis_unit
                 amin = Quantity(amin, units)
                 amax = Quantity(amax, units)
@@ -315,7 +312,7 @@ class LineListsWindow(ClosableMainWindow):
 
     def _build_view(self, line_list, index, waverange=(None,None)):
 
-        if waverange[0] and wave_range[1]:
+        if waverange[0] and waverange[1]:
             line_list = line_list.extract_range(waverange)
 
         table_model = LineListTableModel(line_list)

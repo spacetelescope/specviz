@@ -64,5 +64,5 @@ def specviz_gui():
     for testing of specviz gui
     :return:
     """
-    spec_app = Application([])
+    spec_app = Application([], skip_splash=True, dev=True)
     return spec_app
