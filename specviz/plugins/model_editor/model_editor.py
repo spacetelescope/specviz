@@ -25,9 +25,9 @@ MODELS = {
 }
 
 FITTERS = {
-    "Levenberg-Marquardt": fitting.LevMarLSQFitter,
-    "SLSQP Optimization": fitting.SLSQPLSQFitter,
-    "Simplex": fitting.SimplexLSQFitter,
+    'Levenberg-Marquardt': fitting.LevMarLSQFitter,
+    'Simplex Least Squares': fitting.SimplexLSQFitter,
+    # Disabled # 'SLSQP Optimization': fitting.SLSQPLSQFitter,
 }
 
 
@@ -37,10 +37,10 @@ class ModelEditor(QWidget):
         super().__init__(*args, **kwargs)
 
         self.fitting_options = {
-            "fitter": "Levenberg-Marquardt",
-            "max_iterations": optimizers.DEFAULT_MAXITER,
-            "relative_error": optimizers.DEFAULT_ACC,
-            "epsilon": optimizers.DEFAULT_EPS,
+            'fitter': 'Levenberg-Marquardt',
+            'max_iterations': optimizers.DEFAULT_MAXITER,
+            'relative_error': optimizers.DEFAULT_ACC,
+            'epsilon': optimizers.DEFAULT_EPS,
         }
 
         self._init_ui()
@@ -298,16 +298,16 @@ class ModelEditor(QWidget):
 
         # Load options
         fitter = FITTERS[self.fitting_options["fitter"]]
-        max_iterations = self.fitting_options["max_iterations"]
-        relative_error = self.fitting_options["relative_error"]
-        epsilon = self.fitting_options["epsilon"]
+
+        kwargs = {}
+        if fitter is fitting.LevMarLSQFitter:
+            kwargs['maxiter'] = self.fitting_options['max_iterations']
+            kwargs['acc'] = self.fitting_options['relative_error']
+            kwargs['epsilon'] = self.fitting_options['epsilon']
 
         # Run the compound model through the specutils fitting routine
         fit_mod = fit_lines(spectrum, result, fitter=fitter(),
-                            window=spectral_region,
-                            maxiter=max_iterations,
-                            acc=relative_error,
-                            epsilon=epsilon)
+                            window=spectral_region, **kwargs)
 
         if fit_mod is None:
             return
@@ -383,20 +383,23 @@ class ModelAdvancedSettingsDialog(QDialog):
 
         fitting_options = self.model_editor.fitting_options
 
-        self.max_iterations_line_edit.setText(str(fitting_options["max_iterations"]))
-        self.relative_error_line_edit.setText(str(fitting_options["relative_error"]))
-        self.epsilon_line_edit.setText(str(fitting_options["epsilon"]))
-        index = self.fitting_type_combo_box.findText(fitting_options["fitter"],
+        self.max_iterations_line_edit.setText(str(fitting_options['max_iterations']))
+        self.relative_error_line_edit.setText(str(fitting_options['relative_error']))
+        self.epsilon_line_edit.setText(str(fitting_options['epsilon']))
+        self.fitting_type_combo_box.currentIndexChanged.connect(self._on_index_change)
+        index = self.fitting_type_combo_box.findText(fitting_options['fitter'],
                                                      Qt.MatchFixedString)
         if index >= 0:
             self.fitting_type_combo_box.setCurrentIndex(index)
 
-        # This section disables some of the options
-        # until specutils fitting functions have been
-        # updated to take them into account:
-        # self.max_iterations_line_edit.setDisabled(True)
-        # self.relative_error_line_edit.setDisabled(True)
-        # self.epsilon_line_edit.setDisabled(True)
+        self._on_index_change()
+
+    def _on_index_change(self, *args):
+        fitting_type = self.fitting_type_combo_box.currentText()
+        is_lev_mar_lsq = fitting_type == 'Levenberg-Marquardt'
+        self.max_iterations_line_edit.setDisabled(not is_lev_mar_lsq)
+        self.relative_error_line_edit.setDisabled(not is_lev_mar_lsq)
+        self.epsilon_line_edit.setDisabled(not is_lev_mar_lsq)
 
     def _validate_inputs(self):
         """
@@ -438,10 +441,10 @@ class ModelAdvancedSettingsDialog(QDialog):
         epsilon = float(self.epsilon_line_edit.text())
 
         self.model_editor.fitting_options = {
-            "fitter": fitting_type,
-            "max_iterations": max_iterations,
-            "relative_error": relative_error,
-            "epsilon": epsilon,
+            'fitter': fitting_type,
+            'max_iterations': max_iterations,
+            'relative_error': relative_error,
+            'epsilon': epsilon,
         }
 
         self.close()
