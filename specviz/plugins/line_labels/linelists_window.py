@@ -124,7 +124,7 @@ class ClosableMainWindow(QMainWindow):
     #     super(ClosableMainWindow, self).__init__()
 
     def closeEvent(self, event):
-        self.dismiss_linelists_window.emit(False)
+        self.dismiss_linelists_window.emit(True)
 
 
 class LineListsWindow(ClosableMainWindow):
@@ -197,7 +197,7 @@ class LineListsWindow(ClosableMainWindow):
             caller=self.line_labels_plotter))
 
         self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
-        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(False))
+        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(True))
 
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
