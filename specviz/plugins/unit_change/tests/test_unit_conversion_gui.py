@@ -116,10 +116,9 @@ def test_flux_accept_works_correctly(specviz_gui, qtbot):
     """
     ucd = get_ucd(specviz_gui)
     qtbot.addWidget(ucd)
-
-    if ucd.ui.comboBox_units.count() > 0:
-        ucd.ui.comboBox_units.setCurrentIndex(0)
-        assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
+    
+    ucd.ui.comboBox_units.setCurrentIndex(0)
+    assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
 
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
 
