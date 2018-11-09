@@ -14,16 +14,22 @@ class LineLabelsPlotter(object):
     Class that encapsulates and handles the gory details of line label
     plotting, and especially, zooming.
     """
-    # def __init__(self, linelist_window, linelists, plot_item, *args, **kwargs):
     def __init__(self, linelist_window, *args, **kwargs):
         super(LineLabelsPlotter, self).__init__(*args, **kwargs)
 
-        # When porting code to this new class, we kept references
-        # that explicitly point to objects in the caller code. A better
-        # approach to encapsulation would be an improvement here.
         self._linelist_window = linelist_window
         self._linelists = self._linelist_window.linelists
         self._plot_item = self._linelist_window.hub.plot_widget
+
+        # This is normally set to False, except for the brief moment in
+        # between the arrivals of a data_unit_changed signal and a
+        # sigRangeChanged signal. That situation takes place when the
+        # plot units have changed, but the plot widget didn't have time
+        # to update it's range yet (as delivered by plot_widget.viewRange).
+        # After the arrival of a data_unit_changed, we have to wait for the
+        # next sigRangeChanged in order to access the new plot range and
+        # use it to re-plot the line labels.
+        self._units_changed = False
 
         # create a new, empty list that will store and help track down
         # which markers are actually being displayed at any time.
@@ -32,12 +38,9 @@ class LineLabelsPlotter(object):
         # connect signals
         self._linelist_window.dismiss_linelists_window.connect(self._dismiss_linelists_window)
         self._linelist_window.erase_linelabels.connect(self._erase_linelabels)
-
-        # self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
-        # self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self._process_zoom_signal)
-
-        # self._linelist_window.hub.plot_item.data_unit_changed.connect(self._test1)
-        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(lambda:self._test1(self._linelist_window.hub.plot_item.spectral_axis_unit))
+        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
+        self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self._handle_range_change)
+        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
 
     # --------  Slots.
 
@@ -48,34 +51,33 @@ class LineLabelsPlotter(object):
             # for now, any object can be used as a zoom message.
             self._zoom_event_buffer.put(1)
 
-    def _test1(self, units):
+    # These two slots below handle the logic associated with the
+    # data_unit_changed and sigRangeChanged signals.
 
+    def _handle_units_change(self):
+        # we have to remove all line labels here, to prevent
+        # the range re-calculation to include them when the
+        # next sigRangeChanged signal is received.
+        self._remove_linelabels_from_plot()
+        self._units_changed = True
 
-        # if self._linelist_window:
-        #     self.plot_linelists(
-        #         table_views=self._linelist_window._getTableViews(),
-        #         panes=self._linelist_window._getPanes(),
-        #         units=self._linelist_window.hub.plot_item.spectral_axis_unit,
-        #         caller=self)
+    def _handle_range_change(self):
+        if self._units_changed:
+            self._process_units_change()
+            self._units_changed = False
+        else:
+            self._process_zoom_signal()
 
+    # handle the re-plot of line labels after a plot units change.
+    def _process_units_change(self):
         if hasattr(self, "_merged_linelist"):
 
-            self._remove_linelabels_from_plot()
+            units = self._linelist_window.hub.plot_item.spectral_axis_unit
 
             self._merged_linelist[WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
             self._merged_linelist[REDSHIFTED_WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
 
-
-            print ('@@@@@@     line: 68  - ', self._merged_linelist)
-
             self._go_plot_markers(self._merged_linelist)
-
-            self._process_zoom_signal()
-
-            # self._linelist_window.hub.plot_widget.autoRange()
-            # self._linelist_window.hub.plot_widget.setRange(xRange=(-1., 1.), update=True)
-
-
 
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._linelist_window:
@@ -266,48 +268,23 @@ class LineLabelsPlotter(object):
                                        tip=tool_tip,
                                        color=color_column[row_index],
                                        orientation='vertical')
-
-            print ('@@@@@@     line: 267  wave column:  - ',  wave_column[row_index])
-
-
             markers[row_index] = marker
 
         # after all markers are created, check their positions
         # and disable some to de-clutter the plot.
-        # new_markers = self._declutter(markers)
-        new_markers = markers
-
-        # self._linelist_window.hub.plot_widget.enableAutoRange()
-
-        print ('@@@@@@     line: 261  - ', self._plot_item.viewRange())
+        new_markers = self._declutter(markers)
 
         # place markers on screen
         for marker_proxy in new_markers:
             if marker_proxy:
-                # build eal, full-fledged marker from proxy.
+                # build the real, full-fledged marker from proxy.
                 real_marker = LineIDMarker(marker_proxy)
                 real_marker.setPos(marker_proxy.x0, marker_proxy.y0)
 
-                print ('@@@@@@     line: 263  - x0, y0:  ', marker_proxy.x0, marker_proxy.y0)
-
                 self._plot_item.addItem(real_marker)
-
-                print ('@@@@@@     line: 294  -  after setPos:  ', real_marker.x0, real_marker.y0)
-
                 self._markers_on_screen.append(real_marker)
 
         self._plot_item.update()
-
-        # self._linelist_window.hub.plot_widget.enableAutoRange()
-
-        # self._linelist_window.hub.plot_widget.setRange(xRange=(0.1, 0.2), update=True)
-
-
-        for marker_ in self._markers_on_screen:
-            print ('@@@@@@     line: 305  - after update:  ', marker_.x0, marker_.y0)
-
-
-        print('@@@@@@     line: 279  - ', self._linelist_window.hub.plot_widget.viewRange())
 
     # Slot called by the zoom control thread.
     def _handle_zoom(self):
@@ -451,9 +428,8 @@ class LineLabelsPlotter(object):
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
-            markers = self._markers_on_screen
-            for index in range(len(markers)):
-                self._plot_item.removeItem(markers[index])
+            for index in range(len(self._markers_on_screen)):
+                self._plot_item.removeItem(self._markers_on_screen[index])
             self._plot_item.update()
             self._markers_on_screen = []
 
