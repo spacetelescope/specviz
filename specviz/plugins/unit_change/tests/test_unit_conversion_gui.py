@@ -22,7 +22,6 @@ def test_spectral_custom_units_correct(specviz_gui, qtbot):
     Accept valid custom units
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     ucd.ui.comboBox_spectral.setCurrentIndex(0)
     assert ucd.ui.comboBox_spectral.currentText() == ucd.spectral_axis_unit_equivalencies_titles[0]
@@ -39,7 +38,6 @@ def test_spectral_custom_units_incorrect(specviz_gui, qtbot):
     Reject invalid custom units
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     ucd.ui.comboBox_spectral.setCurrentIndex(ucd.ui.comboBox_spectral.count() - 1)
     assert ucd.ui.comboBox_spectral.currentText() == "Custom"
@@ -53,7 +51,6 @@ def test_spectral_accept_works_correctly(specviz_gui, qtbot):
     Accept works for units in combobox
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     if ucd.ui.comboBox_spectral.count() > 4:
         ucd.ui.comboBox_spectral.setCurrentIndex(4)
@@ -71,7 +68,6 @@ def test_spectral_cancel_works_correctly(specviz_gui, qtbot):
     Make sure units are not changed after cancel
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     original_spectral_unit = ucd.hub.plot_widget.spectral_axis_unit
 
@@ -89,7 +85,6 @@ def test_flux_custom_units_correct(specviz_gui, qtbot):
     Accept valid custom units
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     ucd.ui.comboBox_units.setCurrentIndex(0)
     assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
@@ -106,7 +101,6 @@ def test_flux_custom_units_incorrect(specviz_gui, qtbot):
     Reject invalid custom units
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     ucd.ui.comboBox_units.setCurrentIndex(ucd.ui.comboBox_units.count() - 1)
     assert ucd.ui.comboBox_units.currentText() == "Custom"
@@ -120,7 +114,6 @@ def test_flux_accept_works_correctly(specviz_gui, qtbot):
     Accept works for units in combobox
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     if ucd.ui.comboBox_units.count() > 0:
         ucd.ui.comboBox_units.setCurrentIndex(0)
@@ -134,7 +127,6 @@ def test_flux_cancel_works_correctly(specviz_gui, qtbot):
     Make sure units are not changed after cancel
     """
     ucd = get_ucd(specviz_gui)
-    qtbot.addWidget(ucd)
 
     original_flux_unit = ucd.hub.plot_widget.data_unit
 
