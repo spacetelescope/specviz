@@ -1,16 +1,13 @@
 from qtpy import QtCore
 from qtpy.QtWidgets import QDialogButtonBox
 
-from specviz.core.hub import Hub
-from specviz.plugins.unit_change.unit_change_dialog import UnitChangeDialog
-
 
 def get_ucd(specviz_gui):
-
-    # hub = Hub(workspace=specviz_gui.current_workspace)
-    # # Make sure that there are only 3 data items currently
-    # assert len(hub.data_items) == 3
-    # ucd = UnitChangeDialog(specviz_gui.current_workspace)
+    """
+    Get the unit conversion dialog instance and return it
+    :param specviz_gui:
+    :return:
+    """
     ucd = specviz_gui.current_workspace._plugins['Unit Change Plugin']
 
     ucd.show()
