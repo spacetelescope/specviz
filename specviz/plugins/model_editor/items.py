@@ -1,6 +1,9 @@
 import numpy as np
 
 from astropy import units as u
+
+from specutils.spectra import Spectrum1D
+
 from ...core.items import DataItem
 
 
@@ -52,3 +55,7 @@ class ModelDataItem(DataItem):
     @model_editor_model.setter
     def model_editor_model(self, value):
         self._model_editor_model = value
+
+    @property
+    def spectrum(self):
+        return Spectrum1D(flux=self.flux, spectral_axis=self.model_spectral_axis)
