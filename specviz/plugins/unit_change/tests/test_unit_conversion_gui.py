@@ -5,8 +5,6 @@ from qtpy.QtWidgets import QDialogButtonBox
 def get_ucd(specviz_gui):
     """
     Get the unit conversion dialog instance and return it
-    :param specviz_gui:
-    :return:
     """
     ucd = specviz_gui.current_workspace._plugins['Unit Change Plugin']
 
