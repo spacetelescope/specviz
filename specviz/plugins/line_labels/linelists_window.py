@@ -46,8 +46,6 @@ ID_COLORS = {
 PLOTTED = "Plotted"
 NLINES_WARN = 150
 
-wave_range = (None, None)
-
 
 # Function that creates one single tabbed pane with one single view of a line list.
 
@@ -136,6 +134,8 @@ class LineListsWindow(ClosableMainWindow):
 
         self.hub = hub
 
+        self.wave_range = (None, None)
+
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
 
         # QtDesigner can't add a combo box to a tool bar...
@@ -209,13 +209,12 @@ class LineListsWindow(ClosableMainWindow):
         # the user definition from call to call. At the initial
         # call, the wave range is initialized with whatever range
         # is being displayed in the spectrum plot window.
-        global wave_range
-        if wave_range[0] == None or wave_range[1] == None:
-            wave_range = self._find_wavelength_range()
+        if self.wave_range[0] == None or self.wave_range[1] == None:
+            self.wave_range = self._find_wavelength_range()
 
-        wrange = self._build_waverange_dialog(wave_range, line_list)
+        wrange = self._build_waverange_dialog(self.wave_range, line_list)
 
-        wave_range = wrange
+        self.wave_range = wrange
 
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains
@@ -225,9 +224,8 @@ class LineListsWindow(ClosableMainWindow):
 
             try:
                 self._get_waverange_from_dialog(line_list)
-                global wave_range
-                if wave_range[0] and wave_range[1]:
-                    self._build_view(line_list, 0, waverange=wave_range)
+                if self.wave_range[0] and self.wave_range[1]:
+                    self._build_view(line_list, 0, waverange=self.wave_range)
 
                 self.line_list_selector.setCurrentIndex(0)
 
@@ -306,7 +304,7 @@ class LineListsWindow(ClosableMainWindow):
 
     def _build_view(self, line_list, index, waverange=(None, None)):
 
-        if waverange[0] and wave_range[1]:
+        if self.wave_range[0] and self.wave_range[1]:
             line_list = line_list.extract_range(waverange)
 
         table_model = LineListTableModel(line_list)
@@ -413,9 +411,8 @@ class LineListsWindow(ClosableMainWindow):
 
                 if line_list:
                     self._get_waverange_from_dialog(line_list)
-                    global wave_range
-                    if wave_range[0] and wave_range[1]:
-                        line_list = self._build_view(line_list, 0, waverange=wave_range)
+                    if self.wave_range[0] and self.wave_range[1]:
+                        line_list = self._build_view(line_list, 0, waverange=self.wave_range)
 
                         if not hasattr(self.plot_window, 'linelists'):
                             self.plot_window.linelists = []
