@@ -38,7 +38,7 @@ class UnitChangeDialog(QDialog):
         self.current_data_unit = None
         self.current_spectral_axis_unit = None
 
-    def exec_(self):
+    def show(self):
         # If there is no plot item, don't even try to process unit info
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
@@ -62,13 +62,14 @@ class UnitChangeDialog(QDialog):
 
         # Gets all possible conversions from current spectral_axis_unit
         self.spectral_axis_unit_equivalencies = u.Unit(
-            self.hub.data_item.spectral_axis[0]).find_equivalent_units(
+            self.hub.data_item.spectral_axis.unit).find_equivalent_units(
                 equivalencies=u.spectral())
 
         # Gets all possible conversions for flux from current spectral axis and corresponding units
+        # np.sum for spectral_axis so that it does not return a Quantity with zero scale
         self.data_unit_equivalencies = u.Unit(
             self.hub.plot_widget.data_unit).find_equivalent_units(
-                equivalencies=u.spectral_density(self.hub.data_item.spectral_axis[0]), include_prefix_units=False)
+                equivalencies=u.spectral_density(np.sum(self.hub.data_item.spectral_axis)), include_prefix_units=False)
 
         # Current data unit and spectral axis unit
         self.current_data_unit = self.hub.plot_widget.data_unit
@@ -117,11 +118,11 @@ class UnitChangeDialog(QDialog):
         self.setup_ui()
         self.setup_connections()
 
-        super().exec_()
+        super().show()
 
     @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
     def on_action_triggered(self):
-        self.exec_()
+        self.show()
 
     def setup_ui(self):
         """Setup the PyQt UI for this dialog."""
