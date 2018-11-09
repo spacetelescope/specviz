@@ -1,5 +1,6 @@
 import os
 import uuid
+import pickle
 
 import numpy as np
 from astropy import units as u
@@ -7,7 +8,7 @@ from astropy.modeling import fitting, models, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (QAction, QDialog, QInputDialog, QMenu, QMessageBox,
-                            QToolButton, QWidget)
+                            QToolButton, QWidget, QFileDialog)
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
 from specutils.spectra import Spectrum1D
@@ -152,15 +153,36 @@ class ModelEditor(QWidget):
             if self.model_tree_view.model().evaluate() is None:
                 self._on_equation_edit_button_clicked()
 
+    def _save_model(self, filename, model_obj):
+        with open(filename, 'wb') as handle:
+            pickle.dump(model_obj, handle)
+
     def _on_save_model(self):
 
         plot_data_item = self.hub.plot_item
         model_editor_model = plot_data_item.data_item.model_editor_model
 
+        # There are no models to save
         if not model_editor_model.fittable_models:
             self.new_message_box(text='No model available',
                                  info='No model exists to be saved.')
             return
+
+        default_name = os.path.join(os.path.curdir, 'new_model.smf')
+        outfile = QFileDialog.getSaveFileName(
+            self, caption='Save Model', directory=default_name,
+            filter="Specviz Model Files (*.smf)")[0]
+        # No file was selected; the user hit "Cancel"
+        if not outfile:
+            return
+
+        self._save_model(outfile, model_editor_model.fittable_models)
+
+        self.new_message_box(
+            text='Model saved',
+            info='Model successfully saved to {}'.format(outfile),
+            icon=QMessageBox.Information)
+
 
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
