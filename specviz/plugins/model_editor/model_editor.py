@@ -129,8 +129,8 @@ class ModelEditor(QWidget):
 
         # Connect data change signals so that the plot updates when the user
         # changes a parameter in the model view model
-        model_data_item.model_editor_model.dataChanged.connect(
-            lambda tl, br, r, pi=plot_data_item: self._on_model_data_changed(tl, br, pi))
+        model_data_item.model_editor_model.itemChanged.connect(
+            lambda item, pdi=plot_data_item: self._on_model_item_changed(item, pdi))
 
         # plot_data_item = self.hub.workspace.proxy_model.item_from_id(model_data_item.identifier)
         plot_data_item.visible = True
@@ -167,12 +167,16 @@ class ModelEditor(QWidget):
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
-    def _on_model_data_changed(self, top_left, bottom_right, plot_data_item):
-        if top_left.column() == 1:
-            # We only want to update the model if the parameter values
-            # are changed, which exist in column 1.
+    def _on_model_item_changed(self, item, plot_data_item):
+        if item.parent():
+            # If the item has a parent, then we know that the parameter
+            # value has changed. Note that the internal stored data has not
+            # been truncated at all, only the displayed text value. All fitting
+            # uses the full, un-truncated data value.
+            item.setData(float(item.text()), Qt.UserRole + 1)
+            item.setText("{:.5g}".format(float(item.text())))
             plot_data_item.set_data()
-        elif top_left.column() == 0:
+        else:
             # In this case, the user has renamed a model. Since the equation
             # editor now doesn't know about the old model, reset the equation
             self.hub.data_item.model_editor_model.reset_equation()
@@ -293,8 +297,15 @@ class ModelEditor(QWidget):
             kwargs['acc'] = self.fitting_options['relative_error']
             kwargs['epsilon'] = self.fitting_options['epsilon']
 
-        # Run the compound model through the specutils fitting routine
-        fit_mod = fit_lines(data_item.spectrum, result, fitter=fitter(),
+        # Run the compound model through the specutils fitting routine. Ensure
+        # that the returned values are always in units of the current plot by
+        # passing in the spectrum with the spectral axis and flux
+        # converted to plot units.
+        spectrum = data_item.spectrum.with_spectral_unit(
+            plot_data_item.spectral_axis_unit)
+        spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
+
+        fit_mod = fit_lines(spectrum, result, fitter=fitter(),
                             window=spectral_region, **kwargs)
 
         if fit_mod is None:
