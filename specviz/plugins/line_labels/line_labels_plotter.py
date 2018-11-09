@@ -70,7 +70,9 @@ class LineLabelsPlotter(object):
 
     # handle the re-plot of line labels after a plot units change.
     def _process_units_change(self):
-        if hasattr(self, "_merged_linelist"):
+        if hasattr(self, "_merged_linelist") and \
+           hasattr(self, '_linelist_window') and \
+           self._linelist_window:
 
             units = self._linelist_window.hub.plot_item.spectral_axis_unit
 
@@ -78,6 +80,10 @@ class LineLabelsPlotter(object):
             self._merged_linelist[REDSHIFTED_WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
 
             self._go_plot_markers(self._merged_linelist)
+
+            # the plotted lines pane needs to be refreshed as well.
+            self._linelist_window.erasePlottedLines()
+            self._linelist_window.displayPlottedLines(self._merged_linelist)
 
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._linelist_window:
