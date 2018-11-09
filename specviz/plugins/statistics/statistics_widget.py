@@ -59,7 +59,7 @@ def compute_stats(spectrum):
     """
 
     try:
-        cent = centroid(spectrum, region=None)  # we may want to adjust this for continuum subtraction
+        cent = centroid(spectrum, region=None) # we may want to adjust this for continuum subtraction
     except Exception as e:
         logging.error(e)
         cent = "Error"
