@@ -55,6 +55,7 @@ def test_spectral_accept_works_correctly(specviz_gui, qtbot):
 
     # Press accept
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+    assert ucd.hub.plot_widget.spectral_axis_unit == ucd.spectral_axis_unit_equivalencies[0]
 
 
 def test_spectral_cancel_works_correctly(specviz_gui, qtbot):
@@ -117,6 +118,7 @@ def test_flux_accept_works_correctly(specviz_gui, qtbot):
     assert ucd.ui.comboBox_units.currentText() == ucd.data_unit_equivalencies_titles[0]
 
     qtbot.mouseClick(ucd.ui.buttonBox.button(QDialogButtonBox.Ok), QtCore.Qt.LeftButton)
+    assert ucd.hub.plot_widget.data_unit == ucd.data_unit_equivalencies[0]
 
 
 def test_flux_cancel_works_correctly(specviz_gui, qtbot):

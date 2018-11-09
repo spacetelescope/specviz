@@ -16,7 +16,7 @@ from ...core.hub import Hub
 np.seterr(divide='ignore', invalid='ignore')
 logging.basicConfig(level=logging.DEBUG, format="%(filename)s: %(levelname)8s %(message)s")
 log = logging.getLogger('UnitChangeDialog')
-log.setLevel(logging.ERROR)
+log.setLevel(logging.WARNING)
 
 
 @plugin("Unit Change Plugin")
