@@ -160,14 +160,12 @@ class ModelEditor(QWidget):
             if self.model_tree_view.model().evaluate() is None:
                 self._on_equation_edit_button_clicked()
 
-    def _save_model(self, filename, model_obj):
+    def _save_models(self, filename):
+        model_editor_model = self.hub.plot_item.data_item.model_editor_model
         with open(filename, 'wb') as handle:
-            pickle.dump(model_obj, handle)
+            pickle.dump(model_editor_model.fittable_models, handle)
 
-    def _on_save_model(self):
-
-        plot_data_item = self.hub.plot_item
-        model_editor_model = plot_data_item.data_item.model_editor_model
+    def _on_save_model(self, interactive=True):
 
         # There are no models to save
         if not model_editor_model.fittable_models:
@@ -183,7 +181,7 @@ class ModelEditor(QWidget):
         if not outfile:
             return
 
-        self._save_model(outfile, model_editor_model.fittable_models)
+        self._save_models(outfile)
 
         self.new_message_box(
             text='Model saved',
