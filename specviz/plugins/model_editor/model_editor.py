@@ -34,6 +34,8 @@ FITTERS = {
     # Disabled # 'SLSQP Optimization': fitting.SLSQPLSQFitter,
 }
 
+SPECVIZ_MODEL_FILE_FILTER = 'Specviz Model Files (*.smf)'
+
 
 @plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
 class ModelEditor(QWidget):
@@ -64,6 +66,11 @@ class ModelEditor(QWidget):
             action = QAction(k, models_menu)
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
+
+        # Add an option to load models from a file
+        load_file_action = QAction('Load from file', models_menu)
+        load_file_action.triggered.connect(lambda x : self._on_load_from_file())
+        models_menu.addAction(load_file_action)
 
         # Initially hide the model editor tools until user has selected an
         # editable model spectrum object
@@ -171,7 +178,7 @@ class ModelEditor(QWidget):
         default_name = os.path.join(os.path.curdir, 'new_model.smf')
         outfile = QFileDialog.getSaveFileName(
             self, caption='Save Model', directory=default_name,
-            filter="Specviz Model Files (*.smf)")[0]
+            filter=SPECVIZ_MODEL_FILE_FILTER)[0]
         # No file was selected; the user hit "Cancel"
         if not outfile:
             return
@@ -183,6 +190,28 @@ class ModelEditor(QWidget):
             info='Model successfully saved to {}'.format(outfile),
             icon=QMessageBox.Information)
 
+    def _load_model_from_file(self, filename):
+        with open(filename, 'rb') as handle:
+            loaded_models = pickle.load(handle)
+
+        for _, model in loaded_models.items():
+            self._add_model(model)
+
+    def _on_load_from_file(self):
+        filename = QFileDialog.getOpenFileName(
+            self, caption='Load Model',
+            filter=SPECVIZ_MODEL_FILE_FILTER)[0]
+        if not filename:
+            return
+
+        self._load_model_from_file(filename)
+
+    def _add_model(self, model):
+        idx = self.model_tree_view.model().add_model(model)
+        self.model_tree_view.setExpanded(idx, True)
+
+        for i in range(0, 4):
+            self.model_tree_view.resizeColumnToContents(i)
 
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
@@ -200,11 +229,7 @@ class ModelEditor(QWidget):
                 return
 
         model = model_type()
-        idx = self.model_tree_view.model().add_model(model)
-        self.model_tree_view.setExpanded(idx, True)
-
-        for i in range(0, 4):
-            self.model_tree_view.resizeColumnToContents(i)
+        self._add_model(model)
 
     def _redraw_model(self):
         # Get the current plot item and update
