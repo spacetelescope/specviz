@@ -153,8 +153,14 @@ class ModelEditor(QWidget):
                 self._on_equation_edit_button_clicked()
 
     def _on_save_model(self):
-        self.new_message_box(text='No model available',
-                             info='No model exists to be saved.')
+
+        plot_data_item = self.hub.plot_item
+        model_editor_model = plot_data_item.data_item.model_editor_model
+
+        if not model_editor_model.fittable_models:
+            self.new_message_box(text='No model available',
+                                 info='No model exists to be saved.')
+            return
 
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
