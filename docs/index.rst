@@ -25,3 +25,4 @@ Using SpecViz
 
    getting-started
    unit_conversion
+   arithmetic-layer

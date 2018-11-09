@@ -76,6 +76,8 @@ class Plugin(DecoratorRegistry):
                 cls.hub = Hub(workspace)
                 plugin = cls()
 
+                workspace._plugins[name] = plugin
+
                 # Call any internal tool or plot bar decorators
                 members = inspect.getmembers(plugin, predicate=inspect.ismethod)
 
@@ -107,6 +109,8 @@ class Plugin(DecoratorRegistry):
 
                 cls.hub = Hub(workspace)
                 plugin = cls()
+
+                workspace._plugin_bars[name] = plugin
 
                 if workspace is not None:
                     # Check if this plugin already exists as a tab
