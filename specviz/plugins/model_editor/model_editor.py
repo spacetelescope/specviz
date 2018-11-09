@@ -77,6 +77,8 @@ class ModelEditor(QWidget):
         self.advanced_settings_button.clicked.connect(
             lambda: ModelAdvancedSettingsDialog(self, self).exec())
 
+        self.save_model_button.clicked.connect(self._on_save_model)
+
         self.data_selection_combo.setModel(self.hub.model)
 
         # When a plot data item is select, get its model editor model
@@ -149,6 +151,10 @@ class ModelEditor(QWidget):
             # force open the arithmetic editor so the user can fix it.
             if self.model_tree_view.model().evaluate() is None:
                 self._on_equation_edit_button_clicked()
+
+    def _on_save_model(self):
+        self.new_message_box(text='No model available',
+                             info='No model exists to be saved.')
 
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
