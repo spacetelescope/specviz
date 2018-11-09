@@ -84,6 +84,7 @@ def test_save_model(specviz_gui, tmpdir):
 
     model_editor = specviz_gui.current_workspace._plugin_bars['Model Editor']
 
+    # Open the model editor and create a model
     model_editor._on_create_new_model()
     model_editor._add_fittable_model(models.Gaussian1D)
 
@@ -101,3 +102,36 @@ def test_save_model(specviz_gui, tmpdir):
     assert len(saved_models) == 1
     assert 'Gaussian1D' in saved_models
     assert isinstance(saved_models['Gaussian1D'], models.Gaussian1D)
+
+
+def test_load_model(specviz_gui, tmpdir):
+    hub = Hub(workspace=specviz_gui.current_workspace)
+
+    model_editor = specviz_gui.current_workspace._plugin_bars['Model Editor']
+
+    # Open the model editor
+    model_editor._on_create_new_model()
+    model_editor_model = hub.plot_item.data_item.model_editor_model
+
+    # Sanity check to make sure no models exist so far
+    assert len(model_editor_model.fittable_models) == 0
+
+    # Create a pickle on the fly to use for testing
+    model_file = str(tmpdir.join('new_model.smf'))
+    new_models = {
+        'Gaussian1D': models.Gaussian1D(),
+        'Polynomial1D': models.Polynomial1D(degree=4),
+        'Linear1D': models.Linear1D()
+    }
+    with open(model_file, 'wb') as handle:
+        pickle.dump(new_models, handle)
+
+    model_editor._load_model_from_file(model_file)
+    loaded_models = model_editor_model.fittable_models
+    assert len(loaded_models) == len(new_models)
+    assert 'Gaussian1D' in loaded_models
+    assert isinstance(loaded_models['Gaussian1D'], models.Gaussian1D)
+    assert 'Polynomial1D' in loaded_models
+    assert isinstance(loaded_models['Polynomial1D'], models.Polynomial1D)
+    assert 'Linear1D' in loaded_models
+    assert isinstance(loaded_models['Linear1D'], models.Linear1D)
