@@ -24,5 +24,6 @@ Using SpecViz
    :maxdepth: 2
 
    getting-started
-   model_fitting.rst
+   unit_conversion
    arithmetic-layer
+   model_fitting
