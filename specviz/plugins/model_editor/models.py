@@ -33,8 +33,7 @@ class ModelFittingModel(QStandardItemModel):
         self._equation = value
         self.evaluate()
 
-    @property
-    def fittable_models(self):
+    def compose_fittable_models(self):
         # Recompose the model objects with the current values in each of its
         # parameter rows.
         fittable_models = {}
@@ -42,15 +41,11 @@ class ModelFittingModel(QStandardItemModel):
         for model_item in self.items:
             model_kwargs = {'name': model_item.text(), 'fixed': {}}
 
-            special_args = model_item._special_args
-            if special_args:
-                model_kwargs.update(special_args)
-
             # For each of the children `StandardItem`s, parse out their
             # individual stored values
             for cidx in range(model_item.rowCount()):
                 param_name = model_item.child(cidx, 0).data()
-                param_value = float(model_item.child(cidx, 1).text())
+                param_value = model_item.child(cidx, 1).data()
                 param_unit = model_item.child(cidx, 2).data()
                 param_fixed = model_item.child(cidx, 3).checkState() == Qt.Checked
 
@@ -62,7 +57,7 @@ class ModelFittingModel(QStandardItemModel):
 
         return fittable_models
 
-    def add_model(self, model, special_args={}):
+    def add_model(self, model):
         model_name = model.__class__.name
 
         model_count = len([self.item(idx) for idx in range(self.rowCount())
@@ -71,7 +66,6 @@ class ModelFittingModel(QStandardItemModel):
         model_name = model_name + str(model_count) if model_count > 0 else model_name
 
         model_item = QStandardItem(model_name)
-        model_item._special_args = special_args
         model_item.setData(model, Qt.UserRole + 1)
 
         for para_name in model.param_names:
@@ -84,7 +78,7 @@ class ModelFittingModel(QStandardItemModel):
             param_name.setEditable(False)
 
             # Store the data value of the parameter
-            param_value = QStandardItem("{}".format(parameter.value))
+            param_value = QStandardItem("{:.5g}".format(parameter.value))
             param_value.setData(parameter.value, Qt.UserRole + 1)
 
             # Store the unit information
@@ -127,7 +121,7 @@ class ModelFittingModel(QStandardItemModel):
         fittable_models : dict
             Mapping of tree view model variables names to their model instances.
         """
-        fittable_models = self.fittable_models
+        fittable_models = self.compose_fittable_models()
 
         # Create an evaluation namespace for use in parsing the string
         namespace = {}

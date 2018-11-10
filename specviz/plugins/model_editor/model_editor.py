@@ -129,8 +129,8 @@ class ModelEditor(QWidget):
 
         # Connect data change signals so that the plot updates when the user
         # changes a parameter in the model view model
-        model_data_item.model_editor_model.dataChanged.connect(
-            lambda tl, br, r, pi=plot_data_item: self._on_model_data_changed(tl, br, pi))
+        model_data_item.model_editor_model.itemChanged.connect(
+            lambda item, pdi=plot_data_item: self._on_model_item_changed(item, pdi))
 
         # plot_data_item = self.hub.workspace.proxy_model.item_from_id(model_data_item.identifier)
         plot_data_item.visible = True
@@ -146,29 +146,37 @@ class ModelEditor(QWidget):
             self.model_tree_view.model().removeRow(selected_idx.row())
 
     def _add_fittable_model(self, model_type):
-        if model_type in [MODELS['Polynomial1D']]:
+        if issubclass(model_type, MODELS['Polynomial1D']):
             text, ok = QInputDialog.getInt(self, 'Polynomial1D',
                                            'Enter Polynomial1D degree:')
             if ok:
-                model = model_type(int(text))
-                special_args = {'degree': int(text)}
+                # Create a new astropy model class definition with the degree
+                # data already embedded
+                model_type = type(
+                    model_type.__name__, (model_type,),
+                    {'__init__': lambda self, *args, **kwargs:
+                        super(model_type, self).__init__(
+                            degree=int(text), **kwargs)})
             else:
                 return
-        else:
-            model = model_type()
-            special_args = {}
-        idx = self.model_tree_view.model().add_model(model, special_args=special_args)
+
+        model = model_type()
+        idx = self.model_tree_view.model().add_model(model)
         self.model_tree_view.setExpanded(idx, True)
 
-        for i in range(0, 3):
+        for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
-    def _on_model_data_changed(self, top_left, bottom_right, plot_data_item):
-        if top_left.column() == 1:
-            # We only want to update the model if the parameter values
-            # are changed, which exist in column 1.
+    def _on_model_item_changed(self, item, plot_data_item):
+        if item.parent():
+            # If the item has a parent, then we know that the parameter
+            # value has changed. Note that the internal stored data has not
+            # been truncated at all, only the displayed text value. All fitting
+            # uses the full, un-truncated data value.
+            item.setData(float(item.text()), Qt.UserRole + 1)
+            item.setText("{:.5g}".format(float(item.text())))
             plot_data_item.set_data()
-        elif top_left.column() == 0:
+        else:
             # In this case, the user has renamed a model. Since the equation
             # editor now doesn't know about the old model, reset the equation
             self.hub.data_item.model_editor_model.reset_equation()
@@ -214,7 +222,7 @@ class ModelEditor(QWidget):
         self.model_tree_view.setModel(model_data_item.model_editor_model)
         self.model_tree_view.expandAll()
 
-        for i in range(0, 3):
+        for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
     def _combine_all_workspace_regions(self):
@@ -245,39 +253,11 @@ class ModelEditor(QWidget):
 
         return self.hub.proxy_model.data(idx, role=Qt.UserRole)
 
-    def _on_fitting_target_changed(self):
-        # Grab the currntly selected plot data item from the data list
-        model_plot_data_item = self.hub.plot_item
-
-        # If this item is not a model data item, bail
-        if not isinstance(model_plot_data_item.data_item, ModelDataItem):
-            return
-
-        plot_data_item = self._get_selected_plot_data_item()
-
-        model_data_item = model_plot_data_item.data_item
-        model_data_item._plot_data_item = plot_data_item
-
-    def _spectrum_with_plot_units(self):
-        """
-        Make a new spectrum object with the plotted units.
-
-        Returns
-        -------
-        spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
-        """
-        plot_data_item = self._get_selected_plot_data_item()
-
-        flux = plot_data_item.flux * u.Unit(plot_data_item.data_unit)
-        spectral_axis = plot_data_item.spectral_axis * u.Unit(plot_data_item.spectral_axis_unit)
-
-        return Spectrum1D(flux=flux, spectral_axis=spectral_axis)
-
-    def _on_fit_clicked(self, spectrum_data_item=None, eq_pop_up=True):
+    def _on_fit_clicked(self, eq_pop_up=True):
         if eq_pop_up:
             self._on_equation_edit_button_clicked()
 
-        # Grab the currntly selected plot data item from the data list
+        # Grab the currently selected plot data item from the data list
         plot_data_item = self.hub.plot_item
 
         # If this item is not a model data item, bail
@@ -287,21 +267,18 @@ class ModelEditor(QWidget):
         # The spectrum_data_item would be the data item that this model is to
         # be fit to. This selection is done via the data_selection_combo.
         combo_index = self.data_selection_combo.currentIndex()
-        spectrum_data_item = self.data_selection_combo.itemData(combo_index)
+        data_item = self.data_selection_combo.itemData(combo_index)
 
         # If user chooses a model instead of a data item, notify and return
-        if isinstance(spectrum_data_item, ModelDataItem):
+        if isinstance(data_item, ModelDataItem):
             return self.new_message_box(text="Selected data is a model.",
                                         info="The currently selected data "
                                              "is a model. Please select a "
                                              "data item containing spectra.")
 
-        # spectrum = plot_data_item.data_item.spectrum  # spectrum_data_item.spectrum
-        spectrum = self._spectrum_with_plot_units()
         spectral_region = self._combine_all_workspace_regions()
 
         # Compose the compound model from the model editor sub model tree view
-        self._on_fitting_target_changed()
         model_editor_model = plot_data_item.data_item.model_editor_model
         result = model_editor_model.evaluate()
 
@@ -320,7 +297,14 @@ class ModelEditor(QWidget):
             kwargs['acc'] = self.fitting_options['relative_error']
             kwargs['epsilon'] = self.fitting_options['epsilon']
 
-        # Run the compound model through the specutils fitting routine
+        # Run the compound model through the specutils fitting routine. Ensure
+        # that the returned values are always in units of the current plot by
+        # passing in the spectrum with the spectral axis and flux
+        # converted to plot units.
+        spectrum = data_item.spectrum.with_spectral_unit(
+            plot_data_item.spectral_axis_unit)
+        spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
+
         fit_mod = fit_lines(spectrum, result, fitter=fitter(),
                             window=spectral_region, **kwargs)
 
@@ -368,11 +352,11 @@ class ModelEditor(QWidget):
                 else:
                     parameter = getattr(fit_mod, param_name)
 
-                model_item.child(cidx, 1).setText(str(parameter.value))
+                model_item.child(cidx, 1).setText("{:0.5g}".format(parameter.value))
                 model_item.child(cidx, 1).setData(parameter.value, Qt.UserRole + 1)
                 model_item.child(cidx, 3).setData(parameter.fixed, Qt.UserRole + 1)
 
-        for i in range(0, 3):
+        for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
         # Update the displayed data on the plot
