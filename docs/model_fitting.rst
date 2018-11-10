@@ -19,6 +19,7 @@ Gaussian                  `~astropy.modeling.functional_models.Gaussian1D`
 Linear                    `~astropy.modeling.functional_models.Linear1D`
 Lorentz                   `~astropy.modeling.functional_models.Lorentz1D`
 Voigt                     `~astropy.modeling.functional_models.Voigt1D`
+Polynomial                `~astropy.modeling.polynomial.Polynomial1D`
 ========================= ==========================================================
 
 The models can be fitted with the following fitters:
@@ -57,8 +58,8 @@ To fit a model:
 #. Click the lock icon next to any parameter to choose whether it should be kept
    fixed (closed lock) or allowed to vary (open lock) during fitting.
 #. Click on the settings icon at the bottom of the model fitting window select options such as the desired fitter and maximum iterations.
+#. Check the model's ``Equation Editor`` by clicking the calculator button. It will pop up with the current model arithmetic. Review. edit and press ok when done.
 #. Click the blue ``Fit Model`` button at the bottom of the fitting window.
-#. The model ``Equation Editor`` will pop up with the current model arithmetic. Review. edit and press ok to preform the fitting.
 #. The associated model parameters will be adjusted accordingly.
 
 Equation Editor
