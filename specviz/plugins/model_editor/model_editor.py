@@ -130,7 +130,7 @@ class ModelEditor(QWidget):
         # Connect data change signals so that the plot updates when the user
         # changes a parameter in the model view model
         model_data_item.model_editor_model.itemChanged.connect(
-            lambda item, pdi=plot_data_item: self._on_model_item_changed(item, pdi))
+            lambda item: self._on_model_item_changed(item))
 
         # plot_data_item = self.hub.workspace.proxy_model.item_from_id(model_data_item.identifier)
         plot_data_item.visible = True
@@ -167,15 +167,37 @@ class ModelEditor(QWidget):
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
-    def _on_model_item_changed(self, item, plot_data_item):
+    def _redraw_model(self):
+        # Get the current plot item and update
+        # its data item if its a model plot item
+        plot_data_item = self.hub.plot_item
+        if isinstance(plot_data_item.data_item, ModelDataItem):
+            # This is the data item selected in the
+            # model editor data selection combo box
+            data_item = self._get_selected_data_item()
+            if data_item is not None and \
+                    isinstance(data_item.spectrum, Spectrum1D):
+                # Copy the spectrum and assign the current
+                # fittable model the spectrum with the
+                # spectral axis and flux converted to plot units.
+                spectrum = data_item.spectrum.with_spectral_unit(
+                    plot_data_item.spectral_axis_unit)
+                spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
+                plot_data_item.data_item.set_data(spectrum)
+
+        plot_data_item.set_data()
+
+    def _on_model_item_changed(self, item):
+
         if item.parent():
             # If the item has a parent, then we know that the parameter
             # value has changed. Note that the internal stored data has not
             # been truncated at all, only the displayed text value. All fitting
             # uses the full, un-truncated data value.
             item.setData(float(item.text()), Qt.UserRole + 1)
-            item.setText("{:.5g}".format(float(item.text())))
-            plot_data_item.set_data()
+            # item.setText("{:.5g}".format(float(item.text()))) # dont change user input
+            item.setText(item.text())
+            self._redraw_model()
         else:
             # In this case, the user has renamed a model. Since the equation
             # editor now doesn't know about the old model, reset the equation
@@ -253,6 +275,21 @@ class ModelEditor(QWidget):
 
         return self.hub.proxy_model.data(idx, role=Qt.UserRole)
 
+    def _get_selected_data_item(self):
+        # The spectrum_data_item would be the data item that this model is to
+        # be fit to. This selection is done via the data_selection_combo.
+        combo_index = self.data_selection_combo.currentIndex()
+        data_item = self.data_selection_combo.itemData(combo_index)
+
+        # If user chooses a model instead of a data item, notify and return
+        if isinstance(data_item, ModelDataItem):
+            self.new_message_box(text="Selected data is a model.",
+                                 info="The currently selected data "
+                                      "is a model. Please select a "
+                                      "data item containing spectra.")
+            return None
+        return data_item
+
     def _on_fit_clicked(self, eq_pop_up=True):
         if eq_pop_up:
             self._on_equation_edit_button_clicked()
@@ -264,17 +301,10 @@ class ModelEditor(QWidget):
         if not isinstance(plot_data_item.data_item, ModelDataItem):
             return
 
-        # The spectrum_data_item would be the data item that this model is to
-        # be fit to. This selection is done via the data_selection_combo.
-        combo_index = self.data_selection_combo.currentIndex()
-        data_item = self.data_selection_combo.itemData(combo_index)
+        data_item = self._get_selected_data_item()
 
-        # If user chooses a model instead of a data item, notify and return
-        if isinstance(data_item, ModelDataItem):
-            return self.new_message_box(text="Selected data is a model.",
-                                        info="The currently selected data "
-                                             "is a model. Please select a "
-                                             "data item containing spectra.")
+        if data_item is None:
+            return
 
         spectral_region = self._combine_all_workspace_regions()
 
@@ -360,7 +390,7 @@ class ModelEditor(QWidget):
             self.model_tree_view.resizeColumnToContents(i)
 
         # Update the displayed data on the plot
-        plot_data_item.set_data()
+        self._redraw_model()
 
 
 class ModelAdvancedSettingsDialog(QDialog):
