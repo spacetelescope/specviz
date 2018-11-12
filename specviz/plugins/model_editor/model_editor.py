@@ -3,14 +3,14 @@ import uuid
 
 import numpy as np
 from astropy import units as u
-from astropy.modeling import models, fitting, optimizers
+from astropy.modeling import fitting, models, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QAction, QMenu, QMessageBox, QToolButton, QWidget, QDialog, QInputDialog
+from qtpy.QtWidgets import (QAction, QDialog, QInputDialog, QMenu, QMessageBox,
+                            QToolButton, QWidget)
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
 from specutils.spectra import Spectrum1D
-from specutils.manipulation import extract_region
 from specutils.spectra.spectral_region import SpectralRegion
 
 from .equation_editor_dialog import ModelEquationEditorDialog
@@ -143,7 +143,12 @@ class ModelEditor(QWidget):
 
         if len(indexes) > 0:
             selected_idx = indexes[0]
-            self.model_tree_view.model().removeRow(selected_idx.row())
+            self.model_tree_view.model().remove_model(row=selected_idx.row())
+
+            # If removing the model resulted in an invalid arithmetic equation,
+            # force open the arithmetic editor so the user can fix it.
+            if self.model_tree_view.model().evaluate() is None:
+                self._on_equation_edit_button_clicked()
 
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
@@ -171,10 +176,12 @@ class ModelEditor(QWidget):
         # Get the current plot item and update
         # its data item if its a model plot item
         plot_data_item = self.hub.plot_item
+
         if isinstance(plot_data_item.data_item, ModelDataItem):
             # This is the data item selected in the
             # model editor data selection combo box
             data_item = self._get_selected_data_item()
+
             if data_item is not None and \
                     isinstance(data_item.spectrum, Spectrum1D):
                 # Copy the spectrum and assign the current
@@ -188,7 +195,6 @@ class ModelEditor(QWidget):
         plot_data_item.set_data()
 
     def _on_model_item_changed(self, item):
-
         if item.parent():
             # If the item has a parent, then we know that the parameter
             # value has changed. Note that the internal stored data has not
