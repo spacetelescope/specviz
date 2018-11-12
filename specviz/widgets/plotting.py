@@ -554,6 +554,20 @@ class PlotWidget(pg.PlotWidget):
         self._region_text_item.setText("")
         self.roi_removed.emit(roi)
 
+    def list_all_regions(self):
+        """Get all region items in plot"""
+        regions = []
+        for item in self.items():
+            if isinstance(item, LinearRegionItem):
+                regions.append(item)
+        return regions
+
+    # --------  Line lists and line labels handling.
+
+    # Finds the wavelength range spanned by the spectrum (or spectra)
+    # at hand. The range will be used to bracket the set of lines
+    # actually read from the line list table(s).
+
     def enterEvent(self, event):
         self.mouse_enterexit.emit(event.type())
 

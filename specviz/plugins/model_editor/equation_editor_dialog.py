@@ -45,7 +45,7 @@ class ModelEquationEditorDialog(QDialog):
     def exec_(self):
         # Populate the drop down list with the model names
         self.model_list_combo_box.clear()
-        self.model_list_combo_box.addItems(self.model.fittable_models.keys())
+        self.model_list_combo_box.addItems(self.model.compose_fittable_models().keys())
 
         self.equation_text_edit.setPlainText(self.model.equation)
 
@@ -76,7 +76,7 @@ class ModelEquationEditorDialog(QDialog):
         full_string = self.equation_text_edit.toPlainText()
         self.model.equation = full_string
 
-        for var in self.model.fittable_models.keys():
+        for var in self.model.compose_fittable_models().keys():
             comp_reg = re.compile(r"\b{}\b".format(var))
 
             if len(comp_reg.findall(full_string)) > 0:
