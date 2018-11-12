@@ -1,14 +1,9 @@
-import uuid
+import re
 
 import astropy.units as u
-import numpy as np
-import qtawesome as qta
-from qtpy.QtCore import QSortFilterProxyModel, Qt
-from qtpy.QtGui import QStandardItem, QStandardItemModel
-from specutils import Spectrum1D
-from qtpy.QtGui import QValidator
 from asteval import Interpreter
-from qtpy.QtCore import Signal, Qt
+from qtpy.QtCore import QSortFilterProxyModel, Qt, Signal
+from qtpy.QtGui import QStandardItem, QStandardItemModel, QValidator
 
 
 class ModelFittingModel(QStandardItemModel):
@@ -102,6 +97,27 @@ class ModelFittingModel(QStandardItemModel):
             if len(self._equation) > 0 else "{}".format(model_name)
 
         return model_item.index()
+
+    def remove_model(self, row):
+        """
+        Remove an astropy model from the internal qt data model.
+
+        Parameters
+        ----------
+        row : int
+            The row in the qt model that is to be removed.
+        """
+        # Get the model first so that we can re-parse the equation
+        model_item = self.item(row, 0)
+
+        # Remove the model name from the equation
+        self.equation = re.sub(
+            "(\+|-|\*|\/|=|>|<|>=|<=|&|\||%|!|\^|\(|\))\s+?({})".format(
+                model_item.text()),
+            "", self._equation)
+
+        # Remove the model item from the internal qt model
+        self.removeRow(row)
 
     def reset_equation(self):
         self._equation = ""
