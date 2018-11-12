@@ -95,7 +95,6 @@ def _createLineListPane(linelist, table_model, caller):
 # embedded GUI L&F.
 
 @plugin("Line Labels")
-# class LineListsPlugin(QMainWindow):
 class LineListsPlugin(object):
 
     def __init__(self, *args, **kwargs):
@@ -320,7 +319,6 @@ class LineListsWindow(ClosableMainWindow):
             lineset_tabbed_pane.addTab(pane, "Original")
             pane.setLineSetsTabbedPane(lineset_tabbed_pane)
 
-            # TODO replace direct reference to pane with references to the Hub machinery.
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
             # internal signals do not use Hub infrastructure.
@@ -561,7 +559,6 @@ class LineListPane(QWidget):
             # Internal signals do not use Hub infrastructure.
             table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
 
-            # TODO replace direct reference to pane with references to the Hub machinery.
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
             self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
