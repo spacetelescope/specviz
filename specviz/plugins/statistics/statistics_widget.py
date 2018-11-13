@@ -1,21 +1,21 @@
 import os
+import logging
 import numpy as np
 
 from astropy import units as u
 
+from specutils.spectra.spectrum1d import Spectrum1D
 from specutils.spectra.spectral_region import SpectralRegion
 from specutils.manipulation import extract_region
-from specutils.analysis.uncertainty import snr
+from specutils.analysis import snr, equivalent_width, fwhm, centroid, line_flux
 
 from qtpy.QtWidgets import QWidget
 from qtpy.uic import loadUi
 from qtpy.QtGui import QIcon
 
 from ...core.items import PlotDataItem
-from ...utils import UI_PATH
 from ...utils.helper_functions import format_float_text
 from ...core.plugin import plugin
-from ...core.hub import Hub
 
 
 """
@@ -57,17 +57,54 @@ def compute_stats(spectrum):
     spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
     region: `~specutils.utils.SpectralRegion`
     """
-    flux = spectrum.flux
-    mean = flux.mean()
-    rms = np.sqrt(flux.dot(flux) / len(flux))
-    return {'mean': mean,
-            'median': np.median(flux),
-            'stddev': flux.std(),
+
+    try:
+        cent = centroid(spectrum, region=None) # we may want to adjust this for continuum subtraction
+    except Exception as e:
+        logging.debug(e)
+        cent = "Error"
+
+    try:
+        rms = np.sqrt(spectrum.flux.dot(spectrum.flux) / len(spectrum.flux))
+    except Exception as e:
+        logging.debug(e)
+        rms = "Error"
+
+    try:
+        snr_val = snr(spectrum)
+    except Exception as e:
+        logging.debug(e)
+        snr_val = "N/A"
+
+    try:
+        fwhm_val = fwhm(spectrum)
+    except Exception as e:
+        logging.debug(e)
+        fwhm_val = "Error"
+
+    try:
+        ew = equivalent_width(spectrum)
+    except Exception as e:
+        logging.debug(e)
+        ew = "Error"
+
+    try:
+        total = line_flux(spectrum)
+    except Exception as e:
+        logging.debug(e)
+        total = "Error"
+
+    return {'mean': spectrum.flux.mean(),
+            'median': np.median(spectrum.flux),
+            'stddev': spectrum.flux.std(),
+            'centroid': cent,
             'rms': rms,
-            'snr': mean / rms,  # snr(spectrum=spectrum),
-            'total': np.trapz(flux),
-            'maxval': flux.max(),
-            'minval': flux.min()}
+            'snr': snr_val,
+            'fwhm': fwhm_val,
+            'ew': ew,
+            'total': total,
+            'maxval': spectrum.flux.max(),
+            'minval': spectrum.flux.min()}
 
 
 @plugin.plugin_bar("Statistics", icon=QIcon(":/icons/012-file.svg"), priority=1)
@@ -82,6 +119,7 @@ class StatisticsWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._current_spectrum = None  # Current `Spectrum1D`
+        self._current_plot_item = None  # Current plot item
         self.stats = None  # dict with stats
 
         self._init_ui()
@@ -106,15 +144,28 @@ class StatisticsWidget(QWidget):
 
         # A dict of display `QLineEdit` and their stat keys:
         self.stat_widgets = {
-            'minval': self.min_val_line_edit,
-            'maxval': self.max_val_line_edit,
-            'mean': self.mean_line_edit,
-            'median': self.median_line_edit,
-            'stddev': self.std_dev_line_edit,
-            'rms': self.rms_line_edit,
-            'snr': self.snr_line_edit,
-            'total': self.count_total_line_edit
+            'mean': self.mean_text_edit,
+            'median': self.median_text_edit,
+            'stddev': self.std_dev_text_edit,
+            'centroid': self.centroid_text_edit,
+            'rms': self.rms_text_edit,
+            'snr': self.snr_text_edit,
+            'fwhm': self.fwhm_text_edit,
+            'ew': self.eqwidth_text_edit,
+            'minval': self.min_val_text_edit,
+            'maxval': self.max_val_text_edit,
+            'total': self.count_total_text_edit
         }
+
+        # Set ui line height based on the current platform's qfont info
+        for widget in self.stat_widgets.values():
+            doc = widget.document()
+            fm = widget.fontMetrics()
+            margins = widget.contentsMargins()
+            n_height = (fm.lineSpacing() +
+                        (doc.documentMargin() + widget.frameWidth()) * 2 +
+                        margins.top() + margins.bottom())
+            widget.setFixedHeight(n_height)
 
     def _connect_plot_window(self, plot_window):
         plot_window.plot_widget.plot_added.connect(self.update_statistics)
@@ -143,15 +194,16 @@ class StatisticsWidget(QWidget):
             return
         for key in stats:
             if key in self.stat_widgets:
-                text = format_float_text(stats[key])
-                self.stat_widgets[key].setText(text)
+                text = stats[key] if (stats[key] == "N/A" or stats[key] == "Error") \
+                    else format_float_text(stats[key])
+                self.stat_widgets[key].document().setPlainText(text)
 
     def _clear_stat_widgets(self):
         """
         Clears all widgets in `StatisticsWidget.stat_widgets`
         """
         for key in self.stat_widgets:
-            self.stat_widgets[key].setText("")
+            self.stat_widgets[key].document().clear()
 
     @staticmethod
     def pos_to_spectral_region(pos):
@@ -210,6 +262,38 @@ class StatisticsWidget(QWidget):
         self._clear_stat_widgets()
         self.stats = None
 
+    def _reconnect_item_signals(self):
+        if self.hub.plot_item is self._current_plot_item:
+            return
+
+        if isinstance(self._current_plot_item, PlotDataItem):
+            self._current_plot_item.spectral_axis_unit_changed.disconnect(self.update_statistics)
+            self._current_plot_item.data_unit_changed.disconnect(self.update_statistics)
+
+        self._current_plot_item = self.hub.plot_item
+
+        if isinstance(self._current_plot_item, PlotDataItem):
+            self._current_plot_item.spectral_axis_unit_changed.connect(self.update_statistics)
+            self._current_plot_item.data_unit_changed.connect(self.update_statistics)
+
+    def _spectrum_with_plot_units(self, spec):
+        """
+        Make a new spectrum object with the plotted units.
+
+        Returns
+        -------
+        spectrum : `~specutils.spectra.spectrum1d.Spectrum1D`
+        """
+        if self._current_plot_item is None:
+            return spec
+
+        data_unit = self._current_plot_item.data_unit
+        spectral_axis_unit = self._current_plot_item.spectral_axis_unit
+
+        new_spec = spec.new_flux_unit(u.Unit(data_unit))
+        new_spec = new_spec.with_spectral_unit(u.Unit(spectral_axis_unit))
+        return new_spec
+
     def update_statistics(self):
         if self.hub.workspace is None or self.hub.plot_item is None:
             return self.clear_statistics()
@@ -222,12 +306,19 @@ class StatisticsWidget(QWidget):
         spectral_region = self._get_workspace_region()
 
         self._current_spectrum = spec
+        self._reconnect_item_signals()
 
         # Check for issues and extract
         # region from input spectra:
         if spec is None:
             self.set_status("No data selected.")
             return self.clear_statistics()
+        elif not isinstance(spec, Spectrum1D):
+            self.set_status("Spectrum was not found.")
+            return self.clear_statistics()
+        else:
+            spec = self._spectrum_with_plot_units(spec)
+
         if spectral_region is not None:
             if not check_unit_compatibility(spec, spectral_region):
                 self.set_status("Region units are not compatible with "
