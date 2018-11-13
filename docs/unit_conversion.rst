@@ -25,3 +25,9 @@ will be reflected in the plot. If the user selects the "Custom" option, they can
 if the units are accepted by `astropy.units <http://docs.astropy.org/en/stable/units/>`_ the unit conversion dialog box
 will allow the units to be parsed. However, "Custom" units are checked to see if the conversion is allowed before
 any conversion occurs and if False, the units will not be changed.
+
+.. image:: _static/specviz_uc_custom1.png
+
+.. image:: _static/specviz_uc_custom2.png
+
+.. image:: _static/specviz_uc_custom3.png
