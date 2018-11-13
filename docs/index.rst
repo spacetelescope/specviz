@@ -27,3 +27,4 @@ Using SpecViz
    unit_conversion
    arithmetic-layer
    model_fitting
+   stats_sidebar
