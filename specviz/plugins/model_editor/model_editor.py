@@ -162,11 +162,13 @@ class ModelEditor(QWidget):
 
     def _save_models(self, filename):
         model_editor_model = self.hub.plot_item.data_item.model_editor_model
+        models = model_editor_model.fittable_models
         with open(filename, 'wb') as handle:
             pickle.dump(model_editor_model.fittable_models, handle)
 
     def _on_save_model(self, interactive=True):
 
+        model_editor_model = self.hub.data_item.model_editor_model
         # There are no models to save
         if not model_editor_model.fittable_models:
             self.new_message_box(text='No model available',
@@ -215,18 +217,14 @@ class ModelEditor(QWidget):
         if issubclass(model_type, MODELS['Polynomial1D']):
             text, ok = QInputDialog.getInt(self, 'Polynomial1D',
                                            'Enter Polynomial1D degree:')
-            if ok:
-                # Create a new astropy model class definition with the degree
-                # data already embedded
-                model_type = type(
-                    model_type.__name__, (model_type,),
-                    {'__init__': lambda self, *args, **kwargs:
-                        super(model_type, self).__init__(
-                            degree=int(text), **kwargs)})
-            else:
+            # User decided not to create a model after all
+            if not ok:
                 return
 
-        model = model_type()
+            model = model_type(int(text))
+        else:
+            model = model_type()
+
         self._add_model(model)
 
     def _redraw_model(self):
