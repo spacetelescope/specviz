@@ -127,6 +127,9 @@ class LineListsPlugin(QMainWindow):
         # for associating signals from the plot frame with signal handlers
         # in the plugin. So the plugin only responds to signals sent  by
         # the currently visible plot.
+
+        print("@@@@@@  file linelists_window.py; line 131 - ",  window)
+
         if hasattr(window, '_plot_widget'):
 
             key = window._plot_widget.__hash__()
