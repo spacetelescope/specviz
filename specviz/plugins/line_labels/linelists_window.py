@@ -240,6 +240,7 @@ class LineListsWindow(QMainWindow):
 
         # convert from line list native units to whatever units
         # are currently being displayed in the spectral axis.
+        linelist_units = wave_range[0].unit
         plot_units = self.hub.plot_widget.spectral_axis_unit
         w0 = wave_range[0].to(plot_units, equivalencies=u.spectral())
         w1 = wave_range[1].to(plot_units, equivalencies=u.spectral())
@@ -257,41 +258,44 @@ class LineListsWindow(QMainWindow):
 
         validator = QDoubleValidator()
         validator.setBottom(0.0)
-        validator.setDecimals(2)
         dialog.min_text.setValidator(validator)
         dialog.max_text.setValidator(validator)
 
         dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
-                                                                dialog.nlines_label)
+                                                                dialog.nlines_label, linelist_units, plot_units)
 
-        # internal signals do not use Hub infrastructure.
         dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
                                                                                           dialog.min_text,
                                                                                           dialog.max_text,
-                                                                                          dialog.nlines_label))
+                                                                                          dialog.nlines_label,
+                                                                                          linelist_units,
+                                                                                          plot_units))
         dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
                                                                                           dialog.min_text,
                                                                                           dialog.max_text,
-                                                                                          dialog.nlines_label))
+                                                                                          dialog.nlines_label,
+                                                                                          linelist_units,
+                                                                                          plot_units))
         accepted = dialog.exec_() > 0
 
         amin = amax = None
         if accepted:
-            return self._get_range_from_textfields(dialog.min_text, dialog.max_text)
-
+            return self._get_range_from_textfields(dialog.min_text, dialog.max_text,
+                                                   linelist_units, plot_units)
         return (amin, amax)
 
-    def _get_range_from_textfields(self, min_text, max_text):
+    def _get_range_from_textfields(self, min_text, max_text, linelist_units, plot_units):
         amin = amax = None
         if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
+
             amin = float(min_text.text())
             amax = float(max_text.text())
-            if amax > amin:
-                units = self.data_item.spectral_axis.unit
-                amin = Quantity(amin, units)
-                amax = Quantity(amax, units)
-            else:
-                return (None, None)
+
+            amin = Quantity(amin, plot_units)
+            amax = Quantity(amax, plot_units)
+
+            amin = amin.to(linelist_units, equivalencies=u.spectral())
+            amax = amax.to(linelist_units, equivalencies=u.spectral())
 
         return (amin, amax)
 
@@ -299,12 +303,14 @@ class LineListsWindow(QMainWindow):
     # fall within the supplied wavelength range. The
     # result populates the supplied label. Or, it
     # builds a fresh QLabel with the result.
-    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label):
+    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label,
+                                     linelist_units, plot_units):
 
-        amin, amax = self._get_range_from_textfields(min_text, max_text)
+        amin, amax = self._get_range_from_textfields(min_text, max_text, linelist_units, plot_units)
 
         if amin != None or amax != None:
             r = (amin, amax)
+
             extracted = line_list.extract_range(r)
             nlines = len(extracted[WAVELENGTH_COLUMN].data)
 
