@@ -145,9 +145,9 @@ class ComponentHelper(object):
         else:
             return self.dataset[self.component]['index']
 
-    def dataset_update(self, new_dataset):
+    def dataset_update(self, new_dataset, is_enabled=True):
         self.dataset = new_dataset
-        self._dataset_changed()
+        self._dataset_changed(is_enabled=is_enabled)
         self._set_data()
 
     def _set_data(self):
@@ -158,7 +158,7 @@ class ComponentHelper(object):
                 self.combo_units.addItem(str(unit), userData=unit)
             self.combo_units.addItem('Custom', userData='Custom')
 
-    def _dataset_changed(self, event=None):
+    def _dataset_changed(self, event=None, is_enabled=True):
 
         if self.dataset is None:
             self.combo_component.setCurrentIndex(-1)
@@ -166,7 +166,8 @@ class ComponentHelper(object):
 
         self.combo_component.blockSignals(True)
         self.combo_component.clear()
-        self.combo_component.setEnabled(True)
+        # might need to change this
+        self.combo_component.setEnabled(is_enabled)
         model = self.combo_component.model()
         icomponent = 0
         for component_name, component in self.dataset.items():
@@ -197,7 +198,6 @@ class ComponentHelper(object):
             self.combo_units.setCurrentIndex(-1)
             return
 
-        print("unit thing: ", self.dataset)
         unit = self.dataset[self.component]['unit']
 
         if unit is None:
@@ -325,13 +325,20 @@ class BaseImportWizard(QDialog):
         self.set_uncertainties_enabled(False)
         self.ui.bool_uncertainties.toggled.connect(self.set_uncertainties_enabled)
 
-        self.ui.bool_mask.setChecked(False)
-        self.set_mask_enabled(False)
-        self.ui.bool_mask.toggled.connect(self.set_mask_enabled)
-
-        self.ui.combo_bit_mask_definition.addItem('Custom', userData='custom')
-        self.ui.combo_bit_mask_definition.addItem('SDSS', userData='sdss')
-        self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
+        self.ui.bool_mask.blockSignals(True)
+        self.ui.combo_bit_mask_definition.blockSignals(True)
+        self.ui.combo_mask_component.blockSignals(True)
+        self.ui.bool_mask.setEnabled(False)
+        self.ui.combo_bit_mask_definition.setEnabled(False)
+        self.ui.combo_mask_component.setEnabled(False)
+        ## will implement this in the future
+        # self.ui.bool_mask.setChecked(False)
+        # self.set_mask_enabled(False)
+        # # self.ui.bool_mask.toggled.connect(self.set_mask_enabled)
+        #
+        # self.ui.combo_bit_mask_definition.addItem('Custom', userData='custom')
+        # self.ui.combo_bit_mask_definition.addItem('SDSS', userData='sdss')
+        # self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
 
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
 
@@ -347,8 +354,10 @@ class BaseImportWizard(QDialog):
 
         self.ui.button_save_yaml.clicked.connect(self.save_loader_script)
 
+
         # Force a preview update in case initial guess is good
         self._update_preview()
+
         self._clear_loader_name_status()
 
     def set_dispersion_enabled(self, enabled):
@@ -378,13 +387,6 @@ class BaseImportWizard(QDialog):
         self.combo_uncertainty_component.setEnabled(enabled)
         self.combo_uncertainty_type.setEnabled(enabled)
 
-        if enabled:
-            self.combo_uncertainty_component.setCurrentIndex(0)
-            self.combo_uncertainty_type.setCurrentIndex(0)
-        else:
-            self.combo_uncertainty_component.setCurrentIndex(-1)
-            self.combo_uncertainty_type.setCurrentIndex(-1)
-
         self._update_preview()
 
     def set_mask_enabled(self, enabled):
@@ -394,13 +396,6 @@ class BaseImportWizard(QDialog):
 
         self.combo_mask_component.setEnabled(enabled)
         self.combo_bit_mask_definition.setEnabled(enabled)
-
-        if enabled:
-            self.combo_uncertainty_component.setCurrentIndex(0)
-            self.combo_bit_mask_definition.setCurrentIndex(0)
-        else:
-            self.combo_mask_component.setCurrentIndex(-1)
-            self.combo_bit_mask_definition.setCurrentIndex(-1)
 
     @property
     def uncertainties_enabled(self):
@@ -419,8 +414,9 @@ class BaseImportWizard(QDialog):
                                                     self.ui.line_table_read.text()))
         self.helper_disp.dataset_update(self.dataset)
         self.helper_data.dataset_update(self.dataset)
-        self.helper_unce.dataset_update(self.dataset)
-        self.helper_mask.dataset_update(self.dataset)
+        self.helper_unce.dataset_update(self.dataset, is_enabled= self.ui.bool_uncertainties.isChecked())
+        # implementing in future
+        # self.helper_mask.dataset_update(self.dataset, is_enabled= self.ui.bool_mask.isChecked())
 
 
     def _update_preview(self, event=None):
@@ -429,7 +425,10 @@ class BaseImportWizard(QDialog):
 
         x = self.helper_disp.data
         y = self.helper_data.data
-        yerr = self.helper_unce.data
+        if self.ui.bool_uncertainties.isChecked():
+            yerr = self.helper_unce.data
+        else:
+            yerr = None
 
         if x is None or y is None:
             return
@@ -509,6 +508,7 @@ class BaseImportWizard(QDialog):
         # If a loader by this name exists, delete it
         if self.new_loader_dict['name'] in registry.get_formats()['Format']:
             registry.unregister_reader(self.new_loader_dict['name'], Spectrum1D)
+            registry.unregister_identifier(self.new_loader_dict['name'], Spectrum1D)
 
         # Add new loader to registry
         spec = importlib.util.spec_from_file_location(os.path.basename(filename)[:-3], filename)
@@ -556,15 +556,16 @@ class ASCIIImportWizard(BaseImportWizard):
 
         self.new_loader_uncertainty()
 
-        if self.ui.bool_mask.isChecked():
-            # if going to use this, might need to change this to single
-            # dict items
-            self.new_loader_dict['mask'] = OrderedDict()
-            self.new_loader_dict['mask']['hdu'] = self.helper_mask.hdu_index
-            self.new_loader_dict['mask']['col'] = self.helper_mask.component_name
-            definition = self.ui.combo_bit_mask_definition.currentData()
-            if definition != 'custom':
-                self.new_loader_dict['mask']['definition'] = definition
+        ## will implement this in the future
+        # if self.ui.bool_mask.isChecked():
+        #     # if going to use this, might need to change this to single
+        #     # dict items
+        #     self.new_loader_dict['mask'] = OrderedDict()
+        #     self.new_loader_dict['mask']['hdu'] = self.helper_mask.hdu_index
+        #     self.new_loader_dict['mask']['col'] = self.helper_mask.component_name
+        #     definition = self.ui.combo_bit_mask_definition.currentData()
+        #     if definition != 'custom':
+        #         self.new_loader_dict['mask']['definition'] = definition
 
         self.new_loader_dict['meta_author'] = 'Wizard'
 

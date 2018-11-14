@@ -15,8 +15,8 @@ def simple_generic_loader(file_name):
 
     ast_table = Table.read(file_name{table_read_kwargs})
 
-    flux = ast_table['{data_col}']
-    wavelength = ast_table['{dispersion_col}']
+    flux = ast_table['{data_col}'].flatten()
+    wavelength = ast_table['{dispersion_col}'].flatten()
 
     # Set units
     unit = Unit("{data_unit}")

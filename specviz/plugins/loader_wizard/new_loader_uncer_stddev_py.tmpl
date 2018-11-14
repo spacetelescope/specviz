@@ -30,4 +30,3 @@ def simple_generic_loader(file_name):
     # A new spectrum object is returned, which specviz understands
     return Spectrum1D(spectral_axis=wavelength*disp_unit, flux=flux*unit,
                       uncertainty=StdDevUncertainty(uncertainty))
-
