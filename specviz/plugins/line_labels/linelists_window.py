@@ -100,74 +100,25 @@ def _createLineListPane(linelist, table_model, caller):
     return pane, table_view
 
 
+@plugin("Line Labels")
+class LineListsPlugin(object):
+
+    _linelists_windows = {}
+
+    @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+    def on_action_triggered(self):
+        if hasattr(self.hub, "plot_widget") and self.hub.plot_widget and self.hub.plot_item:
+            key = self.hub.plot_widget.__hash__()
+            if key not in LineListsPlugin._linelists_windows:
+                LineListsPlugin._linelists_windows[key] = LineListsWindow(self.hub)
+
+            LineListsPlugin._linelists_windows[key].show()
+
+
 # The line list window must be a full fledged window and not a dialog.
 # The choice of QMainWindow over QWidget is a leftover from the old
 # implementation. This will likely change when and if we adopt the
 # embedded GUI L&F.
-
-@plugin("Line Labels")
-class LineListsPlugin(object):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._linelists_windows = {}
-
-        self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_selected_window)
-
-    @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
-    def on_action_triggered(self):
-
-        if hasattr(self.hub, "plot_item") and self.hub.plot_item:
-            key = self.hub.plot_window.__hash__()
-
-            if key not in self._linelists_windows:
-                self._linelists_windows[key] = LineListsWindow(self.hub)
-
-            self._linelists_windows[key].show()
-
-    # When a given plot is selected, this slot handles the logic
-    # for associating signals from the plot frame with signal handlers
-    # in the plugin. So the plugin only responds to signals sent  by
-    # the currently visible plot.
-    def _on_selected_window(self, plot_window):
-        if plot_window and hasattr(plot_window, 'plot_widget') and \
-           hasattr(self.hub, "plot_item") and self.hub.plot_item:
-
-                key = str(plot_window.__hash__())
-
-                if key in self._linelists_windows:
-                    # # disconnect signals from current plot widget.
-                    # self._current_plot_widget.plot_added.disconnect()
-                    # self._current_plot_widget.plot_removed.disconnect()
-                    # self._current_plot_widget.destroyed.disconnect()
-                    #
-                    # self._current_plot_widget, self.tab_widget = self._widgets[key]
-                    pass
-                else:
-                    # # store new plot widget and associated new tabbed pane widget.
-                    # self._current_plot_widget = window._plot_widget
-                    # self._widgets[key] = (self._current_plot_widget, self.tab_widget)
-
-                    self._linelists_windows[key] = LineListsWindow(self.hub)
-
-
-
-                # # connect signals to enable detection of events in the plot frame.
-            # self._current_plot_widget.plot_added.connect(self._on_plot_added)
-            # self._current_plot_widget.plot_removed.connect(self._on_plot_removed)
-            # self._current_plot_widget.destroyed.connect(self._on_plot_quit)
-            #
-            # #TODO handle the tab widget.
-            #
-            # #TODO add functionality on _on_plot_item_selected and afterwards
-            # # But only on the first call. After that, the tabbed pane should be
-            # # done for good.
-
-
-
-
-
 
 class LineListsWindow(QMainWindow):
 
@@ -242,7 +193,7 @@ class LineListsWindow(QMainWindow):
             caller=self.line_labels_plotter))
 
         self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
-        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(True))
+        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(False))
 
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
@@ -532,7 +483,7 @@ class LineListsWindow(QMainWindow):
     # ensure that a window closing event that is generated
     # by the OS itself, gets properly handled.
     def closeEvent(self, event):
-        self.dismiss_linelists_window.emit(True)
+        self.dismiss_linelists_window.emit(False)
 
 
 class LineListPane(QWidget):
