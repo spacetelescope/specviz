@@ -111,46 +111,58 @@ class LineListsPlugin(object):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._linelist_windows = {}
+        self._linelists_windows = {}
 
         self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_selected_window)
 
     @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
     def on_action_triggered(self):
-        self.linelist_window = LineListsWindow(self.hub)
-        self.linelist_window.show()
+
+        if hasattr(self.hub, "plot_item") and self.hub.plot_item:
+            key = self.hub.plot_window.__hash__()
+
+            if key not in self._linelists_windows:
+                self._linelists_windows[key] = LineListsWindow(self.hub)
+
+            self._linelists_windows[key].show()
 
     # When a given plot is selected, this slot handles the logic
     # for associating signals from the plot frame with signal handlers
     # in the plugin. So the plugin only responds to signals sent  by
     # the currently visible plot.
-    def _on_selected_window(self, window):
-        if window and hasattr(window, 'plot_widget'):
+    def _on_selected_window(self, plot_window):
+        if plot_window and hasattr(plot_window, 'plot_widget') and \
+           hasattr(self.hub, "plot_item") and self.hub.plot_item:
 
-            key = window.plot_widget.__hash__()
+                key = str(plot_window.__hash__())
 
-            if key in self._linelist_windows:
-                # disconnect signals from current plot widget.
-                self._current_plot_widget.plot_added.disconnect()
-                self._current_plot_widget.plot_removed.disconnect()
-                self._current_plot_widget.destroyed.disconnect()
+                if key in self._linelists_windows:
+                    # # disconnect signals from current plot widget.
+                    # self._current_plot_widget.plot_added.disconnect()
+                    # self._current_plot_widget.plot_removed.disconnect()
+                    # self._current_plot_widget.destroyed.disconnect()
+                    #
+                    # self._current_plot_widget, self.tab_widget = self._widgets[key]
+                    pass
+                else:
+                    # # store new plot widget and associated new tabbed pane widget.
+                    # self._current_plot_widget = window._plot_widget
+                    # self._widgets[key] = (self._current_plot_widget, self.tab_widget)
 
-                self._current_plot_widget, self.tab_widget = self._widgets[key]
-            else:
-                # store new plot widget and associated new tabbed pane widget.
-                self._current_plot_widget = window._plot_widget
-                self._widgets[key] = (self._current_plot_widget, self.tab_widget)
+                    self._linelists_windows[key] = LineListsWindow(self.hub)
 
-            # connect signals to enable detection of events in the plot frame.
-            self._current_plot_widget.plot_added.connect(self._on_plot_added)
-            self._current_plot_widget.plot_removed.connect(self._on_plot_removed)
-            self._current_plot_widget.destroyed.connect(self._on_plot_quit)
 
-            #TODO handle the tab widget.
 
-            #TODO add functionality on _on_plot_item_selected and afterwards
-            # But only on the first call. After that, the tabbed pane should be
-            # done for good.
+                # # connect signals to enable detection of events in the plot frame.
+            # self._current_plot_widget.plot_added.connect(self._on_plot_added)
+            # self._current_plot_widget.plot_removed.connect(self._on_plot_removed)
+            # self._current_plot_widget.destroyed.connect(self._on_plot_quit)
+            #
+            # #TODO handle the tab widget.
+            #
+            # #TODO add functionality on _on_plot_item_selected and afterwards
+            # # But only on the first call. After that, the tabbed pane should be
+            # # done for good.
 
 
 
