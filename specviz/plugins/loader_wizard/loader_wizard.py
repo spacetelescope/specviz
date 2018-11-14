@@ -194,7 +194,7 @@ class ComponentHelper(object):
         if self.combo_units is None:
             return
 
-        if self.dataset is None:
+        if self.dataset is None or self.dataset == {}:
             self.combo_units.setCurrentIndex(-1)
             return
 
@@ -318,6 +318,8 @@ class BaseImportWizard(QDialog):
                                          background=None)
         self.layout_preview.addWidget(self.plot_widget)
 
+        self.ui.label_unit_status.setText('')
+
         self.ui.wcs_check_box.setChecked(False)
         self.ui.wcs_check_box.toggled.connect(self.set_dispersion_enabled)
 
@@ -341,6 +343,8 @@ class BaseImportWizard(QDialog):
         # self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
 
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
+        self.ui.value_dispersion_units.textChanged.connect(self._clear_unit_status)
+        self.ui.value_data_units.textChanged.connect(self._clear_unit_status)
 
         self.ui.combo_dispersion_component.currentIndexChanged.connect(self._update_preview)
         self.ui.combo_data_component.currentIndexChanged.connect(self._update_preview)
@@ -353,7 +357,6 @@ class BaseImportWizard(QDialog):
         self.ui.combo_data_units.currentIndexChanged.connect(self._update_preview)
 
         self.ui.button_save_yaml.clicked.connect(self.save_loader_script)
-
 
         # Force a preview update in case initial guess is good
         self._update_preview()
@@ -396,6 +399,7 @@ class BaseImportWizard(QDialog):
 
         self.combo_mask_component.setEnabled(enabled)
         self.combo_bit_mask_definition.setEnabled(enabled)
+
 
     @property
     def uncertainties_enabled(self):
@@ -482,7 +486,18 @@ class BaseImportWizard(QDialog):
         self.ui.label_loader_name_status.setText('')
         self.ui.label_loader_name_status.setStyleSheet('')
 
+    def _clear_unit_status(self):
+        self.ui.label_unit_status.setText('')
+        self.ui.label_unit_status.setStyleSheet('')
+
     def save_loader_script(self, event=None):
+
+        if (self.helper_disp.combo_units.currentText() == "Custom" and self.helper_disp.label_status.text() != 'Valid units') or \
+                (self.helper_data.combo_units.currentText() == "Custom" and self.helper_data.label_status.text() != 'Valid units'):
+            self.ui.label_unit_status.setText('Found invalid units')
+            self.ui.label_unit_status.setStyleSheet('color: red')
+            return
+
         if self.ui.loader_name.text() == "":
             self.ui.label_loader_name_status.setText('Enter a name for the loader')
             self.ui.label_loader_name_status.setStyleSheet('color: red')

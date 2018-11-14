@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>973</width>
-    <height>871</height>
+    <height>902</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -200,7 +200,7 @@
          </property>
         </widget>
        </item>
-       <item row="20" column="5">
+       <item row="21" column="5">
         <widget class="QLabel" name="label_loader_name_status">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -301,6 +301,19 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="17" column="4" colspan="3">
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you would like to read other files like this in future, you can set a name for the loader below and click on Save to .py (be sure to save it to a file with a *.py extension, in the ~/.specutils directory). But this is optional, so you can just click OK and open this in Specviz as a one-off.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignBottom|Qt::AlignJustify</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -539,23 +552,20 @@
          </property>
         </widget>
        </item>
-       <item row="16" column="4" rowspan="3" colspan="3">
-        <widget class="QLabel" name="label_6">
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you would like to read other files like this in future, you can set a name for the loader below and click on Save to .py (be sure to save it to a file with a *.py extension, in the ~/.specutils directory). But this is optional, so you can just click OK and open this in Specviz as a one-off.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignBottom|Qt::AlignJustify</set>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
        <item row="13" column="0" colspan="2">
         <widget class="QLabel" name="label_9">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#fd6666;&quot;&gt;Bit Mask capabilites to be implemented in future release.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="20" column="5">
+        <widget class="QLabel" name="label_unit_status">
+         <property name="text">
+          <string>{{status line}}</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>

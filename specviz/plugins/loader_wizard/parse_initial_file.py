@@ -57,7 +57,10 @@ def _parse(filename, table=None):
 def parse_ascii(filename, read_input):
 
     if read_input == "":
-        itable = Table.read(filename, format="ascii")
+        try:
+            itable = Table.read(filename, format="ascii")
+        except Exception as e:
+            itable = None
 
     else:
         # split parameter string out into dictonary
@@ -66,7 +69,6 @@ def parse_ascii(filename, read_input):
                   for a in read_input.split(",")}
             itable = Table.read(filename, **kwargs)
         except Exception as e:
-            print(e)
             itable = None
 
     return _parse(filename, itable)
