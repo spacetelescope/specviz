@@ -192,7 +192,8 @@ class ModelEditor(QWidget):
                 spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
                 plot_data_item.data_item.set_data(spectrum)
 
-        plot_data_item.set_data()
+            # Only draw if ModelDataItem
+            plot_data_item.set_data()
 
     def _on_model_item_changed(self, item):
         if item.parent():
@@ -200,9 +201,10 @@ class ModelEditor(QWidget):
             # value has changed. Note that the internal stored data has not
             # been truncated at all, only the displayed text value. All fitting
             # uses the full, un-truncated data value.
-            item.setData(float(item.text()), Qt.UserRole + 1)
-            # item.setText("{:.5g}".format(float(item.text()))) # dont change user input
-            item.setText(item.text())
+            if item.column() == 1:
+                item.setData(float(item.text()), Qt.UserRole + 1)
+                # item.setText("{:.5g}".format(float(item.text()))) # dont change user input
+                item.setText(item.text())
             self._redraw_model()
         else:
             # In this case, the user has renamed a model. Since the equation
