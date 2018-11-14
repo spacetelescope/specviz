@@ -77,7 +77,8 @@ class ModelFittingModel(QStandardItemModel):
             param_value.setData(parameter.value, Qt.UserRole + 1)
 
             # Store the unit information
-            param_unit = QStandardItem("{}".format(parameter.unit))
+            # param_unit = QStandardItem("{}".format(parameter.unit))
+            param_unit = QStandardItem("Plot Units")
             param_unit.setData(parameter.unit, Qt.UserRole + 1)
             param_unit.setEditable(False)
 

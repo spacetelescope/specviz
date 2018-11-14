@@ -23,6 +23,11 @@ class ModelDataItem(DataItem):
         return self.data(self.DataRole).flux
 
     @property
+    def spectrum(self):
+        flux = self.flux  # Update the flux
+        return super().spectrum
+
+    @property
     def model_editor_model(self):
         return self._model_editor_model
 
