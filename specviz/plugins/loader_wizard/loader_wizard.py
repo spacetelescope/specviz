@@ -78,12 +78,13 @@ class ComponentHelper(object):
     then use it three times.
     """
 
-    def __init__(self, datasets, combo_dataset, combo_component, combo_units=None,
+    def __init__(self, dataset, combo_component, combo_units=None,
                  valid_units=None, custom_units=None, label_status=None, allow_wcs=True):
 
-        self.datasets = datasets
-
-        self.combo_dataset = combo_dataset
+        if dataset == {}:
+            self.dataset = None
+        else:
+            self.dataset = dataset
         self.combo_component = combo_component
         self.combo_units = combo_units
         self.valid_units = valid_units
@@ -91,12 +92,13 @@ class ComponentHelper(object):
         self.label_status = label_status
         self.allow_wcs = allow_wcs
 
-        # Initialize combo box of datasets.
+        # Initialize combo box of dataset.
         self._set_data()
 
         # Set up callbacks for various events
 
-        self.combo_dataset.currentIndexChanged.connect(self._dataset_changed)
+        # flag
+        #self.combo_dataset.currentIndexChanged.connect(self._dataset_changed)
         self.combo_component.currentIndexChanged.connect(self._component_changed)
 
         if self.combo_units is not None:
@@ -108,17 +110,6 @@ class ComponentHelper(object):
         self._dataset_changed()
         self._unit_changed()
         self._custom_unit_changed()
-
-    @property
-    def dataset_name(self):
-        return self.combo_dataset.currentText()
-
-    @property
-    def dataset(self):
-        if self.dataset_name:
-            return self.datasets[self.dataset_name]
-        else:
-            return None
 
     @property
     def component_index(self):
@@ -154,17 +145,12 @@ class ComponentHelper(object):
         else:
             return self.dataset[self.component]['index']
 
-    def datasets_update(self, new_datasets):
-        self.datasets = new_datasets
+    def dataset_update(self, new_dataset):
+        self.dataset = new_dataset
+        self._dataset_changed()
         self._set_data()
 
     def _set_data(self):
-        self.combo_dataset.clear()
-
-        for dataset_name, dataset in self.datasets.items():
-            self.combo_dataset.addItem(dataset_name)
-
-        # Similarly, we set up the combo of pre-defined units
 
         if self.combo_units is not None:
             self.combo_units.clear()
@@ -211,6 +197,7 @@ class ComponentHelper(object):
             self.combo_units.setCurrentIndex(-1)
             return
 
+        print("unit thing: ", self.dataset)
         unit = self.dataset[self.component]['unit']
 
         if unit is None:
@@ -274,33 +261,25 @@ class BaseImportWizard(QDialog):
 
     dataset_label = 'Dataset'
 
-    def __init__(self, filename, datasets, parent=None):
+    def __init__(self, filename, dataset, parent=None):
 
         super(BaseImportWizard, self).__init__(parent=parent)
 
         self.filename = filename
-        self.datasets = datasets
+        self.dataset = dataset
         self.new_loader_dict = OrderedDict()
 
         self.ui = loadUi(os.path.abspath(
                os.path.join(os.path.dirname(__file__), "loader_wizard.ui")), self)
 
-        for label in [self.ui.label_dispersion_dataset,
-                      self.ui.label_data_dataset,
-                      self.ui.label_uncertainty_dataset,
-                      self.ui.label_mask_dataset]:
-            label.setText(label.text().replace('{{dataset}}', self.dataset_label))
-
-        self.helper_disp = ComponentHelper(self.datasets,
-                                           self.ui.combo_dispersion_dataset,
+        self.helper_disp = ComponentHelper(self.dataset,
                                            self.ui.combo_dispersion_component,
                                            self.ui.combo_dispersion_units,
                                            DISPERSION_UNITS,
                                            self.ui.value_dispersion_units,
                                            self.ui.label_dispersion_status)
 
-        self.helper_data = ComponentHelper(self.datasets,
-                                           self.ui.combo_data_dataset,
+        self.helper_data = ComponentHelper(self.dataset,
                                            self.ui.combo_data_component,
                                            self.ui.combo_data_units,
                                            DATA_UNITS,
@@ -308,13 +287,11 @@ class BaseImportWizard(QDialog):
                                            self.ui.label_data_status,
                                            allow_wcs=False)
 
-        self.helper_unce = ComponentHelper(self.datasets,
-                                           self.ui.combo_uncertainty_dataset,
+        self.helper_unce = ComponentHelper(self.dataset,
                                            self.ui.combo_uncertainty_component,
                                            allow_wcs=False)
 
-        self.helper_mask = ComponentHelper(self.datasets,
-                                           self.ui.combo_mask_dataset,
+        self.helper_mask = ComponentHelper(self.dataset,
                                            self.ui.combo_mask_component,
                                            allow_wcs=False)
 
@@ -376,21 +353,16 @@ class BaseImportWizard(QDialog):
 
     def set_dispersion_enabled(self, enabled):
 
-        self.combo_dispersion_dataset.blockSignals(enabled)
         self.combo_dispersion_component.blockSignals(enabled)
         self.combo_dispersion_units.blockSignals(enabled)
         self.value_dispersion_units.blockSignals(enabled)
 
-        self.combo_dispersion_dataset.setEnabled(not enabled)
         self.combo_dispersion_component.setEnabled(not enabled)
         self.combo_dispersion_units.setEnabled(not enabled)
 
 
 
-        if not enabled:
-            self.combo_dispersion_dataset.setCurrentIndex(0)
-        else:
-            self.combo_dispersion_dataset.setCurrentIndex(-1)
+        if enabled:
             self.combo_dispersion_component.setCurrentIndex(-1)
 
         self._update_preview()
@@ -400,19 +372,16 @@ class BaseImportWizard(QDialog):
 
     def set_uncertainties_enabled(self, enabled):
 
-        self.combo_uncertainty_dataset.blockSignals(not enabled)
         self.combo_uncertainty_component.blockSignals(not enabled)
         self.combo_uncertainty_type.blockSignals(not enabled)
 
-        self.combo_uncertainty_dataset.setEnabled(enabled)
         self.combo_uncertainty_component.setEnabled(enabled)
         self.combo_uncertainty_type.setEnabled(enabled)
 
         if enabled:
-            self.combo_uncertainty_dataset.setCurrentIndex(0)
+            self.combo_uncertainty_component.setCurrentIndex(0)
             self.combo_uncertainty_type.setCurrentIndex(0)
         else:
-            self.combo_uncertainty_dataset.setCurrentIndex(-1)
             self.combo_uncertainty_component.setCurrentIndex(-1)
             self.combo_uncertainty_type.setCurrentIndex(-1)
 
@@ -420,19 +389,16 @@ class BaseImportWizard(QDialog):
 
     def set_mask_enabled(self, enabled):
 
-        self.combo_mask_dataset.blockSignals(not enabled)
         self.combo_mask_component.blockSignals(not enabled)
         self.combo_bit_mask_definition.blockSignals(not enabled)
 
-        self.combo_mask_dataset.setEnabled(enabled)
         self.combo_mask_component.setEnabled(enabled)
         self.combo_bit_mask_definition.setEnabled(enabled)
 
         if enabled:
-            self.combo_mask_dataset.setCurrentIndex(0)
+            self.combo_uncertainty_component.setCurrentIndex(0)
             self.combo_bit_mask_definition.setCurrentIndex(0)
         else:
-            self.combo_mask_dataset.setCurrentIndex(-1)
             self.combo_mask_component.setCurrentIndex(-1)
             self.combo_bit_mask_definition.setCurrentIndex(-1)
 
@@ -449,12 +415,12 @@ class BaseImportWizard(QDialog):
 
     def _update_data(self):
 
-        self.datasets = simplify_arrays(parse_ascii(self.filename,
+        self.dataset = simplify_arrays(parse_ascii(self.filename,
                                                     self.ui.line_table_read.text()))
-        self.helper_disp.datasets_update(self.datasets)
-        self.helper_data.datasets_update(self.datasets)
-        self.helper_unce.datasets_update(self.datasets)
-        self.helper_mask.datasets_update(self.datasets)
+        self.helper_disp.dataset_update(self.dataset)
+        self.helper_data.dataset_update(self.dataset)
+        self.helper_unce.dataset_update(self.dataset)
+        self.helper_mask.dataset_update(self.dataset)
 
 
     def _update_preview(self, event=None):

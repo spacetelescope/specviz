@@ -29,11 +29,6 @@ def parse_unit(unit):
 
 def _parse(filename, table=None):
 
-    # Here we adopt the same data structures used in the handling
-    # of FITS files, replacing the HDUs by datasets. An ECSV table
-    # will typically contain only one dataset.
-
-    parsed_datasets = {}
     dataset = {}
 
     if table is not None:
@@ -56,9 +51,7 @@ def _parse(filename, table=None):
                                     'unit': unit,
                                     'index': 0}
 
-        parsed_datasets[filename] = dataset
-
-    return parsed_datasets
+    return dataset
 
 
 def parse_ascii(filename, read_input):
@@ -79,18 +72,17 @@ def parse_ascii(filename, read_input):
     return _parse(filename, itable)
 
 
-def simplify_arrays(datasets):
+def simplify_arrays(dataset):
 
-    for dataset in datasets.values():
-        for component in dataset.values():
-            if isinstance(component['data'], WCS):
-                continue
-            shape = component['data'].shape
-            if np.product(shape) == np.max(shape):
-                component['data'] = component['data'].ravel()
-                component['ndim'] = component['data'].ndim
-                component['shape'] = component['data'].shape
-    return datasets
+    for component in dataset.values():
+        if isinstance(component['data'], WCS):
+            continue
+        shape = component['data'].shape
+        if np.product(shape) == np.max(shape):
+            component['data'] = component['data'].ravel()
+            component['ndim'] = component['data'].ndim
+            component['shape'] = component['data'].shape
+    return dataset
 
 
 if __name__ == "__main__":
