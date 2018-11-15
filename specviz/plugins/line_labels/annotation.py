@@ -30,7 +30,7 @@ class LineIDMarkerProxy(object):
         turn an inordinate amount of calls to connect() and disconnect().
     '''
 
-    def __init__(self, x0, y0, proxy=None, text=None, plot_item=None, tip="", color=(0, 0, 0),
+    def __init__(self, x0, y0, proxy=None, text=None, tip="", color=(0, 0, 0),
                  orientation='horizontal'):
 
         self.x0 = x0
@@ -40,7 +40,6 @@ class LineIDMarkerProxy(object):
             # complete initialization by taking
             # parameters from another instance.
             self._text = proxy._text
-            self._plot_item = proxy._plot_item
             self._tooltip = proxy._tooltip
             self._color = proxy._color
             self._orientation = proxy._orientation
@@ -48,7 +47,6 @@ class LineIDMarkerProxy(object):
         else:
             # initialize from passed values.
             self._text = text
-            self._plot_item = plot_item
             self._tooltip = tip
             self._color = color
             self._orientation = orientation
@@ -76,7 +74,6 @@ class LineIDMarker(TextItem):
         self.y0 = marker.y0
 
         self._text = marker._text
-        self._plot_item = marker._plot_item
         self._orientation = marker._orientation
         self._color = marker._color
 

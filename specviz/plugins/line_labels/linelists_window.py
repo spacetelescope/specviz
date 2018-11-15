@@ -2,6 +2,7 @@
 Define all the line list-based windows and dialogs
 """
 import os
+import sys
 
 from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
                             QTableView, QMainWindow, QAbstractItemView,
@@ -147,7 +148,6 @@ class LineListsWindow(QMainWindow):
             self.tab_widget.removeTab(0)
 
         # Local references for often used objects.
-        self.data_item = self.hub.plot_item.data_item
         self.plot_window = self.hub.plot_window
 
         self.setWindowTitle(str(self.plot_window.plot_widget.title))
@@ -388,8 +388,17 @@ class LineListsWindow(QMainWindow):
             error_dialog.exec_()
 
     def _find_wavelength_range(self):
-        amin = self.data_item.spectral_axis[0]
-        amax = self.data_item.spectral_axis[-1]
+        unit = self.hub.plot_widget.spectral_axis_unit
+        data_item_list = self.hub.plot_widget.plotItem.dataItems
+
+        amin = sys.float_info.max
+        amax = -amin
+        for item in data_item_list:
+            value = item.dataBounds(0)
+            amin = min(value[0], amin)
+            amax = max(value[1], amax)
+        amin = Quantity(amin, unit)
+        amax = Quantity(amax, unit)
 
         return (amin, amax)
 
