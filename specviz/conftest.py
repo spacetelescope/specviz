@@ -1,5 +1,6 @@
 # This file is used to configure the behavior of pytest when using the Astropy
 # test infrastructure.
+import time
 
 from astropy.version import version as astropy_version
 if astropy_version < '3.0':
@@ -65,4 +66,5 @@ def specviz_gui():
     :return:
     """
     spec_app = Application([], skip_splash=True, dev=True)
-    return spec_app
+    yield spec_app
+    spec_app.quit()
