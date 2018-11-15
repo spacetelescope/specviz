@@ -19,7 +19,7 @@ class LineLabelsPlotter(object):
 
         self._linelist_window = linelist_window
         self._linelists = self._linelist_window.linelists
-        self._plot_item = self._linelist_window.hub.plot_widget
+        self._plot_widget = self._linelist_window.hub.plot_widget
 
         # This is normally set to False, except for the brief moment in
         # between the arrivals of a data_unit_changed signal and a
@@ -88,14 +88,14 @@ class LineLabelsPlotter(object):
     def _dismiss_linelists_window(self, close, **kwargs):
         if self._linelist_window:
             if close:
-                self._erase_linelabels(self._plot_item)
+                self._erase_linelabels(self._plot_widget)
                 self._linelist_window.close()
                 self._linelist_window = None
             else:
                 self._linelist_window.hide()
 
     def _erase_linelabels(self, caller, *args, **kwargs):
-        if caller != self._plot_item:
+        if caller != self._plot_widget:
             return
 
         if self._linelist_window:
@@ -241,10 +241,10 @@ class LineLabelsPlotter(object):
         # that in turn relies in the storage of marker instances row-wise in the
         # line list table.
 
-        # plot_item = self._plot_item.plotItem
-        plot_item = self._plot_item
+        # plot_widget = self._plot_widget.plotItem
+        plot_widget = self._plot_widget
 
-        height = self._compute_height(merged_linelist, plot_item)
+        height = self._compute_height(merged_linelist, plot_widget)
 
         # column names are defined in the YAML files
         # or by constants elsewhere.
@@ -270,7 +270,6 @@ class LineLabelsPlotter(object):
             marker = LineIDMarkerProxy(wave_column[row_index],
                                        height[row_index],
                                        text=id_column[row_index],
-                                       plot_item=plot_item,
                                        tip=tool_tip,
                                        color=color_column[row_index],
                                        orientation='vertical')
@@ -287,10 +286,10 @@ class LineLabelsPlotter(object):
                 real_marker = LineIDMarker(marker_proxy)
                 real_marker.setPos(marker_proxy.x0, marker_proxy.y0)
 
-                self._plot_item.addItem(real_marker)
+                self._plot_widget.addItem(real_marker)
                 self._markers_on_screen.append(real_marker)
 
-        self._plot_item.update()
+        self._plot_widget.update()
 
     # Slot called by the zoom control thread.
     def _handle_zoom(self):
@@ -304,12 +303,12 @@ class LineLabelsPlotter(object):
 
             # update height column in line list based on
             # the new, zoomed coordinates.
-            height_array = self._compute_height(self._merged_linelist, self._plot_item)
+            height_array = self._compute_height(self._merged_linelist, self._plot_widget)
 
             # remove markers that are displaying right now
             for index in range(len(self._markers_on_screen)):
                 marker = self._markers_on_screen[index]
-                self._plot_item.removeItem(marker)
+                self._plot_widget.removeItem(marker)
             self._markers_on_screen = []
 
             # update markers based on what is stored in the
@@ -351,10 +350,10 @@ class LineLabelsPlotter(object):
                     real_marker = LineIDMarker(marker_proxy)
                     real_marker.setPos(real_marker.x0, real_marker.y0)
 
-                    self._plot_item.addItem(real_marker)
+                    self._plot_widget.addItem(real_marker)
                     self._markers_on_screen.append(real_marker)
 
-            self._plot_item.update()
+            self._plot_widget.update()
 
             # took = self.Cron.elapsed()
             # print("took: {0} msec" .format(str(took)))
@@ -362,8 +361,8 @@ class LineLabelsPlotter(object):
             self._zoom_markers_thread.zoom_end.emit()
 
     # compute height to display each marker
-    def _compute_height(self, merged_linelist, plot_item):
-        data_range = plot_item.viewRange()
+    def _compute_height(self, merged_linelist, plot_widget):
+        data_range = plot_widget.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
 
@@ -394,9 +393,9 @@ class LineLabelsPlotter(object):
         if len(marker_list) > 10:
             threshold = 5
 
-            data_range = self._plot_item.viewRange()
-            x_pixels = self._plot_item.sceneBoundingRect().width()
-            # y_pixels = self._plot_item.sceneBoundingRect().height()
+            data_range = self._plot_widget.viewRange()
+            x_pixels = self._plot_widget.sceneBoundingRect().width()
+            # y_pixels = self._plot_widget.sceneBoundingRect().height()
             xmin = data_range[0][0]
             xmax = data_range[0][1]
             # ymin = data_range[1][0]
@@ -404,8 +403,8 @@ class LineLabelsPlotter(object):
 
             # compute X and Y distances in between markers, in screen pixels
             x = np.array([marker.x0 for marker in marker_list])
-            xdist = np.diff(x)
-            xdist *= x_pixels / (xmax - xmin)
+            xdist = np.abs(np.diff(x))
+            xdist *= np.abs(x_pixels / (xmax - xmin))
             # y = np.array([marker.y0 for marker in marker_list])
             # ydist = np.diff(y)
             # ydist *= y_pixels / (ymax - ymin)
@@ -435,8 +434,8 @@ class LineLabelsPlotter(object):
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
             for index in range(len(self._markers_on_screen)):
-                self._plot_item.removeItem(self._markers_on_screen[index])
-            self._plot_item.update()
+                self._plot_widget.removeItem(self._markers_on_screen[index])
+            self._plot_widget.update()
             self._markers_on_screen = []
 
     def _destroy_zoom_markers_thread(self):
