@@ -260,7 +260,6 @@ class ModelEditor(QWidget):
             # uses the full, un-truncated data value.
             if item.column() == 1:
                 item.setData(float(item.text()), Qt.UserRole + 1)
-                # item.setText("{:.5g}".format(float(item.text()))) # dont change user input
                 item.setText(item.text())
             self._redraw_model()
         else:
