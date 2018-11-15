@@ -1,5 +1,6 @@
 import os
 import uuid
+import pickle
 
 import numpy as np
 from astropy import units as u
@@ -7,7 +8,7 @@ from astropy.modeling import fitting, models, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import (QAction, QDialog, QInputDialog, QMenu, QMessageBox,
-                            QToolButton, QWidget)
+                            QToolButton, QWidget, QFileDialog)
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
 from specutils.spectra import Spectrum1D
@@ -32,6 +33,8 @@ FITTERS = {
     'Simplex Least Squares': fitting.SimplexLSQFitter,
     # Disabled # 'SLSQP Optimization': fitting.SLSQPLSQFitter,
 }
+
+SPECVIZ_MODEL_FILE_FILTER = 'Specviz Model Files (*.smf)'
 
 
 @plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
@@ -64,6 +67,11 @@ class ModelEditor(QWidget):
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
 
+        # Add an option to load models from a file
+        load_file_action = QAction('Load from file', models_menu)
+        load_file_action.triggered.connect(lambda x : self._on_load_from_file())
+        models_menu.addAction(load_file_action)
+
         # Initially hide the model editor tools until user has selected an
         # editable model spectrum object
         self.editor_holder_widget.setHidden(True)
@@ -76,6 +84,8 @@ class ModelEditor(QWidget):
 
         self.advanced_settings_button.clicked.connect(
             lambda: ModelAdvancedSettingsDialog(self, self).exec())
+
+        self.save_model_button.clicked.connect(self._on_save_model)
 
         self.data_selection_combo.setModel(self.hub.model)
 
@@ -150,27 +160,74 @@ class ModelEditor(QWidget):
             if self.model_tree_view.model().evaluate() is None:
                 self._on_equation_edit_button_clicked()
 
-    def _add_fittable_model(self, model_type):
-        if issubclass(model_type, MODELS['Polynomial1D']):
-            text, ok = QInputDialog.getInt(self, 'Polynomial1D',
-                                           'Enter Polynomial1D degree:')
-            if ok:
-                # Create a new astropy model class definition with the degree
-                # data already embedded
-                model_type = type(
-                    model_type.__name__, (model_type,),
-                    {'__init__': lambda self, *args, **kwargs:
-                        super(model_type, self).__init__(
-                            degree=int(text), **kwargs)})
-            else:
-                return
+    def _save_models(self, filename):
+        model_editor_model = self.hub.plot_item.data_item.model_editor_model
+        models = model_editor_model.fittable_models
+        with open(filename, 'wb') as handle:
+            pickle.dump(model_editor_model.fittable_models, handle)
 
-        model = model_type()
+    def _on_save_model(self, interactive=True):
+
+        model_editor_model = self.hub.data_item.model_editor_model
+        # There are no models to save
+        if not model_editor_model.fittable_models:
+            self.new_message_box(text='No model available',
+                                 info='No model exists to be saved.')
+            return
+
+        default_name = os.path.join(os.path.curdir, 'new_model.smf')
+        outfile = QFileDialog.getSaveFileName(
+            self, caption='Save Model', directory=default_name,
+            filter=SPECVIZ_MODEL_FILE_FILTER)[0]
+        # No file was selected; the user hit "Cancel"
+        if not outfile:
+            return
+
+        self._save_models(outfile)
+
+        self.new_message_box(
+            text='Model saved',
+            info='Model successfully saved to {}'.format(outfile),
+            icon=QMessageBox.Information)
+
+    def _load_model_from_file(self, filename):
+        with open(filename, 'rb') as handle:
+            loaded_models = pickle.load(handle)
+
+        for _, model in loaded_models.items():
+            self._add_model(model)
+
+    def _on_load_from_file(self):
+        filename = QFileDialog.getOpenFileName(
+            self, caption='Load Model',
+            filter=SPECVIZ_MODEL_FILE_FILTER)[0]
+        if not filename:
+            return
+
+        self._load_model_from_file(filename)
+
+    def _add_model(self, model):
         idx = self.model_tree_view.model().add_model(model)
         self.model_tree_view.setExpanded(idx, True)
 
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
+
+        self._redraw_model()
+
+    def _add_fittable_model(self, model_type):
+        if issubclass(model_type, MODELS['Polynomial1D']):
+            text, ok = QInputDialog.getInt(self, 'Polynomial1D',
+                                           'Enter Polynomial1D degree:')
+            # User decided not to create a model after all
+            if not ok:
+                return
+
+            model = model_type(int(text))
+        else:
+            model = model_type()
+
+        self._add_model(model)
 
     def _redraw_model(self):
         # Get the current plot item and update
@@ -203,7 +260,6 @@ class ModelEditor(QWidget):
             # uses the full, un-truncated data value.
             if item.column() == 1:
                 item.setData(float(item.text()), Qt.UserRole + 1)
-                # item.setText("{:.5g}".format(float(item.text()))) # dont change user input
                 item.setText(item.text())
             self._redraw_model()
         else:

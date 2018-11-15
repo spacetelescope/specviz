@@ -1,7 +1,8 @@
 import re
+from asteval import Interpreter
 
 import astropy.units as u
-from asteval import Interpreter
+from astropy.modeling import models
 from qtpy.QtCore import QSortFilterProxyModel, Qt, Signal
 from qtpy.QtGui import QStandardItem, QStandardItemModel, QValidator
 
@@ -34,7 +35,14 @@ class ModelFittingModel(QStandardItemModel):
         fittable_models = {}
 
         for model_item in self.items:
-            model_kwargs = {'name': model_item.text(), 'fixed': {}}
+            model = model_item.data()
+            model_name = model_item.text()
+            model_kwargs = {'name': model_name, 'fixed': {}}
+
+            if isinstance(model, models.Polynomial1D):
+                model_args = [model.degree]
+            else:
+                model_args = []
 
             # For each of the children `StandardItem`s, parse out their
             # individual stored values
@@ -48,9 +56,14 @@ class ModelFittingModel(QStandardItemModel):
                                             if param_unit is not None else param_value)
                 model_kwargs.get('fixed').setdefault(param_name, param_fixed)
 
-            fittable_models[model_item.text()] = model_item.data().__class__(**model_kwargs)
+            new_model = model.__class__(*model_args, **model_kwargs)
+            fittable_models[model_name] = new_model
 
         return fittable_models
+
+    @property
+    def fittable_models(self):
+        return self.compose_fittable_models()
 
     def add_model(self, model):
         model_name = model.__class__.name
