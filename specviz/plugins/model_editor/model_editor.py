@@ -213,6 +213,8 @@ class ModelEditor(QWidget):
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
+        self._redraw_model()
+
     def _add_fittable_model(self, model_type):
         if issubclass(model_type, MODELS['Polynomial1D']):
             text, ok = QInputDialog.getInt(self, 'Polynomial1D',
