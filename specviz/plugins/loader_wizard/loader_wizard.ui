@@ -36,7 +36,7 @@
    <item>
     <widget class="QLabel" name="label_8">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;This wizard &lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#e30a07;&quot;&gt;does not support FITS&lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt; image formats. Tabular data only.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;This wizard &lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#e30a07;&quot;&gt;does not support FITS image&lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt; formats. Tabular data only.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -85,7 +85,7 @@
        <item>
         <widget class="QPushButton" name="button_refresh_data">
          <property name="text">
-          <string>Refresh Data</string>
+          <string>Reload Table</string>
          </property>
         </widget>
        </item>
@@ -616,16 +616,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="button_cancel">
-       <property name="text">
-        <string>Cancel</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="button_ok">
        <property name="text">
-        <string>OK</string>
+        <string>Close</string>
        </property>
        <property name="default">
         <bool>true</bool>

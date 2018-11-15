@@ -300,7 +300,6 @@ class BaseImportWizard(QDialog):
         self.ui.button_yaml.clicked.connect(self._toggle_output_preview)
 
         self.ui.button_ok.clicked.connect(self.accept)
-        self.ui.button_cancel.clicked.connect(self.reject)
 
         self.ui.combo_uncertainty_type.addItem('Standard Deviation', userData='std')
         self.ui.combo_uncertainty_type.addItem('Inverse Variance', userData='ivar')

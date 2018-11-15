@@ -4,11 +4,30 @@ Loader Wizard
 -------------
 
 The loader wizard will assist users in generating a custom data loader. After
-working through the wizard a new loader python file will be saved to a
-directory of the users choice (default is the ~/.specutils directory). The
+working through the wizard a new loader python file can be saved to a
+directory of the users choice (default is the ``~/.specutils`` directory). The
 written loader will then be automatically added to the specutils loader
-registry and accessible from the "Load Data" widget(?).
+registry and accessible from the ``Load Data`` widget.
 
 .. image:: _static/loader_startup.png
 
-There are several sections of the loader wizard.  The top field
+The top field of the wizard requires additional parameters that may be needed
+by `astropy.table.Table.read` to open the data file.  The syntax of this field
+should match the syntax following the filename parameter in an
+`astropy.table.Table.read` call. For example, the grayed
+out text in the above figure shows an additional parameter of
+``format="ascii"``.  For multiple additional parameters you should include
+commas, i.e. ``format = "ascii", comment = "*"``. See the `astropy.table.Table`
+documentation for the available options. Once this field is filled out, you can
+press the Refresh Data button and the wizard will reload the table from the
+provided file. If the `~astropy.table.Table.read` command was
+successful, the remaining sections of the wizard will be populated.
+
+You will not be able to save your new loader without valid units defined for
+the data section and the dispersion section (when wcs is not being used for
+the dispersion axis). You can see a preview of the generated loader wizard by
+clicking on the ``Preview .py`` button.
+
+The wizard is only able to handle table data, and will not properly handle FITS
+image data.  Additionally, although not currently
+implemented, we plan on supporting bit masks in a future release.
