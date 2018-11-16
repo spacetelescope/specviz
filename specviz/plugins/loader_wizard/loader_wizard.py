@@ -489,17 +489,27 @@ class BaseImportWizard(QDialog):
         self.ui.label_unit_status.setText('')
         self.ui.label_unit_status.setStyleSheet('')
 
-    def save_loader_script(self, event=None):
-
+    def save_loader_check(self):
         if (self.helper_disp.combo_units.currentText() == "Custom" and self.helper_disp.label_status.text() != 'Valid units') or \
                 (self.helper_data.combo_units.currentText() == "Custom" and self.helper_data.label_status.text() != 'Valid units'):
             self.ui.label_unit_status.setText('Found invalid units')
             self.ui.label_unit_status.setStyleSheet('color: red')
-            return
+            return False
 
         if self.ui.loader_name.text() == "":
             self.ui.label_loader_name_status.setText('Enter a name for the loader')
             self.ui.label_loader_name_status.setStyleSheet('color: red')
+            return False
+
+        return True
+
+
+    def save_loader_script(self, event=None, output_directory=None):
+        """
+        oputput_location parameter is scritly for use in tests.
+        """
+
+        if not self.save_loader_check():
             return
 
         specutils_dir = os.path.join(os.path.expanduser('~'), '.specutils')
@@ -509,9 +519,12 @@ class BaseImportWizard(QDialog):
         filename = compat.getsavefilename(parent=self,
                                           caption='Export loader to .py file',
                                           basedir=specutils_dir)[0]
-
         if filename == '':
             return
+
+        self.save_register_new_loader(filename)
+
+    def save_register_new_loader(self, filename):
 
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
