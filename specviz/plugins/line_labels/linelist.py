@@ -327,7 +327,7 @@ class LineList(Table):
 
         # convert wavelenghts in line list to whatever
         # units the wavelength range is expressed in.
-        new_wavelengths = wavelengths.to(wmin.unit)
+        new_wavelengths = wavelengths.to(wmin.unit, equivalencies=u.spectral())
 
         # add some leeway at the short and long end points.
         # For now, we extend both ends by 10%. This might
