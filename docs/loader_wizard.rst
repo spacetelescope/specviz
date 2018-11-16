@@ -5,9 +5,9 @@ Loader Wizard
 
 The loader wizard will assist users in generating a custom data loader. After
 working through the wizard a new loader python file can be saved to a
-directory of the users choice (default is the ``~/.specutils`` directory). The
+directory of the user's choice (default is the ``~/.specutils`` directory). The
 written loader will then be automatically added to the specutils loader
-registry and accessible from the ``Load Data`` widget.
+registry and accessible from the fiel open dialog.
 
 .. image:: _static/loader_startup.png
 

@@ -5,6 +5,8 @@ from astropy import units as u
 from astropy.wcs import WCS
 from astropy.table import Table
 
+from qtpy.QtWidgets import QMessageBox
+
 UNIT_FIXES = {
     'COUNTS SEC-1 METER-1': u.count / u.s / u.m,
     'MICRONS': u.micron,
@@ -54,21 +56,24 @@ def _parse(filename, table=None):
     return dataset
 
 
-def parse_ascii(filename, read_input):
+def parse_ascii(filename, read_input=None):
 
-    if read_input == "":
+    if read_input == None:
         try:
-            itable = Table.read(filename, format="ascii")
+            itable = Table.read(filename)
         except Exception as e:
             itable = None
 
     else:
-        # split parameter string out into dictonary
+        # split parameter string out into dictionary
         try:
             kwargs = {a.split("=")[0].strip() : a.split("=")[1].strip().strip('"').strip("'")
                   for a in read_input.split(",")}
             itable = Table.read(filename, **kwargs)
         except Exception as e:
+            QMessageBox.critical(None, "Table Read Error", "Couldn't read file "
+                                                           "into table with "
+                                                           "given parameters.")
             itable = None
 
     return _parse(filename, itable)

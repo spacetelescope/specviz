@@ -8,7 +8,7 @@ or  specified region of interest, depending on what is selected in the
 left side bar.  If a region of interest is selected, the statistic
 calculations are updated when that region of interest is changed.
 
-Calcualtions are done using the following functions:
+Calculations are done using the following functions:
 
 Mean
   `astropy.units.Quantity.mean`

@@ -341,6 +341,14 @@ class BaseImportWizard(QDialog):
         # self.ui.combo_bit_mask_definition.addItem('SDSS', userData='sdss')
         # self.ui.combo_bit_mask_definition.addItem('JWST', userData='jwst')
 
+        ## so for now we will set them to invisible
+        self.ui.label_4m.setVisible(False)
+        self.ui.bool_mask.setVisible(False)
+        self.ui.label_mask_component.setVisible(False)
+        self.ui.combo_mask_component.setVisible(False)
+        self.ui.label_mask_definition.setVisible(False)
+        self.ui.combo_bit_mask_definition.setVisible(False)
+
         self.ui.loader_name.textChanged.connect(self._clear_loader_name_status)
         self.ui.value_dispersion_units.textChanged.connect(self._clear_unit_status)
         self.ui.value_data_units.textChanged.connect(self._clear_unit_status)
@@ -568,7 +576,7 @@ class ASCIIImportWizard(BaseImportWizard):
     def as_new_loader_dict(self, name=None):
         """
         Convert the current configuration to a dictionary
-        that can then be serialized to YAML
+        that can then be serialized to a Python file
         """
         self.new_loader_dict['name'] = name or self.ui.loader_name.text()
 
@@ -636,7 +644,7 @@ class LoaderWizard(QDialog):
             return
 
         dialog = ASCIIImportWizard(filename,
-                                   simplify_arrays(parse_ascii(filename, 'format = "ascii"')))
+                                   simplify_arrays(parse_ascii(filename, read_input=None)))
 
 
         val = dialog.exec_()
