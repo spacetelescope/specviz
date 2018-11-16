@@ -9,14 +9,13 @@ from specviz.plugins.loader_wizard.loader_wizard import (ASCIIImportWizard,
 
 def test_loader_wizard(tmpdir, qtbot):
 
-    # tmpfile = str(tmpdir.join('example.txt'))
+    tmpfile = str(tmpdir.join('example.txt'))
 
-    # data_url = 'https://stsci.app.box.com/s/zz2vgbreuzhjtel0d5u96r30oofolod7/file/345743002081'
-    # with urllib.request.urlopen(data_url) as response:
-    #     with open(tmpfile, 'wb') as handle:
-    #         shutil.copyfileobj(response, handle)
-
-    tmpfile = "/Users/ogaz/specviz/data/example_ascii.txt"
+    data_url = 'https://stsci.app.box.com/index.php?rm=box_download_shared_file' \
+               '&shared_name=zz2vgbreuzhjtel0d5u96r30oofolod7&file_id=f_345743002081'
+    with urllib.request.urlopen(data_url) as response:
+        with open(tmpfile, 'wb') as handle:
+            shutil.copyfileobj(response, handle)
 
     arrays = simplify_arrays(parse_ascii(tmpfile, 'format = "ascii"'))
     widget = ASCIIImportWizard(tmpfile, arrays)
