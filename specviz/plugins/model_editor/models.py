@@ -1,14 +1,10 @@
-import uuid
+import re
+from asteval import Interpreter
 
 import astropy.units as u
-import numpy as np
-import qtawesome as qta
-from qtpy.QtCore import QSortFilterProxyModel, Qt
-from qtpy.QtGui import QStandardItem, QStandardItemModel
-from specutils import Spectrum1D
-from qtpy.QtGui import QValidator
-from asteval import Interpreter
-from qtpy.QtCore import Signal, Qt
+from astropy.modeling import models
+from qtpy.QtCore import QSortFilterProxyModel, Qt, Signal
+from qtpy.QtGui import QStandardItem, QStandardItemModel, QValidator
 
 
 class ModelFittingModel(QStandardItemModel):
@@ -33,20 +29,26 @@ class ModelFittingModel(QStandardItemModel):
         self._equation = value
         self.evaluate()
 
-    @property
-    def fittable_models(self):
+    def compose_fittable_models(self):
         # Recompose the model objects with the current values in each of its
         # parameter rows.
         fittable_models = {}
 
         for model_item in self.items:
-            model_kwargs = {'name': model_item.text(), 'fixed': {}}
+            model = model_item.data()
+            model_name = model_item.text()
+            model_kwargs = {'name': model_name, 'fixed': {}}
+
+            if isinstance(model, models.Polynomial1D):
+                model_args = [model.degree]
+            else:
+                model_args = []
 
             # For each of the children `StandardItem`s, parse out their
             # individual stored values
             for cidx in range(model_item.rowCount()):
                 param_name = model_item.child(cidx, 0).data()
-                param_value = float(model_item.child(cidx, 1).text())
+                param_value = model_item.child(cidx, 1).data()
                 param_unit = model_item.child(cidx, 2).data()
                 param_fixed = model_item.child(cidx, 3).checkState() == Qt.Checked
 
@@ -54,9 +56,14 @@ class ModelFittingModel(QStandardItemModel):
                                             if param_unit is not None else param_value)
                 model_kwargs.get('fixed').setdefault(param_name, param_fixed)
 
-            fittable_models[model_item.text()] = model_item.data().__class__(**model_kwargs)
+            new_model = model.__class__(*model_args, **model_kwargs)
+            fittable_models[model_name] = new_model
 
         return fittable_models
+
+    @property
+    def fittable_models(self):
+        return self.compose_fittable_models()
 
     def add_model(self, model):
         model_name = model.__class__.name
@@ -79,11 +86,12 @@ class ModelFittingModel(QStandardItemModel):
             param_name.setEditable(False)
 
             # Store the data value of the parameter
-            param_value = QStandardItem("{}".format(parameter.value))
+            param_value = QStandardItem("{:.5g}".format(parameter.value))
             param_value.setData(parameter.value, Qt.UserRole + 1)
 
             # Store the unit information
-            param_unit = QStandardItem("{}".format(parameter.unit))
+            # param_unit = QStandardItem("{}".format(parameter.unit))
+            param_unit = QStandardItem("Plot Units")
             param_unit.setData(parameter.unit, Qt.UserRole + 1)
             param_unit.setEditable(False)
 
@@ -104,6 +112,27 @@ class ModelFittingModel(QStandardItemModel):
 
         return model_item.index()
 
+    def remove_model(self, row):
+        """
+        Remove an astropy model from the internal qt data model.
+
+        Parameters
+        ----------
+        row : int
+            The row in the qt model that is to be removed.
+        """
+        # Get the model first so that we can re-parse the equation
+        model_item = self.item(row, 0)
+
+        # Remove the model name from the equation
+        self.equation = re.sub(
+            "(\+|-|\*|\/|=|>|<|>=|<=|&|\||%|!|\^|\(|\))\s+?({})".format(
+                model_item.text()),
+            "", self._equation)
+
+        # Remove the model item from the internal qt model
+        self.removeRow(row)
+
     def reset_equation(self):
         self._equation = ""
 
@@ -122,7 +151,7 @@ class ModelFittingModel(QStandardItemModel):
         fittable_models : dict
             Mapping of tree view model variables names to their model instances.
         """
-        fittable_models = self.fittable_models
+        fittable_models = self.compose_fittable_models()
 
         # Create an evaluation namespace for use in parsing the string
         namespace = {}

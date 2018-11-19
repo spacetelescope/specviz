@@ -17,9 +17,15 @@ class ModelDataItem(DataItem):
         result = self.model_editor_model.evaluate()
 
         if result is not None:
-            return result(self.spectral_axis.value) * self.data(self.DataRole).flux.unit
+            flux = result(self.spectral_axis.value) * self.data(self.DataRole).flux.unit
+            self.data(self.DataRole)._data = flux.value
 
-        return np.zeros(self.spectral_axis.size) * self.data(self.DataRole).flux.unit
+        return self.data(self.DataRole).flux
+
+    @property
+    def spectrum(self):
+        flux = self.flux  # Update the flux
+        return super().spectrum
 
     @property
     def model_editor_model(self):
