@@ -48,7 +48,7 @@ DATA_UNITS = [u.uJy, u.mJy, u.Jy, u.erg / u.cm**2 / u.s / u.Hz,
 
 class OutputPreviewWidget(QWidget):
     """
-    A YAML preview widget that appears as a drawer on the side of the main
+    A .py preview widget that appears as a drawer on the side of the main
     import widget.
     """
 
@@ -92,8 +92,8 @@ class ComponentHelper(object):
         self.label_status = label_status
         self.allow_wcs = allow_wcs
 
-        # Initialize combo box of dataset.
-        self._set_data()
+        # Attempt to initialize combo box of dataset.
+        self._set_units()
 
         # Set up callbacks for various events
 
@@ -148,9 +148,9 @@ class ComponentHelper(object):
     def dataset_update(self, new_dataset, is_enabled=True):
         self.dataset = new_dataset
         self._dataset_changed(is_enabled=is_enabled)
-        self._set_data()
+        self._set_units()
 
-    def _set_data(self):
+    def _set_units(self):
 
         if self.combo_units is not None:
             self.combo_units.clear()
@@ -256,7 +256,9 @@ class ComponentHelper(object):
 
 class BaseImportWizard(QDialog):
     """
-    A wizard to help with importing spectra from files.
+    A wizard to help with importing spectra from files. We may not need
+    separate parent and children classes. Retaining this structure until we
+    make some final design desicions about the loader wizard.
     """
 
     dataset_label = 'Dataset'
@@ -332,6 +334,7 @@ class BaseImportWizard(QDialog):
         self.ui.bool_mask.setEnabled(False)
         self.ui.combo_bit_mask_definition.setEnabled(False)
         self.ui.combo_mask_component.setEnabled(False)
+
         ## will implement this in the future
         # self.ui.bool_mask.setChecked(False)
         # self.set_mask_enabled(False)
@@ -514,7 +517,7 @@ class BaseImportWizard(QDialog):
 
     def save_loader_script(self, event=None, output_directory=None):
         """
-        oputput_location parameter is scritly for use in tests.
+        oputput_directory parameter is strictly for use in tests.
         """
 
         if not self.save_loader_check():
@@ -571,6 +574,12 @@ class BaseImportWizard(QDialog):
 
 
 class ASCIIImportWizard(BaseImportWizard):
+    """
+    We have simpliefied the loader wizard to using Table.read() for
+    any potential loader.  We may want to expand this, but if not, it can
+    be merged into it's parent class.
+    """
+
     dataset_label = 'Table'
 
     def as_new_loader_dict(self, name=None):
@@ -581,7 +590,7 @@ class ASCIIImportWizard(BaseImportWizard):
         self.new_loader_dict['name'] = name or self.ui.loader_name.text()
 
         if self.ui.line_table_read.text() == "":
-            self.new_loader_dict['table_read_kwargs'] = ', format="ascii"'
+            self.new_loader_dict['table_read_kwargs'] = ''
         else:
             self.new_loader_dict['table_read_kwargs'] = ", "+self.ui.line_table_read.text()
 

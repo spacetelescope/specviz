@@ -17,6 +17,7 @@ def test_loader_wizard(tmpdir, qtbot):
         with open(tmpfile, 'wb') as handle:
             shutil.copyfileobj(response, handle)
 
+    # Read in table from temp file and load wizard widget
     arrays = simplify_arrays(parse_ascii(tmpfile, 'format = "ascii"'))
     widget = ASCIIImportWizard(tmpfile, arrays)
 
@@ -27,6 +28,7 @@ def test_loader_wizard(tmpdir, qtbot):
     widget.combo_data_component.setCurrentIndex(1)
     widget.combo_data_units.setCurrentIndex(2)
 
+    # Set loader name and run save check
     widget.loader_name.setText("loadertest")
     assert widget.save_loader_check()
 
@@ -37,6 +39,8 @@ def test_loader_wizard(tmpdir, qtbot):
     with open(filename) as f:
         created_out = f.read()
 
+    # Not the nicest text block, but better then putting the comparison
+    # file in git.
     expected_out = """import os
 
 from astropy.table import Table
