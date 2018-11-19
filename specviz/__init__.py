@@ -25,9 +25,6 @@ if not _ASTROPY_SETUP_:
     import pyqtgraph as pg
     from configparser import ConfigParser
 
-    # Import specviz-specific specutils loaders
-    from .io.loaders import *
-
     # Setup logging level and display
     logging.basicConfig(format='specviz [%(levelname)-8s]: %(message)s',
                         level=logging.INFO)
