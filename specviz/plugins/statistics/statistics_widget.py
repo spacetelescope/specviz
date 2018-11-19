@@ -133,6 +133,8 @@ class StatisticsWidget(QWidget):
         self.hub.workspace.current_selected_changed.connect(self.update_statistics)
         # When new plot window is added, connect signals
         self.hub.workspace.plot_window_added.connect(self._connect_plot_window)
+        # When an item in the workspace model changes, update the stat widget
+        self.hub.model.itemChanged.connect(self.update_statistics)
 
         # Connect any currently open plot windows
         for plot_window in self.hub.plot_windows:
