@@ -44,6 +44,7 @@ class ModelEditor(QWidget):
 
         self.fitting_options = {
             'fitter': 'Levenberg-Marquardt',
+            'displayed_digits': 5,
             'max_iterations': optimizers.DEFAULT_MAXITER,
             'relative_error': optimizers.DEFAULT_ACC,
             'epsilon': optimizers.DEFAULT_EPS,
@@ -384,6 +385,7 @@ class ModelEditor(QWidget):
 
         # Load options
         fitter = FITTERS[self.fitting_options["fitter"]]
+        output_formatter = "{:0.%sg}" % self.fitting_options['displayed_digits']
 
         kwargs = {}
         if fitter is fitting.LevMarLSQFitter:
@@ -446,7 +448,7 @@ class ModelEditor(QWidget):
                 else:
                     parameter = getattr(fit_mod, param_name)
 
-                model_item.child(cidx, 1).setText("{:0.5g}".format(parameter.value))
+                model_item.child(cidx, 1).setText(output_formatter.format(parameter.value))
                 model_item.child(cidx, 1).setData(parameter.value, Qt.UserRole + 1)
                 model_item.child(cidx, 3).setData(parameter.fixed, Qt.UserRole + 1)
 
@@ -476,6 +478,7 @@ class ModelAdvancedSettingsDialog(QDialog):
 
         fitting_options = self.model_editor.fitting_options
 
+        self.displayed_digits_spin_box.setValue(fitting_options['displayed_digits'])
         self.max_iterations_line_edit.setText(str(fitting_options['max_iterations']))
         self.relative_error_line_edit.setText(str(fitting_options['relative_error']))
         self.epsilon_line_edit.setText(str(fitting_options['epsilon']))
@@ -532,9 +535,11 @@ class ModelAdvancedSettingsDialog(QDialog):
         max_iterations = int(self.max_iterations_line_edit.text())
         relative_error = float(self.relative_error_line_edit.text())
         epsilon = float(self.epsilon_line_edit.text())
+        displayed_digits = self.displayed_digits_spin_box.value()
 
         self.model_editor.fitting_options = {
             'fitter': fitting_type,
+            'displayed_digits': displayed_digits,
             'max_iterations': max_iterations,
             'relative_error': relative_error,
             'epsilon': epsilon,
