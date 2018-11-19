@@ -3,7 +3,10 @@
 Arithmetic Widget
 =================
 The Arithmetic widget allows users to perform basic arithmetic on their spectra
-that are loaded into specviz.
+that are loaded into Specviz. The arithmetic editor accepts data loaded into the
+Specviz session and only outputs type `specutils.Spectrum1D <https://specutils.readthedocs.io/en/latest/api/specutils.Spectrum1D.html>`_. 
+This means the editor allows users to perform the same arithmatic operations that are available with 
+`specutils.Spectrum1D` objects.
 
 
 Launching Arithmetic Editor
