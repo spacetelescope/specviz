@@ -193,7 +193,7 @@ class PlotWidget(pg.PlotWidget):
         self._is_selected = True
 
         # Listen for model events to add/remove items from the plot
-        self.proxy_model.rowsInserted.connect(self._check_unit_compatibility)
+        self.proxy_model.sourceModel().data_added.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(
             lambda idx: self.remove_plot(index=idx))
 
@@ -332,15 +332,12 @@ class PlotWidget(pg.PlotWidget):
                 plot_data_item.visible = False
                 plot_data_item.data_item.setEnabled(False)
 
-    def _check_unit_compatibility(self, index, first=None, last=None):
-        if not index.isValid():
-            return
-
-        plot_data_item = self.proxy_model.item_from_index(index)
+    def _check_unit_compatibility(self, item):
+        plot_data_item = self.proxy_model.item_from_id(item.identifier)
 
         if not plot_data_item.are_units_compatible(self.spectral_axis_unit,
                                                    self.data_unit):
-            plot_data_item.setEnabled(False)
+            plot_data_item.data_item.setEnabled(False)
 
     def add_plot(self, item=None, index=None, visible=True, initialize=False):
         """
