@@ -15,8 +15,7 @@ class DataItem(QStandardItem):
     IdRole = Qt.UserRole + 2
     DataRole = Qt.UserRole + 3
 
-    def __init__(self, name, identifier, data, is_model=False,
-                 *args, **kwargs):
+    def __init__(self, name, identifier, data, *args, **kwargs):
         super(DataItem, self).__init__(*args, **kwargs)
 
         self.setData(name, self.NameRole)
@@ -139,15 +138,13 @@ class PlotDataItem(pg.PlotDataItem):
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
-        return (self.data_item.flux.unit == "" or
-                unit is not None and
+        return (unit is not None and
                 self.data_item.flux.unit.is_equivalent(
                     unit, equivalencies=spectral_density(
                         self.data_item.spectral_axis)))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        return (self.data_item.spectral_axis.unit == "" or
-                unit is not None and
+        return (unit is not None and
                 self.data_item.spectral_axis.unit.is_equivalent(
                     unit, equivalencies=spectral()))
 

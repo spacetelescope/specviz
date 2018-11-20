@@ -86,6 +86,7 @@ class Arithmetic(QDialog):
         matches = [item.text(0) for item in matches]
         return matches
 
+
 class EquationEditor(QDialog):
     tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
                 "by {{ }} brackets (e.g. {{{example}}}), and you <br>"
@@ -175,7 +176,8 @@ class EquationEditor(QDialog):
 
         self._equation_editor.set_equation(self.eq_name, self.eq_expression)
 
-        self._equation_editor.hub.workspace.model.add_data(spec=self.evaluated_arith, name=self.eq_name)
+        self._equation_editor.hub.workspace.model.add_data(
+            spec=self.evaluated_arith, name=self.eq_name)
 
         self._close_dialog()
 
@@ -184,7 +186,9 @@ class EquationEditor(QDialog):
 
     def _item_from_name(self, name):
         """Get data item based on name"""
-        return next((x.spectrum for x in self._equation_editor.hub.data_items if x.name == name))
+        return next((x.spectrum for x in self._equation_editor.hub.data_items
+                     if x.name == name))
+
     def _duplicate_component(self, compname):
         if compname in self._equation_editor.find_matches(compname):
             return True
@@ -196,7 +200,8 @@ class EquationEditor(QDialog):
     def _update_status(self):
         """Check status of entered arithmetic"""
         # If the text hasn't changed, no need to check again
-        if hasattr(self, '_cache') and self._cache == (self.text_label.text(), self._get_raw_command()):
+        if hasattr(self, '_cache') and self._cache == (self.text_label.text(),
+                                                       self._get_raw_command()):
             return
 
         if self.text_label.text() == "":
@@ -215,7 +220,8 @@ class EquationEditor(QDialog):
 
         else:
             try:
-                dict_map = {x.name: "self._item_from_name('{}')".format(x.name) for x in self._equation_editor.hub.data_items}
+                dict_map = {x.name: "self._item_from_name('{}')".format(x.name)
+                            for x in self._equation_editor.hub.data_items}
                 raw_str = self._get_raw_command()
                 self.evaluated_arith = eval(raw_str.format(**dict_map))
                 if not isinstance(self.evaluated_arith,
