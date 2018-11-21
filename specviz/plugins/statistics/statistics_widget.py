@@ -65,12 +65,6 @@ def compute_stats(spectrum):
         cent = "Error"
 
     try:
-        rms = np.sqrt(spectrum.flux.dot(spectrum.flux) / len(spectrum.flux))
-    except Exception as e:
-        logging.debug(e)
-        rms = "Error"
-
-    try:
         snr_val = snr(spectrum)
     except Exception as e:
         logging.debug(e)
@@ -98,7 +92,6 @@ def compute_stats(spectrum):
             'median': np.median(spectrum.flux),
             'stddev': spectrum.flux.std(),
             'centroid': cent,
-            'rms': rms,
             'snr': snr_val,
             'fwhm': fwhm_val,
             'ew': ew,
@@ -150,7 +143,6 @@ class StatisticsWidget(QWidget):
             'median': self.median_text_edit,
             'stddev': self.std_dev_text_edit,
             'centroid': self.centroid_text_edit,
-            'rms': self.rms_text_edit,
             'snr': self.snr_text_edit,
             'fwhm': self.fwhm_text_edit,
             'ew': self.eqwidth_text_edit,
@@ -158,6 +150,18 @@ class StatisticsWidget(QWidget):
             'maxval': self.max_val_text_edit,
             'total': self.count_total_text_edit
         }
+
+        self.continuum_subtracted_widgets = [
+            self.centroid_text_edit,
+            self.centroid_label,
+            self.fwhm_text_edit,
+            self.fwhm_label
+        ]
+
+        self.continuum_normalized_widgets = [
+            self.eqwidth_label,
+            self.eqwidth_text_edit,
+        ]
 
         # Set ui line height based on the current platform's qfont info
         for widget in self.stat_widgets.values():
@@ -168,6 +172,9 @@ class StatisticsWidget(QWidget):
                         (doc.documentMargin() + widget.frameWidth()) * 2 +
                         margins.top() + margins.bottom())
             widget.setFixedHeight(n_height)
+        self.comboBox.addItems(["Generic", "Continuum Subtracted", "Continuum Normalized"])
+        self.comboBox.currentIndexChanged.connect(self._on_set_statistics_type)
+        self._on_set_statistics_type()
 
     def _connect_plot_window(self, plot_window):
         plot_window.plot_widget.plot_added.connect(self.update_statistics)
@@ -181,6 +188,23 @@ class StatisticsWidget(QWidget):
     def clear_status(self):
         self.set_status("")
 
+    def _on_set_statistics_type(self, index=0):
+        stats_type = self.comboBox.currentText()
+        is_subtracted = stats_type == "Continuum Subtracted"
+        is_normalized = stats_type == "Continuum Normalized"
+
+        for widget in self.continuum_subtracted_widgets:
+            if is_subtracted:
+                widget.show()
+            else:
+                widget.hide()
+
+        for widget in self.continuum_normalized_widgets:
+            if is_normalized:
+                widget.show()
+            else:
+                widget.hide()
+
     def _update_stat_widgets(self, stats):
         """
         Clears all widgets then fills in
@@ -192,6 +216,7 @@ class StatisticsWidget(QWidget):
             Value: float value to display
         """
         self._clear_stat_widgets()
+
         if stats is None:
             return
         for key in stats:
@@ -255,10 +280,11 @@ class StatisticsWidget(QWidget):
             return "Data: {0}".format(current_item.name)
         else:
             return "Data: {0}\n" \
-                   "Region Max: {1:0.5g}\n" \
-                   "Region Min: {2:0.5g}".format(current_item.name,
-                                                 region.upper,
-                                                 region.lower)
+                   "Statistics over single region:\n" \
+                   "Region Upper: {1:0.5g}\n" \
+                   "Region Lower: {2:0.5g}".format(current_item.name,
+                                                   region.upper,
+                                                   region.lower)
 
     def clear_statistics(self):
         self._clear_stat_widgets()
