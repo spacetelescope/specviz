@@ -239,9 +239,24 @@ class LineListsWindow(QMainWindow):
         # convert from line list native units to whatever units
         # are currently being displayed in the spectral axis.
         linelist_units = wave_range[0].unit
-        plot_units = self.hub.plot_widget.spectral_axis_unit
-        w0 = wave_range[0].to(plot_units, equivalencies=u.spectral())
-        w1 = wave_range[1].to(plot_units, equivalencies=u.spectral())
+        spectral_axis_unit = self.hub.plot_widget.spectral_axis_unit
+        w0 = wave_range[0].to(spectral_axis_unit, equivalencies=u.spectral())
+        w1 = wave_range[1].to(spectral_axis_unit, equivalencies=u.spectral())
+
+        # populate labels with correct physical quantity name
+        dispersion_unit = u.Unit(spectral_axis_unit or "")
+        if dispersion_unit.physical_type == 'length':
+            dialog.minwave_label.setText("Minimum wavelength")
+            dialog.maxwave_label.setText("Maximum wavelength")
+        elif dispersion_unit.physical_type == 'frequency':
+            dialog.minwave_label.setText("Minimum frequency")
+            dialog.maxwave_label.setText("Maximum frequency")
+        elif dispersion_unit.physical_type == 'energy':
+            dialog.minwave_label.setText("Minimum energy")
+            dialog.maxwave_label.setText("Maximum energy")
+        else:
+            dialog.minwave_label.setText("Minimum disp. var.")
+            dialog.maxwave_label.setText("Maximum disp. var.")
 
         # pick a good format to display values represented
         # in the currently selected plot units.
@@ -260,26 +275,26 @@ class LineListsWindow(QMainWindow):
         dialog.max_text.setValidator(validator)
 
         dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
-                                                                dialog.nlines_label, linelist_units, plot_units)
+                                                                dialog.nlines_label, linelist_units, spectral_axis_unit)
 
         dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
                                                                                           dialog.min_text,
                                                                                           dialog.max_text,
                                                                                           dialog.nlines_label,
                                                                                           linelist_units,
-                                                                                          plot_units))
+                                                                                          spectral_axis_unit))
         dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
                                                                                           dialog.min_text,
                                                                                           dialog.max_text,
                                                                                           dialog.nlines_label,
                                                                                           linelist_units,
-                                                                                          plot_units))
+                                                                                          spectral_axis_unit))
         accepted = dialog.exec_() > 0
 
         amin = amax = None
         if accepted:
             return self._get_range_from_textfields(dialog.min_text, dialog.max_text,
-                                                   linelist_units, plot_units)
+                                                   linelist_units, spectral_axis_unit)
         return (amin, amax)
 
     def _get_range_from_textfields(self, min_text, max_text, linelist_units, plot_units):
