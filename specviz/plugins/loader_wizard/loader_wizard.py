@@ -43,7 +43,8 @@ yaml.add_representer(OrderedDict, represent_dict_order)
 DISPERSION_UNITS = [u.Angstrom, u.nm, u.um, u.mm, u.cm, u.m,
                     u.Hz, u.kHz, u.MHz, u.GHz, u.THz]
 DATA_UNITS = [u.uJy, u.mJy, u.Jy, u.erg / u.cm**2 / u.s / u.Hz,
-              u.erg / u.cm**2 / u.s / u.um, u.erg / u.cm**2 / u.s]
+              u.erg / u.cm**2 / u.s / u.um, u.erg / u.cm**2 / u.s / u.Angstrom,
+              u.erg / u.cm**2 / u.s]
 
 
 class OutputPreviewWidget(QWidget):
@@ -321,9 +322,6 @@ class BaseImportWizard(QDialog):
 
         self.ui.label_unit_status.setText('')
 
-        self.ui.wcs_check_box.setChecked(False)
-        self.ui.wcs_check_box.toggled.connect(self.set_dispersion_enabled)
-
         self.ui.bool_uncertainties.setChecked(False)
         self.set_uncertainties_enabled(False)
         self.ui.bool_uncertainties.toggled.connect(self.set_uncertainties_enabled)
@@ -373,24 +371,6 @@ class BaseImportWizard(QDialog):
 
         self._clear_loader_name_status()
 
-    def set_dispersion_enabled(self, enabled):
-
-        self.combo_dispersion_component.blockSignals(enabled)
-        self.combo_dispersion_units.blockSignals(enabled)
-        self.value_dispersion_units.blockSignals(enabled)
-
-        self.combo_dispersion_component.setEnabled(not enabled)
-        self.combo_dispersion_units.setEnabled(not enabled)
-
-
-
-        if enabled:
-            self.combo_dispersion_component.setCurrentIndex(-1)
-
-        self._update_preview()
-
-        self.value_dispersion_units.setEnabled(not enabled)
-
 
     def set_uncertainties_enabled(self, enabled):
 
@@ -414,10 +394,6 @@ class BaseImportWizard(QDialog):
     @property
     def uncertainties_enabled(self):
         return self.bool_uncertainties.isChecked()
-
-    @property
-    def wcs_enabled(self):
-        return self.ui.wcs_check_box.isChecked()
 
     def accept(self, event=None):
         super(BaseImportWizard, self).accept()
@@ -622,9 +598,6 @@ class ASCIIImportWizard(BaseImportWizard):
 
     def get_template(self):
         template_string = "new_loader_"
-
-        if self.wcs_enabled:
-            template_string += "wcs_"
 
         if "uncertainty_hdu" in self.new_loader_dict.keys():
             if self.new_loader_dict['uncertainty_type'] == 'std':

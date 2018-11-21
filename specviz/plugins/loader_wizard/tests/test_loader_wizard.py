@@ -18,10 +18,13 @@ def test_loader_wizard(tmpdir, qtbot):
             shutil.copyfileobj(response, handle)
 
     # Read in table from temp file and load wizard widget
-    arrays = simplify_arrays(parse_ascii(tmpfile, 'format = "ascii"'))
+    arrays = simplify_arrays(parse_ascii(tmpfile))
     widget = ASCIIImportWizard(tmpfile, arrays)
 
     qtbot.addWidget(widget)
+
+    widget.line_table_read.setText('format="ascii"')
+    widget._update_data()
 
     # set units and column choices
     widget.combo_dispersion_units.setCurrentIndex(0)
