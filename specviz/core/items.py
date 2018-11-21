@@ -243,6 +243,34 @@ class PlotDataItem(pg.PlotDataItem):
                                      y=self.flux,
                                      height=self.uncertainty)
 
+    def getData(self):
+        """
+        Override getData method to ensure that the returned values fit the
+        requirements of the pyqtgraph step mode: len(x) == len(y) + 1.
+        Necessary for proper performance implementations.
+        """
+        try:
+            x, y = super().getData()
+        except ValueError:
+            # if error occurred during down-sampling and clip to view use original data
+            x, y = self.xDisp, self.yDisp
+
+        # only if we have digital signal
+        if self.opts["stepMode"] and (self.opts['clipToView'] or
+                                      self.opts['autoDownsample']):
+                # if there is data
+                if x is not None:
+                    # if step mode is enabled and len(x) != len(y) + 1
+                    if len(x) == len(y):
+                        if len(x) > 0:
+                            x = np.append(x, x[-1])
+
+                if (x is None and y is None) or (len(x) == 0 and len(y) == 0):
+                    x = np.array([0, 0])
+                    y = np.array([0])
+
+        return x, y
+
 
 class ModelItem(QStandardItem):
     DataRole = Qt.UserRole + 2
