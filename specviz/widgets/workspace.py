@@ -196,6 +196,11 @@ class Workspace(QMainWindow):
     def _on_current_selected_changed(self, selected, deselected):
         if len(selected.indexes()) > 0:
             item = self.proxy_model.data(selected.indexes()[0], role=Qt.UserRole)
+
+            # Update subwindow with current selected change event
+            self.current_plot_window._on_current_item_changed(
+                selected.indexes()[0], next(iter(deselected.indexes()), 0))
+
             self.current_selected_changed.emit(item)
 
     def _on_add_workspace(self):
