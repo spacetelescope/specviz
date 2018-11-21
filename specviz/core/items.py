@@ -3,7 +3,6 @@ from itertools import cycle
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
-import astropy.units as u
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem
 
@@ -16,8 +15,7 @@ class DataItem(QStandardItem):
     IdRole = Qt.UserRole + 2
     DataRole = Qt.UserRole + 3
 
-    def __init__(self, name, identifier, data, is_model=False,
-                 *args, **kwargs):
+    def __init__(self, name, identifier, data, *args, **kwargs):
         super(DataItem, self).__init__(*args, **kwargs)
 
         self.setData(name, self.NameRole)
@@ -140,14 +138,13 @@ class PlotDataItem(pg.PlotDataItem):
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
-        return (self.data_item.flux.unit == "" or
-                unit is not None and
+        return (unit is not None and
                 self.data_item.flux.unit.is_equivalent(
-                    unit, equivalencies=spectral_density(self.spectral_axis*u.Unit(self.spectral_axis_unit))))
+                    unit, equivalencies=spectral_density(
+                        self.data_item.spectral_axis)))
 
     def is_spectral_axis_unit_compatible(self, unit):
-        return (self.data_item.spectral_axis.unit == "" or
-                unit is not None and
+        return (unit is not None and
                 self.data_item.spectral_axis.unit.is_equivalent(
                     unit, equivalencies=spectral()))
 
@@ -171,7 +168,7 @@ class PlotDataItem(pg.PlotDataItem):
         """
         return self.data_item.flux.to(self.data_unit,
                                       equivalencies=spectral_density(
-                                          self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
+                                          self.data_item.spectral_axis)).value
 
     @property
     def spectral_axis(self):
@@ -188,7 +185,7 @@ class PlotDataItem(pg.PlotDataItem):
 
         return uncertainty.to(self.data_unit or "",
                               equivalencies=spectral_density(
-                                  self.spectral_axis * u.Unit(self.spectral_axis_unit))).value
+                                  self.data_item.spectral_axis)).value
 
     @property
     def color(self):
@@ -230,7 +227,8 @@ class PlotDataItem(pg.PlotDataItem):
 
     def set_data(self):
         """
-        Sets the spectral_axis and flux. self.flux is called to convert flux units if they had been changed
+        Sets the spectral_axis and flux. self.flux is called to convert flux
+        units if they had been changed.
         """
         spectral_axis = self.spectral_axis
 

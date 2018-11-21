@@ -1,11 +1,8 @@
 import uuid
 
-import astropy.units as u
-import numpy as np
 import qtawesome as qta
-from qtpy.QtCore import QSortFilterProxyModel, Qt
-from qtpy.QtGui import QStandardItem, QStandardItemModel
-from specutils import Spectrum1D
+from qtpy.QtCore import QSortFilterProxyModel, Qt, Signal
+from qtpy.QtGui import QStandardItemModel
 
 from .items import DataItem, PlotDataItem
 
@@ -14,6 +11,8 @@ class DataListModel(QStandardItemModel):
     """
     Base model for all data loaded into specviz.
     """
+    data_added = Signal(DataItem)
+
     def __init__(self, *args, **kwargs):
         super(DataListModel, self).__init__(*args, **kwargs)
 
@@ -24,12 +23,23 @@ class DataListModel(QStandardItemModel):
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
-    def add_data(self, spec, name, is_model=False):
+    def add_data(self, spec, name):
         """
+        Generate and add a :class:`~specviz.core.items.DataItem` object to the
+        internal Qt data model.
+
+        Parameters
+        ----------
+        spec : :class:`~specutils.Spectrum1D`
+            The spectrum object containing data about the spectrum.
+        name : str
+            Display string of this data item.
         """
-        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec,
-                             is_model=is_model)
+        data_item = DataItem(name, identifier=uuid.uuid4(), data=spec)
         self.appendRow(data_item)
+
+        # Emit custom signal indicating a data item has been added to the model
+        self.data_added.emit(data_item)
 
         return data_item
 
@@ -100,7 +110,7 @@ class PlotProxyModel(QSortFilterProxyModel):
     @property
     def items(self):
         """Returns a list of :class:`PlotDataItems` in the proxy model."""
-        return self._items.values()
+        return list(self._items.values())
 
     def item_from_index(self, index):
         index = self.mapToSource(index)
