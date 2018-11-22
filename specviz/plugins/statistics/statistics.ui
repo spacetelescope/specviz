@@ -433,6 +433,12 @@
          <height>192</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
        </property>

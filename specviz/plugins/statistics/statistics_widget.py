@@ -119,7 +119,7 @@ class StatisticsWidget(QWidget):
 
         self.hub.workspace.current_item_changed.connect(self.update_statistics)
         # When the current subwindow changes, update the stat widget
-        self.hub.workspace.mdi_area.subWindowActivated.connect(self.update_statistics)
+        self.hub.workspace.plot_window_activated.connect(self.update_statistics)
         # When current item changes, update the stat widget
         self.hub.workspace.current_item_changed.connect(self.update_statistics)
         # When selection changes, update the stat widget
@@ -277,10 +277,11 @@ class StatisticsWidget(QWidget):
         if current_item is None or not hasattr(current_item, "name"):
             return ""
         if region is None:
-            return "Data: {0}".format(current_item.name)
+            return "Statistics over entire data.\n" \
+                   "Data: {0}".format(current_item.name)
         else:
-            return "Data: {0}\n" \
-                   "Statistics over single region:\n" \
+            return "Statistics over single region.\n" \
+                   "Data: {0}\n" \
                    "Region Upper: {1:0.5g}\n" \
                    "Region Lower: {2:0.5g}".format(current_item.name,
                                                    region.upper,
