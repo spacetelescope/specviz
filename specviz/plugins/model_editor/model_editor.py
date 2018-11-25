@@ -68,11 +68,6 @@ class ModelEditor(QWidget):
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
 
-        # Add an option to load models from a file
-        load_file_action = QAction('Load from file', models_menu)
-        load_file_action.triggered.connect(lambda x : self._on_load_from_file())
-        models_menu.addAction(load_file_action)
-
         # Initially hide the model editor tools until user has selected an
         # editable model spectrum object
         self.editor_holder_widget.setHidden(True)
