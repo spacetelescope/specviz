@@ -90,6 +90,7 @@ class ModelEditor(QWidget):
         self.load_model_button.clicked.connect(self._on_load_from_file)
 
         self.data_selection_combo.setModel(self.hub.model)
+        self.data_selection_combo.currentIndexChanged.connect(self._redraw_model)
 
         # When a plot data item is select, get its model editor model
         # representation
@@ -232,27 +233,55 @@ class ModelEditor(QWidget):
         self._add_model(model)
 
     def _redraw_model(self):
+        """
+        Re-plot the current model item.
+        When a new data item is selected, check if
+        the model's plot_data_item units are compatible
+        with the target data item's plot_data_item units.
+        If the units are not the same, update the model's units.
+        """
+        # Note
+        # ----
+        # Target data items that cannot be plotted are not
+        # selectable in the data selection combo. The only instance
+        # a unit change is needed is when noting is plotted and the
+        # user changes the target data.
+
         # Get the current plot item and update
         # its data item if its a model plot item
-        plot_data_item = self.hub.plot_item
+        model_plot_data_item = self.hub.plot_item
 
-        if isinstance(plot_data_item.data_item, ModelDataItem):
+        if model_plot_data_item is not None and \
+                isinstance(model_plot_data_item.data_item, ModelDataItem):
             # This is the data item selected in the
             # model editor data selection combo box
             data_item = self._get_selected_data_item()
 
             if data_item is not None and \
                     isinstance(data_item.spectrum, Spectrum1D):
+
+                selected_plot_data_item = self.hub.plot_data_item_from_data_item(data_item)
+
+                new_spectral_axis_unit = selected_plot_data_item.spectral_axis_unit
+                new_data_unit = selected_plot_data_item.data_unit
+
+                compatible = model_plot_data_item.are_units_compatible(
+                    new_spectral_axis_unit,
+                    new_data_unit,
+                )
+                if not compatible:
+                    model_plot_data_item._data_unit = selected_plot_data_item.data_unit
+                    model_plot_data_item._spectral_axis_unit = selected_plot_data_item.spectral_axis_unit
+
                 # Copy the spectrum and assign the current
                 # fittable model the spectrum with the
                 # spectral axis and flux converted to plot units.
-                spectrum = data_item.spectrum.with_spectral_unit(
-                    plot_data_item.spectral_axis_unit)
-                spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
-                plot_data_item.data_item.set_data(spectrum)
+                spectrum = data_item.spectrum.with_spectral_unit(new_spectral_axis_unit)
+                spectrum = spectrum.new_flux_unit(new_data_unit)
+                model_plot_data_item.data_item.set_data(spectrum)
 
-            # Only draw if ModelDataItem
-            plot_data_item.set_data()
+
+            model_plot_data_item.set_data()
 
     def _on_model_item_changed(self, item):
         if item.parent():
