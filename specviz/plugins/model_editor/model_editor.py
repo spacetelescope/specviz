@@ -87,6 +87,7 @@ class ModelEditor(QWidget):
             lambda: ModelAdvancedSettingsDialog(self, self).exec())
 
         self.save_model_button.clicked.connect(self._on_save_model)
+        self.load_model_button.clicked.connect(self._on_load_from_file)
 
         self.data_selection_combo.setModel(self.hub.model)
 
