@@ -363,6 +363,9 @@ class StatisticsWidget(QWidget):
                     self.set_status("Region over single value.")
                     return self.clear_statistics()
                 spec = extract_region(spec, spectral_region)
+                if not len(spec.flux) > 0:
+                    self.set_status("Regione range is too small.")
+                    return self.clear_statistics()
             except ValueError as e:
                 self.set_status("Region could not be extracted "
                                 "from target data.")
@@ -375,6 +378,7 @@ class StatisticsWidget(QWidget):
         self.stats = compute_stats(spec)
         self._update_stat_widgets(self.stats)
         self.set_status(self._get_target_name())
+        print("self.sender()", self.sender())
 
     def update_signal_handler(self, *args, **kwargs):
         """
