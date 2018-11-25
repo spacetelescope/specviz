@@ -130,6 +130,7 @@ class ModelEditor(QWidget):
                                         name="Fittable Model Spectrum",
                                         identifier=uuid.uuid4(),
                                         data=new_spec)
+        model_data_item._selected_data = self.hub.data_item
 
         self.hub.append_data_item(model_data_item)
 
@@ -144,6 +145,11 @@ class ModelEditor(QWidget):
         plot_data_item.visible = True
         self.hub.workspace.current_plot_window.plot_widget.on_item_changed(model_data_item)
         self.hub.workspace._on_item_changed(item=plot_data_item.data_item)
+
+        if model_data_item._selected_data is not None:
+            index = self.data_selection_combo.findData(model_data_item._selected_data)
+            if index != -1:
+                self.data_selection_combo.setCurrentIndex(index)
 
     def _on_remove_model(self):
         """Remove an astropy model from the model editor tree view."""
@@ -274,7 +280,7 @@ class ModelEditor(QWidget):
                 spectrum = data_item.spectrum.with_spectral_unit(new_spectral_axis_unit)
                 spectrum = spectrum.new_flux_unit(new_data_unit)
                 model_plot_data_item.data_item.set_data(spectrum)
-
+                model_plot_data_item.data_item._selected_data = data_item
 
             model_plot_data_item.set_data()
 
@@ -333,6 +339,10 @@ class ModelEditor(QWidget):
         # Set the model on the tree view and expand all children initially.
         self.model_tree_view.setModel(model_data_item.model_editor_model)
         self.model_tree_view.expandAll()
+        if model_data_item._selected_data is not None:
+            index = self.data_selection_combo.findData(model_data_item._selected_data)
+            if index != -1:
+                self.data_selection_combo.setCurrentIndex(index)
 
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
