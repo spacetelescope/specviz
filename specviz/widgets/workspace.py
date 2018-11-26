@@ -2,8 +2,9 @@ import logging
 import os
 import sys
 
+import numpy as np
 from astropy.io import registry as io_registry
-from astropy.io.registry import IORegistryError, identify_format, get_reader
+from astropy.io.registry import IORegistryError, get_reader, identify_format
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
@@ -62,6 +63,7 @@ class Workspace(QMainWindow):
             self._on_load_data)
         self.delete_data_action.triggered.connect(
             self._on_delete_data)
+        self.export_data_action.triggered.connect(self._on_export_data)
 
         # Setup operations menu
         self.operations_button = self.main_tool_bar.widgetForAction(self.operations_action)
@@ -353,6 +355,69 @@ class Workspace(QMainWindow):
             return
 
         self.load_data(file_path, file_loader=loader_name_map[fmt])
+
+    def _on_export_data(self):
+        """
+        Exports the currently selected data item to an ECSV file.
+        """
+        # TODO: the current release of specutils doesn't support exporting
+        # very well (it's untested, and probably does not match the attributes
+        # of the Spectrum1D object). So, create some temporary export formats.
+        def generic_export(spectrum, path):
+            from astropy.table import QTable
+            import astropy.units as u
+
+            data = {
+                'spectral_axis': spectrum.spectral_axis,
+                'flux': spectrum.flux,
+                'uncertainty': spectrum.uncertainty.array * spectrum.uncertainty.unit,
+                'mask': spectrum.mask if spectrum.mask is not None
+                        else u.Quantity(np.ones(spectrum.spectral_axis.shape))
+            }
+
+            meta = {}
+
+            if spectrum.meta is not None and 'header' in spectrum.meta:
+                meta.update({'header': {k: v for k, v in
+                                        spectrum.meta['header'].items()}})
+
+            tab = QTable(data, meta=meta)
+            tab.write(path, format='ascii.ecsv')
+
+        # Below should be used when specutils has proper write capabilities
+        # all_formats = io_registry.get_formats(Spectrum1D)['Format'].data
+        # writable_formats = io_registry.get_formats(Spectrum1D)['Write'].data
+        #
+        # write_mask = [True if x == 'Yes' else False for x in writable_formats]
+        # all_formats = all_formats[np.array(write_mask)]
+        # all_filters = ";;".join(list(all_formats))
+
+        all_filters = ";;".join(['*.ecsv'])
+
+        plot_data_item = self.current_item
+
+        try:
+            io_registry.register_writer('*.ecsv', Spectrum1D, generic_export)
+        except io_registry.IORegistryError:
+            pass
+
+        path, format = compat.getsavefilename(filters=all_filters)
+
+        if path and format:
+            try:
+                plot_data_item.data_item.spectrum.write(path, format=format)
+            except Exception as e:
+                logging.error(e)
+
+                message_box = QMessageBox()
+                message_box.setText("Error exporting data set.")
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.setInformativeText(
+                    "{}\n{}".format(
+                        sys.exc_info()[0], sys.exc_info()[1].__repr__()[:100])
+                )
+
+                message_box.exec()
 
     def load_data(self, file_path, file_loader=None, display=False):
         """
