@@ -303,7 +303,7 @@ class Workspace(QMainWindow):
         # Re-evaluate plot unit compatibilities
         window.plot_widget.check_plot_compatibility()
 
-        # Fire a signal letting everyone know a new plot window has been added
+        # Fire a signal letting everyone know a plot window has been activated
         self.plot_window_activated.emit(window)
 
     def _on_toggle_visibility(self, state):
