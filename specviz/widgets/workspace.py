@@ -3,6 +3,7 @@ import os
 import sys
 
 from astropy.io import registry as io_registry
+from astropy.io.registry import IORegistryError, identify_format, get_reader
 from qtpy import compat
 from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
@@ -326,27 +327,38 @@ class Workspace(QMainWindow):
         :class:`~specutils.Spectrum1D` object and thereafter adds it to the
         data model.
         """
+        # Create a dictionary mapping the registry loader names to the
+        # qt-specified loader names
+        def compose_filter_string(reader):
+            return ' '.join(['*.{}'.format(y) for y in reader.extensions]
+                            if reader.extensions is not None else '*')
+
+        loader_name_map = {
+            '{} ({})'.format(
+                x['Format'], compose_filter_string(
+                    get_reader(x['Format'], Spectrum1D))): x['Format']
+            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes'}
+
+        # Include an auto load function that lets the io machinery find the
+        # most appropriate loader to use
+        loader_name_map['Auto (*)'] = None
+
         # This ensures that users actively have to select a file type before
         # being able to select a file. This should make it harder to
         # accidentally load a file using the wrong type, which results in weird
         # errors.
-        default_filter = '-- Select file type --'
-
-        filters = [default_filter] + [x['Format'] + " (*)"
-                   for x in io_registry.get_formats(Spectrum1D)
-                   if x['Read'] == 'Yes']
+        filters = ['Select loader...'] + list(loader_name_map.keys())
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 caption="Load spectral data file",
-                                                filters=";;".join(filters),
-                                                selectedfilter=default_filter)
+                                                filters=";;".join(filters))
 
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=" ".join(fmt.split()[:-1]))
+        self.load_data(file_path, file_loader=loader_name_map[fmt])
 
-    def load_data(self, file_path, file_loader, display=False):
+    def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
 
@@ -364,8 +376,30 @@ class Workspace(QMainWindow):
         : :class:`~specviz.core.items.DataItem`
             The `DataItem` instance that has been added to the internal model.
         """
+        # In the case that the user has selected auto load, loop through every
+        # available loader and choose the one that 1) the registry identifier
+        # function allows, and 2) is the highest priority.
         try:
-            spec = Spectrum1D.read(file_path, format=file_loader)
+            try:
+                spec = Spectrum1D.read(file_path, format=file_loader)
+            except IORegistryError as e:
+                # In this case, assume that the registry has found several
+                # loaders that fit the same identifier, choose the highest
+                # priority one.
+                fmts = identify_format('read', Spectrum1D, file_path, None, [], {})
+
+                logging.warning(e)
+                logging.warning("Loaders for '%s' matched for this data set. "
+                                "Iterating based on priority."
+                                "", ', '.join(fmts))
+
+                for fmt in fmts:
+                    try:
+                        spec = Spectrum1D.read(file_path, format=fmt)
+                    except:
+                        logging.warning("Attempted load with '%s' failed, "
+                                        "trying next loader.", fmt)
+
             name = file_path.split('/')[-1].split('.')[0]
             data_item = self.model.add_data(spec, name=name)
 
