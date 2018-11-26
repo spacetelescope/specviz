@@ -151,6 +151,7 @@ class UnitChangeDialog(QDialog):
         # TODO: Implement option to preview the effect unit change will have on data
         self.ui.label_preview.hide()
         self.ui.label_preview_values.hide()
+        self.ui.adjustSize()
 
     def setup_connections(self):
         """Setup signal/slot connections for this dialog."""
@@ -182,10 +183,11 @@ class UnitChangeDialog(QDialog):
             label_valid.show()
             label_valid.setText("Enter custom units")
             label_valid.setStyleSheet('color: green')
-
+            self.ui.adjustSize()
         else:
             line_custom.hide()
             label_valid.hide()
+            self.ui.adjustSize()
 
     def on_line_custom_units_change(self, axis):
         """Called when the text of the custom units textbox has changed."""
