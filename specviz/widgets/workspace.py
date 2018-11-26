@@ -401,11 +401,11 @@ class Workspace(QMainWindow):
         except io_registry.IORegistryError:
             pass
 
-        path, format = compat.getsavefilename(filters=all_filters)
+        path, fmt = compat.getsavefilename(filters=all_filters)
 
-        if path and format:
+        if path and fmt:
             try:
-                plot_data_item.data_item.spectrum.write(path, format=format)
+                plot_data_item.data_item.spectrum.write(path, format=fmt)
             except Exception as e:
                 logging.error(e)
 
