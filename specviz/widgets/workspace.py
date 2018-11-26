@@ -406,6 +406,15 @@ class Workspace(QMainWindow):
         if path and fmt:
             try:
                 plot_data_item.data_item.spectrum.write(path, format=fmt)
+
+                message_box = QMessageBox()
+                message_box.setText("Data exported successfully.")
+                message_box.setIcon(QMessageBox.Information)
+                message_box.setInformativeText(
+                    "Data set '{}' has been exported to '{}'".format(
+                        plot_data_item.data_item.name, path))
+
+                message_box.exec()
             except Exception as e:
                 logging.error(e)
 
@@ -443,13 +452,12 @@ class Workspace(QMainWindow):
         try:
             try:
                 spec = Spectrum1D.read(file_path, format=file_loader)
-            except IORegistryError as e:
+            except:
                 # In this case, assume that the registry has found several
                 # loaders that fit the same identifier, choose the highest
                 # priority one.
-                fmts = identify_format('read', Spectrum1D, file_path, None, [], {})
+                fmts = io_registry.get_formats(Spectrum1D, 'Read')['Format']
 
-                logging.warning(e)
                 logging.warning("Loaders for '%s' matched for this data set. "
                                 "Iterating based on priority."
                                 "", ', '.join(fmts))
