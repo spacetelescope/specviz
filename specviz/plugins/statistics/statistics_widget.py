@@ -172,7 +172,7 @@ class StatisticsWidget(QWidget):
                         (doc.documentMargin() + widget.frameWidth()) * 2 +
                         margins.top() + margins.bottom())
             widget.setFixedHeight(n_height)
-        self.comboBox.addItems(["Generic", "Continuum Subtracted", "Continuum Normalized"])
+        self.comboBox.addItems(["Basic", "Continuum Subtracted", "Continuum Normalized"])
         self.comboBox.currentIndexChanged.connect(self._on_set_statistics_type)
         self._on_set_statistics_type()
 
