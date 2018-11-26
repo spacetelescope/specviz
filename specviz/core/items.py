@@ -251,7 +251,7 @@ class PlotDataItem(pg.PlotDataItem):
         """
         try:
             x, y = super().getData()
-        except ValueError:
+        except (ValueError, IndexError):
             # if error occurred during down-sampling and clip to view use original data
             x, y = self.xDisp, self.yDisp
 
