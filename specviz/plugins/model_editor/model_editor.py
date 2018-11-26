@@ -233,9 +233,8 @@ class ModelEditor(QWidget):
 
         self._add_model(model)
 
-    def _redraw_model(self):
+    def _update_model_data_item(self):
         """
-        Re-plot the current model item.
         When a new data item is selected, check if
         the model's plot_data_item units are compatible
         with the target data item's plot_data_item units.
@@ -271,8 +270,22 @@ class ModelEditor(QWidget):
                     new_data_unit,
                 )
                 if not compatible:
-                    model_plot_data_item._data_unit = selected_plot_data_item.data_unit
-                    model_plot_data_item._spectral_axis_unit = selected_plot_data_item.spectral_axis_unit
+                    # If not compatible, update the units of every
+                    # model plot_data_item unit to match the selected
+                    # data's plot_data_item units in every plot sub-window
+                    model_identifier = model_plot_data_item.data_item.identifier
+                    selection_identifier = selected_plot_data_item.data_item.identifier
+                    for sub_window in self.hub.workspace.mdi_area.subWindowList():
+                        proxy_model = sub_window.proxy_model
+
+                        # Get plot_data_items in that sub_window
+                        model_p_d_i = proxy_model.item_from_id(model_identifier)
+                        selected_p_d_i = proxy_model.item_from_id(selection_identifier)
+
+                        # Update model's plot_data_item units
+                        model_p_d_i._spectral_axis_unit = selected_p_d_i.spectral_axis_unit
+                        model_p_d_i._data_unit = selected_p_d_i.data_unit
+                        sub_window.plot_widget.check_plot_compatibility()
 
                 # Copy the spectrum and assign the current
                 # fittable model the spectrum with the
@@ -282,6 +295,15 @@ class ModelEditor(QWidget):
                 model_plot_data_item.data_item.set_data(spectrum)
                 model_plot_data_item.data_item._selected_data = data_item
 
+    def _redraw_model(self):
+        """
+        Re-plot the current model item.
+        """
+        model_plot_data_item = self.hub.plot_item
+
+        if model_plot_data_item is not None and \
+                isinstance(model_plot_data_item.data_item, ModelDataItem):
+            self._update_model_data_item()
             model_plot_data_item.set_data()
 
     def _on_model_item_changed(self, item):
