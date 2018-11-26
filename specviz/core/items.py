@@ -253,7 +253,7 @@ class PlotDataItem(pg.PlotDataItem):
             x, y = super().getData()
         except (ValueError, IndexError):
             # if error occurred during down-sampling and clip to view use original data
-            x, y = self.xDisp, self.yDisp
+            x, y = self.xData, self.yData
 
         # only if we have digital signal
         if self.opts["stepMode"] and (self.opts['clipToView'] or
