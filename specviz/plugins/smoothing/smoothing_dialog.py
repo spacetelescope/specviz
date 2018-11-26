@@ -2,15 +2,12 @@ import os
 
 from qtpy.QtCore import QThread, Signal
 from qtpy.QtWidgets import QDialog, QMessageBox
-from qtpy.QtGui import QIcon
 from qtpy.uic import loadUi
-
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
-                                              trapezoid_smooth, median_smooth)
+                                              median_smooth, trapezoid_smooth)
+
 from ...core.items import PlotDataItem
 from ...core.plugin import plugin
-from ...core.hub import Hub
-
 
 KERNEL_REGISTRY = {
     """
