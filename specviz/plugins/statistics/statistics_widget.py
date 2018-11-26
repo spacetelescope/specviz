@@ -378,7 +378,6 @@ class StatisticsWidget(QWidget):
         self.stats = compute_stats(spec)
         self._update_stat_widgets(self.stats)
         self.set_status(self._get_target_name())
-        print("self.sender()", self.sender())
 
     def update_signal_handler(self, *args, **kwargs):
         """
