@@ -503,9 +503,26 @@ class BaseImportWizard(QDialog):
         if not os.path.exists(specutils_dir):
             os.mkdir(specutils_dir)
 
+        loader_name = self.ui.loader_name.text()
+
+        # If the loader name already exists in the registry, raise a warning
+        # and ask the user to pick another name
+        if loader_name in registry.get_formats(Spectrum1D, 'Read')['Format']:
+            message_box = QMessageBox()
+            message_box.setText("Loader name already exists.")
+            message_box.setIcon(QMessageBox.Critical)
+            message_box.setInformativeText(
+                "A loader with the name '{}' already exists in the registry. "
+                "Please choose a different name.".format(loader_name))
+
+            message_box.exec()
+            return
+
+        out_path = os.path.join(specutils_dir, loader_name)
+
         filename = compat.getsavefilename(parent=self,
                                           caption='Export loader to .py file',
-                                          basedir=specutils_dir)[0]
+                                          basedir=out_path)[0]
         if filename == '':
             return
 
@@ -516,6 +533,7 @@ class BaseImportWizard(QDialog):
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
         string = self.as_new_loader()
+
         with open(filename, 'w') as f:
             f.write(string)
 
