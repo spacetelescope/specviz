@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>479</width>
-    <height>791</height>
+    <width>351</width>
+    <height>815</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -85,7 +85,7 @@
         </property>
         <item>
          <widget class="QWidget" name="widget_2" native="true">
-          <layout class="QGridLayout" name="gridLayout">
+          <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,1">
            <property name="horizontalSpacing">
             <number>0</number>
            </property>
@@ -99,6 +99,19 @@
                <width>100</width>
                <height>0</height>
               </size>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="data_label">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string> Data to be fitted: </string>
              </property>
             </widget>
            </item>
