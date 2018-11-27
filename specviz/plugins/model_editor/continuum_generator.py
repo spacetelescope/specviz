@@ -28,9 +28,11 @@ class ContinuumGenerator:
         # Retreive any rois to be used for exclusion in the continuum fit.
         # TODO: need an easy way to invert this to satisfy the formalism of
         # specutils where *excluded* regions are passed in.
-        exc_regs = self.hub.spectral_regions
+        inc_regs = self.hub.spectral_regions
+        exc_regs = inc_regs.invert_from_spectrum(spec)
 
         # Perform the continuum fitting, storing both model and array output
+
         cont_mod = fit_generic_continuum(spec, exclude_regions=exc_regs)
         y_cont = cont_mod(spec.spectral_axis)
 
