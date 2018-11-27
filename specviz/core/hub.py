@@ -1,5 +1,8 @@
 import logging
 
+import astropy.units as u
+from specutils.spectra.spectral_region import SpectralRegion
+
 from .items import DataItem
 
 
@@ -55,9 +58,32 @@ class Hub:
             return self.plot_widget.listDataItems()
 
     @property
-    def list_all_regions(self):
+    def regions(self):
         """The currently active ROI on the plot."""
         return self.plot_window.plot_widget.list_all_regions()
+
+    @property
+    def spectral_regions(self):
+        """
+        Currently plotted ROIs returned as a
+        :class:`~specutils.spectra.SpectralRegion`.
+        """
+        regions = self.regions
+
+        if len(regions) == 0:
+            return None
+
+        units = u.Unit(self.plot_window.plot_widget.spectral_axis_unit or "")
+        positions = []
+
+        for region in regions:
+            pos = (region.getRegion()[0] * units,
+                   region.getRegion()[1] * units)
+
+            if pos is not None:
+                positions.append(pos)
+
+        return SpectralRegion(positions)
 
     @property
     def selected_region(self):
@@ -91,6 +117,7 @@ class Hub:
         """
         if isinstance(data_item, DataItem):
             self.workspace.model.appendRow(data_item)
+            self.workspace.model.data_added.emit(data_item)
         else:
             logging.error("Data item model only accepts items of class "
                           "'DataItem', received '{}'.".format(type(data_item)))
