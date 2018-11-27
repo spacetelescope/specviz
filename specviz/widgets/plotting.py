@@ -147,6 +147,10 @@ class PlotWidget(pg.PlotWidget):
         self._plot_item = self.getPlotItem()
         self._visible = visible
 
+        # Performance enhancements
+        self.setDownsampling(auto=True)
+        # self.setClipToView(True)
+
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='')
         self._plot_item.setLabel('left', text='')
@@ -535,6 +539,16 @@ class PlotWidget(pg.PlotWidget):
         self._selected_region = None
         self._region_text_item.setText("")
         self.roi_removed.emit(roi)
+
+    def list_all_regions(self):
+        """Get all region items in plot"""
+        regions = []
+
+        for item in self.items():
+            if isinstance(item, LinearRegionItem):
+                regions.append(item)
+
+        return regions
 
     def enterEvent(self, event):
         """
