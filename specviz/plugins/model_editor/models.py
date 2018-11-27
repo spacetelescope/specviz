@@ -39,7 +39,7 @@ class ModelFittingModel(QStandardItemModel):
             model_name = model_item.text()
             model_kwargs = {'name': model_name, 'fixed': {}}
 
-            if isinstance(model, models.Polynomial1D):
+            if isinstance(model, models.PolynomialModel):
                 model_args = [model.degree]
             else:
                 model_args = []

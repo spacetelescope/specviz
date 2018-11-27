@@ -95,6 +95,9 @@ class ModelEditor(QWidget):
         # When the plot window changes, reset model editor
         self.hub.workspace.mdi_area.subWindowActivated.connect(self._on_new_plot_activated)
 
+        # Listen for when data items are added to internal model
+        self.hub.model.data_added.connect(self._on_data_item_added)
+
         # Connect the fit model button
         self.fit_button.clicked.connect(self._on_fit_clicked)
 
@@ -111,29 +114,11 @@ class ModelEditor(QWidget):
     def on_new_model_triggered(self):
         self._on_create_new_model()
 
-    def _on_create_new_model(self):
-        if self.hub.data_item is None:
-            self.new_message_box(text="No item selected, cannot create model.",
-                                 info="There is currently no item selected. "
-                                      "Please select an item before attempting"
-                                      " to create a new model.")
+    def _on_data_item_added(self, data_item):
+        if not isinstance(data_item, ModelDataItem):
             return
 
-        # Set the currently displayed plugin panel widget to the model editor
-        self.hub.set_active_plugin_bar(name="Model Editor")
-
-        # Grab the currently selected plot data item
-        new_spec = Spectrum1D(flux=np.zeros(self.hub.data_item.spectral_axis.size) * self.hub.data_item.flux.unit,
-                              spectral_axis=self.hub.data_item.spectral_axis)
-
-        model_data_item = ModelDataItem(model=ModelFittingModel(),
-                                        name="Fittable Model Spectrum",
-                                        identifier=uuid.uuid4(),
-                                        data=new_spec)
-        model_data_item._selected_data = self.hub.data_item
-
-        self.hub.append_data_item(model_data_item)
-
+        model_data_item = data_item
         plot_data_item = self.hub.plot_data_item_from_data_item(model_data_item)
 
         # Connect data change signals so that the plot updates when the user
@@ -143,8 +128,43 @@ class ModelEditor(QWidget):
 
         # plot_data_item = self.hub.workspace.proxy_model.item_from_id(model_data_item.identifier)
         plot_data_item.visible = True
-        self.hub.workspace.current_plot_window.plot_widget.on_item_changed(model_data_item)
+
+        self.hub.workspace.current_plot_window.plot_widget.on_item_changed(
+            model_data_item)
         self.hub.workspace._on_item_changed(item=plot_data_item.data_item)
+
+    def _on_create_new_model(self):
+        if self.hub.data_item is None:
+            self.new_message_box(text="No item selected, cannot create model.",
+                                 info="There is currently no item selected. "
+                                      "Please select an item before attempting"
+                                      " to create a new model.")
+
+        # Grab the currently selected plot data item
+        new_spec = Spectrum1D(flux=np.zeros(self.hub.data_item.spectral_axis.size) * self.hub.data_item.flux.unit,
+                              spectral_axis=self.hub.data_item.spectral_axis)
+
+        self.create_model_data_item(new_spec, data_item=self.hub.data_item)
+
+    def create_model_data_item(self, spectrum, name=None, data_item=None):
+        """
+        Generate a new model data item to be added to the data list.
+
+        Parameters
+        ----------
+        spectrum : :class:`~specutils.Spectrum1D`
+            The spectrum holding the spectral data.
+        """
+        # Set the currently displayed plugin panel widget to the model editor
+        self.hub.set_active_plugin_bar(name="Model Editor")
+
+        model_data_item = ModelDataItem(model=ModelFittingModel(),
+                                        name=name or "Fittable Model Spectrum",
+                                        identifier=uuid.uuid4(),
+                                        data=spectrum)
+        model_data_item._selected_data = data_item
+
+        self.hub.append_data_item(model_data_item)
 
         if model_data_item._selected_data is not None:
             index = self.data_selection_combo.findData(model_data_item._selected_data)
@@ -369,23 +389,6 @@ class ModelEditor(QWidget):
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)
 
-    def _combine_all_workspace_regions(self):
-        """Get current widget region."""
-        regions = self.hub.list_all_regions
-        if len(regions) == 0:
-            return None
-
-        units = u.Unit(self.hub.plot_window.plot_widget.spectral_axis_unit or "")
-
-        positions = []
-        for region in regions:
-            pos = (region.getRegion()[0] * units,
-                   region.getRegion()[1] * units)
-            if pos is not None:
-                positions.append(pos)
-
-        return SpectralRegion(positions)
-
     def _get_selected_plot_data_item(self):
         workspace = self.hub.workspace
 
@@ -428,7 +431,7 @@ class ModelEditor(QWidget):
         if data_item is None:
             return
 
-        spectral_region = self._combine_all_workspace_regions()
+        spectral_region = self.hub.spectral_regions
 
         # Compose the compound model from the model editor sub model tree view
         model_editor_model = plot_data_item.data_item.model_editor_model
