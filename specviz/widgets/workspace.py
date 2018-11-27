@@ -10,7 +10,7 @@ from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
                             QMessageBox, QTabBar, QToolButton)
 from qtpy.uic import loadUi
-from specutils import SpectrumList
+from specutils import Spectrum1D, SpectrumList
 
 from .plotting import PlotWindow
 from ..core.items import PlotDataItem
