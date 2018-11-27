@@ -391,16 +391,15 @@ class PlotDataItem(pg.PlotDataItem):
         # only if we have digital signal
         if self.opts["stepMode"] and (self.opts['clipToView'] or
                                       self.opts['autoDownsample']):
+                # if there is data
+                if x is not None:
+                    # if step mode is enabled and len(x) != len(y) + 1
+                    if len(x) == len(y):
+                        if len(x) > 0:
+                            x = np.append(x, x[-1])
 
-            # if there is data
-            if x is not None:
-                # if step mode is enabled and len(x) != len(y) + 1
-                if len(x) == len(y):
-                    if len(x) > 0:
-                        x = np.append(x, x[-1])
-
-            if (x is None and y is None) or (len(x) == 0 and len(y) == 0):
-                x = np.array([0, 0])
-                y = np.array([0])
+                if (x is None and y is None) or (len(x) == 0 and len(y) == 0):
+                    x = np.array([0, 0])
+                    y = np.array([0])
 
         return x, y
