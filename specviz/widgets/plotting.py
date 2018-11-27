@@ -550,6 +550,12 @@ class PlotWidget(pg.PlotWidget):
 
         return regions
 
+    # Line lists and line labels handling.
+
+    # Finds the wavelength range spanned by the spectrum (or spectra)
+    # at hand. The range will be used to bracket the set of lines
+    # actually read from the line list table(s).
+
     def enterEvent(self, event):
         """
         Emits a mouse_enterexit signal when the mouse
