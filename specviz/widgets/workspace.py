@@ -357,6 +357,7 @@ class Workspace(QMainWindow):
         filters = ['Select loader...'] + list(loader_name_map.keys())
 
         file_path, fmt = compat.getopenfilename(parent=self,
+                                                basedir=os.getcwd(),
                                                 caption="Load spectral data file",
                                                 filters=";;".join(filters))
 

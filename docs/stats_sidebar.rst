@@ -8,14 +8,14 @@ or  specified region of interest, depending on what is selected in the
 left side bar.  If a region of interest is selected, the statistic
 calculations are updated when that region of interest is changed.
 
-Calcualtions are done using the following functions:
+Calculations are done using the following functions:
 
 Mean
-  astropy.units.Quantity.mean
+  `astropy.units.Quantity.mean`
 Median:
-  numpy.median
+  `numpy.median`
 Std Dev:
-  astropy.units.Quantity.std
+  `astropy.units.Quantity.std`
 Centroid:
   :func:`specutils.analysis.centroid`
 RMS:
@@ -27,8 +27,8 @@ FWHM:
 Eq Width:
   :func:`specutils.analysis.equivalent_width`
 Max:
-  astropy.units.quantity.Quantity.max
+  `astropy.units.quantity.Quantity.max`
 Min:
-  astropy.units.quantity.Quantity.min
+  `astropy.units.quantity.Quantity.min`
 Count Total:
   :func:`specutils.analysis.line_flux`

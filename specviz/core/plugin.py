@@ -164,11 +164,15 @@ class Plugin(DecoratorRegistry):
                 if icon is not None:
                     action.setIcon(icon)
 
-                if location is not None:
+                if location is not None and isinstance(location, str):
                     for level in location.split('/'):
                         parent = self.get_action(parent, level)
 
-                parent.addAction(action)
+                if isinstance(location, int):
+                    parent.insertAction(parent.actions()[location], action)
+                else:
+                    parent.addAction(action)
+
                 action.triggered.connect(lambda: func(plugin, *args, **kwargs))
 
             # self.registry.append(func_wrapper)
@@ -198,7 +202,7 @@ class Plugin(DecoratorRegistry):
                 if icon is not None:
                     action.setIcon(icon)
 
-                if location is not None:
+                if location is not None and isinstance(location, str):
                     for level in location.split('/'):
                         parent = self.get_action(parent, level)
 
@@ -214,3 +218,4 @@ class Plugin(DecoratorRegistry):
 
 
 plugin = Plugin()
+
