@@ -37,6 +37,7 @@ class Workspace(QMainWindow):
     current_item_changed = Signal(PlotDataItem)
     current_selected_changed = Signal(PlotDataItem)
     plot_window_added = Signal(PlotWindow)
+    plot_window_activated = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -308,6 +309,9 @@ class Workspace(QMainWindow):
 
         # Re-evaluate plot unit compatibilities
         window.plot_widget.check_plot_compatibility()
+
+        # Fire a signal letting everyone know a plot window has been activated
+        self.plot_window_activated.emit(window)
 
     def _on_toggle_visibility(self, state):
         idx = self.list_view.currentIndex()
