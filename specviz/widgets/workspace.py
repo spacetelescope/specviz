@@ -10,7 +10,7 @@ from qtpy.QtCore import QEvent, Qt, Signal
 from qtpy.QtWidgets import (QApplication, QMainWindow, QMenu,
                             QMessageBox, QTabBar, QToolButton)
 from qtpy.uic import loadUi
-from specutils import Spectrum1D
+from specutils import Spectrum1D, SpectrumList
 
 from .plotting import PlotWindow
 from ..core.items import PlotDataItem
@@ -37,6 +37,7 @@ class Workspace(QMainWindow):
     current_item_changed = Signal(PlotDataItem)
     current_selected_changed = Signal(PlotDataItem)
     plot_window_added = Signal(PlotWindow)
+    plot_window_activated = Signal(PlotWindow)
 
     def __init__(self, *args, **kwargs):
         super(Workspace, self).__init__(*args, **kwargs)
@@ -309,6 +310,9 @@ class Workspace(QMainWindow):
         # Re-evaluate plot unit compatibilities
         window.plot_widget.check_plot_compatibility()
 
+        # Fire a signal letting everyone know a plot window has been activated
+        self.plot_window_activated.emit(window)
+
     def _on_toggle_visibility(self, state):
         idx = self.list_view.currentIndex()
         item = self.proxy_model.data(idx, role=Qt.UserRole)
@@ -327,8 +331,8 @@ class Workspace(QMainWindow):
         """
         When the user loads a data file, this method is triggered. It provides
         a file open dialog and from the dialog attempts to create a new
-        :class:`~specutils.Spectrum1D` object and thereafter adds it to the
-        data model.
+        :class:`~specutils.SpectrumList` object and thereafter adds the
+        contents to the data model.
         """
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
@@ -339,8 +343,8 @@ class Workspace(QMainWindow):
         loader_name_map = {
             '{} ({})'.format(
                 x['Format'], compose_filter_string(
-                    get_reader(x['Format'], Spectrum1D))): x['Format']
-            for x in io_registry.get_formats(Spectrum1D) if x['Read'] == 'Yes'}
+                    get_reader(x['Format'], SpectrumList))): x['Format']
+            for x in io_registry.get_formats(SpectrumList) if x['Read'] == 'Yes'}
 
         # Include an auto load function that lets the io machinery find the
         # most appropriate loader to use
@@ -353,6 +357,7 @@ class Workspace(QMainWindow):
         filters = ['Select loader...'] + list(loader_name_map.keys())
 
         file_path, fmt = compat.getopenfilename(parent=self,
+                                                basedir=os.getcwd(),
                                                 caption="Load spectral data file",
                                                 filters=";;".join(filters))
 
@@ -433,6 +438,17 @@ class Workspace(QMainWindow):
 
                 message_box.exec()
 
+    def _add_and_plot_data(self, spectrum, name):
+        data_item = self.model.add_data(spectrum, name=name)
+
+        # If there are any current plots, attempt to add the data to the plot
+        plot_data_item = self.proxy_model.item_from_id(data_item.identifier)
+        plot_data_item.visible = True
+        self.current_plot_window.plot_widget.on_item_changed(data_item)
+        self._on_item_changed(item=plot_data_item.data_item)
+
+        return data_item
+
     def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
@@ -456,8 +472,8 @@ class Workspace(QMainWindow):
         # function allows, and 2) is the highest priority.
         try:
             try:
-                spec = Spectrum1D.read(file_path, format=file_loader)
-            except:
+                speclist = SpectrumList.read(file_path, format=file_loader)
+            except IORegistryError as e:
                 # In this case, assume that the registry has found several
                 # loaders that fit the same identifier, choose the highest
                 # priority one.
@@ -469,19 +485,29 @@ class Workspace(QMainWindow):
 
                 for fmt in fmts:
                     try:
-                        spec = Spectrum1D.read(file_path, format=fmt)
+                        speclist = SpectrumList.read(file_path, format=fmt)
                     except:
                         logging.warning("Attempted load with '%s' failed, "
                                         "trying next loader.", fmt)
 
             name = file_path.split('/')[-1].split('.')[0]
-            data_item = self.model.add_data(spec, name=name)
 
-            # If there are any current plots, attempt to add the data to the
-            # plot
-            self.force_plot(data_item)
+            data_items = []
 
-            return data_item
+            if len(speclist) == 1:
+                data_items.append(self._add_and_plot_data(speclist[0], name))
+            else:
+                for i, spec in enumerate(speclist):
+                    # TODO: try to use more informative metadata in the name
+                    specname = '{}-{}'.format(name, i)
+                    data_items.append(self._add_and_plot_data(spec, specname))
+
+            for di in data_items:
+                self.force_plot(di)
+
+            # TODO: is this return value useful? Potentially just for testing
+            return data_items
+
         except:
             message_box = QMessageBox()
             message_box.setText("Error loading data set.")

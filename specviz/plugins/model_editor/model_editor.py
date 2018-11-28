@@ -68,11 +68,6 @@ class ModelEditor(QWidget):
             action.triggered.connect(lambda x, m=v: self._add_fittable_model(m))
             models_menu.addAction(action)
 
-        # Add an option to load models from a file
-        load_file_action = QAction('Load from file', models_menu)
-        load_file_action.triggered.connect(lambda x : self._on_load_from_file())
-        models_menu.addAction(load_file_action)
-
         # Initially hide the model editor tools until user has selected an
         # editable model spectrum object
         self.editor_holder_widget.setHidden(True)
@@ -87,8 +82,10 @@ class ModelEditor(QWidget):
             lambda: ModelAdvancedSettingsDialog(self, self).exec())
 
         self.save_model_button.clicked.connect(self._on_save_model)
+        self.load_model_button.clicked.connect(self._on_load_from_file)
 
         self.data_selection_combo.setModel(self.hub.model)
+        self.data_selection_combo.currentIndexChanged.connect(self._redraw_model)
 
         # When a plot data item is select, get its model editor model
         # representation
@@ -147,9 +144,9 @@ class ModelEditor(QWidget):
         new_spec = Spectrum1D(flux=np.zeros(self.hub.data_item.spectral_axis.size) * self.hub.data_item.flux.unit,
                               spectral_axis=self.hub.data_item.spectral_axis)
 
-        self.create_model_data_item(new_spec)
+        self.create_model_data_item(new_spec, data_item=self.hub.data_item)
 
-    def create_model_data_item(self, spectrum, name=None):
+    def create_model_data_item(self, spectrum, name=None, data_item=None):
         """
         Generate a new model data item to be added to the data list.
 
@@ -165,8 +162,14 @@ class ModelEditor(QWidget):
                                         name=name or "Fittable Model Spectrum",
                                         identifier=uuid.uuid4(),
                                         data=spectrum)
+        model_data_item._selected_data = data_item
 
         self.hub.append_data_item(model_data_item)
+
+        if model_data_item._selected_data is not None:
+            index = self.data_selection_combo.findData(model_data_item._selected_data)
+            if index != -1:
+                self.data_selection_combo.setCurrentIndex(index)
 
     def _on_remove_model(self):
         """Remove an astropy model from the model editor tree view."""
@@ -250,28 +253,78 @@ class ModelEditor(QWidget):
 
         self._add_model(model)
 
-    def _redraw_model(self):
+    def _update_model_data_item(self):
+        """
+        When a new data item is selected, check if
+        the model's plot_data_item units are compatible
+        with the target data item's plot_data_item units.
+        If the units are not the same, update the model's units.
+        """
+        # Note
+        # ----
+        # Target data items that cannot be plotted are not
+        # selectable in the data selection combo. The only instance
+        # a unit change is needed is when noting is plotted and the
+        # user changes the target data.
+
         # Get the current plot item and update
         # its data item if its a model plot item
-        plot_data_item = self.hub.plot_item
+        model_plot_data_item = self.hub.plot_item
 
-        if isinstance(plot_data_item.data_item, ModelDataItem):
+        if model_plot_data_item is not None and \
+                isinstance(model_plot_data_item.data_item, ModelDataItem):
             # This is the data item selected in the
             # model editor data selection combo box
             data_item = self._get_selected_data_item()
 
             if data_item is not None and \
                     isinstance(data_item.spectrum, Spectrum1D):
+
+                selected_plot_data_item = self.hub.plot_data_item_from_data_item(data_item)
+
+                new_spectral_axis_unit = selected_plot_data_item.spectral_axis_unit
+                new_data_unit = selected_plot_data_item.data_unit
+
+                compatible = model_plot_data_item.are_units_compatible(
+                    new_spectral_axis_unit,
+                    new_data_unit,
+                )
+                if not compatible:
+                    # If not compatible, update the units of every
+                    # model plot_data_item unit to match the selected
+                    # data's plot_data_item units in every plot sub-window
+                    model_identifier = model_plot_data_item.data_item.identifier
+                    selection_identifier = selected_plot_data_item.data_item.identifier
+                    for sub_window in self.hub.workspace.mdi_area.subWindowList():
+                        proxy_model = sub_window.proxy_model
+
+                        # Get plot_data_items in that sub_window
+                        model_p_d_i = proxy_model.item_from_id(model_identifier)
+                        selected_p_d_i = proxy_model.item_from_id(selection_identifier)
+
+                        # Update model's plot_data_item units
+                        model_p_d_i._spectral_axis_unit = selected_p_d_i.spectral_axis_unit
+                        model_p_d_i._data_unit = selected_p_d_i.data_unit
+                        sub_window.plot_widget.check_plot_compatibility()
+
                 # Copy the spectrum and assign the current
                 # fittable model the spectrum with the
                 # spectral axis and flux converted to plot units.
-                spectrum = data_item.spectrum.with_spectral_unit(
-                    plot_data_item.spectral_axis_unit)
-                spectrum = spectrum.new_flux_unit(plot_data_item.data_unit)
-                plot_data_item.data_item.set_data(spectrum)
+                spectrum = data_item.spectrum.with_spectral_unit(new_spectral_axis_unit)
+                spectrum = spectrum.new_flux_unit(new_data_unit)
+                model_plot_data_item.data_item.set_data(spectrum)
+                model_plot_data_item.data_item._selected_data = data_item
 
-            # Only draw if ModelDataItem
-            plot_data_item.set_data()
+    def _redraw_model(self):
+        """
+        Re-plot the current model item.
+        """
+        model_plot_data_item = self.hub.plot_item
+
+        if model_plot_data_item is not None and \
+                isinstance(model_plot_data_item.data_item, ModelDataItem):
+            self._update_model_data_item()
+            model_plot_data_item.set_data()
 
     def _on_model_item_changed(self, item):
         if item.parent():
@@ -328,6 +381,10 @@ class ModelEditor(QWidget):
         # Set the model on the tree view and expand all children initially.
         self.model_tree_view.setModel(model_data_item.model_editor_model)
         self.model_tree_view.expandAll()
+        if model_data_item._selected_data is not None:
+            index = self.data_selection_combo.findData(model_data_item._selected_data)
+            if index != -1:
+                self.data_selection_combo.setCurrentIndex(index)
 
         for i in range(0, 4):
             self.model_tree_view.resizeColumnToContents(i)

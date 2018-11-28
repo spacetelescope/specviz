@@ -22,7 +22,6 @@ def test_statistics_gui_full_spectrum(specviz_gui):
                   'median': np.median(spectrum.flux),
                   'stddev': spectrum.flux.std(),
                   'centroid': centroid(spectrum, region=None),
-                  'rms': np.sqrt(spectrum.flux.dot(spectrum.flux) / len(spectrum.flux)),
                   'snr': "N/A",
                   'fwhm': fwhm(spectrum),
                   'ew': equivalent_width(spectrum),
@@ -54,8 +53,6 @@ def test_statistics_gui_roi_spectrum(specviz_gui):
                   'median': np.median(spectrum.flux),
                   'stddev': spectrum.flux.std(),
                   'centroid': centroid(spectrum, region=None),
-                  'rms': np.sqrt(
-                      spectrum.flux.dot(spectrum.flux) / len(spectrum.flux)),
                   'snr': "N/A",
                   'fwhm': fwhm(spectrum),
                   'ew': equivalent_width(spectrum),
