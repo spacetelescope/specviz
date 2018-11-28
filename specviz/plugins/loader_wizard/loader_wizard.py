@@ -5,29 +5,30 @@
 # components (in the case of a Primary or ImageHDU), or spectral WCS for
 # example.
 
+import importlib
 import os
 import sys
 import tempfile
 import uuid
-import importlib
 from collections import OrderedDict
-
 
 import numpy as np
 import pyqtgraph as pg
 import yaml
 from astropy import units as u
-from astropy.wcs import WCS
 from astropy.io import registry
+from astropy.wcs import WCS
 from qtpy import compat
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QFont, QIcon
-from qtpy.QtWidgets import QApplication, QDialog, QVBoxLayout, QWidget, QPlainTextEdit, QPushButton
+from qtpy.QtWidgets import (QApplication, QDialog, QMessageBox, QPlainTextEdit,
+                            QPushButton, QVBoxLayout, QWidget)
 from qtpy.uic import loadUi
-from ...core.plugin import plugin
+
 from specutils import Spectrum1D
 
-from .parse_initial_file import simplify_arrays, parse_ascii
+from ...core.plugin import plugin
+from .parse_initial_file import parse_ascii, simplify_arrays
 
 
 def represent_dict_order(self, data):
@@ -500,22 +501,40 @@ class BaseImportWizard(QDialog):
             return
 
         specutils_dir = os.path.join(os.path.expanduser('~'), '.specutils')
+
         if not os.path.exists(specutils_dir):
             os.mkdir(specutils_dir)
 
+        loader_name = self.ui.loader_name.text()
+
+        # If the loader name already exists in the registry, raise a warning
+        # and ask the user to pick another name
+        if loader_name in registry.get_formats(Spectrum1D, 'Read')['Format']:
+            message_box = QMessageBox()
+            message_box.setText("Loader name already exists.")
+            message_box.setIcon(QMessageBox.Critical)
+            message_box.setInformativeText(
+                "A loader with the name '{}' already exists in the registry. "
+                "Please choose a different name.".format(loader_name))
+
+            message_box.exec()
+            return
+
+        out_path = os.path.join(specutils_dir, loader_name)
+
         filename = compat.getsavefilename(parent=self,
                                           caption='Export loader to .py file',
-                                          basedir=specutils_dir)[0]
+                                          basedir=out_path)[0]
         if filename == '':
             return
 
         self.save_register_new_loader(filename)
 
     def save_register_new_loader(self, filename):
-
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
         string = self.as_new_loader()
+
         with open(filename, 'w') as f:
             f.write(string)
 
@@ -528,6 +547,13 @@ class BaseImportWizard(QDialog):
         spec = importlib.util.spec_from_file_location(os.path.basename(filename)[:-3], filename)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
+
+        message_box = QMessageBox()
+        message_box.setText("Loader saved successful.")
+        message_box.setIcon(QMessageBox.Information)
+        message_box.setInformativeText("Custom loader was saved successfully.")
+
+        message_box.exec()
 
 
 # --------- Helper methods for subclasses ------------
