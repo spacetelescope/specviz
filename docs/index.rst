@@ -26,5 +26,6 @@ Using SpecViz
    getting-started
    unit_conversion
    arithmetic-layer
+   loader_wizard
    model_fitting
    stats_sidebar
