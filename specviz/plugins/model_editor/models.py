@@ -126,7 +126,7 @@ class ModelFittingModel(QStandardItemModel):
 
         # Remove the model name from the equation
         self.equation = re.sub(
-            "(\+|-|\*|\/|=|>|<|>=|<=|&|\||%|!|\^|\(|\))\s+?({})".format(
+            "(\+|-|\*|\/|=|>|<|>=|<=|&|\||%|!|\^|\(|\))*\s*?({})".format(
                 model_item.text()),
             "", self._equation)
 
