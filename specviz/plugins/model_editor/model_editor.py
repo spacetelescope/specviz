@@ -20,7 +20,7 @@ from .models import ModelFittingModel
 from ...core.plugin import plugin
 
 MODELS = {
-    'Constant1D': models.Const1D,
+    'Const1D': models.Const1D,
     'Linear1D': models.Linear1D,
     'Polynomial1D': models.Polynomial1D,
     'Gaussian1D': models.Gaussian1D,
