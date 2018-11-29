@@ -1,31 +1,31 @@
 import os
-import uuid
 import pickle
+import uuid
 
 import numpy as np
-from astropy import units as u
 from astropy.modeling import fitting, models, optimizers
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import (QAction, QDialog, QInputDialog, QMenu, QMessageBox,
-                            QToolButton, QWidget, QFileDialog)
+from qtpy.QtWidgets import (QAction, QDialog, QFileDialog, QInputDialog, QMenu,
+                            QMessageBox, QToolButton, QWidget)
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
+from specutils.manipulation import extract_region
 from specutils.spectra import Spectrum1D
-from specutils.spectra.spectral_region import SpectralRegion
 
 from .equation_editor_dialog import ModelEquationEditorDialog
+from .initializers import initialize
 from .items import ModelDataItem
 from .models import ModelFittingModel
 from ...core.plugin import plugin
 
 MODELS = {
-    'Const1D': models.Const1D,
+    'Constant1D': models.Const1D,
     'Linear1D': models.Linear1D,
     'Polynomial1D': models.Polynomial1D,
     'Gaussian1D': models.Gaussian1D,
-    'Voigt': models.Voigt1D,
-    'Lorentzian': models.Lorentz1D,
+    'Voigt1D': models.Voigt1D,
+    'Lorentzian1D': models.Lorentz1D,
 }
 
 FITTERS = {
@@ -181,17 +181,17 @@ class ModelEditor(QWidget):
 
             # If removing the model resulted in an invalid arithmetic equation,
             # force open the arithmetic editor so the user can fix it.
-            if self.model_tree_view.model().evaluate() is None:
+            if self.model_tree_view.model().equation and self.model_tree_view.model().evaluate() is None:
                 self._on_equation_edit_button_clicked()
 
     def _save_models(self, filename):
         model_editor_model = self.hub.plot_item.data_item.model_editor_model
         models = model_editor_model.fittable_models
+
         with open(filename, 'wb') as handle:
-            pickle.dump(model_editor_model.fittable_models, handle)
+            pickle.dump(models, handle)
 
     def _on_save_model(self, interactive=True):
-
         model_editor_model = self.hub.data_item.model_editor_model
         # There are no models to save
         if not model_editor_model.fittable_models:
@@ -240,7 +240,7 @@ class ModelEditor(QWidget):
         self._redraw_model()
 
     def _add_fittable_model(self, model_type):
-        if issubclass(model_type, MODELS['Polynomial1D']):
+        if issubclass(model_type, models.Polynomial1D):
             text, ok = QInputDialog.getInt(self, 'Polynomial1D',
                                            'Enter Polynomial1D degree:')
             # User decided not to create a model after all
@@ -250,6 +250,17 @@ class ModelEditor(QWidget):
             model = model_type(int(text))
         else:
             model = model_type()
+
+        # Grab any user-defined regions so we may initialize parameters only
+        # for the selected data.
+        inc_regs = self.hub.spectral_regions
+        spec = self._get_selected_plot_data_item().data_item.spectrum
+
+        if inc_regs is not None:
+            spec = extract_region(spec, inc_regs)
+
+        # Initialize the parameters
+        model = initialize(model, spec.spectral_axis, spec.flux)
 
         self._add_model(model)
 
