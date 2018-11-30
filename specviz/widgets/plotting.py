@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage, QWidget)
+                            QMessageBox, QErrorMessage, QApplication)
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -53,7 +53,7 @@ class PlotWindow(QMdiSubWindow):
             self._on_change_color)
 
         self._central_widget.reset_view_action.triggered.connect(
-            lambda: self.plot_widget.autoRange())
+            lambda: self._on_reset_view())
 
     @property
     def tool_bar(self):
@@ -74,6 +74,16 @@ class PlotWindow(QMdiSubWindow):
 
     def _on_current_item_changed(self, current_idx, prev_idx):
         self._current_item_index = current_idx
+
+    def _on_reset_view(self):
+        """
+        Resets the visible range of the plot taking into consideration only the
+        PlotDataItem objects currently attached.
+        """
+        self.plot_widget.autoRange(
+                items=[item for item in self.plot_widget.listDataItems()
+                       if isinstance(item, PlotDataItem)])
+        self.plot_widget.sigRangeChanged.emit(*self.plot_widget.viewRange())
 
     def _on_change_color(self):
         """
