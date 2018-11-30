@@ -44,10 +44,10 @@ Workspaces and Plots
 --------------------
 
 Loaded data is added to the global data list for the entire workspace. A
-workspace is the currently instance of the SpecViz application, and more can
-be created by selecting ``File > New Workspace``. Workspaces are completely
-independent of one another, and the user can have as many workspaces are they
-wish.
+workspace is an instance of the SpecViz application. Several can be
+open at once and more can be added by selecting ``File > New Workspace`` from
+the menu bar. Workspaces are completely independent of one another, and the
+user can have as many workspaces are they wish.
 
 Plots are the visual representation of a selection of data items within a
 particular workspace. A user can have as many plots as they wish, and new plots
@@ -70,7 +70,7 @@ Using Regions
 
 Interesting regions can be defined by adding an ROI to the plot. This is done
 via the ``Add Region`` button in the plot toolbar. Multiple regions can be
-utilized when defining e.g. areas the user might wish to use for model fitting.
+used when defining e.g. areas the user might wish to use for model fitting.
 
 A blue highlighted region is considered the _active_ region, and will in cases
 where it is imported (e.g. statistics), will be used to define the region

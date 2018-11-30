@@ -7,10 +7,10 @@ Introduction
 
 SpecViz is a tool for visualization and quick-look analysis of 1D astronomical
 spectra. It is written in the Python programming language, and therefore can be
-run anywhere Python is supported (see :ref:`specviz-installation`). It is based
-on the `Astropy Specutils packgage <https://specutils.rtfd.io>`_. SpecViz is
-capable of reading data from FITS and ASCII tables, and supports the creation
-of custom loaders for user-specific data sets.
+run anywhere Python is supported (see :ref:`specviz-installation`). SpecViz is
+built on top of the `SpecUtils <https://specutils.rtfd.io>`_ Astropy-affiliated
+python library, providing a visual, interactive interface to the analysis
+capabilities in that library.
 
 SpecViz allows spectra to be easily plotted and examined. It supports
 flexible spectral units conversions, custom plotting attributes, interactive
@@ -21,9 +21,9 @@ enables the user, with a few mouse actions, to perform and record measurements.
 It has a model fitting capability that enables the user to create simple
 (e.g., single Gaussian) or multi-component models (e.g., multiple Gaussians for
 emission and absorption lines in addition to regions of flat continuua).
-SpecViz incorporates various methods for fitting such models to data. For more
-details, see :ref:`doc_model_fitting`. The ability to overlay line label values
-is also supported. SpecViz also allows for overplotting or combining of spectra.
+A typical data-analysis workflow might involve data exploration using SpecViz
+and then scripting to create more complex measurements or modeling workflows
+using SpecUtils.
 
 SpecViz will soon include the ability to:
 
