@@ -454,7 +454,6 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
-                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
