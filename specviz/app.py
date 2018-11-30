@@ -31,7 +31,7 @@ class Application(QApplication):
         super(Application, self).__init__(*args, **kwargs)
 
         # Set application icon
-        self.setWindowIcon(QIcon(":/icons/icon.png"))
+        self.setWindowIcon(QIcon(":/icons/specviz.icns"))
 
         # Load local plugins
         self.load_local_plugins()
@@ -77,7 +77,7 @@ class Application(QApplication):
         # If a file path has been given, automatically add data
         if file_path is not None:
             self.current_workspace.load_data(
-                file_path, file_loader or 'Auto (*)', display=True)
+                file_path, file_loader, display=True)
 
     def add_workspace(self):
         """
