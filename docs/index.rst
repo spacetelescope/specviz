@@ -2,6 +2,9 @@
 
 |
 
+Introduction
+============
+
 SpecViz is a tool for visualization and quick-look analysis of 1D astronomical
 spectra. It is written in the Python programming language, and therefore can be
 run anywhere Python is supported (see :ref:`specviz-installation`). It is based
@@ -22,7 +25,7 @@ SpecViz incorporates various methods for fitting such models to data. For more
 details, see :ref:`doc_model_fitting`. The ability to overlay line label values
 is also supported. SpecViz also allows for overplotting or combining of spectra.
 
-SpecViz will soon include the ability to
+SpecViz will soon include the ability to:
 
 - Measure the average of multiple spectra, detrending, and apply Fourier filters.
 - Interactively renormalize data from spectral templates.

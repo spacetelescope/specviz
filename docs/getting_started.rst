@@ -12,10 +12,8 @@ spectrum.
 
 There are two options to load a spectrum data file:
 
-1. Load the spectrum with a pre-defined data loader, or a custom
-   user-defined data loader.
-2. Utilize the :doc:`Loader Wizard </loader_wizard>` to create a new
-   custom loader, and use that to load your data.
+1. Load the spectrum with a pre-defined data loader, or a custom user-defined data loader.
+2. Utilize the :doc:`Loader Wizard </loader_wizard>` to create a new custom loader, and use that to load your data.
 
 Either way, the specific loader for your data can be selected from the drop
 down list in the open file dialog
