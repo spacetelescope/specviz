@@ -116,6 +116,9 @@ class PlotProxyModel(QSortFilterProxyModel):
         index = self.mapToSource(index)
         data_item = self.sourceModel().data(index, role=Qt.UserRole)
 
+        if data_item is None:
+            return
+
         if data_item.identifier not in self._items:
             self._items[data_item.identifier] = PlotDataItem(data_item)
 
@@ -139,7 +142,7 @@ class PlotProxyModel(QSortFilterProxyModel):
         item = self.item_from_index(index)
 
         if role == Qt.DisplayRole:
-            return item._data_item.name
+            return item.data_item.name
         elif role == Qt.DecorationRole:
             icon = qta.icon('fa.circle' if item.data_item.isEnabled() else 'fa.circle-o',
                             color=item.color)
