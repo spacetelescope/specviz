@@ -5,15 +5,17 @@
 Launching SpecViz
 =================
 
-Once you've installed SpecViz, you can launch it via the command line::
+Once the user has installed SpecViz, they can launch it via the command line::
 
     $ specviz
 
 
-If you only wish to inspect a single file, you can also pass in the filename
-as a command line argument, as follows::
+If the user wishes to inspect a single file, they can also pass in the filename
+as a command line argument along with the ``-F`` flag as follows::
 
-    $ specviz filename
+    $ specviz -F filename
+
+
 
 
 You may also include the name of a custom loader as second optional argument::
