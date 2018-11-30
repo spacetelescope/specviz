@@ -31,7 +31,7 @@ class Application(QApplication):
         super(Application, self).__init__(*args, **kwargs)
 
         # Set application icon
-        self.setWindowIcon(QIcon(":/icons/icon.png"))
+        self.setWindowIcon(QIcon(":/icons/specviz.icns"))
 
         # Load local plugins
         self.load_local_plugins()
