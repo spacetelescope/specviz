@@ -11,3 +11,4 @@ dependencies:
     - numpy
     - pip:
         - sphinx-astropy
+        - sphinx-rtd-theme
