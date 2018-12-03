@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>specviz.icns</file>
     <file>configuration.svg</file>
     <file>title.png</file>
     <file>005-stats.svg</file>
@@ -27,6 +28,5 @@
     <file>region_remove.svg</file>
     <file>selection.svg</file>
     <file>house.svg</file>
-    <file>icon.ico</file>
   </qresource>
 </RCC>

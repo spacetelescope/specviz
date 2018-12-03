@@ -104,15 +104,15 @@ release = package.__version__
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes. To override the custom theme, set this to the
 # name of a builtin theme or the name of a custom theme in html_theme_path.
-#html_theme = None
+html_theme = "sphinx_rtd_theme"
 
 
 # Please update these texts to match the name of your package.
-html_theme_options = {
-    'logotext1': 'spec',  # white,  semi-bold
-    'logotext2': 'viz',  # orange, light
-    'logotext3': ':docs'   # white,  light
-    }
+# html_theme_options = {
+#     'logotext1': 'spec',  # white,  semi-bold
+#     'logotext2': 'viz',  # orange, light
+#     'logotext3': ':docs'   # white,  light
+#     }
 
 
 # Custom sidebar templates, maps document names to template names.
@@ -120,7 +120,7 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/specviz_logo.png'
+html_logo = '_static/logo_icon.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

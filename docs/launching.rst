@@ -5,17 +5,31 @@
 Launching SpecViz
 =================
 
-Once you've installed SpecViz, you can launch it via the command line::
+Once the user has installed SpecViz, they can launch it via the command line::
 
     $ specviz
 
 
-If you only wish to inspect a single file, you can also pass in the filename
-as a command line argument, as follows::
+If the user wishes to inspect a single file, they can also pass in the filename
+as a command line argument along with the ``-F`` flag as follows::
 
-    $ specviz filename
+    $ specviz -F <filename>
+
+.. code-block::bash
+
+    $ specviz -F ~/Downloads/COS_FUV.fits
 
 
-You may also include the name of a custom loader as second optional argument::
+In the above case, the loader registry functionality will attempt to select
+the best available loader for the data. If the user wishes to specify a
+specific loader for their data, a ``-L`` flag can be passed with the loader
+name
 
-    $ specviz filename --format="my-custom-format"
+    $ specviz -F <filename> -L <loader_name>
+
+.. code-block::bash
+
+    $ specviz -F ~/Downloads/COS_FUV.fits -L HST/COS
+
+To get further help with the command line options, simply type
+``specviz --help``.
