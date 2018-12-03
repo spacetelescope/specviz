@@ -135,7 +135,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
      <item>
-      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
        <item row="6" column="0">
         <widget class="QLabel" name="label_data_units">
          <property name="text">
@@ -594,7 +594,7 @@
            <number>0</number>
           </property>
           <item>
-           <layout class="QVBoxLayout" name="layout_preview" stretch=""/>
+           <layout class="QVBoxLayout" name="layout_preview"/>
           </item>
          </layout>
         </widget>
@@ -742,6 +742,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../data/resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -1,6 +1,6 @@
 .. highlight:: console
 
-.. _specviz_installation:
+.. _specviz-installation:
 
 Installation
 ============
