@@ -6,7 +6,7 @@ import sys
 
 from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
                             QTableView, QMainWindow, QAbstractItemView,
-                            QLayout, QTextBrowser, QComboBox,
+                            QLayout, QGridLayout, QTextBrowser, QComboBox,
                             QDialog, QErrorMessage, QSizePolicy)
 from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont, QIcon
 from qtpy.QtCore import (Qt, Signal, QAbstractTableModel, QVariant, QSortFilterProxyModel)
@@ -101,33 +101,83 @@ def _createLineListPane(linelist, table_model, caller):
     return pane, table_view
 
 
-@plugin("Line Labels")
-class LineListsPlugin(object):
+# @plugin("Line Labels")
+# class LineListsPlugin(object):
+#
+#     _linelists_windows = {}
+#
+#     @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+#     def on_action_triggered(self):
+#         if hasattr(self.hub, "plot_widget") and self.hub.plot_widget and self.hub.plot_item:
+#             key = self.hub.plot_widget.__hash__()
+#             if key not in LineListsPlugin._linelists_windows:
+#                 LineListsPlugin._linelists_windows[key] = LineListsWindow(self.hub)
+#
+#             LineListsPlugin._linelists_windows[key].show()
 
-    _linelists_windows = {}
 
-    @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
-    def on_action_triggered(self):
-        if hasattr(self.hub, "plot_widget") and self.hub.plot_widget and self.hub.plot_item:
+
+#########################################################################
+@plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")), priority=1)
+class LineListsPlugin(QWidget):
+
+    erase_linelabels = Signal(pg.PlotWidget)
+    dismiss_linelists_window = Signal(bool)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+#         self.wave_range = (None, None)
+#
+#         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
+
+        self._linelists_windows = {}
+
+        self.setLayout(QGridLayout())
+
+#         # QtDesigner can't add a combo box to a tool bar...
+#         self.line_list_selector = QComboBox()
+#         self.line_list_selector.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+#         self.line_list_selector.setMinimumWidth(230)
+#         self.line_list_selector.setToolTip("Select line list from internal library")
+#         self.main_toolbar.addWidget(self.line_list_selector)
+#
+#         # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
+#         # removing then in the designer itself. Remove in here then.
+#         while self.tab_widget.count() > 0:
+#             self.tab_widget.removeTab(0)
+
+        self.hub.workspace.plot_window_added.connect(self._plot_selected)
+
+    def _plot_selected(self):
+
+        # if hasattr(self.hub, "plot_widget") and self.hub.plot_widget and self.hub.plot_item:
+        if hasattr(self.hub, "plot_widget") and self.hub.plot_widget:
             key = self.hub.plot_widget.__hash__()
-            if key not in LineListsPlugin._linelists_windows:
-                LineListsPlugin._linelists_windows[key] = LineListsWindow(self.hub)
+            if key not in self._linelists_windows:
+                self._linelists_windows[key] = LineListsWindow(self.hub, parent=self)
 
-            LineListsPlugin._linelists_windows[key].show()
+            # self._linelists_windows[key].show()
 
+            self.layout().addWidget(self._linelists_windows[key])
+            # self.show()
 
 # The line list window must be a full fledged window and not a dialog.
 # The choice of QMainWindow over QWidget is a leftover from the old
 # implementation. This will likely change when and if we adopt the
 # embedded GUI L&F.
 
-class LineListsWindow(QMainWindow):
+# class LineListsWindow(QMainWindow):
+class LineListsWindow(QWidget):
 
     erase_linelabels = Signal(pg.PlotWidget)
     dismiss_linelists_window = Signal(bool)
 
-    def __init__(self, hub, parent=None):
-        super(LineListsWindow, self).__init__()
+    # def __init__(self, hub, parent=None):
+    #     super(LineListsWindow, self).__init__(parent=parent)
+
+    def __init__(self, hub, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.hub = hub
 
@@ -153,21 +203,21 @@ class LineListsWindow(QMainWindow):
         self.setWindowTitle(str(self.plot_window.plot_widget.title))
 
         # Request that line lists be read from wherever are they sources.
-        if not hasattr(self, 'linelists'):
-            self._request_linelists()
-
-            # Populate line list selector with internal line lists
-            model = self.line_list_selector.model()
-            item = QStandardItem("Select line list")
-            font = QFont("Monospace")
-            font.setStyleHint(QFont.TypeWriter)
-            font.setPointSize(12)
-            item.setFont(font)
-            model.appendRow(item)
-            for description in linelist.descriptions():
-                item = QStandardItem(str(description))
-                item.setFont(font)
-                model.appendRow(item)
+        # if not hasattr(self, 'linelists'):
+        #     self._request_linelists()
+        #
+        #     # Populate line list selector with internal line lists
+        #     model = self.line_list_selector.model()
+        #     item = QStandardItem("Select line list")
+        #     font = QFont("Monospace")
+        #     font.setStyleHint(QFont.TypeWriter)
+        #     font.setPointSize(12)
+        #     item.setFont(font)
+        #     model.appendRow(item)
+        #     for description in linelist.descriptions():
+        #         item = QStandardItem(str(description))
+        #         item.setFont(font)
+        #         model.appendRow(item)
 
         #------------ UNCOMMENT TO LOAD LISTS AUTOMATICALLY --------------
         #
@@ -181,24 +231,24 @@ class LineListsWindow(QMainWindow):
 
         #---------------------------------------------------------------
 
-        self.line_labels_plotter = LineLabelsPlotter(self)
-
-        # Connect controls to appropriate signals.
-
-        self.draw_button.clicked.connect(
-            lambda:self.line_labels_plotter.plot_linelists(
-            table_views=self._getTableViews(),
-            panes=self._getPanes(),
-            units=self.hub.plot_widget.spectral_axis_unit,
-            caller=self.line_labels_plotter))
-
-        self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
-        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(False))
-
-        self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
-        self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
-        self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
-        self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
+        # self.line_labels_plotter = LineLabelsPlotter(self)
+        #
+        # # Connect controls to appropriate signals.
+        #
+        # self.draw_button.clicked.connect(
+        #     lambda:self.line_labels_plotter.plot_linelists(
+        #     table_views=self._getTableViews(),
+        #     panes=self._getPanes(),
+        #     units=self.hub.plot_widget.spectral_axis_unit,
+        #     caller=self.line_labels_plotter))
+        #
+        # self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
+        # self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(False))
+        #
+        # self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
+        # self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
+        # self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
+        # self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
