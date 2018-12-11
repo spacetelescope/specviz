@@ -133,7 +133,7 @@ class LineListsWindow(QMainWindow):
 
         self.wave_range = (None, None)
 
-        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window_floatwindow.ui"), self)
 
         # QtDesigner can't add a combo box to a tool bar...
         self.line_list_selector = QComboBox()
