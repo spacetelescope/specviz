@@ -6,7 +6,7 @@ import sys
 
 from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
                             QTableView, QMainWindow, QAbstractItemView,
-                            QLayout, QGridLayout, QTextBrowser, QComboBox,
+                            QLayout, QGridLayout, QBoxLayout, QTextBrowser, QComboBox,
                             QDialog, QErrorMessage, QSizePolicy)
 from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont, QIcon
 from qtpy.QtCore import (Qt, Signal, QAbstractTableModel, QVariant, QSortFilterProxyModel)
@@ -101,23 +101,6 @@ def _createLineListPane(linelist, table_model, caller):
     return pane, table_view
 
 
-# @plugin("Line Labels")
-# class LineListsPlugin(object):
-#
-#     _linelists_windows = {}
-#
-#     @plugin.plot_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
-#     def on_action_triggered(self):
-#         if hasattr(self.hub, "plot_widget") and self.hub.plot_widget and self.hub.plot_item:
-#             key = self.hub.plot_widget.__hash__()
-#             if key not in LineListsPlugin._linelists_windows:
-#                 LineListsPlugin._linelists_windows[key] = LineListsWindow(self.hub)
-#
-#             LineListsPlugin._linelists_windows[key].show()
-
-
-
-#########################################################################
 @plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")), priority=1)
 class LineListsPlugin(QWidget):
 
@@ -143,19 +126,10 @@ class LineListsPlugin(QWidget):
             self.layout().addWidget(self._linelists_windows[key])
 
 
-# The line list window must be a full fledged window and not a dialog.
-# The choice of QMainWindow over QWidget is a leftover from the old
-# implementation. This will likely change when and if we adopt the
-# embedded GUI L&F.
-
-# class LineListsWindow(QMainWindow):
 class LineListsWindow(QWidget):
 
     erase_linelabels = Signal(pg.PlotWidget)
     dismiss_linelists_window = Signal(bool)
-
-    # def __init__(self, hub, parent=None):
-    #     super(LineListsWindow, self).__init__(parent=parent)
 
     def __init__(self, hub, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -413,13 +387,6 @@ class LineListsWindow(QWidget):
         self.waverange = self._find_wavelength_range()
 
         self.linelists = linelist.ingest(self.waverange)
-
-        # if len(self.linelists) == 0:
-        #     error_dialog = QErrorMessage()
-        #     error_dialog.showMessage('Units conversion not possible. '
-        #                              'Or, no line lists in internal library '
-        #                              'match wavelength range.')
-        #     error_dialog.exec_()
 
     def _find_wavelength_range(self):
         unit = self.hub.plot_widget.spectral_axis_unit
