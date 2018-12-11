@@ -40,9 +40,13 @@ class LineLabelsPlotter(object):
         self._linelist_window.erase_linelabels.connect(self._erase_linelabels)
         self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
         self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self._handle_range_change)
-        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
         self._linelist_window.hub.plot_widget.sigRangeChanged.connect(
             lambda: self._handle_mouse_events(QEvent.Enter))
+
+        # in case the plot widget is empty, we cannot connect to a non-existing
+        # plot item in order to sense units changed signals.
+        if self._linelist_window.hub.plot_widget.spectral_axis_unit:
+            self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
 
     # --------  Slots.
 
