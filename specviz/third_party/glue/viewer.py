@@ -188,18 +188,20 @@ class SpecvizDataViewer(DataViewer):
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
-        # Fake a current_workspace property so that plugins can mount
-        self.specviz_window = Workspace()
-        self.specviz_window.set_embedded(True)
-        QApplication.instance().current_workspace = self.specviz_window
-
-        # Add an intially empty plot window
-        self.specviz_window.add_plot_window()
-
         # Load specviz plugins
         Application.load_local_plugins()
 
-        self.setCentralWidget(self.specviz_window)
+        # Fake a current_workspace property so that plugins can mount
+        # self._application = Application([], skip_splash=True)
+        # self._application.add_workspace()
+        self.current_workspace = Workspace() #self._application.current_workspace
+        # self.specviz_window.set_embedded(True)
+        # QApplication.instance().current_workspace = self.specviz_window
+
+        # Add an intially empty plot window
+        self.current_workspace.add_plot_window()
+
+        self.setCentralWidget(self.current_workspace)
 
         # For some reason this causes the PlotWindow to no longer be part of the
         # workspace MDI area which then causes issues down the line.
