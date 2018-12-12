@@ -511,7 +511,7 @@ class LineListPane(QWidget):
         self._build_GUI(linelist, table_view)
 
     def _build_GUI(self, linelist, table_view):
-        panel_layout = QVBoxLayout()
+        panel_layout = QGridLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(panel_layout)
 
@@ -554,9 +554,9 @@ class LineListPane(QWidget):
             model.appendRow(item)
 
         # put it all together
-        panel_layout.addWidget(info)
-        panel_layout.addWidget(table_view)
-        panel_layout.addWidget(self.button_pane)
+        panel_layout.addWidget(info,0,0)
+        panel_layout.addWidget(table_view,1,0)
+        panel_layout.addWidget(self.button_pane,2,0)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
