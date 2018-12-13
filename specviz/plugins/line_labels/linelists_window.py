@@ -101,7 +101,7 @@ def _createLineListPane(linelist, table_model, caller):
     return pane, table_view
 
 
-@plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")), priority=1)
+@plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
 class LineListsPlugin(QWidget):
 
     erase_linelabels = Signal(pg.PlotWidget)
@@ -112,6 +112,8 @@ class LineListsPlugin(QWidget):
 
         self._linelists_windows = {}
 
+        panel_layout = QGridLayout()
+        panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(QGridLayout())
 
         self.hub.workspace.plot_window_added.connect(self._plot_selected)
