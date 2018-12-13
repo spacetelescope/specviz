@@ -91,14 +91,10 @@ class LineLabelsPlotter(object):
             self._linelist_window.erasePlottedLines()
             self._linelist_window.displayPlottedLines(self._merged_linelist)
 
-    def _dismiss_linelists_window(self, close, **kwargs):
+    def _dismiss_linelists_window(self, **kwargs):
         if self._linelist_window:
-            if close:
-                self._erase_linelabels(self._plot_widget)
-                self._linelist_window.close()
-                self._linelist_window = None
-            else:
-                self._linelist_window.hide()
+            self._erase_linelabels(self._plot_widget)
+            self._linelist_window.dismiss()
 
     def _erase_linelabels(self, caller, *args, **kwargs):
         if caller != self._plot_widget:

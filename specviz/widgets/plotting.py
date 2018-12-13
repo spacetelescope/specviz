@@ -22,6 +22,8 @@ class PlotWindow(QMdiSubWindow):
     """
     Displayed plotting subwindow available in the `QMdiArea`.
     """
+    window_removed = Signal()
+
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
         # Hide the icon in the title bar
@@ -71,6 +73,9 @@ class PlotWindow(QMdiSubWindow):
     @property
     def proxy_model(self):
         return self.plot_widget.proxy_model
+
+    def closeEvent(self, event):
+        self.window_removed.emit()
 
     def _on_current_item_changed(self, current_idx, prev_idx):
         self._current_item_index = current_idx
@@ -559,12 +564,6 @@ class PlotWidget(pg.PlotWidget):
                 regions.append(item)
 
         return regions
-
-    # Line lists and line labels handling.
-
-    # Finds the wavelength range spanned by the spectrum (or spectra)
-    # at hand. The range will be used to bracket the set of lines
-    # actually read from the line list table(s).
 
     def enterEvent(self, event):
         """
