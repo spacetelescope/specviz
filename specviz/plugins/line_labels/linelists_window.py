@@ -101,16 +101,15 @@ def _createLineListPane(linelist, table_model, caller):
     return pane, table_view
 
 
+linelists_windows = {}
+
 @plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
 class LineListsPlugin(QWidget):
-
-    erase_linelabels = Signal(pg.PlotWidget)
-    dismiss_linelists_window = Signal(bool)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._linelists_windows = {}
+        # self._linelists_windows = {}
 
         panel_layout = QGridLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
@@ -119,19 +118,18 @@ class LineListsPlugin(QWidget):
         self.hub.workspace.plot_window_added.connect(self._plot_selected)
 
     def _plot_selected(self):
-
         if hasattr(self.hub, "plot_widget") and self.hub.plot_widget:
             key = self.hub.plot_widget.__hash__()
-            if key not in self._linelists_windows:
-                self._linelists_windows[key] = LineListsWindow(self.hub, parent=self)
+            if key not in linelists_windows:
+                linelists_windows[key] = LineListsWindow(self.hub, parent=self)
 
-            self.layout().addWidget(self._linelists_windows[key])
+            self.layout().addWidget(linelists_windows[key])
 
 
 class LineListsWindow(QWidget):
 
     erase_linelabels = Signal(pg.PlotWidget)
-    dismiss_linelists_window = Signal(bool)
+    dismiss_linelists_window = Signal()
 
     def __init__(self, hub, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -156,8 +154,6 @@ class LineListsWindow(QWidget):
 
         # Local references for often used objects.
         self.plot_window = self.hub.plot_window
-
-        self.setWindowTitle(str(self.plot_window.plot_widget.title))
 
         # Request that line lists be read from wherever are they sources.
         if not hasattr(self, 'linelists'):
@@ -188,12 +184,21 @@ class LineListsWindow(QWidget):
             caller=self.line_labels_plotter))
 
         self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
-        self.dismiss_button.clicked.connect(lambda:self.dismiss_linelists_window.emit(False))
+        self.dismiss_button.clicked.connect(self.dismiss_linelists_window.emit)
 
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
         self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
+
+        self.hub.plot_window.window_removed.connect(self.dismiss_linelists_window.emit)
+
+    def dismiss(self):
+        # the Dismiss button just clears the plug-in
+        # window from whatever line lists it's holding.
+        v = self.tab_widget.count()
+        for index in range(v-1,-1,-1):
+            self.tab_widget.removeTab(index)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
@@ -210,7 +215,7 @@ class LineListsWindow(QWidget):
     def _lineList_selection_change(self, index):
         # ignore first element in drop down. It contains
         # the "Select line list" message.
-        if index > 0 and self.hub.plot_widget.spectral_axis_unit:
+        if index > 0 and hasattr(self.hub, 'plot_widget') and self.hub.plot_widget.spectral_axis_unit:
             line_list = linelist.get_from_cache(index - 1)
 
             try:
@@ -491,11 +496,6 @@ class LineListsWindow(QWidget):
     def _getTableViews(self):
         panes = self._getPanes()
         return [pane.table_view for pane in panes]
-
-    # ensure that a window closing event that is generated
-    # by the OS itself, gets properly handled.
-    def closeEvent(self, event):
-        self.dismiss_linelists_window.emit(False)
 
 
 class LineListPane(QWidget):
