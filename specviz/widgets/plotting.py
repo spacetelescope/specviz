@@ -169,7 +169,7 @@ class PlotWidget(pg.PlotWidget):
         self._visible = visible
 
         # Performance enhancements
-        self.setDownsampling(auto=True)
+        # self.setDownsampling(auto=False)
         # self.setClipToView(True)
 
         # Define labels for axes
@@ -435,6 +435,7 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
+        self.setDownsampling(auto=False)
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """

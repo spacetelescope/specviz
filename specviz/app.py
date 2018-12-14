@@ -31,7 +31,8 @@ class Application(QApplication):
         super(Application, self).__init__(*args, **kwargs)
 
         # Set application icon
-        self.setWindowIcon(QIcon(":/icons/specviz.icns"))
+        if not embedded:
+            self.setWindowIcon(QIcon(":/icons/specviz.icns"))
 
         # Load local plugins
         self.load_local_plugins()
@@ -45,17 +46,11 @@ class Application(QApplication):
             self._splash_dialog = SplashDialog(2000)
             self._splash_dialog.exec()
 
-        # If specviz is not being embded in another application, go ahead and
-        # perform the normal gui setup procedure.
-        if not embedded:
-            # Cache a reference to the currently active window
-            self.current_workspace = self.add_workspace()
+        # Cache a reference to the currently active window
+        self.current_workspace = self.add_workspace()
 
-            # Add an initially empty plot
-            self.current_workspace.add_plot_window()
-
-            # Set embed mode state
-            self.current_workspace.set_embedded(embedded)
+        # Add an initially empty plot
+        self.current_workspace.add_plot_window()
 
         if dev:
             y = Gaussian1D(mean=50, stddev=10)(np.arange(100)) + np.random.sample(100) * 0.1

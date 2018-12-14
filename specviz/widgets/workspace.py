@@ -34,6 +34,7 @@ class Workspace(QMainWindow):
         Fired when a particular `QMainWindow` is activated.
     """
     window_activated = Signal(QMainWindow)
+    window_closed = Signal(QMainWindow)
     current_item_changed = Signal(PlotDataItem)
     current_selected_changed = Signal(PlotDataItem)
     plot_window_added = Signal(PlotWindow)
@@ -109,6 +110,9 @@ class Workspace(QMainWindow):
 
         # Mount plugins
         plugin.mount(self)
+
+    def closeEvent(self, a0):
+        self.window_closed.emit(self)
 
     @property
     def name(self):
@@ -242,12 +246,11 @@ class Workspace(QMainWindow):
         amenable to being embedded in other applications.
         """
         if embed:
-            self.menu_bar.hide()
+            # self.menu_bar.hide()
             self.list_view.hide()
-            self.main_tool_bar.hide()
-            self.main_tool_bar.hide()
-            self.mdi_area.findChild(QTabBar).hide()
-            self.plugin_tab_widget.hide()
+            # self.main_tool_bar.hide()
+            # self.mdi_area.findChild(QTabBar).hide()
+            # self.plugin_tab_widget.hide()
 
     def event(self, e):
         """Scrap window events."""
