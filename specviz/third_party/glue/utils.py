@@ -90,7 +90,7 @@ def glue_data_to_spectrum1d(data_or_subset, attribute, statistic='mean'):
         # Find non-spectral axes
         axes = tuple(i for i in range(data.ndim) if i != spec_axis)
 
-        kwargs = {'wcs': data.coords.wcs}
+        kwargs = {'wcs': data.coords.wcs.sub([WCSSUB_SPECTRAL])}
 
     elif isinstance(data.coords, SpectralCoordinates):
 

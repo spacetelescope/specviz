@@ -191,24 +191,13 @@ class SpecvizDataViewer(DataViewer):
         # Load specviz plugins
         Application.load_local_plugins()
 
-        # Fake a current_workspace property so that plugins can mount
-        # self._application = Application([], skip_splash=True)
-        # self._application.add_workspace()
-        self.current_workspace = Workspace() #self._application.current_workspace
-        # self.specviz_window.set_embedded(True)
-        # QApplication.instance().current_workspace = self.specviz_window
+        # Instantiate workspace widget
+        self.current_workspace = Workspace()
 
-        # Add an intially empty plot window
+        # Add an initially empty plot window
         self.current_workspace.add_plot_window()
 
         self.setCentralWidget(self.current_workspace)
-
-        # For some reason this causes the PlotWindow to no longer be part of the
-        # workspace MDI area which then causes issues down the line.
-        # self.setCentralWidget(self.plot_window)
-
-        # FIXME: the following shouldn't be needed
-        # self.specviz_window._model.clear()
 
     def add_data(self, data):
         if not glue_data_has_spectral_axis(data):
@@ -225,7 +214,7 @@ class SpecvizDataViewer(DataViewer):
         return super(SpecvizDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
-        return cls(self.specviz_window, self.state, layer=layer, layer_state=layer_state)
+        return cls(self.current_workspace, self.state, layer=layer, layer_state=layer_state)
 
     def initialize_toolbar(self):
         pass
