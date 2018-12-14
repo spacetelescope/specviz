@@ -5,7 +5,7 @@ import os
 import sys
 
 from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
-                            QTableView, QMainWindow, QAbstractItemView,
+                            QTableView, QMainWindow, QAbstractItemView, QStackedLayout,
                             QLayout, QGridLayout, QBoxLayout, QTextBrowser, QComboBox,
                             QDialog, QErrorMessage, QSizePolicy)
 from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont, QIcon
@@ -100,7 +100,7 @@ def _createLineListPane(linelist, table_model, caller):
 
     return pane, table_view
 
-
+# line list widget storage.
 linelists_windows = {}
 
 @plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
@@ -109,22 +109,33 @@ class LineListsPlugin(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # self._linelists_windows = {}
-
-        panel_layout = QGridLayout()
+        panel_layout = QStackedLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
-        self.setLayout(QGridLayout())
+        panel_layout.setContentsMargins (0,0,0,0)
+        self.setLayout(panel_layout)
 
-        self.hub.workspace.plot_window_added.connect(self._plot_selected)
+        self.hub.workspace.mdi_area.subWindowActivated.connect(self._plot_selected)
 
+    # line list widgets for the plugin bar are associated with their corresponding
+    # plot widget via a key built from the plot widget instance hash. References are
+    # kept in a dict for management purposes, but the actual widgets are kept in a
+    # stacked layout. This method provides the logic to select the appropriate line
+    # list widget and display it, upon selection of the subwindow that contains the
+    # plot widget.
     def _plot_selected(self):
         if hasattr(self.hub, "plot_widget") and self.hub.plot_widget:
             key = self.hub.plot_widget.__hash__()
             if key not in linelists_windows:
+                # build a new line list window and display it.
                 linelists_windows[key] = LineListsWindow(self.hub, parent=self)
 
-            self.layout().addWidget(linelists_windows[key])
+                self.layout().addWidget(linelists_windows[key])
+                self.layout().setCurrentIndex(self.layout().count()-1)
 
+            else:
+                # re-display an existing line list window.
+                index = self.layout().indexOf(linelists_windows[key])
+                self.layout().setCurrentIndex(index)
 
 class LineListsWindow(QWidget):
 
