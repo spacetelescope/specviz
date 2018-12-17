@@ -43,11 +43,6 @@ class LineLabelsPlotter(object):
         self._linelist_window.hub.plot_widget.sigRangeChanged.connect(
             lambda: self._handle_mouse_events(QEvent.Enter))
 
-        # in case the plot widget is empty, we cannot connect to a non-existing
-        # plot item in order to sense units changed signals.
-        if self._linelist_window.hub.plot_widget.spectral_axis_unit:
-            self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
-
     # --------  Slots.
 
     # Buffering of zoom events.
@@ -108,6 +103,23 @@ class LineLabelsPlotter(object):
 
     # Main method for drawing line labels on the plot surface.
     def plot_linelists(self, table_views, panes, units, caller, **kwargs):
+
+        # If there is no valid plot item down to this point, then bail out (unfortunately)
+        # because we cannot connect to the 'spectral_axis_unit_changed' signal.
+        if self._linelist_window.hub.plot_item is None or \
+            len(self._linelist_window.hub.visible_plot_items) == 0:
+            message_box = QMessageBox()
+            message_box.setText("No plot item selected.")
+            message_box.setIcon(QMessageBox.Warning)
+            message_box.setInformativeText(
+                "There are currently no plot items selected. Please select "
+                " plotted item before changing unit.")
+            message_box.exec_()
+            return
+
+        # we have to postpone the 'unit changed' signal connection to here. It cannot be
+        # done at constructor time because there is no valid plot_item at that time.
+        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
 
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
