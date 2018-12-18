@@ -32,7 +32,6 @@ env:
         - ASTROPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         - SETUP_CMD='test'
-        - PIP_DEPENDENCIES='pytest-qt'
         - EVENT_TYPE='pull_request push'
 
 
@@ -89,7 +88,7 @@ matrix:
         # Test with glue installed
         - os: linux
           env: SETUP_CMD='test'
-               PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click git+https://github.com/astropy/specutils sphinx-astropy pytest-astropy pytest-qt git+https://github.com/glue-viz/glue'
+               PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.1 sphinx-astropy pytest-astropy pytest-qt glue-core'
 
         # Try all python versions and Numpy versions. Since we can assume that
         # the Numpy developers have taken care of testing Numpy with different
@@ -97,9 +96,9 @@ matrix:
         # time.
 
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10 ASTROPY_VERSION=3.0
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11 ASTROPY_VERSION=3.0
         - os: linux
           env: NUMPY_VERSION=1.12
 
