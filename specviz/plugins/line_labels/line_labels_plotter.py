@@ -117,8 +117,9 @@ class LineLabelsPlotter(object):
             message_box.exec_()
             return
 
-        # we have to postpone the 'unit changed' signal connection to here. It cannot be
-        # done at constructor time because there is no valid plot_item at that time.
+        # we have to postpone the 'spectral_axis_unit_changed' signal connection
+        # to here. It cannot be done at constructor time because there is no valid
+        # plot_item at that time.
         self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
 
         # Get a list of the selected indices in each line list.
@@ -405,26 +406,26 @@ class LineLabelsPlotter(object):
 
     def _declutter(self, marker_list):
         if len(marker_list) > 10:
-            threshold = 5
+            threshold = 3
 
             data_range = self._plot_widget.viewRange()
             x_pixels = self._plot_widget.sceneBoundingRect().width()
-            # y_pixels = self._plot_widget.sceneBoundingRect().height()
+            # y_pixels = self._plot_widget.sceneBoundingRect().height()  ###
             xmin = data_range[0][0]
             xmax = data_range[0][1]
-            # ymin = data_range[1][0]
-            # ymax = data_range[1][1]
+            # ymin = data_range[1][0]  ###
+            # ymax = data_range[1][1]  ###
 
             # compute X and Y distances in between markers, in screen pixels
             x = np.array([marker.x0 for marker in marker_list])
             xdist = np.abs(np.diff(x))
             xdist *= np.abs(x_pixels / (xmax - xmin))
-            # y = np.array([marker.y0 for marker in marker_list])
-            # ydist = np.diff(y)
-            # ydist *= y_pixels / (ymax - ymin)
+            # y = np.array([marker.y0 for marker in marker_list])  ###
+            # ydist = np.diff(y)                                   ###
+            # ydist *= y_pixels / (ymax - ymin)                    ###
 
             # replace cluttered markers with None
-            # new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))
+            # new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))     ####
             new_array = np.where(xdist < threshold, None, np.array(marker_list[1:]))
 
             # replace markers currently outside the wave range with None
@@ -459,13 +460,6 @@ class LineLabelsPlotter(object):
 
 
 class ZoomMarkersThread(QThread):
-
-    # Notice that we can't use the dispatch mechanism to manage the zoom
-    # thread and its signal-slot dependencies. Something in the dispatch
-    # code messes up with the timing relationships in the GUI and secondary
-    # threads, causing the “Timers cannot be started from another thread”
-    # warning, and eventual app crash. We have to manage locally-defined
-    # signals instead, explicitly connecting them with their slots
 
     do_zoom = Signal()
     zoom_end = Signal()
