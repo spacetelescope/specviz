@@ -131,6 +131,7 @@ class ModelEditor(QWidget):
                                 "There is currently no item selected. Please "
                                 "select an item before attempting to create "
                                 "a new model.")
+            return
 
         # Grab the currently selected plot data item
         new_spec = Spectrum1D(flux=np.zeros(self.hub.data_item.spectral_axis.size) * self.hub.data_item.flux.unit,
