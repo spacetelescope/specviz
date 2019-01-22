@@ -153,5 +153,3 @@ class LineIDMarker(TextItem):
             return QRectF(base_rect.x() - 20, base_rect.y(), base_rect.width(), base_rect.height())
         else:
             return QRectF(base_rect.x(), base_rect.y() - 20, base_rect.width(), base_rect.height())
-
-
