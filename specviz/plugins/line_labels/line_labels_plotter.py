@@ -1,6 +1,7 @@
 import numpy as np
 
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
+from qtpy.QtWidgets import QMessageBox
 
 from astropy import units as u
 
