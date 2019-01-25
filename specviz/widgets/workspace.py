@@ -452,7 +452,8 @@ class Workspace(QMainWindow):
 
         return data_item
 
-    def load_data(self, file_path, file_loader=None, display=False):
+    def load_data(self, file_path, file_loader=None, display=False,
+                  _interactive=True):
         """
         Load spectral data given file path and loader.
 
@@ -512,15 +513,18 @@ class Workspace(QMainWindow):
             return data_items
 
         except:
-            message_box = QMessageBox()
-            message_box.setText("Error loading data set.")
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.setInformativeText(
-                "{}\n{}".format(
-                    sys.exc_info()[0], sys.exc_info()[1])
-            )
+            if _interactive:
+                message_box = QMessageBox()
+                message_box.setText("Error loading data set.")
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.setInformativeText(
+                    "{}\n{}".format(
+                        sys.exc_info()[0], sys.exc_info()[1])
+                )
 
-            message_box.exec()
+                message_box.exec()
+            else:
+                raise
 
     def force_plot(self, data_item):
         """

@@ -50,7 +50,7 @@ JWST_DATA_PATHS = [urljoin(BOX_PREFIX, name) for name in JWST_DATA_FILES]
 def load_jwst_data(url):
     try:
         spec_app = Application([], skip_splash=True)
-        data = spec_app.current_workspace.load_data(url)
+        data = spec_app.current_workspace.load_data(url, _interactive=False)
         # Basic sanity check to make sure there are data items
         assert len(data) > 0
     finally:
