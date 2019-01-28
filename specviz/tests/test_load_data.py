@@ -89,3 +89,4 @@ def test_load_jwst_data(url):
         ex_type, ex_value, tb_str = error
         message = '{} (in subprocess)\n{}'.format(ex_value, tb_str)
         raise ex_type(message)
+
