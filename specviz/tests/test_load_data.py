@@ -1,3 +1,4 @@
+import os
 import sys
 import traceback
 from urllib.parse import urljoin
@@ -69,6 +70,10 @@ def run_specviz_subprocess(q, url):
     q.put(error)
 
 
+@pytest.mark.skipif(not os.environ.get('JWST_DATA_TEST'),
+                    reason='Since these tests run in a subprocess they do not '
+                    'play nicely with the fixture that is used for the rest of '
+                    'the test suite.')
 @pytest.mark.parametrize('url', JWST_DATA_PATHS)
 def test_load_jwst_data(url):
 
