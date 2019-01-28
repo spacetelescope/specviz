@@ -90,10 +90,6 @@ matrix:
           env: SETUP_CMD='test'
                PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.1 sphinx-astropy pytest-astropy pytest-qt glue-core'
 
-        # Test with older version of Astropy
-        - os: linux
-          env: PYTHON_VERSION=3.6 ASTROPY_VERSION=3.0
-
         # Test with latest stable versions of dependencies
         - os: linux
 
