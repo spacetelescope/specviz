@@ -1,6 +1,7 @@
-import logging
 import os
 import sys
+import logging
+from collections import OrderedDict
 
 import numpy as np
 from astropy.io import registry as io_registry
@@ -20,6 +21,7 @@ from ..widgets.delegates import DataItemDelegate
 from ..version import version as specviz_version
 
 from . import resources
+from .spectrum_selection import SpectrumSelection
 
 __all__ = ['Workspace']
 
@@ -548,6 +550,32 @@ class Workspace(QMainWindow):
 
         raise IOError('Could not find appropriate loader for given file')
 
+    def _select_spectra_to_load(self, specs_by_name):
+
+        selection_dialog = SpectrumSelection(self)
+        selection_dialog.populate(specs_by_name.keys())
+        selection_dialog.exec_()
+
+        names_to_keep = selection_dialog.get_selected()
+
+        if not names_to_keep:
+            logging.warning('No spectra selected')
+
+            message_box = QMessageBox()
+            message_box.setText("No spectra were selected.")
+            message_box.setIcon(QMessageBox.Warning)
+            message_box.setInformativeText('No data has been loaded.')
+            message_box.exec()
+
+            return {}
+
+        to_load = OrderedDict()
+        for name, spectrum in specs_by_name.items():
+            if name in names_to_keep:
+                to_load[name] = spectrum
+
+        return to_load
+
     def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
@@ -588,9 +616,14 @@ class Workspace(QMainWindow):
         if len(speclist) == 1:
             data_items.append(self._add_and_plot_data(speclist[0], name))
         else:
+            specs_by_name = OrderedDict()
             for i, spec in enumerate(speclist):
                 # TODO: try to use more informative metadata in the name
-                specname = '{}-{}'.format(name, i)
+                specs_by_name['{}-{}'.format(name, i)] = spec
+
+            specs_to_load = self._select_spectra_to_load(specs_by_name)
+
+            for specname, spec in specs_to_load.items():
                 data_items.append(self._add_and_plot_data(spec, specname))
 
         for di in data_items:
