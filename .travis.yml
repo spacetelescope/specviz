@@ -101,12 +101,6 @@ matrix:
         - os: linux
           env: CMD='pycodestyle specviz --count'
 
-    allow_failures:
-        # Do a PEP8 test with pycodestyle
-        # (allow to fail unless your code completely compliant)
-        - os: linux
-          env: CMD='pycodestyle specviz --count'
-
 install:
 
     # We now use the ci-helpers package to set up our testing environment.
