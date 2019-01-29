@@ -359,7 +359,7 @@ class Workspace(QMainWindow):
         # pedantic about this even though we can probably just rely on
         # dictionary ordering here.
         index = filters.index(auto_filter)
-        filters = filters.insert(0, filters.pop(index))
+        filters.insert(0, filters.pop(index))
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 basedir=os.getcwd(),
