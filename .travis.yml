@@ -100,6 +100,7 @@ matrix:
         # Do a PEP8 test with pycodestyle
         - os: linux
           env: CMD='pycodestyle specviz --count'
+               PIP_DEPENDENCIES='pycodestyle'
 
 install:
 
