@@ -73,4 +73,3 @@ def simple_generic_loader(file_name):
 """
 
     assert created_out == expected_out
-

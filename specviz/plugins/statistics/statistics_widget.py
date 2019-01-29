@@ -384,4 +384,3 @@ class StatisticsWidget(QWidget):
         Universal signal handler for update calls.
         """
         self.update_statistics()
-

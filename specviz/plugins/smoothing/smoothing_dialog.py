@@ -247,4 +247,3 @@ class SmoothingThread(QThread):
             self.finished.emit(new_spec)
         except Exception as e:
             self.exception.emit(e)
-
