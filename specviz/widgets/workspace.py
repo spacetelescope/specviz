@@ -405,6 +405,68 @@ class Workspace(QMainWindow):
         message_box.setInformativeText(str(exp))
         message_box.exec()
 
+    def _choose_file_path(self):
+
+        filters, loader_name_map = self._create_loader_filters()
+
+        file_path, fmt = compat.getopenfilename(parent=self,
+                                                basedir=os.getcwd(),
+                                                caption="Load spectral data file",
+                                                filters=";;".join(filters))
+        return file_path, loader_name_map[fmt]
+
+    def _load_spectra_by_name(self, specs_by_name):
+        data_items = []
+
+        for name, spec in specs_by_name.items():
+            data_items.append(self._add_and_plot_data(spec, name))
+
+        for di in data_items:
+            self.force_plot(di)
+
+        # TODO: is this return value useful? Potentially just for testing
+        return data_items
+
+    def load_data_from_file(self, file_path, file_loader=None, multi_select=True):
+        """
+        Loads spectral data from a given file path and a file loader
+
+        This is a high-level function that is intended to be used both by GUI
+        functionality, and also programmatically if necessary. By default, if
+        the given file contains multiple spectra, a dialog will be presented to
+        the user to select which spectra to load. If `multi_select=False`, no
+        dialog will be displayed and all spectra in the file will be loaded.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to location of the spectrum file.
+        file_loader : str, or None
+            Format specified for the astropy io interface.
+            If `None`, attempts to automatically select loader based on file
+            type.
+        multi_select : bool
+            If `True`, displays dialog for choosing spectra to load from file.
+            This only occurs if the file loader returns multiple spectra.
+        """
+        speclist = self.read_data_file(file_path, file_loader=file_loader)
+
+        name = file_path.split('/')[-1].split('.')[0]
+
+        if len(speclist) == 1:
+            specs_to_load = {name: speclist[0]}
+        else:
+            specs_by_name = OrderedDict()
+            for i, spec in enumerate(speclist):
+                # TODO: try to use more informative metadata in the name
+                specs_by_name['{}-{}'.format(name, i)] = spec
+            if multi_select:
+                specs_to_load = self._select_spectra_to_load(specs_by_name)
+            else:
+                specs_to_load = specs_by_name
+
+        return self._load_spectra_by_name(specs_to_load)
+
     def _on_load_data(self):
         """
         When the user loads a data file, this method is triggered. It provides
@@ -412,18 +474,12 @@ class Workspace(QMainWindow):
         :class:`~specutils.SpectrumList` object and thereafter adds the
         contents to the data model.
         """
-        filters, loader_name_map = self._create_loader_filters()
-
-        file_path, fmt = compat.getopenfilename(parent=self,
-                                                basedir=os.getcwd(),
-                                                caption="Load spectral data file",
-                                                filters=";;".join(filters))
-
+        file_path, file_loader = self._choose_file_path()
         if not file_path:
             return
 
         try:
-            self.load_data(file_path, file_loader=loader_name_map[fmt])
+            self.load_data_from_file(file_path, file_loader)
         except Exception as e:
             self.display_load_data_error(e)
 
@@ -576,9 +632,9 @@ class Workspace(QMainWindow):
 
         return to_load
 
-    def load_data(self, file_path, file_loader=None, display=False):
+    def read_data_file(self, file_path, file_loader=None):
         """
-        Load spectral data given file path and loader.
+        Read spectral data from file given file path and loader.
 
         Parameters
         ----------
@@ -586,13 +642,11 @@ class Workspace(QMainWindow):
             Path to location of the spectrum file.
         file_loader : str
             Format specified for the astropy io interface.
-        display : bool
-            Automatically add the loaded spectral data to the plot.
 
         Returns
         -------
-        :class:`~specviz.core.items.DataItem`
-            The `~specviz.core.items.DataItem` instance that has been added to the internal model.
+        : :class:`~specutils.SpectrumList`
+            A `SpectrumList` instance containing the spectra loaded from the file
         """
         # In the case that the user has selected auto load, loop through every
         # available loader and choose the one that 1) the registry identifier
@@ -609,28 +663,7 @@ class Workspace(QMainWindow):
             # priority one.
             speclist = self._try_priority_file_loaders(file_path)
 
-        name = file_path.split('/')[-1].split('.')[0]
-
-        data_items = []
-
-        if len(speclist) == 1:
-            data_items.append(self._add_and_plot_data(speclist[0], name))
-        else:
-            specs_by_name = OrderedDict()
-            for i, spec in enumerate(speclist):
-                # TODO: try to use more informative metadata in the name
-                specs_by_name['{}-{}'.format(name, i)] = spec
-
-            specs_to_load = self._select_spectra_to_load(specs_by_name)
-
-            for specname, spec in specs_to_load.items():
-                data_items.append(self._add_and_plot_data(spec, specname))
-
-        for di in data_items:
-            self.force_plot(di)
-
-        # TODO: is this return value useful? Potentially just for testing
-        return data_items
+        return speclist
 
     def force_plot(self, data_item):
         """
