@@ -351,13 +351,15 @@ class Workspace(QMainWindow):
 
         # Include an auto load function that lets the io machinery find the
         # most appropriate loader to use
-        loader_name_map['Auto (*)'] = None
+        auto_filter = 'Auto (*)'
+        loader_name_map[auto_filter] = None
 
-        # This ensures that users actively have to select a file type before
-        # being able to select a file. This should make it harder to
-        # accidentally load a file using the wrong type, which results in weird
-        # errors.
-        filters = ['Select loader...'] + list(loader_name_map.keys())
+        filters = list(loader_name_map.keys())
+        # Make sure that the "Auto (*)" loader shows up first. Being a bit
+        # pedantic about this even though we can probably just rely on
+        # dictionary ordering here.
+        index = filters.index(auto_filter)
+        filters = filters.insert(0, filters.pop(index))
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 basedir=os.getcwd(),
