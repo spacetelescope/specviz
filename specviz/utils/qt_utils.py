@@ -2,6 +2,18 @@ from qtpy.QtWidgets import QMenu, QAction
 
 
 def dict_to_menu(parent, menu_dict, menu_widget=None):
+    """
+
+    Parameters
+    ----------
+    parent
+    menu_dict
+    menu_widget
+
+    Returns
+    -------
+
+    """
     if not menu_widget:
         menu_widget = QMenu(parent)
     for k, v in menu_dict.items():

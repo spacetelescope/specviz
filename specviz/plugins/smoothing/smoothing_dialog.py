@@ -78,6 +78,9 @@ class SmoothingDialog(QDialog):
 
     @plugin.tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
+        """
+
+        """
         # Update the current list of available data items
         self.model_items = self.hub.data_items
 

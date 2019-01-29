@@ -22,6 +22,9 @@ class ContinuumGenerator:
     """
     @plugin.tool_bar("Generate continuum model", location="Operations")
     def on_action_triggered(self):
+        """
+
+        """
         # Get the currently selected data item
         spec = self.hub.data_item.spectrum
 

@@ -18,6 +18,9 @@ from ...core.plugin import plugin
 
 @plugin('Arithmetic')
 class Arithmetic(QDialog):
+    """
+
+    """
     def __init__(self, *args, **kwargs):
         """Equation editor main dialog. From this view you can add, edit, and remove
         arithmetic attributes."""
@@ -88,6 +91,9 @@ class Arithmetic(QDialog):
 
 
 class EquationEditor(QDialog):
+    """
+
+    """
     tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
                 "by {{ }} brackets (e.g. {{{example}}}), and you <br>"
                 "you can use libraries imported in the namespace (numpy, specutils, etc). "

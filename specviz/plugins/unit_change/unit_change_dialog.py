@@ -39,6 +39,12 @@ class UnitChangeDialog(QDialog):
         self.current_spectral_axis_unit = None
 
     def show(self):
+        """
+
+        Returns
+        -------
+
+        """
         # If there is no plot item, don't even try to process unit info
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
             message_box = QMessageBox()
@@ -122,6 +128,9 @@ class UnitChangeDialog(QDialog):
 
     @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
     def on_action_triggered(self):
+        """
+
+        """
         self.show()
 
     def setup_ui(self):

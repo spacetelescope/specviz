@@ -52,7 +52,17 @@ _linelists_cache = []
 
 
 def get_from_file(linelist_path, filename):
+    """
 
+    Parameters
+    ----------
+    linelist_path
+    filename
+
+    Returns
+    -------
+
+    """
     if filename.endswith('.yaml'):
         yaml_object = yaml.load(open(filename, 'r'))
         linelist_fullname = linelist_path + os.path.sep + yaml_object['filename']
@@ -74,6 +84,9 @@ def get_from_file(linelist_path, filename):
 # This should be called at the appropriate time when starting the
 # app, so the lists are cached for speedier access later on.
 def populate_linelists_cache():
+    """
+
+    """
     # we could benefit from a threaded approach here. But I couldn't
     # see the benefits, since the reading of even the largest line
     # list files takes a fraction of a second at most.
@@ -87,6 +100,16 @@ def populate_linelists_cache():
 
 
 def get_from_cache(index):
+    """
+
+    Parameters
+    ----------
+    index
+
+    Returns
+    -------
+
+    """
     return _linelists_cache[index]
 
 
@@ -193,10 +216,27 @@ class LineList(Table):
 
     @property
     def table(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._table
 
     @classmethod
     def read_list(cls, filename, yaml_object):
+        """
+
+        Parameters
+        ----------
+        filename
+        yaml_object
+
+        Returns
+        -------
+
+        """
         names_list = []
         start_list = []
         end_list = []
@@ -410,11 +450,30 @@ class LineList(Table):
         return result
 
     def setRedshift(self, redshift, z_units):
+        """
+
+        Parameters
+        ----------
+        redshift
+        z_units
+        """
         self.redshift = redshift
         self.z_units = z_units
 
     def setColor(self, color):
+        """
+
+        Parameters
+        ----------
+        color
+        """
         self.color = color
 
     def setHeight(self, height):
+        """
+
+        Parameters
+        ----------
+        height
+        """
         self.height = height

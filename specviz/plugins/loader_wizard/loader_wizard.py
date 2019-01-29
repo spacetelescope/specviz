@@ -32,6 +32,17 @@ from .parse_initial_file import parse_ascii, simplify_arrays
 
 
 def represent_dict_order(self, data):
+    """
+
+    Parameters
+    ----------
+    self
+    data
+
+    Returns
+    -------
+
+    """
     return self.represent_mapping('tag:yaml.org,2002:map', data.items())
 
 
@@ -70,6 +81,12 @@ class OutputPreviewWidget(QWidget):
         self.text_editor.setReadOnly(True)
 
     def set_text(self, text):
+        """
+
+        Parameters
+        ----------
+        text
+        """
         self.text_editor.setPlainText(text)
 
 
@@ -115,18 +132,42 @@ class ComponentHelper(object):
 
     @property
     def component_index(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.combo_component.currentIndex()
 
     @property
     def component_name(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.combo_component.currentData()
 
     @property
     def component(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.combo_component.currentData()
 
     @property
     def unit(self):
+        """
+
+        Returns
+        -------
+
+        """
         combo_text = self.combo_units.currentText()
         if combo_text == 'Custom':
             return self.custom_units.text()
@@ -135,6 +176,12 @@ class ComponentHelper(object):
 
     @property
     def data(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.dataset is None or self.component is None:
             return None
         else:
@@ -142,12 +189,25 @@ class ComponentHelper(object):
 
     @property
     def hdu_index(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.dataset is None or self.component is None:
             return None
         else:
             return self.dataset[self.component]['index']
 
     def dataset_update(self, new_dataset, is_enabled=True):
+        """
+
+        Parameters
+        ----------
+        new_dataset
+        is_enabled
+        """
         self.dataset = new_dataset
         self._dataset_changed(is_enabled=is_enabled)
         self._set_units()
@@ -374,7 +434,12 @@ class BaseImportWizard(QDialog):
 
 
     def set_uncertainties_enabled(self, enabled):
+        """
 
+        Parameters
+        ----------
+        enabled
+        """
         self.combo_uncertainty_component.blockSignals(not enabled)
         self.combo_uncertainty_type.blockSignals(not enabled)
 
@@ -384,7 +449,12 @@ class BaseImportWizard(QDialog):
         self._update_preview()
 
     def set_mask_enabled(self, enabled):
+        """
 
+        Parameters
+        ----------
+        enabled
+        """
         self.combo_mask_component.blockSignals(not enabled)
         self.combo_bit_mask_definition.blockSignals(not enabled)
 
@@ -394,9 +464,21 @@ class BaseImportWizard(QDialog):
 
     @property
     def uncertainties_enabled(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.bool_uncertainties.isChecked()
 
     def accept(self, event=None):
+        """
+
+        Parameters
+        ----------
+        event
+        """
         super(BaseImportWizard, self).accept()
 
     def _update_data(self):
@@ -453,13 +535,28 @@ class BaseImportWizard(QDialog):
         self.output_preview.show()
 
     def as_new_loader_dict(self):
+        """
+
+        """
         raise NotImplementedError()
 
     def get_template(self):
+        """
+
+        """
         raise NotImplementedError()
 
     def as_new_loader(self, name=None):
+        """
 
+        Parameters
+        ----------
+        name
+
+        Returns
+        -------
+
+        """
         self.as_new_loader_dict(name=name)
 
         template_path = self.get_template()
@@ -478,6 +575,12 @@ class BaseImportWizard(QDialog):
         self.ui.label_unit_status.setStyleSheet('')
 
     def save_loader_check(self):
+        """
+
+        Returns
+        -------
+
+        """
         if (self.helper_disp.combo_units.currentText() == "Custom" and self.helper_disp.label_status.text() != 'Valid units') or \
                 (self.helper_data.combo_units.currentText() == "Custom" and self.helper_data.label_status.text() != 'Valid units'):
             self.ui.label_unit_status.setText('Found invalid units')
@@ -529,6 +632,12 @@ class BaseImportWizard(QDialog):
         self.save_register_new_loader(filename)
 
     def save_register_new_loader(self, filename):
+        """
+
+        Parameters
+        ----------
+        filename
+        """
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
         string = self.as_new_loader()
@@ -554,16 +663,25 @@ class BaseImportWizard(QDialog):
 # --------- Helper methods for subclasses ------------
 
     def new_loader_dispersion(self):
+        """
+
+        """
         self.new_loader_dict['dispersion_hdu'] = self.helper_disp.hdu_index
         self.new_loader_dict['dispersion_col'] = self.helper_disp.component_name
         self.new_loader_dict['dispersion_unit'] = self.helper_disp.unit
 
     def new_loader_data(self):
+        """
+
+        """
         self.new_loader_dict['data_hdu'] = self.helper_data.hdu_index
         self.new_loader_dict['data_col'] = self.helper_data.component_name
         self.new_loader_dict['data_unit'] = self.helper_data.unit
 
     def new_loader_uncertainty(self):
+        """
+
+        """
         if self.ui.bool_uncertainties.isChecked():
             self.new_loader_dict['uncertainty_hdu'] = self.helper_unce.hdu_index
             self.new_loader_dict['uncertainty_col'] = self.helper_unce.component_name
@@ -614,10 +732,19 @@ class ASCIIImportWizard(BaseImportWizard):
 
 
     def add_extension(self):
+        """
+
+        """
         self.new_loader_dict['extension'] = ['dat']
 
 
     def get_template(self):
+        """
+
+        Returns
+        -------
+
+        """
         template_string = "new_loader_"
 
         if "uncertainty_hdu" in self.new_loader_dict.keys():
@@ -639,7 +766,12 @@ class ASCIIImportWizard(BaseImportWizard):
 class LoaderWizard(QDialog):
     @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
     def open_wizard(self):
+        """
 
+        Returns
+        -------
+
+        """
         filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt *.*)"]
         filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 

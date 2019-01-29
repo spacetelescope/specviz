@@ -58,6 +58,16 @@ class DataListModel(QStandardItemModel):
             self.removeRow(item.index().row())
 
     def item_from_id(self, identifier):
+        """
+
+        Parameters
+        ----------
+        identifier
+
+        Returns
+        -------
+
+        """
         return next((x for x in self.items if x.identifier == identifier))
 
     def data(self, index, role=Qt.DisplayRole):
@@ -80,6 +90,18 @@ class DataListModel(QStandardItemModel):
         return super(DataListModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
+        """
+
+        Parameters
+        ----------
+        index
+        value
+        role
+
+        Returns
+        -------
+
+        """
         if not index.isValid():
             return False
 
@@ -92,6 +114,9 @@ class DataListModel(QStandardItemModel):
         return super(DataListModel, self).setData(index, value, role)
 
     def clear(self):
+        """
+
+        """
         self.beginResetModel()
 
         for item in self.items:
@@ -101,6 +126,9 @@ class DataListModel(QStandardItemModel):
 
 
 class PlotProxyModel(QSortFilterProxyModel):
+    """
+
+    """
     def __init__(self, source=None, *args, **kwargs):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
@@ -113,6 +141,16 @@ class PlotProxyModel(QSortFilterProxyModel):
         return list(self._items.values())
 
     def item_from_index(self, index):
+        """
+
+        Parameters
+        ----------
+        index
+
+        Returns
+        -------
+
+        """
         index = self.mapToSource(index)
         data_item = self.sourceModel().data(index, role=Qt.UserRole)
 
@@ -127,6 +165,16 @@ class PlotProxyModel(QSortFilterProxyModel):
         return item
 
     def item_from_id(self, identifier):
+        """
+
+        Parameters
+        ----------
+        identifier
+
+        Returns
+        -------
+
+        """
         data_item = self.sourceModel().item_from_id(identifier)
 
         if data_item.identifier not in self._items:
@@ -136,6 +184,17 @@ class PlotProxyModel(QSortFilterProxyModel):
         return item
 
     def data(self, index, role=Qt.DisplayRole):
+        """
+
+        Parameters
+        ----------
+        index
+        role
+
+        Returns
+        -------
+
+        """
         if not index.isValid():
             return
 
@@ -155,7 +214,18 @@ class PlotProxyModel(QSortFilterProxyModel):
         return super(PlotProxyModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
+        """
 
+        Parameters
+        ----------
+        index
+        value
+        role
+
+        Returns
+        -------
+
+        """
         if not index.isValid():
             return
 

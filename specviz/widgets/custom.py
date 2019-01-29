@@ -4,6 +4,10 @@ from qtpy.QtWidgets import QTabBar, QPushButton
 
 
 class LinearRegionItem(pg.LinearRegionItem):
+    """
+    Subclass of pyqtgraph's :class:`~pg.LinearRegionItem` to provide extra
+    methods for handling events and dealing with selection color changes.
+    """
     selected = Signal(bool)
 
     def __init__(self, *args, **kwargs):
@@ -22,9 +26,13 @@ class LinearRegionItem(pg.LinearRegionItem):
         self.selected.connect(self._on_region_selected)
 
     def _on_region_changed(self):
+        """
+        Emit an extra signal indicating whether region selection is active.
+        """
         self.selected.emit(True)
 
     def _on_region_selected(self, state):
+        """When a region is selected, update the selection brush."""
         self._selected = state
 
         if state:
@@ -36,9 +44,26 @@ class LinearRegionItem(pg.LinearRegionItem):
 
     @property
     def name(self):
+        """
+        The name of this linear region item.
+
+        Returns
+        -------
+        : str
+            Name of the region.
+
+        """
         return self._name
 
     def mouseClickEvent(self, ev):
+        """
+        Intercepts mouse click events.
+
+        Parameters
+        ----------
+        ev : :class:`~qtpy.QtGui.QMouseEvent`
+            The qt event object.
+        """
         super(LinearRegionItem, self).mouseClickEvent(ev)
 
         if ev.button() == Qt.LeftButton:
@@ -46,6 +71,14 @@ class LinearRegionItem(pg.LinearRegionItem):
                 self.selected.emit(True)
 
     def mouseDragEvent(self, ev):
+        """
+        Intercepts mouse drag events.
+
+        Parameters
+        ----------
+        ev : :class:`~qtpy.QtGui.QMouseEvent`
+            The qt event object.
+        """
         super(LinearRegionItem, self).mouseDragEvent(ev)
 
         if not self._selected:

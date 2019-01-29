@@ -9,11 +9,20 @@ from .hub import Hub
 
 
 class DecoratorRegistry:
+    """
+
+    """
     def __init__(self, *args, **kwargs):
         self._registry = []
 
     @property
     def registry(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._registry
 
     @staticmethod
@@ -58,18 +67,47 @@ class DecoratorRegistry:
 class Plugin(DecoratorRegistry):
     @property
     def registry(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._registry
 
     def __call__(self, name, priority=0):
         logging.info("Adding plugin '%s'.", name)
 
         def plugin_decorator(cls):
+            """
+
+            Parameters
+            ----------
+            cls
+
+            Returns
+            -------
+
+            """
             cls.wrapped = True
             cls.type = None
             cls.priority = priority
 
             @wraps(cls)
             def cls_wrapper(workspace, filt=None, *args, **kwargs):
+                """
+
+                Parameters
+                ----------
+                workspace
+                filt
+                args
+                kwargs
+
+                Returns
+                -------
+
+                """
                 if workspace is None:
                     return
 
@@ -93,17 +131,58 @@ class Plugin(DecoratorRegistry):
         return plugin_decorator
 
     def mount(self, workspace, filt=None):
+        """
+
+        Parameters
+        ----------
+        workspace
+        filt
+        """
         for plugin in sorted(self.registry, key=lambda x: -x.priority):
             plugin(workspace, filt=filt)
 
     def plugin_bar(self, name, icon, priority=0):
+        """
+
+        Parameters
+        ----------
+        name
+        icon
+        priority
+
+        Returns
+        -------
+
+        """
         def plugin_bar_decorator(cls):
+            """
+
+            Parameters
+            ----------
+            cls
+
+            Returns
+            -------
+
+            """
             cls.wrapped = True
             cls.type = 'plugin_bar'
             cls.priority = priority
 
             @wraps(cls)
             def cls_wrapper(workspace, *args, **kwargs):
+                """
+
+                Parameters
+                ----------
+                workspace
+                args
+                kwargs
+
+                Returns
+                -------
+
+                """
                 if workspace is None:
                     return
 
@@ -147,13 +226,49 @@ class Plugin(DecoratorRegistry):
         return plugin_bar_decorator
 
     def tool_bar(self, name, icon=None, location=None, priority=0):
+        """
+
+        Parameters
+        ----------
+        name
+        icon
+        location
+        priority
+
+        Returns
+        -------
+
+        """
         def tool_bar_decorator(func):
+            """
+
+            Parameters
+            ----------
+            func
+
+            Returns
+            -------
+
+            """
             func.wrapped = True
             func.plugin_type = 'tool_bar'
             func.priority = priority
 
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):
+                """
+
+                Parameters
+                ----------
+                plugin
+                workspace
+                args
+                kwargs
+
+                Returns
+                -------
+
+                """
                 if workspace is None:
                     return
 
@@ -181,13 +296,49 @@ class Plugin(DecoratorRegistry):
         return tool_bar_decorator
 
     def plot_bar(self, name, icon=None, location=None, priority=0):
+        """
+
+        Parameters
+        ----------
+        name
+        icon
+        location
+        priority
+
+        Returns
+        -------
+
+        """
         def plot_bar_decorator(func):
+            """
+
+            Parameters
+            ----------
+            func
+
+            Returns
+            -------
+
+            """
             func.wrapped = True
             func.plugin_type = 'plot_bar'
             func.priority = priority
 
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):
+                """
+
+                Parameters
+                ----------
+                plugin
+                workspace
+                args
+                kwargs
+
+                Returns
+                -------
+
+                """
                 if workspace is None:
                     return
 

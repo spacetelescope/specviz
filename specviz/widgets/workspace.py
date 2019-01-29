@@ -112,6 +112,12 @@ class Workspace(QMainWindow):
         plugin.mount(self)
 
     def closeEvent(self, a0):
+        """
+
+        Parameters
+        ----------
+        a0
+        """
         self.window_closed.emit(self)
 
     @property
@@ -130,6 +136,12 @@ class Workspace(QMainWindow):
 
     @property
     def proxy_model(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.current_plot_window is not None:
             return self.current_plot_window.proxy_model
 
@@ -160,6 +172,9 @@ class Workspace(QMainWindow):
                 return self.current_plot_window.plot_widget.selected_region_pos
 
     def remove_current_window(self):
+        """
+
+        """
         self.mdi_area.removeSubWindow(self.current_plot_window)
 
     @property
@@ -334,6 +349,16 @@ class Workspace(QMainWindow):
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
         def compose_filter_string(reader):
+            """
+
+            Parameters
+            ----------
+            reader
+
+            Returns
+            -------
+
+            """
             return ' '.join(['*.{}'.format(y) for y in reader.extensions]
                             if reader.extensions is not None else '*')
 
@@ -403,6 +428,13 @@ class Workspace(QMainWindow):
         # very well (it's untested, and probably does not match the attributes
         # of the Spectrum1D object). So, create some temporary export formats.
         def generic_export(spectrum, path):
+            """
+
+            Parameters
+            ----------
+            spectrum
+            path
+            """
             from astropy.table import QTable
             import astropy.units as u
 

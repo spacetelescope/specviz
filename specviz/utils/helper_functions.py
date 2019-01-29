@@ -2,6 +2,16 @@ from astropy import units as u
 
 
 def format_float_text(value):
+    """
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+
+    """
     v = value
     if isinstance(v, u.Quantity):
         v = value.value

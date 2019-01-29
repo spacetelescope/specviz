@@ -4,6 +4,9 @@ from ...core.items import DataItem
 
 
 class ModelDataItem(DataItem):
+    """
+
+    """
     def __init__(self, model, *args, **kwargs):
         self._model_editor_model = model
         self._selected_data = None
@@ -12,6 +15,12 @@ class ModelDataItem(DataItem):
 
     @property
     def flux(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.model_editor_model is None:
             return super().flux
 
@@ -27,11 +36,23 @@ class ModelDataItem(DataItem):
 
     @property
     def spectrum(self):
+        """
+
+        Returns
+        -------
+
+        """
         flux = self.flux  # Update the flux
         return super().spectrum
 
     @property
     def model_editor_model(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._model_editor_model
 
     @model_editor_model.setter

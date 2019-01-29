@@ -8,6 +8,9 @@ from qtpy.QtGui import QStandardItem, QStandardItemModel, QValidator
 
 
 class ModelFittingModel(QStandardItemModel):
+    """
+
+    """
     status_changed = Signal(QValidator.State, str)
 
     def __init__(self, *args, **kwargs):
@@ -18,10 +21,22 @@ class ModelFittingModel(QStandardItemModel):
 
     @property
     def items(self):
+        """
+
+        Returns
+        -------
+
+        """
         return [self.item(idx) for idx in range(self.rowCount())]
 
     @property
     def equation(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._equation
 
     @equation.setter
@@ -30,6 +45,12 @@ class ModelFittingModel(QStandardItemModel):
         self.evaluate()
 
     def compose_fittable_models(self):
+        """
+
+        Returns
+        -------
+
+        """
         # Recompose the model objects with the current values in each of its
         # parameter rows.
         fittable_models = {}
@@ -63,9 +84,25 @@ class ModelFittingModel(QStandardItemModel):
 
     @property
     def fittable_models(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.compose_fittable_models()
 
     def add_model(self, model):
+        """
+
+        Parameters
+        ----------
+        model
+
+        Returns
+        -------
+
+        """
         model_name = model.__class__.name
 
         model_count = len([self.item(idx) for idx in range(self.rowCount())
@@ -134,6 +171,9 @@ class ModelFittingModel(QStandardItemModel):
         self.removeRow(row)
 
     def reset_equation(self):
+        """
+
+        """
         self._equation = ""
 
         for item in self.items:
@@ -186,6 +226,17 @@ class ModelFittingModel(QStandardItemModel):
 
 class ModelFittingProxyModel(QSortFilterProxyModel):
     def filterAcceptsRow(self, p_int, index):
+        """
+
+        Parameters
+        ----------
+        p_int
+        index
+
+        Returns
+        -------
+
+        """
         if index.row() >= 0:
             return False
 

@@ -49,6 +49,12 @@ JWST_DATA_PATHS = [urljoin(BOX_PREFIX, name) for name in JWST_DATA_FILES]
 
 
 def load_jwst_data(url):
+    """
+
+    Parameters
+    ----------
+    url
+    """
     try:
         spec_app = Application([], skip_splash=True)
         data = spec_app.current_workspace.load_data(url)
@@ -59,6 +65,13 @@ def load_jwst_data(url):
 
 
 def run_specviz_subprocess(q, url):
+    """
+
+    Parameters
+    ----------
+    q
+    url
+    """
     try:
         load_jwst_data(url)
     except Exception:

@@ -18,6 +18,16 @@ UNIT_FIXES = {
 
 
 def parse_unit(unit):
+    """
+
+    Parameters
+    ----------
+    unit
+
+    Returns
+    -------
+
+    """
     if not isinstance(unit, u.Unit):
 
         if isinstance(unit, u.UnrecognizedUnit):
@@ -57,7 +67,17 @@ def _parse(filename, table=None):
 
 
 def parse_ascii(filename, read_input=None):
+    """
 
+    Parameters
+    ----------
+    filename
+    read_input
+
+    Returns
+    -------
+
+    """
     if read_input == None:
         try:
             itable = Table.read(filename)
@@ -80,7 +100,16 @@ def parse_ascii(filename, read_input=None):
 
 
 def simplify_arrays(dataset):
+    """
 
+    Parameters
+    ----------
+    dataset
+
+    Returns
+    -------
+
+    """
     for component in dataset.values():
         if isinstance(component['data'], WCS):
             continue

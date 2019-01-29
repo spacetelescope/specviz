@@ -24,6 +24,17 @@ these computations internally. They will be moved into the StatisticsWidget
 once they are updated.
 """
 def check_unit_compatibility(spec, region):
+    """
+
+    Parameters
+    ----------
+    spec
+    region
+
+    Returns
+    -------
+
+    """
     spec_unit = spec.spectral_axis.unit
     if region.lower is not None:
         region_unit = region.lower.unit
@@ -35,6 +46,17 @@ def check_unit_compatibility(spec, region):
 
 
 def clip_region(spectrum, region):
+    """
+
+    Parameters
+    ----------
+    spectrum
+    region
+
+    Returns
+    -------
+
+    """
     # If the region is out of data range return None:
     if region.lower > spectrum.spectral_axis.max() or \
             region.upper < spectrum.spectral_axis.min():
@@ -183,9 +205,18 @@ class StatisticsWidget(QWidget):
         plot_window.plot_widget.roi_removed.connect(self.update_statistics)
 
     def set_status(self, message):
+        """
+
+        Parameters
+        ----------
+        message
+        """
         self.status_display.setPlainText(message)
 
     def clear_status(self):
+        """
+
+        """
         self.set_status("")
 
     def _on_set_statistics_type(self, index=0):
@@ -288,6 +319,9 @@ class StatisticsWidget(QWidget):
                                                    region.lower)
 
     def clear_statistics(self):
+        """
+
+        """
         self._clear_stat_widgets()
         self.stats = None
 
@@ -324,6 +358,12 @@ class StatisticsWidget(QWidget):
         return new_spec
 
     def update_statistics(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.hub.workspace is None or self.hub.plot_item is None:
             return self.clear_statistics()
 

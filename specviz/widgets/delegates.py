@@ -5,11 +5,22 @@ import qtawesome as qta
 
 
 class DataItemDelegate(QStyledItemDelegate):
+    """
+
+    """
     def __init__(self, *args, **kwargs):
         super(DataItemDelegate, self).__init__(*args, **kwargs)
         self.padding = 2
 
     def paint(self, painter, option, index):
+        """
+
+        Parameters
+        ----------
+        painter
+        option
+        index
+        """
         # option.decorationAlignment = Qt.AlignRight
         option.decorationPosition = QStyleOptionViewItem.Left
 

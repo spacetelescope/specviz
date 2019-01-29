@@ -11,6 +11,13 @@ from specviz.core.hub import Hub
 
 
 def fill_in_models(model_editor, value_dict):
+    """
+
+    Parameters
+    ----------
+    model_editor
+    value_dict
+    """
     for model_item in model_editor.items:
         name = model_item.text()
         if name not in value_dict.keys():

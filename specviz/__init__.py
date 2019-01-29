@@ -30,6 +30,9 @@ if not _ASTROPY_SETUP_:
                         level=logging.INFO)
 
     def load_settings():
+        """
+
+        """
         # Get the path relative to the user's home directory
         path = os.path.expanduser("~/.specviz")
 

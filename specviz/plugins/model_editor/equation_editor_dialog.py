@@ -11,6 +11,9 @@ import astropy.units as u
 
 
 class ModelEquationEditorDialog(QDialog):
+    """
+
+    """
     def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         loadUi(os.path.abspath(
@@ -36,6 +39,12 @@ class ModelEquationEditorDialog(QDialog):
 
     @property
     def model(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._model_editor_model
 
     @model.setter
@@ -43,6 +52,9 @@ class ModelEquationEditorDialog(QDialog):
         self._model_editor_model = value
 
     def exec_(self):
+        """
+
+        """
         # Populate the drop down list with the model names
         self.model_list_combo_box.clear()
         self.model_list_combo_box.addItems(self.model.compose_fittable_models().keys())

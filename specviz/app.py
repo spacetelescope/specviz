@@ -96,8 +96,29 @@ class Application(QApplication):
 
     @staticmethod
     def load_local_plugins(application=None, filt=None):
+        """
+
+        Parameters
+        ----------
+        application
+        filt
+
+        Returns
+        -------
+
+        """
         # Load plugins
         def iter_namespace(ns_pkg):
+            """
+
+            Parameters
+            ----------
+            ns_pkg
+
+            Returns
+            -------
+
+            """
             # Specifying the second argument (prefix) to iter_modules makes the
             # returned name an absolute name instead of a relative one. This
             # allows import_module to work without having to do additional
@@ -110,6 +131,9 @@ class Application(QApplication):
                           in iter_namespace(plugins)}
 
     def remove_workspace(self):
+        """
+
+        """
         pass
 
     @property
@@ -132,6 +156,9 @@ class Application(QApplication):
 
 
 class SplashDialog(QDialog):
+    """
+
+    """
     def __init__(self, wait_time, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._wait_time = wait_time
@@ -156,6 +183,9 @@ class SplashDialog(QDialog):
         self._timer.start(300)
 
     def calculate_progress(self):
+        """
+
+        """
         rand = random.randrange(100, 500)
         self._total_time += rand
         self.progress_bar.setValue(self._total_time/self._wait_time*100)
@@ -173,6 +203,21 @@ class SplashDialog(QDialog):
 @click.option('--dev', '-D', is_flag=True, help="Open SpecViz in developer mode. This mode auto-loads example spectral data.")
 @click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
 def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide_splash=False):
+    """
+
+    Parameters
+    ----------
+    version
+    file_path
+    loader
+    embed
+    dev
+    hide_splash
+
+    Returns
+    -------
+
+    """
     if version:
         print(__version__)
         return

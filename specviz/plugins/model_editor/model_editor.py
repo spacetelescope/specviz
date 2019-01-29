@@ -39,6 +39,9 @@ SPECVIZ_MODEL_FILE_FILTER = 'Specviz Model Files (*.smf)'
 
 @plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
 class ModelEditor(QWidget):
+    """
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -103,6 +106,9 @@ class ModelEditor(QWidget):
 
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
+        """
+
+        """
         self._on_create_new_model()
 
     def _on_data_item_added(self, data_item):
@@ -525,6 +531,9 @@ class ModelEditor(QWidget):
 
 
 class ModelAdvancedSettingsDialog(QDialog):
+    """
+
+    """
     def __init__(self, model_editor, parent=None):
         super().__init__(parent)
 
@@ -593,6 +602,12 @@ class ModelAdvancedSettingsDialog(QDialog):
         return success
 
     def apply_settings(self):
+        """
+
+        Returns
+        -------
+
+        """
         if not self._validate_inputs():
             return
 
@@ -613,4 +628,7 @@ class ModelAdvancedSettingsDialog(QDialog):
         self.close()
 
     def cancel(self):
+        """
+
+        """
         self.close()

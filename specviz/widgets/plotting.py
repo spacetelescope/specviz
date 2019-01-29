@@ -64,19 +64,43 @@ class PlotWindow(QMdiSubWindow):
 
     @property
     def tool_bar(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._central_widget.tool_bar
 
     @property
     def current_item(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self._current_item_index is not None:
             return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._plot_widget
 
     @property
     def proxy_model(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self.plot_widget.proxy_model
 
     def _on_current_item_changed(self, current_idx, prev_idx):
@@ -218,18 +242,42 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def title(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._title
 
     @property
     def proxy_model(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._proxy_model
 
     @property
     def data_unit(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._data_unit
 
     @property
     def spectral_axis_unit(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._spectral_axis_unit
 
     @data_unit.setter
@@ -286,6 +334,12 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def region_mask(self):
+        """
+
+        Returns
+        -------
+
+        """
         mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
         mask_holder = []
 
@@ -329,6 +383,9 @@ class PlotWidget(pg.PlotWidget):
                 self.remove_plot(item=plot_data_item)
 
     def check_plot_compatibility(self):
+        """
+
+        """
         for i in range(self.proxy_model.sourceModel().rowCount()):
             model_item = self.proxy_model.sourceModel().item(i)
             source_index = self.proxy_model.sourceModel().indexFromItem(model_item)
@@ -489,6 +546,9 @@ class PlotWidget(pg.PlotWidget):
             self.plot_removed.emit(item)
 
     def clear_plots(self):
+        """
+
+        """
         for item in self.listDataItems():
             if isinstance(item, PlotDataItem):
                 self.remove_plot(item=item)
@@ -583,9 +643,21 @@ class PlotWidget(pg.PlotWidget):
     # actually read from the line list table(s).
 
     def enterEvent(self, event):
+        """
+
+        Parameters
+        ----------
+        event
+        """
         self.mouse_enterexit.emit(event.type())
 
     def leaveEvent(self, event):
+        """
+
+        Parameters
+        ----------
+        event
+        """
         self.mouse_enterexit.emit(event.type())
 
     def _find_wavelength_range(self):
@@ -604,6 +676,13 @@ class PlotWidget(pg.PlotWidget):
         return (amin, amax)
 
     def request_linelists(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        args
+        kwargs
+        """
         self.waverange = self._find_wavelength_range()
 
         self.linelists = ingest(self.waverange)
