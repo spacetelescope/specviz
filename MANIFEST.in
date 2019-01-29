@@ -6,7 +6,7 @@ include ah_bootstrap.py
 include setup.cfg
 include specviz/tests/coveragerc
 
-recursive-include specviz *.pyx *.c *.pxd 
+recursive-include specviz *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include cextern *
@@ -46,3 +46,4 @@ include *.yml
 recursive-include specviz *.list
 recursive-include specviz *.ui
 recursive-include specviz *.yaml
+recursive-include specviz *.tmpl
