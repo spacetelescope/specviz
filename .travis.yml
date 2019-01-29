@@ -100,12 +100,7 @@ matrix:
         # Do a PEP8 test with pycodestyle
         - os: linux
           env: CMD='pycodestyle specviz --count'
-
-    allow_failures:
-        # Do a PEP8 test with pycodestyle
-        # (allow to fail unless your code completely compliant)
-        - os: linux
-          env: CMD='pycodestyle specviz --count'
+               PIP_DEPENDENCIES='pycodestyle'
 
 install:
 

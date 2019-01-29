@@ -67,7 +67,7 @@ class Arithmetic(QDialog):
     def remove_expression(self):
         """Remove selected expression in main diaglog"""
         if not self.list_derived_components.currentItem():
-            QMessageBox.warning(self, "No Spectrum1D Objects", 
+            QMessageBox.warning(self, "No Spectrum1D Objects",
                                 "No selected expression to remove!")
         else:
             # Get current selected item and it's index in the QTreeWidget.
@@ -115,7 +115,7 @@ class EquationEditor(QDialog):
         self._equation_editor = equation_editor
 
         if not self._equation_editor.hub.data_items:
-            self.msgbox = QMessageBox.warning(self._equation_editor, "No Spectrum1D Objects", 
+            self.msgbox = QMessageBox.warning(self._equation_editor, "No Spectrum1D Objects",
                                 "There is no data loaded into your SpecViz session!")
         else:
             self.is_addmode = label is None

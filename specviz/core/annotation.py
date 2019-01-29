@@ -141,5 +141,3 @@ class LineIDMarker(TextItem):
         pen = QPen(QColor(functions.mkColor(self._color)))
         p.setPen(pen)
         p.drawPolygon(polygon)
-
-
