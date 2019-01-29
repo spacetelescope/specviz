@@ -139,7 +139,7 @@ script:
   # different test cases do not play nicely when they run in the same pytest
   # process, which is the reason for separating them here.
   - if [[ $CMD == test ]]; then
-      pip install -e .
+      pip install -e .;
       pytest && JWST_DATA_TEST=1 pytest $DATA_TEST_PATH;
     else
       $CMD;
