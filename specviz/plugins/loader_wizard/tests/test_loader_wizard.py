@@ -1,13 +1,19 @@
+import os
 import shutil
 import urllib.request
-import os
 
-from specviz.plugins.loader_wizard.loader_wizard import (ASCIIImportWizard,
-                                                         simplify_arrays,
-                                                         parse_ascii)
+from qtpy.QtWidgets import QMessageBox
+from qtpy.QtCore import Qt
+
+from specviz.plugins.loader_wizard.loader_wizard import (ASCIIImportWizard, parse_ascii,
+                                            simplify_arrays)
 
 
-def test_loader_wizard(tmpdir, qtbot):
+def test_loader_wizard(tmpdir, qtbot, monkeypatch):
+    # Monkeypatch the QMessageBox widget so that it doesn't block the test
+    # progression. In this case, accept the information dialog indicating that
+    # a loader has been saved.
+    monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
 
     tmpfile = str(tmpdir.join('example.txt'))
 

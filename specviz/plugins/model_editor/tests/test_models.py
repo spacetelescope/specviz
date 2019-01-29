@@ -2,11 +2,11 @@ import os
 import pickle
 
 import numpy as np
-
 from astropy import units as u
-from astropy.modeling import models, fitting
-
+from astropy.modeling import fitting, models
+from qtpy.QtWidgets import QMessageBox
 from specutils.spectra import Spectrum1D
+
 from specviz.core.hub import Hub
 
 
@@ -23,7 +23,13 @@ def fill_in_models(model_editor, value_dict):
             model_item.child(cidx, 1).setText(values[param_name])
 
 
-def test_model_fitting(specviz_gui):
+def test_model_fitting(specviz_gui, monkeypatch):
+    # Monkeypatch the QMessageBox widget so that it doesn't block the test
+    # progression. In this case, accept the information dialog indicating that
+    # a loader has been saved.
+    monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: QMessageBox.Ok)
+
     hub = Hub(workspace=specviz_gui.current_workspace)
 
     # Generate fake data
@@ -76,10 +82,16 @@ def test_model_fitting(specviz_gui):
     model_editor_model = plot_data_item.data_item.model_editor_model
     result = model_editor_model.evaluate()
 
-    np.testing.assert_allclose(result.parameters, gg_fit.parameters)
+    np.testing.assert_allclose(result.parameters, gg_fit.parameters, rtol=1e-4)
 
 
-def test_save_model(specviz_gui, tmpdir):
+def test_save_model(specviz_gui, tmpdir, monkeypatch):
+    # Monkeypatch the QMessageBox widget so that it doesn't block the test
+    # progression. In this case, accept the information dialog indicating that
+    # a loader has been saved.
+    monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: QMessageBox.Ok)
+
     hub = Hub(workspace=specviz_gui.current_workspace)
 
     model_editor = specviz_gui.current_workspace._plugin_bars['Model Editor']
@@ -104,7 +116,13 @@ def test_save_model(specviz_gui, tmpdir):
     assert isinstance(saved_models['Gaussian1D'], models.Gaussian1D)
 
 
-def test_load_model(specviz_gui, tmpdir):
+def test_load_model(specviz_gui, tmpdir, monkeypatch):
+    # Monkeypatch the QMessageBox widget so that it doesn't block the test
+    # progression. In this case, accept the information dialog indicating that
+    # a loader has been saved.
+    monkeypatch.setattr(QMessageBox, "information", lambda *args: QMessageBox.Ok)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: QMessageBox.Ok)
+
     hub = Hub(workspace=specviz_gui.current_workspace)
 
     model_editor = specviz_gui.current_workspace._plugin_bars['Model Editor']

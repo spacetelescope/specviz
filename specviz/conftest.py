@@ -56,14 +56,16 @@ from astropy.tests.helper import enable_deprecations_as_exceptions
 #     TESTED_VERSIONS[packagename] = version
 # except NameError:   # Needed to support Astropy <= 1.0.0
 #     pass
-
 import pytest
 from .app import Application
+
+
 @pytest.fixture(scope='session')
 def specviz_gui():
     """
-    for testing of specviz gui
-    :return:
+    Provides a specviz application instance as a pytest fixture for tests. This
+    fixture is added in this file because tests exist in directories outside
+    of specviz/tests.
     """
     spec_app = Application([], skip_splash=True, dev=True)
     yield spec_app
