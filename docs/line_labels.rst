@@ -143,23 +143,22 @@ folder icon).
 
 Example of an output file in ECSV format:
 
-```
-# %ECSV 0.9
-# ---
-# datatype:
-# - {name: Wavelength, unit: Angstrom, datatype: float64}
-# - {name: Species, unit: '', datatype: string}
-# meta: !!omap
-# - comments: [Common stellar lines., '', Copyrigtht (C) 1999-2004 by Christian Buil, 'http://www.astrosurf.com/buil/us/spe2/hresol5.htm']
-# schema: astropy-2.0
-Wavelength Species
-1215.67 La
-1238.81 "N V"
-1242.8 "N V"
-1393.76 "Si IV"
-1402.77 "Si IV"
-```
+::
 
+ # %ECSV 0.9
+ # ---
+ # datatype:
+ # - {name: Wavelength, unit: Angstrom, datatype: float64}
+ # - {name: Species, unit: '', datatype: string}
+ # meta: !!omap
+ # - comments: [Common stellar lines., '', Copyrigtht (C) 1999-2004 by Christian Buil, 'http://www.astrosurf.com/buil/us/spe2/hresol5.htm']
+ # schema: astropy-2.0
+ Wavelength Species
+ 1215.67 La
+ 1238.81 "N V"
+ 1242.8 "N V"
+ 1393.76 "Si IV"
+ 1402.77 "Si IV"
 
 
 
