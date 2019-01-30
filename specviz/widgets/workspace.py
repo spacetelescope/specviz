@@ -330,13 +330,7 @@ class Workspace(QMainWindow):
         """
         self.add_plot_window()
 
-    def _on_load_data(self):
-        """
-        When the user loads a data file, this method is triggered. It provides
-        a file open dialog and from the dialog attempts to create a new
-        :class:`~specutils.SpectrumList` object and thereafter adds the
-        contents to the data model.
-        """
+    def _create_loader_filters(self):
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
         def compose_filter_string(reader):
@@ -359,7 +353,18 @@ class Workspace(QMainWindow):
         # pedantic about this even though we can probably just rely on
         # dictionary ordering here.
         index = filters.index(auto_filter)
-        filters = filters.insert(0, filters.pop(index))
+        filters.insert(0, filters.pop(index))
+
+        return filters, loader_name_map
+
+    def _on_load_data(self):
+        """
+        When the user loads a data file, this method is triggered. It provides
+        a file open dialog and from the dialog attempts to create a new
+        :class:`~specutils.SpectrumList` object and thereafter adds the
+        contents to the data model.
+        """
+        filters, loader_name_map = self._create_loader_filters()
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 basedir=os.getcwd(),
