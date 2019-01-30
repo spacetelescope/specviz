@@ -1,18 +1,20 @@
-import importlib
-import logging
 import os
-import pkgutil
-import random
 import sys
+import random
+import logging
+import pkgutil
+import importlib
 
-import astropy.units as u
 import click
 import numpy as np
-from astropy.modeling.models import Gaussian1D
-from qtpy.QtCore import QTimer, Qt, Signal
-from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QDialog, QMainWindow
+
 from qtpy.uic import loadUi
+from qtpy.QtGui import QIcon
+from qtpy.QtCore import QTimer, Qt, Signal
+from qtpy.QtWidgets import QApplication, QDialog, QMainWindow
+
+import astropy.units as u
+from astropy.modeling.models import Gaussian1D
 
 from specutils import Spectrum1D
 from specutils import __version__ as specutils_version
