@@ -13,7 +13,9 @@ from qtpy.QtCore import QTimer, Qt, Signal
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QDialog, QMainWindow
 from qtpy.uic import loadUi
+
 from specutils import Spectrum1D
+from specutils import __version__ as specutils_version
 
 from . import __version__, plugins
 from .widgets.workspace import Workspace
@@ -141,7 +143,8 @@ class SplashDialog(QDialog):
             self)
 
         # Set the version number
-        self.version_label.setText("Version {}".format(__version__))
+        self.specviz_version_label.setText("Version {}".format(__version__))
+        self.specutils_version_label.setText("Using specutils {}".format(specutils_version))
 
         self._timer = QTimer()
         self._timer.timeout.connect(self.calculate_progress)
