@@ -54,3 +54,4 @@ Using SpecViz
    loader_wizard
    model_fitting
    statistics
+   line_labels
