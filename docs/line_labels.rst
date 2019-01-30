@@ -9,17 +9,17 @@ lists. There is a set of line lists already included in the distribution,
 and the user can read his/hers own line lists as text files formatted
 in Astropy's ECSV format.
 
-One a spectrum is displayed in the plot window, clicking on the green
-"Line Labels" button in the main menu bar will bring up a floating
-window which contains the functionality to manage the line lists.
+One a spectrum is displayed in the plot window, clicking on the
+"Line Labels" tab in the plug-in bar bar will give access to the line
+labels tool, which contain the functionality to manage the line lists.
 
 
 Selecting line lists
 ^^^^^^^^^^^^^^^^^^^^
 
 Use the drop-down menu to select a line list. Alternatively, use the
-File menu button (the yellow folder) to read a line list from a
-user-supplied file.
+File menu button to read a line list from a user-supplied file (see
+more about that at the end of this page).
 
 Currently, the following line lists are supplied within the package
 and available via the drop-down menu:
@@ -43,17 +43,17 @@ SDSS                           48    1,034 -  8,660 |AA|
 
 Once a line list is selected, a dialog pop-up will ask what is the wavelength
 range one wants to read from the list. The dialog is populated by default
-with the wavelength range spanned by the spectrum being displayed. Typing in
-new values in the dialog text fields will retain then during subsequent uses
-of the dialog, until they are re-typed again.
+with the wavelength range spanned by the spectrum being displayed. It can also
+handle units like energy and frequency. Typing in new values in the dialog text
+fields will retain then during subsequent uses of the dialog, until they are re-typed again.
 
 The dialog will display the actual number of lines that will be read from
 the list. Large numbers of lines trigger an alert, in the form of red text.
 
-The two large lists must be handled with care, because if one attempts to read
-or select the entire list, some functionality may be affected adversely and
-become very slow. It is recommended that small wavelength ranges be used with
-those lists, in a way that no more than about 2,000 lines be read.
+The two large lists provided within the tol must be handled with care, because if
+one attempts to read or select the entire list, some functionality may be affected
+adversely and become very slow. It is recommended that small wavelength ranges be
+used with those lists, in a way that no more than about 2,000 lines be read.
 
 
 Line list management
