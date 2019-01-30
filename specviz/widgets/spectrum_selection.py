@@ -14,7 +14,7 @@ class SpectrumSelection(QDialog):
             os.path.join(os.path.dirname(__file__),
                          "ui", "spectrum_selection.ui")), self)
 
-        self.setWindowTitle('Select Spectra to Load')
+        self.setWindowTitle('Spectrum Selection')
 
         self._model = QStandardItemModel(self.spectrumList)
         self.spectrumList.setModel(self._model)
