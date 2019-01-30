@@ -143,6 +143,7 @@ folder icon).
 
 Example of an output file in ECSV format:
 
+```
 # %ECSV 0.9
 # ---
 # datatype:
@@ -157,7 +158,7 @@ Wavelength Species
 1242.8 "N V"
 1393.76 "Si IV"
 1402.77 "Si IV"
-
+```
 
 
 
