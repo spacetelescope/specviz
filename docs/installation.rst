@@ -98,7 +98,7 @@ You may also install by cloning the repository directly
 PyQt bindings
 ^^^^^^^^^^^^^
 
-SpecViz requires PyQt. Currently, only python environments with 3.5 or higher
+SpecViz requires PyQt. Currently, only python environments with 3.6 or higher
 installed can use ``pip`` to install PyQt5, in which case simply type::
 
     $ pip install pyqt5

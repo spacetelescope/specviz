@@ -218,4 +218,3 @@ class Plugin(DecoratorRegistry):
 
 
 plugin = Plugin()
-

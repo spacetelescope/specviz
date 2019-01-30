@@ -330,13 +330,7 @@ class Workspace(QMainWindow):
         """
         self.add_plot_window()
 
-    def _on_load_data(self):
-        """
-        When the user loads a data file, this method is triggered. It provides
-        a file open dialog and from the dialog attempts to create a new
-        :class:`~specutils.SpectrumList` object and thereafter adds the
-        contents to the data model.
-        """
+    def _create_loader_filters(self):
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
         def compose_filter_string(reader):
@@ -351,13 +345,26 @@ class Workspace(QMainWindow):
 
         # Include an auto load function that lets the io machinery find the
         # most appropriate loader to use
-        loader_name_map['Auto (*)'] = None
+        auto_filter = 'Auto (*)'
+        loader_name_map[auto_filter] = None
 
-        # This ensures that users actively have to select a file type before
-        # being able to select a file. This should make it harder to
-        # accidentally load a file using the wrong type, which results in weird
-        # errors.
-        filters = ['Select loader...'] + list(loader_name_map.keys())
+        filters = list(loader_name_map.keys())
+        # Make sure that the "Auto (*)" loader shows up first. Being a bit
+        # pedantic about this even though we can probably just rely on
+        # dictionary ordering here.
+        index = filters.index(auto_filter)
+        filters.insert(0, filters.pop(index))
+
+        return filters, loader_name_map
+
+    def _on_load_data(self):
+        """
+        When the user loads a data file, this method is triggered. It provides
+        a file open dialog and from the dialog attempts to create a new
+        :class:`~specutils.SpectrumList` object and thereafter adds the
+        contents to the data model.
+        """
+        filters, loader_name_map = self._create_loader_filters()
 
         file_path, fmt = compat.getopenfilename(parent=self,
                                                 basedir=os.getcwd(),
@@ -367,7 +374,18 @@ class Workspace(QMainWindow):
         if not file_path:
             return
 
-        self.load_data(file_path, file_loader=loader_name_map[fmt])
+        try:
+            self.load_data(file_path, file_loader=loader_name_map[fmt])
+        except:
+            message_box = QMessageBox()
+            message_box.setText("Error loading data set.")
+            message_box.setIcon(QMessageBox.Critical)
+            message_box.setInformativeText(
+                "{}\n{}".format(
+                    sys.exc_info()[0], sys.exc_info()[1])
+            )
+
+            message_box.exec()
 
     def _on_export_data(self):
         """
@@ -474,53 +492,41 @@ class Workspace(QMainWindow):
         # available loader and choose the one that 1) the registry identifier
         # function allows, and 2) is the highest priority.
         try:
-            try:
-                speclist = SpectrumList.read(file_path, format=file_loader)
-            except IORegistryError as e:
-                # In this case, assume that the registry has found several
-                # loaders that fit the same identifier, choose the highest
-                # priority one.
-                fmts = io_registry.get_formats(Spectrum1D, 'Read')['Format']
+            speclist = SpectrumList.read(file_path, format=file_loader)
+        except IORegistryError as e:
+            # In this case, assume that the registry has found several
+            # loaders that fit the same identifier, choose the highest
+            # priority one.
+            fmts = io_registry.get_formats(Spectrum1D, 'Read')['Format']
 
-                logging.warning("Loaders for '%s' matched for this data set. "
-                                "Iterating based on priority."
-                                "", ', '.join(fmts))
+            logging.warning("Loaders for '%s' matched for this data set. "
+                            "Iterating based on priority."
+                            "", ', '.join(fmts))
 
-                for fmt in fmts:
-                    try:
-                        speclist = SpectrumList.read(file_path, format=fmt)
-                    except:
-                        logging.warning("Attempted load with '%s' failed, "
-                                        "trying next loader.", fmt)
+            for fmt in fmts:
+                try:
+                    speclist = SpectrumList.read(file_path, format=fmt)
+                except:
+                    logging.warning("Attempted load with '%s' failed, "
+                                    "trying next loader.", fmt)
 
-            name = file_path.split('/')[-1].split('.')[0]
+        name = file_path.split('/')[-1].split('.')[0]
 
-            data_items = []
+        data_items = []
 
-            if len(speclist) == 1:
-                data_items.append(self._add_and_plot_data(speclist[0], name))
-            else:
-                for i, spec in enumerate(speclist):
-                    # TODO: try to use more informative metadata in the name
-                    specname = '{}-{}'.format(name, i)
-                    data_items.append(self._add_and_plot_data(spec, specname))
+        if len(speclist) == 1:
+            data_items.append(self._add_and_plot_data(speclist[0], name))
+        else:
+            for i, spec in enumerate(speclist):
+                # TODO: try to use more informative metadata in the name
+                specname = '{}-{}'.format(name, i)
+                data_items.append(self._add_and_plot_data(spec, specname))
 
-            for di in data_items:
-                self.force_plot(di)
+        for di in data_items:
+            self.force_plot(di)
 
-            # TODO: is this return value useful? Potentially just for testing
-            return data_items
-
-        except:
-            message_box = QMessageBox()
-            message_box.setText("Error loading data set.")
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.setInformativeText(
-                "{}\n{}".format(
-                    sys.exc_info()[0], sys.exc_info()[1])
-            )
-
-            message_box.exec()
+        # TODO: is this return value useful? Potentially just for testing
+        return data_items
 
     def force_plot(self, data_item):
         """

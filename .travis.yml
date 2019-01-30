@@ -27,11 +27,12 @@ env:
         # The following versions are the 'default' for tests, unless
         # overridden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - PYTHON_VERSION=3.6
+        - PYTHON_VERSION=3.7
         - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
-        - MAIN_CMD='python setup.py'
-        - SETUP_CMD='test'
+        - SETUP_CMD='python setup.py'
+        - DATA_TEST_PATH='specviz/tests/test_load_data.py'
+        - CMD=test
         - EVENT_TYPE='pull_request push'
 
 
@@ -56,8 +57,8 @@ env:
 
     matrix:
         # Make sure that egg_info works without dependencies
-        - PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
-        - PYTHON_VERSION=3.6 SETUP_CMD='egg_info'
+        - PYTHON_VERSION=3.6 CMD="$SETUP_CMD egg_info"
+        - PYTHON_VERSION=3.7 CMD="$SETUP_CMD egg_info"
 
 
 matrix:
@@ -68,7 +69,6 @@ matrix:
     include:
         # Try MacOS X
         - os: osx
-          env: SETUP_CMD='test'
 
         # Re-enable once coverage is set up for this repository
         ## Do a coverage test.
@@ -78,7 +78,7 @@ matrix:
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - os: linux
-          env: SETUP_CMD='build_docs -w'
+          env: CMD="$SETUP_CMD build_docs -w"
 
         # Now try Astropy dev with the latest Python and LTS with Python 2.7 and 3.x.
         - os: linux
@@ -87,20 +87,10 @@ matrix:
 
         # Test with glue installed
         - os: linux
-          env: SETUP_CMD='test'
-               PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.1 sphinx-astropy pytest-astropy pytest-qt glue-core'
+          env: PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.1 sphinx-astropy pytest-astropy pytest-qt glue-core'
 
-        # Try all python versions and Numpy versions. Since we can assume that
-        # the Numpy developers have taken care of testing Numpy with different
-        # versions of Python, we can vary Python and Numpy versions at the same
-        # time.
-
+        # Test with latest stable versions of dependencies
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10 ASTROPY_VERSION=3.0
-        - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11 ASTROPY_VERSION=3.0
-        - os: linux
-          env: NUMPY_VERSION=1.12
 
         # Try numpy pre-release
         - os: linux
@@ -109,13 +99,8 @@ matrix:
 
         # Do a PEP8 test with pycodestyle
         - os: linux
-          env: MAIN_CMD='pycodestyle specviz --count' SETUP_CMD=''
-
-    allow_failures:
-        # Do a PEP8 test with pycodestyle
-        # (allow to fail unless your code completely compliant)
-        - os: linux
-          env: MAIN_CMD='pycodestyle specviz --count' SETUP_CMD=''
+          env: CMD='pycodestyle specviz --count'
+               PIP_DEPENDENCIES='pycodestyle'
 
 install:
 
@@ -143,9 +128,19 @@ install:
     # other dependencies.
 
 script:
-   - $MAIN_CMD $SETUP_CMD
+  # We do two separate test runs: one runs the main test suite where all tests
+  # share the same specviz application instance. The second runs only the JWST
+  # data loader tests, which each run in a separate subprocess.  These two
+  # different test cases do not play nicely when they run in the same pytest
+  # process, which is the reason for separating them here.
+  - if [[ $CMD == test ]]; then
+      pip install -e .;
+      pytest && JWST_DATA_TEST=1 pytest $DATA_TEST_PATH;
+    else
+      $CMD;
+    fi
 
 after_success:
     # If coveralls.io is set up for this package, uncomment the line below.
     # The coveragerc file may be customized as needed for your package.
-    # - if [[ $SETUP_CMD == *coverage* ]]; then coveralls --rcfile='specviz/tests/coveragerc'; fi
+    # - if [[ $CMD == *coverage* ]]; then coveralls --rcfile='specviz/tests/coveragerc'; fi

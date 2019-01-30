@@ -510,14 +510,12 @@ class BaseImportWizard(QDialog):
         # If the loader name already exists in the registry, raise a warning
         # and ask the user to pick another name
         if loader_name in registry.get_formats(Spectrum1D, 'Read')['Format']:
-            message_box = QMessageBox()
-            message_box.setText("Loader name already exists.")
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.setInformativeText(
+            QMessageBox.information(
+                self,
+                "Loader name already exists.",
                 "A loader with the name '{}' already exists in the registry. "
                 "Please choose a different name.".format(loader_name))
 
-            message_box.exec()
             return
 
         out_path = os.path.join(specutils_dir, loader_name)
@@ -548,12 +546,9 @@ class BaseImportWizard(QDialog):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
-        message_box = QMessageBox()
-        message_box.setText("Loader saved successful.")
-        message_box.setIcon(QMessageBox.Information)
-        message_box.setInformativeText("Custom loader was saved successfully.")
-
-        message_box.exec()
+        QMessageBox.information(self,
+                                "Loader saved successful.",
+                                "Custom loader was saved successfully.")
 
 
 # --------- Helper methods for subclasses ------------

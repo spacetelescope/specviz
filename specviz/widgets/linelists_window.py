@@ -709,5 +709,3 @@ class SortModel(QSortFilterProxyModel):
 
     def getName(self):
         return self._name
-
-

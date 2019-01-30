@@ -101,15 +101,6 @@ class ModelEditor(QWidget):
         # Connect the fit model button
         self.fit_button.clicked.connect(self._on_fit_clicked)
 
-    def new_message_box(self, text, info=None, icon=QMessageBox.Warning):
-        message_box = QMessageBox()
-        message_box.setText(text)
-        message_box.setIcon(icon)
-        if info is not None:
-            message_box.setInformativeText(info)
-        message_box.exec()
-        return
-
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
         self._on_create_new_model()
@@ -135,10 +126,11 @@ class ModelEditor(QWidget):
 
     def _on_create_new_model(self):
         if self.hub.data_item is None:
-            self.new_message_box(text="No item selected, cannot create model.",
-                                 info="There is currently no item selected. "
-                                      "Please select an item before attempting"
-                                      " to create a new model.")
+            QMessageBox.warning(self,
+                                "No item selected, cannot create model.",
+                                "There is currently no item selected. Please "
+                                "select an item before attempting to create "
+                                "a new model.")
 
         # Grab the currently selected plot data item
         new_spec = Spectrum1D(flux=np.zeros(self.hub.data_item.spectral_axis.size) * self.hub.data_item.flux.unit,
@@ -195,8 +187,9 @@ class ModelEditor(QWidget):
         model_editor_model = self.hub.data_item.model_editor_model
         # There are no models to save
         if not model_editor_model.fittable_models:
-            self.new_message_box(text='No model available',
-                                 info='No model exists to be saved.')
+            QMessageBox.warning(self,
+                                'No model available',
+                                'No model exists to be saved.')
             return
 
         default_name = os.path.join(os.path.curdir, 'new_model.smf')
@@ -209,10 +202,9 @@ class ModelEditor(QWidget):
 
         self._save_models(outfile)
 
-        self.new_message_box(
-            text='Model saved',
-            info='Model successfully saved to {}'.format(outfile),
-            icon=QMessageBox.Information)
+        QMessageBox.information(self,
+                                'Model saved',
+                                'Model successfully saved to {}'.format(outfile))
 
     def _load_model_from_file(self, filename):
         with open(filename, 'rb') as handle:
@@ -357,10 +349,11 @@ class ModelEditor(QWidget):
         model_data_item = self.hub.data_item
 
         if not isinstance(model_data_item, ModelDataItem):
-            self.new_message_box(text="No model available.",
-                                 info="The currently selected item does not"
-                                      " contain a fittable model. Create a new"
-                                      " one, or select an item containing a model.")
+            QMessageBox.warning(self,
+                                "No model available.",
+                                "The currently selected item does not"
+                                " contain a fittable model. Create a new"
+                                " one, or select an item containing a model.")
             return
 
         equation_editor_dialog = ModelEquationEditorDialog(
@@ -419,10 +412,11 @@ class ModelEditor(QWidget):
 
         # If user chooses a model instead of a data item, notify and return
         if isinstance(data_item, ModelDataItem):
-            self.new_message_box(text="Selected data is a model.",
-                                 info="The currently selected data "
-                                      "is a model. Please select a "
-                                      "data item containing spectra.")
+            QMessageBox.warning(self,
+                                "Selected data is a model.",
+                                "The currently selected data "
+                                "is a model. Please select a "
+                                "data item containing spectra.")
             return None
         return data_item
 
@@ -449,10 +443,12 @@ class ModelEditor(QWidget):
         result = model_editor_model.evaluate()
 
         if result is None:
-            return self.new_message_box(text="Please add models to fit.",
-                                        info="Models can be added by clicking the"
-                                             " green \"add\" button and selecting a"
-                                             " model from the drop-down menu")
+            QMessageBox.warning(self,
+                                "Please add models to fit.",
+                                "Models can be added by clicking the"
+                                " green \"add\" button and selecting a"
+                                " model from the drop-down menu")
+            return
 
         # Load options
         fitter = FITTERS[self.fitting_options["fitter"]]
@@ -483,16 +479,14 @@ class ModelEditor(QWidget):
         # models in the model editor. Go through and hope that their order is
         # preserved.
 
-        """
-        # Uncomment for when specutils function is working with units
-        if result.n_submodels() > 1:
-            for i, x in enumerate(result):
-                fit_mod.unitless_model._submodels[i].name = x.name
-            sub_mods = [x for x in fit_mod.unitless_model]
-        else:
-            fit_mod.unitless_model.name = result.name
-            sub_mods = [fit_mod.unitless_model]
-        """
+        # TODO: Uncomment for when specutils function is working with units
+        # if result.n_submodels() > 1:
+        #     for i, x in enumerate(result):
+        #         fit_mod.unitless_model._submodels[i].name = x.name
+        #     sub_mods = [x for x in fit_mod.unitless_model]
+        # else:
+        #     fit_mod.unitless_model.name = result.name
+        #     sub_mods = [fit_mod.unitless_model]
 
         if result.n_submodels() > 1:
             sub_mods = [x for x in fit_mod._submodels]
