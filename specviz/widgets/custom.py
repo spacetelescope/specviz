@@ -17,7 +17,7 @@ class LinearRegionItem(pyqtgraph.LinearRegionItem):
         self._selected = False
 
         # Define the selected region color
-        self._default_brush = pg.mkBrush((200, 200, 200, 75))
+        self._default_brush = pyqtgraph.mkBrush((200, 200, 200, 75))
         self._selected_brush = self.brush
         self.setBrush(self._default_brush)
 
