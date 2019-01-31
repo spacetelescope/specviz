@@ -530,6 +530,22 @@ class Workspace(QMainWindow):
         return io_registry.identify_format(
             'read', SpectrumList, file_path, None, [], {})
 
+    def _try_priority_file_loaders(self, file_path):
+        fmts = self._get_matching_formats(file_path)
+        logging.warning("Loaders for '%s' matched for this data set. "
+                        "Iterating based on priority."
+                        "", ', '.join(fmts))
+
+        for fmt in fmts:
+            try:
+                speclist = SpectrumList.read(file_path, format=fmt)
+                return speclist
+            except IORegistryError:
+                logging.warning("Attempted load with '%s' failed, "
+                                "trying next loader.", fmt)
+
+        raise IOError('Could not find appropriate loader for given file')
+
     def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
@@ -561,21 +577,7 @@ class Workspace(QMainWindow):
             # In this case, assume that the registry has found several
             # loaders that fit the same identifier, choose the highest
             # priority one.
-            fmts = self._get_matching_formats(file_path)
-
-            logging.warning("Loaders for '%s' matched for this data set. "
-                            "Iterating based on priority."
-                            "", ', '.join(fmts))
-
-            for fmt in fmts:
-                try:
-                    speclist = SpectrumList.read(file_path, format=fmt)
-                    break
-                except IORegistryError:
-                    logging.warning("Attempted load with '%s' failed, "
-                                    "trying next loader.", fmt)
-            else:
-                raise IOError('Could not find appropriate loader for given file')
+            speclist = self._try_priority_file_loaders(file_path)
 
         name = file_path.split('/')[-1].split('.')[0]
 
