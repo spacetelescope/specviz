@@ -67,10 +67,7 @@ class PlotWindow(QMdiSubWindow):
     @property
     def tool_bar(self):
         """
-
-        Returns
-        -------
-
+        Return the tool bar for the embedded plot widget.
         """
         return self._central_widget.tool_bar
 
@@ -88,10 +85,7 @@ class PlotWindow(QMdiSubWindow):
     @property
     def plot_widget(self):
         """
-
-        Returns
-        -------
-
+        Return the embedded plot widget
         """
         return self._plot_widget
 
@@ -245,10 +239,7 @@ class PlotWidget(pg.PlotWidget):
     @property
     def title(self):
         """
-
-        Returns
-        -------
-
+        The title of the widget
         """
         return self._title
 
@@ -265,20 +256,14 @@ class PlotWidget(pg.PlotWidget):
     @property
     def data_unit(self):
         """
-
-        Returns
-        -------
-
+        The current data unit used for displaying the spectrum.
         """
         return self._data_unit
 
     @property
     def spectral_axis_unit(self):
         """
-
-        Returns
-        -------
-
+        The current spectral axis unit used for displaying the spectrum.
         """
         return self._spectral_axis_unit
 
@@ -321,14 +306,16 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def selected_region(self):
-        """Returns currently selected region object."""
+        """
+        The currently selected region object.
+        """
         return self._selected_region
 
     @property
     def selected_region_bounds(self):
         """
-        Returns the bounds of the currently selected region as a tuple of
-        quantities.
+        The bounds of the currently selected region as a tuple of
+        `~astropy.units.Quantity` objects.
         """
         if self.selected_region is not None:
             return self.selected_region.getRegion() * u.Unit(
@@ -645,21 +632,9 @@ class PlotWidget(pg.PlotWidget):
     # actually read from the line list table(s).
 
     def enterEvent(self, event):
-        """
-
-        Parameters
-        ----------
-        event
-        """
         self.mouse_enterexit.emit(event.type())
 
     def leaveEvent(self, event):
-        """
-
-        Parameters
-        ----------
-        event
-        """
         self.mouse_enterexit.emit(event.type())
 
     def _find_wavelength_range(self):

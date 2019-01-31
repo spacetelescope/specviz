@@ -8,7 +8,7 @@ __all__ = ['DataItemDelegate']
 
 class DataItemDelegate(QStyledItemDelegate):
     """
-
+    A Qt item delegate class for `~specviz.core.items.DataItem`.
     """
     def __init__(self, *args, **kwargs):
         super(DataItemDelegate, self).__init__(*args, **kwargs)
@@ -16,12 +16,8 @@ class DataItemDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         """
-
-        Parameters
-        ----------
-        painter
-        option
-        index
+        This overrides Qt's ``QStyledItemDelegate.paint`` method to customize
+        the appearance of the data item.
         """
         # option.decorationAlignment = Qt.AlignRight
         option.decorationPosition = QStyleOptionViewItem.Left
