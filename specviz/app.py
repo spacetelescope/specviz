@@ -75,8 +75,11 @@ class Application(QApplication):
 
         # If a file path has been given, automatically add data
         if file_path is not None:
-            self.current_workspace.load_data(
-                file_path, file_loader, display=True)
+            try:
+                self.current_workspace.load_data(
+                    file_path, file_loader, display=True)
+            except Exception as e:
+                self.current_workspace.display_load_data_error(e)
 
     def add_workspace(self):
         """

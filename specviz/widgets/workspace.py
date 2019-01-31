@@ -357,6 +357,13 @@ class Workspace(QMainWindow):
 
         return filters, loader_name_map
 
+    def display_load_data_error(self, exp):
+        message_box = QMessageBox()
+        message_box.setText("Error loading data set.")
+        message_box.setIcon(QMessageBox.Critical)
+        message_box.setInformativeText(str(exp))
+        message_box.exec()
+
     def _on_load_data(self):
         """
         When the user loads a data file, this method is triggered. It provides
@@ -376,16 +383,8 @@ class Workspace(QMainWindow):
 
         try:
             self.load_data(file_path, file_loader=loader_name_map[fmt])
-        except:
-            message_box = QMessageBox()
-            message_box.setText("Error loading data set.")
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.setInformativeText(
-                "{}\n{}".format(
-                    sys.exc_info()[0], sys.exc_info()[1])
-            )
-
-            message_box.exec()
+        except Exception as e:
+            self.display_load_data_error(e)
 
     def _on_export_data(self):
         """
