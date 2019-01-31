@@ -51,21 +51,33 @@ columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN, 
 _linelists_cache = []
 
 
-def get_from_file(linelist_path, filename):
+def get_from_file(filename, linelist_path=None):
     """
+    Create a line list based on the definition in a file.
 
     Parameters
     ----------
-    linelist_path
-    filename
+    filename : str
+        The filename of the definition file for the line list. This can either
+        be a YAML file with a definition of the line list, or an ECSV with an
+        actual line list.
+    linelist_path : str, optional
+        If `filename` points to a YAML file, this gives the directory in which
+        the actual line lists are stored
 
     Returns
     -------
-
+    `~specviz.core.linelist.LineList` or `None`
+        The line list - if the file is neither a YAML or ECSV file, `None` is
+        returned.
     """
     if filename.endswith('.yaml'):
+
+        if linelist_path is None:
+            raise ValueError("linelist_path is required")
+
         yaml_object = yaml.load(open(filename, 'r'))
-        linelist_fullname = linelist_path + os.path.sep + yaml_object['filename']
+        linelist_fullname = os.path.join(linelist_path, yaml_object['filename'])
 
         return LineList.read_list(linelist_fullname, yaml_object)
 
@@ -85,13 +97,13 @@ def get_from_file(linelist_path, filename):
 # app, so the lists are cached for speedier access later on.
 def populate_linelists_cache():
     """
-
+    Read in all the available line lists packaged with specviz into a cache.
     """
     # we could benefit from a threaded approach here. But I couldn't
     # see the benefits, since the reading of even the largest line
     # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
-    linelist_path +=  '/../data/linelists/'
+    linelist_path = os.path.join(linelist_path, '..', 'data', 'linelists')
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
@@ -101,13 +113,17 @@ def populate_linelists_cache():
 
 def get_from_cache(index):
     """
+    Get the n-th `~specviz.core.linelist.LineList` from the cache.
 
     Parameters
     ----------
-    index
+    index : int
+        The line list to get from the cache
 
     Returns
     -------
+    `~specviz.core.linelist.LineList` or `None`
+        The requested line list
 
     """
     return _linelists_cache[index]
@@ -115,20 +131,18 @@ def get_from_cache(index):
 
 def ingest(range):
     """
-    Returns a list with LineList instances.
-
-    Each original list is stripped out of lines that lie outside the
-    wavelength range.
+    Returns a list with `~specviz.core.linelist.LineList` instances containing
+    only entries that fall inside the specified wavelength range.
 
     Parameters
     ----------
-    range:
+    range : a tuple of `~astropy.units.Quantity`
         The wavelength range of interest.
 
     Returns
     -------
     [LineList, ...]
-        The list of linelists found.
+        The list of `~specviz.core.linelist.LineList` instances
     """
     result = []
     for linelist in _linelists_cache:
@@ -143,7 +157,8 @@ def ingest(range):
 
 def descriptions():
     """
-    Returns a python list with strings containing a description of each line list.
+    Returns a list with strings containing a description of each line list in
+    the cache.
 
     Returns
     -------
@@ -177,12 +192,10 @@ class LineList(Table):
     ----------
     table: `~astropy.table.Table`
         If specified, a table to initialize from.
-
     name: str
         The name of the list.
-
     masked: bool
-        If true, a masked table is used.
+        If `True`, a masked table is used.
     """
 
     def __init__(self, table=None, tooltips=None, name=None, masked=None):
@@ -217,25 +230,27 @@ class LineList(Table):
     @property
     def table(self):
         """
-
-        Returns
-        -------
-
+        The underlying `~astropy.table.Table` object.
         """
         return self._table
 
     @classmethod
     def read_list(cls, filename, yaml_object):
         """
+        Read in a line list from a file.
 
         Parameters
         ----------
-        filename
-        yaml_object
+        filename : str
+            The file containing the line list to read in.
+        yaml_object : dict
+            A dictionary read in from a YAML file providing a description of
+            how to read in the line list.
 
         Returns
         -------
-
+        `~specviz.core.linelist.LineList`
+            The resulting line list.
         """
         names_list = []
         start_list = []
@@ -261,10 +276,10 @@ class LineList(Table):
                 tooltip = yaml_object['columns'][k][TOOLTIP_COLUMN]
             tooltips_list.append(tooltip)
 
-        tab = ascii.read(filename, format = yaml_object['format'],
-                         names = names_list,
-                         col_starts = start_list,
-                         col_ends = end_list)
+        tab = ascii.read(filename, format=yaml_object['format'],
+                         names=names_list,
+                         col_starts=start_list,
+                         col_ends=end_list)
 
         for k, colname in enumerate(tab.columns):
             tab[colname].unit = units_list[k]
@@ -284,8 +299,8 @@ class LineList(Table):
     @classmethod
     def merge(cls, lists, target_units):
         """
-        Executes a 'vstack' of all input lists, and
-        then sorts the result by the wavelength column.
+        Executes a 'vstack' of all input lists, and then sorts the result by the
+        wavelength column.
 
         Parameters
         ----------
@@ -317,7 +332,7 @@ class LineList(Table):
             internal_table[HEIGHT_COLUMN] = height_array
 
             # add column to hold redshifted wavelength
-            f =  1. + linelist.redshift
+            f = 1. + linelist.redshift
             if linelist.z_units == 'km/s':
                 f = 1. + linelist.redshift / constants.c.value * 1000.
             z_wavelength = internal_table[WAVELENGTH_COLUMN] * f
@@ -337,9 +352,9 @@ class LineList(Table):
 
     def extract_range(self, wrange):
         """
-        Builds a LineList instance out of self, with
-        the subset of lines that fall within the
-        wavelength range defined by 'wmin' and 'wmax'.
+        Return a new `~specviz.core.linelist.LineList` containing the subset of
+        lines that fall within the wavelength range defined by 'wmin' and
+        'wmax'.
 
         REMOVED FOR NOW: The actual range is somewhat
         wider, to allow for radial velocity and redshift
@@ -349,13 +364,12 @@ class LineList(Table):
 
         Parameters
         ----------
-        wrange: (Quantity, Quantity)
-            minimum and maximum wavelength of the data
-            (spectrum) wavelength range
+        wrange: (`~astropy.units.Quantity`, `~astropy.units.Quantity`)
+            Minimum and maximum wavelength to use to extract the lines.
 
         Returns
         -------
-        LineList
+        `~specviz.core.linelist.LineList`
             line list with subset of lines
         """
         wavelengths = self[WAVELENGTH_COLUMN].quantity
@@ -399,8 +413,8 @@ class LineList(Table):
 
     def extract_rows(self, indices):
         """
-        Builds a LineList instance out of self, with
-        the subset of lines pointed by 'indices'
+        Return a new `~specviz.core.linelist.LineList` containing the subset of
+        lines determined by the specified indices.
 
         Parameters
         ----------
@@ -409,7 +423,7 @@ class LineList(Table):
 
         Returns
         -------
-        LineList
+        `~specviz.core.linelist.LineList`
             line list with subset of lines
         """
         row_indices = []
@@ -428,8 +442,7 @@ class LineList(Table):
 
     def _remove_lines(self, indices_to_remove):
         """
-        Makes a copy of self and removes
-        unwanted lines from the copy.
+        Returns a copy of the line list without the specified indices.
 
         Parameters
         ----------
@@ -438,8 +451,8 @@ class LineList(Table):
 
         Returns
         -------
-        LineList:
-            A new copy of the `LineList` with the rows removed.
+        `~specviz.core.linelist.LineList`
+            A new copy of the `~specviz.core.linelist.LineList` with the rows removed.
         """
         table = Table(self)
 

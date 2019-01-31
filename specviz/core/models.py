@@ -59,14 +59,17 @@ class DataListModel(QStandardItemModel):
 
     def item_from_id(self, identifier):
         """
+        Return a the data item corresponding to a unique identifier.
 
         Parameters
         ----------
-        identifier
+        identifier : :class:`~uuid.UUID`
+            Assigned id of the :class:`~specviz.core.items.DataItem` object.
 
         Returns
         -------
-
+        `~specviz.core.items.DataItem`
+            The corresponding data item.
         """
         return next((x for x in self.items if x.identifier == identifier))
 
@@ -91,16 +94,8 @@ class DataListModel(QStandardItemModel):
 
     def setData(self, index, value, role=Qt.EditRole):
         """
-
-        Parameters
-        ----------
-        index
-        value
-        role
-
-        Returns
-        -------
-
+        This overrides Qt's setData and automatically updates the name of the
+        item if we are in editing mode.
         """
         if not index.isValid():
             return False
@@ -115,6 +110,7 @@ class DataListModel(QStandardItemModel):
 
     def clear(self):
         """
+        Remove all data items.
 
         """
         self.beginResetModel()

@@ -211,7 +211,7 @@ class LineListsWindow(ClosableMainWindow):
             # Not an issue for self-contained ecsv files.
             if file_name is not None and len(file_name) > 0:
                 name = file_name[0]
-                line_list = linelist.get_from_file(os.path.dirname(name), name)
+                line_list = linelist.get_from_file(name, linelist_path=os.path.dirname(name))
 
                 if line_list:
                     self._get_waverange_from_dialog(line_list)
