@@ -392,31 +392,3 @@ class PlotDataItem(pg.PlotDataItem):
                 y = np.array([0])
 
         return x, y
-
-
-class ModelItem(QStandardItem):
-    """
-
-    """
-    DataRole = Qt.UserRole + 2
-
-    def __init__(self, model, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setData(model.__class__.name, Qt.DisplayRole)
-        self.setData(model, self.DataRole)
-
-
-class ParameterItem(QStandardItem):
-    """
-
-    """
-    DataRole = Qt.UserRole + 2
-    UnitRole = Qt.UserRole + 3
-
-    def __init__(self, parameter, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setData(parameter.name, Qt.DisplayRole)
-        self.setData(parameter.value, self.DataRole)
-        self.setData(parameter.unit, self.UnitRole)
