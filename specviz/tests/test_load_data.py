@@ -95,7 +95,7 @@ def test_load_jwst_data(url):
         try:
             spec_app = Application([], skip_splash=True)
             # Use loader auto-detection here
-            data = spec_app.current_workspace.load_data(url)
+            data = spec_app.current_workspace.load_data_from_file(url, multi_select=False)
             # Basic sanity check to make sure there are data items
             assert len(data) > 0
         finally:
@@ -116,7 +116,9 @@ def test_valid_loader(tmpdir):
 
     def use_valid_loader(fname):
         spec_app = Application([], skip_splash=True)
-        spec_app.current_workspace.load_data(fname, file_loader='HST/COS')
+        spec_app.current_workspace.load_data_from_file(fname,
+                                                       file_loader='HST/COS',
+                                                       multi_select=False)
 
     run_subprocess_test(use_valid_loader, fname)
 
@@ -137,7 +139,8 @@ def test_invalid_data_file(tmpdir):
     def open_invalid_data(fname):
         spec_app = Application([], skip_splash=True)
         with pytest.raises(IOError) as err:
-            spec_app.current_workspace.load_data(fname)
+            spec_app.current_workspace.load_data_from_file(fname,
+                                                           multi_select=False)
             assert err.msg.startswith('Could not find appropriate loader')
 
     run_subprocess_test(open_invalid_data, fname)
@@ -161,7 +164,9 @@ def test_invalid_loader(url, tmpdir):
         spec_app = Application([], skip_splash=True)
         with pytest.raises(IOError) as err:
             # Using the HST/COS loader is not appropriate for a JWST data file
-            spec_app.current_workspace.load_data(fname, file_loader='HST/COS')
+            spec_app.current_workspace.load_data_from_file(fname,
+                                                           file_loader='HST/COS',
+                                                           multi_select=False)
             assert err.msg.startswith(
                  'Given file can not be processed as specified file format')
             assert 'HST/COS' in err.msg
@@ -182,7 +187,9 @@ def test_nonexistent_loader(tmpdir):
     def use_valid_loader(fname):
         spec_app = Application([], skip_splash=True)
         with pytest.raises(IOError) as err:
-            spec_app.current_workspace.load_data(fname, file_loader='FAKE')
+            spec_app.current_workspace.load_data_from_file(fname,
+                                                           file_loader='FAKE',
+                                                           multi_select=False)
             assert err.msg.startswith(
                  'Given file can not be processed as specified file format')
             assert 'FAKE' in err.msg
