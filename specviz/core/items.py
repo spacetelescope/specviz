@@ -6,6 +6,9 @@ from astropy.units import spectral, spectral_density
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QStandardItem
 
+__all__ = ['DataItem', 'PlotDataItem']
+
+
 flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
                 "#34495e", "#2ecc71"])
 

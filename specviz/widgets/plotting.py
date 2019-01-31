@@ -22,6 +22,8 @@ from ..core.linelist import ingest
 from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
 from .line_labels_plotter import LineLabelsPlotter
 
+__all__ = ['PlotWindow', 'PlotWidget']
+
 
 class PlotWindow(QMdiSubWindow):
     """

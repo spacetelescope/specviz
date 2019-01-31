@@ -6,6 +6,8 @@ from pyqtgraph import functions, TextItem
 from qtpy.QtCore import QPointF
 from qtpy.QtGui import QPolygonF, QPen, QColor
 
+__all__ = ['LineIDMarkerProxy', 'LineIDMarker']
+
 orientations = {
     'horizontal': {'anchor': (0.5, 1), 'angle': 0},
     'vertical': {'anchor': (0, 0.5), 'angle': 90}

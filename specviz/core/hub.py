@@ -5,6 +5,7 @@ from specutils.spectra.spectral_region import SpectralRegion
 
 from .items import DataItem
 
+__all__ = ['Hub']
 
 class Hub:
     """

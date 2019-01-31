@@ -7,6 +7,8 @@ import logging
 
 from .hub import Hub
 
+__all__ = ['DecoratorRegistry', 'Plugin', 'plugin']
+
 
 class DecoratorRegistry:
     """

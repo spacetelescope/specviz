@@ -2,6 +2,8 @@ import pyqtgraph as pg
 from qtpy.QtCore import Qt, Signal, QSize
 from qtpy.QtWidgets import QTabBar, QPushButton
 
+__all__ = ['LinearRegionItem', 'TabBarPlus']
+
 
 class LinearRegionItem(pg.LinearRegionItem):
     """

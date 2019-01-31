@@ -21,6 +21,8 @@ from ..version import version as specviz_version
 
 from . import resources
 
+__all__ = ['Workspace']
+
 
 class Workspace(QMainWindow):
     """

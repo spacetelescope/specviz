@@ -107,7 +107,7 @@ def populate_linelists_cache():
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
     for yaml_filename in yaml_paths:
-        linelist = get_from_file(linelist_path, yaml_filename)
+        linelist = get_from_file(yaml_filename, linelist_path=linelist_path)
         _linelists_cache.append(linelist)
 
 

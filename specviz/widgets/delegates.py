@@ -3,6 +3,8 @@ from qtpy.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem
 from qtpy.QtGui import QPixmap
 import qtawesome as qta
 
+__all__ = ['DataItemDelegate']
+
 
 class DataItemDelegate(QStyledItemDelegate):
     """

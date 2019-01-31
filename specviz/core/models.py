@@ -6,6 +6,8 @@ from qtpy.QtGui import QStandardItemModel
 
 from .items import DataItem, PlotDataItem
 
+__all__ = ['DataListModel', 'PlotProxyModel']
+
 
 class DataListModel(QStandardItemModel):
     """
@@ -19,7 +21,7 @@ class DataListModel(QStandardItemModel):
     @property
     def items(self):
         """
-        Retrieves all the :class:`~specviz.core.items.DataItem`s in this model.
+        Retrieves all the :class:`~specviz.core.items.DataItem` objects in this model.
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 

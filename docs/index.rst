@@ -54,4 +54,12 @@ Using SpecViz
    loader_wizard
    model_fitting
    statistics
+
+Advanced
+--------
+
+.. toctree::
+   :maxdepth: 1
+
    developer
+   api

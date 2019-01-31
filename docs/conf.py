@@ -175,7 +175,7 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #
-# nitpicky = True
+nitpicky = True
 # nitpick_ignore = []
 #
 # Some warnings are impossible to suppress, and you can list specific references
@@ -202,3 +202,4 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 
 # add custom intersphinx
 intersphinx_mapping['specutils'] = ('https://specutils.readthedocs.io/en/latest/', None)
+intersphinx_mapping['pyqtgraph'] = ('http://www.pyqtgraph.org/documentation/', None)

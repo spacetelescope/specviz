@@ -24,6 +24,9 @@ from ..core import linelist
 from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 from ..core.linelist import columns_to_remove
 
+__all__ = ['ClosableMainWindow', 'LineListsWindow', 'LineListPane',
+           'PlottedLinesPane', 'LineListTableModel', 'SortModel']
+
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          '..', 'data', 'qt', 'resources'))
 
