@@ -176,7 +176,30 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #
 nitpicky = True
-# nitpick_ignore = []
+
+nitpick_ignore = [('py:class', 'PyQt5.QtWidgets.QMainWindow'),
+                  ('py:class', 'PyQt5.QtWidgets.QWidget'),
+                  ('py:class', 'PyQt5.QtWidgets.QTextEdit'),
+                  ('py:class', 'PyQt5.QtWidgets.QMdiSubWindow'),
+                  ('py:class', 'PyQt5.QtWidgets.QTabBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QLabel'),
+                  ('py:class', 'PyQt5.QtWidgets.QComboBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QMessageBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QDialog'),
+                  ('py:class', 'PyQt5.QtWidgets.QToolBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QStyledItemDelegate'),
+                  ('py:class', 'PyQt5.QtWidgets.QListView'),
+                  ('py:class', 'PyQt5.QtCore.QMimeData'),
+                  ('py:class', 'PyQt5.QtCore.QAbstractListModel'),
+                  ('py:class', 'PyQt5.QtCore.QAbstractTableModel'),
+                  ('py:class', 'PyQt5.QtCore.QThread'),
+                  ('py:class', 'PyQt5.QtCore.QSortFilterProxyModel'),
+                  ('py:class', 'PyQt5.QtGui.QStandardItemModel'),
+                  ('py:class', 'PyQt5.QtGui.QStandardItem'),
+                  ('py:class', 'qtpy.QtGui.QMouseEvent'),
+                  ('py:class', 'qtpy.QtCore.QModelIndex'),
+                  ('py:class', 'qtpy.QtWigets.QMdiArea')]
+
 #
 # Some warnings are impossible to suppress, and you can list specific references
 # that should be ignored in a nitpick-exceptions file which should be inside
