@@ -1,13 +1,13 @@
-import pyqtgraph as pg
+import pyqtgraph
 from qtpy.QtCore import Qt, Signal, QSize
 from qtpy.QtWidgets import QTabBar, QPushButton
 
 __all__ = ['LinearRegionItem', 'TabBarPlus']
 
 
-class LinearRegionItem(pg.LinearRegionItem):
+class LinearRegionItem(pyqtgraph.LinearRegionItem):
     """
-    Subclass of pyqtgraph's :class:`~pg.LinearRegionItem` to provide extra
+    Subclass of pyqtgraph's :class:`~pyqtgraph.LinearRegionItem` to provide extra
     methods for handling events and dealing with selection color changes.
     """
     selected = Signal(bool)

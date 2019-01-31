@@ -145,7 +145,7 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     @property
     def items(self):
-        """Returns a list of :class:`PlotDataItems` in the proxy model."""
+        """Returns a list of :class:`specviz.core.items.PlotDataItem` instances in the proxy model."""
         return list(self._items.values())
 
     def item_from_index(self, index):

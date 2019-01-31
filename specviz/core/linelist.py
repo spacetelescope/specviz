@@ -62,7 +62,7 @@ def get_from_file(filename, linelist_path=None):
         be a YAML file with a definition of the line list, or an ECSV with an
         actual line list.
     linelist_path : str, optional
-        If `filename` points to a YAML file, this gives the directory in which
+        If ``filename`` points to a YAML file, this gives the directory in which
         the actual line lists are stored
 
     Returns

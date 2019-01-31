@@ -4,7 +4,7 @@ Model Fitting
 =============
 
 SpecViz utilizes
-`Astropy Models` and `SpecUtils Fitting`
+Astropy models and specutils's fitting functionality
 to fit models to its spectra. For example, you can fit one model to the
 continuum, another to an emission line of interest, and yet another to an
 absorption line.
@@ -95,4 +95,3 @@ plus a running numerical suffix.
 These names can be changed by clicking on the default name and entering a new
 name. Note that changing model names will require that any expression in
 the ``Equation Editor`` text box be edited accordingly.
-

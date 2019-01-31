@@ -198,7 +198,12 @@ nitpick_ignore = [('py:class', 'PyQt5.QtWidgets.QMainWindow'),
                   ('py:class', 'PyQt5.QtGui.QStandardItem'),
                   ('py:class', 'qtpy.QtGui.QMouseEvent'),
                   ('py:class', 'qtpy.QtCore.QModelIndex'),
-                  ('py:class', 'qtpy.QtWigets.QMdiArea')]
+                  ('py:class', 'qtpy.QtWigets.QMdiArea'),
+                  ('py:class', 'qtpy.QtWidgets.QListView'),
+                  ('py:class', 'pyqtgraph.widgets.PlotWidget.PlotWidget'),
+                  ('py:class', 'pyqtgraph.graphicsItems.LinearRegionItem.LinearRegionItem'),
+                  ('py:class', 'pyqtgraph.graphicsItems.TextItem.TextItem'),
+                  ('py:class', 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem')]
 
 #
 # Some warnings are impossible to suppress, and you can list specific references

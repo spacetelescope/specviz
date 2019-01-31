@@ -27,7 +27,7 @@ __all__ = ['PlotWindow', 'PlotWidget']
 
 class PlotWindow(QMdiSubWindow):
     """
-    Displayed plotting subwindow available in the `QMdiArea`.
+    Displayed plotting subwindow available in the QMdiArea.
     """
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)

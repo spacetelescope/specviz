@@ -535,8 +535,8 @@ class Workspace(QMainWindow):
 
         Returns
         -------
-        : :class:`~specviz.core.items.DataItem`
-            The `DataItem` instance that has been added to the internal model.
+        :class:`~specviz.core.items.DataItem`
+            The `~specviz.core.items.DataItem` instance that has been added to the internal model.
         """
         # In the case that the user has selected auto load, loop through every
         # available loader and choose the one that 1) the registry identifier
@@ -580,8 +580,9 @@ class Workspace(QMainWindow):
 
     def force_plot(self, data_item):
         """
-        Enabled checkbox and highlight row of the `PlotDataItem` representing
-        the provided data_item instance.
+        Enabled checkbox and highlight row of the
+        `~specviz.core.items.PlotDataItem` representing the provided data_item
+        instance.
 
         Parameters
         ----------
