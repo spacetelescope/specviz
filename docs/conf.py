@@ -206,29 +206,6 @@ nitpick_ignore = [('py:class', 'PyQt5.QtWidgets.QMainWindow'),
                   ('py:class', 'pyqtgraph.graphicsItems.TextItem.TextItem'),
                   ('py:class', 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem')]
 
-#
-# Some warnings are impossible to suppress, and you can list specific references
-# that should be ignored in a nitpick-exceptions file which should be inside
-# the docs/ directory. The format of the file should be:
-#
-# <type> <class>
-#
-# for example:
-#
-# py:class astropy.io.votable.tree.Element
-# py:class astropy.io.votable.tree.SimpleElement
-# py:class astropy.io.votable.tree.SimpleElementWithContent
-#
-# Uncomment the following lines to enable the exceptions:
-#
-# for line in open('nitpick-exceptions'):
-#     if line.strip() == "" or line.startswith("#"):
-#         continue
-#     dtype, target = line.split(None, 1)
-#     target = target.strip()
-#     nitpick_ignore.append((dtype, six.u(target)))
-
-
 # add custom intersphinx
 intersphinx_mapping['specutils'] = ('https://specutils.readthedocs.io/en/latest/', None)
 intersphinx_mapping['pyqtgraph'] = ('http://www.pyqtgraph.org/documentation/', None)

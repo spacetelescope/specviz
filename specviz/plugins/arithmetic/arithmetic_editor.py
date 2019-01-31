@@ -13,13 +13,13 @@ import specutils
 from specutils import Spectrum1D
 import uuid
 
-from ...core.items import DataItem
 from ...core.plugin import plugin
+
 
 @plugin('Arithmetic')
 class Arithmetic(QDialog):
     """
-
+    A plugin that can show a dialog to allow users to define derived variables.
     """
     def __init__(self, *args, **kwargs):
         """Equation editor main dialog. From this view you can add, edit, and remove
@@ -92,7 +92,8 @@ class Arithmetic(QDialog):
 
 class EquationEditor(QDialog):
     """
-
+    A Qt dialog where users can enter expressions to calculate variables
+    derived from other variables.
     """
     tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
                 "by {{ }} brackets (e.g. {{{example}}}), and you <br>"

@@ -22,6 +22,30 @@ specviz.core
 .. automodapi:: specviz.core.plugin
    :no-inheritance-diagram:
 
+specviz.plugins
+---------------
+
+.. automodapi:: specviz.plugins.arithmetic
+   :no-inheritance-diagram:
+
+.. The following raises a warning that needs to be addressed before we can
+.. add it back.
+.. .. automodapi:: specviz.plugins.loader_wizard
+..    :no-inheritance-diagram:
+
+.. automodapi:: specviz.plugins.model_editor
+   :no-inheritance-diagram:
+
+.. automodapi:: specviz.plugins.smoothing
+   :no-inheritance-diagram:
+
+.. automodapi:: specviz.plugins.statistics
+   :no-inheritance-diagram:
+
+.. automodapi:: specviz.plugins.unit_change
+   :no-inheritance-diagram:
+
+
 specviz.utils
 -------------
 
