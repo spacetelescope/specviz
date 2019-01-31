@@ -47,58 +47,28 @@ JWST_DATA_FILES = [
 
 JWST_DATA_PATHS = [urljoin(BOX_PREFIX, name) for name in JWST_DATA_FILES]
 
-
-def load_jwst_data(url):
-    """
-    Loads the set of jwst test data at the give url.
-
-    Parameters
-    ----------
-    url : str
-        URL of the jwst test data.
-    """
-    try:
-        spec_app = Application([], skip_splash=True)
-        data = spec_app.current_workspace.load_data(url)
-        # Basic sanity check to make sure there are data items
-        assert len(data) > 0
-    finally:
-        spec_app.quit()
-
-
-def run_specviz_subprocess(q, url):
-    """
-    Encapsulates the function calls in a single specviz test process.
-
-    Parameters
-    ----------
-    q : :class:`multiprocessing.queues.Queue`
-        The process queue into which this process will be placed.
-    url : str
-        The url of the data.
-    """
-    try:
-        load_jwst_data(url)
-    except Exception:
-        ex_type, ex_value, tb = sys.exc_info()
-        error = ex_type, ex_value, ''.join(traceback.format_tb(tb))
-    else:
-        error = None
-
-    q.put(error)
-
-
-@pytest.mark.skipif(not os.environ.get('JWST_DATA_TEST'),
+jwst_data_test = pytest.mark.skipif(
+                    not os.environ.get('JWST_DATA_TEST'),
                     reason='Since these tests run in a subprocess they do not '
                     'play nicely with the fixture that is used for the rest of '
                     'the test suite.')
-@pytest.mark.parametrize('url', JWST_DATA_PATHS)
-def test_load_jwst_data(url):
+
+
+def run_subprocess_test(callback, *args):
+    def run_specviz_subprocess(q, callback, *args):
+        try:
+            callback(args[0])
+        except Exception:
+            ex_type, ex_value, tb = sys.exc_info()
+            error = ex_type, ex_value, ''.join(traceback.format_tb(tb))
+        else:
+            error = None
+        q.put(error)
 
     q = Queue()
     # Running multiple subsequent Qt applications in the same process seems to
     # cause segfaults, so we run each specviz instance in a separate process
-    p = Process(target=run_specviz_subprocess, args=(q, url))
+    p = Process(target=run_specviz_subprocess, args=(q, callback, *args))
     p.start()
     error = q.get()
     p.join()
@@ -107,3 +77,19 @@ def test_load_jwst_data(url):
         ex_type, ex_value, tb_str = error
         message = '{} (in subprocess)\n{}'.format(ex_value, tb_str)
         raise ex_type(message)
+
+
+@jwst_data_test
+@pytest.mark.parametrize('url', JWST_DATA_PATHS)
+def test_load_jwst_data(url):
+
+    def load_jwst_data(url):
+        try:
+            spec_app = Application([], skip_splash=True)
+            data = spec_app.current_workspace.load_data(url)
+            # Basic sanity check to make sure there are data items
+            assert len(data) > 0
+        finally:
+            spec_app.quit()
+
+    run_subprocess_test(load_jwst_data, url)
