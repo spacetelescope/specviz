@@ -51,7 +51,7 @@ class LinearRegionItem(pyqtgraph.LinearRegionItem):
 
         Returns
         -------
-        : str
+        str
             Name of the region.
 
         """

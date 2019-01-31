@@ -12,7 +12,7 @@ __all__ = ['DecoratorRegistry', 'Plugin', 'plugin']
 
 class DecoratorRegistry:
     """
-
+    Base class for any decorator-based registry.
     """
     def __init__(self, *args, **kwargs):
         self._registry = []
@@ -20,10 +20,7 @@ class DecoratorRegistry:
     @property
     def registry(self):
         """
-
-        Returns
-        -------
-
+        Returns the list of registered decorators
         """
         return self._registry
 
@@ -67,30 +64,29 @@ class DecoratorRegistry:
 
 
 class Plugin(DecoratorRegistry):
-    @property
-    def registry(self):
-        """
-
-        Returns
-        -------
-
-        """
-        return self._registry
 
     def __call__(self, name, priority=0):
+        """
+        Decorator for plugin classes.
+
+        For example, to decorate a specific plugin class as well define a
+        tool bar plugin, you would do::
+
+            @plugin("Custom Dialog")
+            class MyPlyginDialog(QDialog):
+
+                @plugin.tool_bar("Open Custom Dialog", icon=...)
+                def open_dialog(self):
+        """
+
         logging.info("Adding plugin '%s'.", name)
 
         def plugin_decorator(cls):
             """
-
-            Parameters
-            ----------
-            cls
-
-            Returns
-            -------
-
+            This is the actual decorator that gets returned when
+            ``plugin(...)`` is called.
             """
+
             cls.wrapped = True
             cls.type = None
             cls.priority = priority
@@ -98,18 +94,10 @@ class Plugin(DecoratorRegistry):
             @wraps(cls)
             def cls_wrapper(workspace, filt=None, *args, **kwargs):
                 """
-
-                Parameters
-                ----------
-                workspace
-                filt
-                args
-                kwargs
-
-                Returns
-                -------
-
+                Wrapper function that, when called, causes the plugin to be
+                loaded into a specific workspace.
                 """
+
                 if workspace is None:
                     return
 
@@ -134,39 +122,41 @@ class Plugin(DecoratorRegistry):
 
     def mount(self, workspace, filt=None):
         """
+        Load all the plugins in the registry into the specified workspace.
 
         Parameters
         ----------
-        workspace
-        filt
+        workspace : `~specviz.widgets.workspace.Workspace`
+            The workspace to load the plugins in.
+        filt : {`None`, 'tool_bar', 'plot_bar'}, optional
+            The type of plugin to load. If not specified, all plugins are
+            loaded.
         """
         for plugin in sorted(self.registry, key=lambda x: -x.priority):
             plugin(workspace, filt=filt)
 
     def plugin_bar(self, name, icon, priority=0):
         """
+        Generate a decorator for a callback method that can be triggered by a
+        tab on the right of the window.
 
         Parameters
         ----------
-        name
-        icon
-        priority
-
-        Returns
-        -------
-
+        name : str
+            The name of the tab
+        icon : `~PyQt5.QtGui.QIcon`, optional
+            The icon for the tab
+        priority : int, optional
+            The priority to use to load in the plugins - a higher value means
+            the plugin will be loaded sooner.
         """
+
         def plugin_bar_decorator(cls):
             """
-
-            Parameters
-            ----------
-            cls
-
-            Returns
-            -------
-
+            This is the actual decorator that gets returned when
+            ``plugin.plugin_bar(...)`` is called.
             """
+
             cls.wrapped = True
             cls.type = 'plugin_bar'
             cls.priority = priority
@@ -174,16 +164,8 @@ class Plugin(DecoratorRegistry):
             @wraps(cls)
             def cls_wrapper(workspace, *args, **kwargs):
                 """
-
-                Parameters
-                ----------
-                workspace
-                args
-                kwargs
-
-                Returns
-                -------
-
+                Wrapper function that, when called, causes the plugin to be
+                loaded into a specific workspace.
                 """
                 if workspace is None:
                     return
@@ -229,29 +211,29 @@ class Plugin(DecoratorRegistry):
 
     def tool_bar(self, name, icon=None, location=None, priority=0):
         """
+        Generate a decorator for a callback method that can be triggered by a
+        button in the application tool bar.
 
         Parameters
         ----------
-        name
-        icon
-        location
-        priority
-
-        Returns
-        -------
-
+        name : str
+            The name of the tool to add
+        icon : `~PyQt5.QtGui.QIcon`
+            The icon for the tool
+        location : int
+            If specified, can be used to customize the position of the icon in
+            the tool bar.
+        priority : int, optional
+            The priority to use to load in the plugins - a higher value means
+            the plugin will be loaded sooner.
         """
+
         def tool_bar_decorator(func):
             """
-
-            Parameters
-            ----------
-            func
-
-            Returns
-            -------
-
+            This is the actual decorator that gets returned when
+            ``plugin.tool_bar(...)`` is called.
             """
+
             func.wrapped = True
             func.plugin_type = 'tool_bar'
             func.priority = priority
@@ -259,18 +241,10 @@ class Plugin(DecoratorRegistry):
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):
                 """
-
-                Parameters
-                ----------
-                plugin
-                workspace
-                args
-                kwargs
-
-                Returns
-                -------
-
+                Wrapper function that, when called, causes the plugin to be
+                loaded into a specific workspace.
                 """
+
                 if workspace is None:
                     return
 
@@ -299,29 +273,29 @@ class Plugin(DecoratorRegistry):
 
     def plot_bar(self, name, icon=None, location=None, priority=0):
         """
+        Generate a decorator for a callback method that can be triggered by a
+        button in the plot tool bar.
 
         Parameters
         ----------
-        name
-        icon
-        location
-        priority
-
-        Returns
-        -------
-
+        name : str
+            The name of the tool to add
+        icon : `~PyQt5.QtGui.QIcon`
+            The icon for the tool
+        location : int
+            If specified, can be used to customize the position of the icon in
+            the tool bar.
+        priority : int, optional
+            The priority to use to load in the plugins - a higher value means
+            the plugin will be loaded sooner.
         """
+
         def plot_bar_decorator(func):
             """
-
-            Parameters
-            ----------
-            func
-
-            Returns
-            -------
-
+            This is the actual decorator that gets returned when
+            ``plugin.plot_bar(...)`` is called.
             """
+
             func.wrapped = True
             func.plugin_type = 'plot_bar'
             func.priority = priority
@@ -329,18 +303,10 @@ class Plugin(DecoratorRegistry):
             @wraps(func)
             def func_wrapper(plugin, workspace, *args, **kwargs):
                 """
-
-                Parameters
-                ----------
-                plugin
-                workspace
-                args
-                kwargs
-
-                Returns
-                -------
-
+                Wrapper function that, when called, causes the plugin to be
+                loaded into a specific workspace.
                 """
+
                 if workspace is None:
                     return
 
