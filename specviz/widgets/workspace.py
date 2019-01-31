@@ -526,6 +526,10 @@ class Workspace(QMainWindow):
 
         return data_item
 
+    def _get_matching_formats(self, file_path):
+        return io_registry.identify_format(
+            'read', SpectrumList, file_path, None, [], {})
+
     def load_data(self, file_path, file_loader=None, display=False):
         """
         Load spectral data given file path and loader.
@@ -548,12 +552,16 @@ class Workspace(QMainWindow):
         # available loader and choose the one that 1) the registry identifier
         # function allows, and 2) is the highest priority.
         try:
+            if file_loader:
+                if file_loader not in self._get_matching_formats(file_path):
+                    msg = 'Given file can not be processed as specified file format ({})'
+                    raise IOError(msg.format(file_loader))
             speclist = SpectrumList.read(file_path, format=file_loader)
         except IORegistryError as e:
             # In this case, assume that the registry has found several
             # loaders that fit the same identifier, choose the highest
             # priority one.
-            fmts = io_registry.get_formats(Spectrum1D, 'Read')['Format']
+            fmts = self._get_matching_formats(file_path)
 
             logging.warning("Loaders for '%s' matched for this data set. "
                             "Iterating based on priority."
@@ -562,9 +570,12 @@ class Workspace(QMainWindow):
             for fmt in fmts:
                 try:
                     speclist = SpectrumList.read(file_path, format=fmt)
-                except:
+                    break
+                except IORegistryError:
                     logging.warning("Attempted load with '%s' failed, "
                                     "trying next loader.", fmt)
+            else:
+                raise IOError('Could not find appropriate loader for given file')
 
         name = file_path.split('/')[-1].split('.')[0]
 
