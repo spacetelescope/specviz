@@ -12,7 +12,7 @@ flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
 
 class DataItem(QStandardItem):
     """
-
+    A Qt wrapper class around :class:`~specutils.Spectrum1D`.
     """
     NameRole = Qt.UserRole + 1
     IdRole = Qt.UserRole + 2
@@ -31,20 +31,14 @@ class DataItem(QStandardItem):
     @property
     def identifier(self):
         """
-
-        Returns
-        -------
-
+        A unique identifier for the data.
         """
         return self.data(self.IdRole)
 
     @property
     def name(self):
         """
-
-        Returns
-        -------
-
+        A dislay name for the data.
         """
         return self.data(self.NameRole)
 
@@ -55,53 +49,43 @@ class DataItem(QStandardItem):
     @property
     def flux(self):
         """
-
-        Returns
-        -------
-
+        The flux values of the stored :class:`~specutils.Spectrum1D` object.
         """
         return self.data(self.DataRole).flux
 
     @property
     def spectral_axis(self):
         """
-
-        Returns
-        -------
-
+        The spectral axis of the stored :class:`~specutils.Spectrum1D` object.
         """
         return self.data(self.DataRole).spectral_axis
 
     @property
     def uncertainty(self):
         """
-
-        Returns
-        -------
-
+        The flux uncertainty values of the stored :class:`~specutils.Spectrum1D`
+        object.
         """
         return self.data(self.DataRole).uncertainty
 
     def set_data(self, data):
         """
-        Updates the stored :class:`~specutils.Spectrum1D` data values.
+        Update the stored :class:`~specutils.Spectrum1D` data values.
         """
         self.setData(data, self.DataRole)
 
     @property
     def spectrum(self):
         """
-
-        Returns
-        -------
-
+        The stored :class:`~specutils.Spectrum1D` object.
         """
         return self.data(self.DataRole)
 
 
 class PlotDataItem(pg.PlotDataItem):
     """
-
+    A PyQtGraph `~pyqtgraph.PlotDataItem` object that wraps a `DataItem` object
+    (which in turn wraps a :class:`~specutils.Spectrum1D` object).
     """
     data_unit_changed = Signal(str)
     spectral_axis_unit_changed = Signal(str)
@@ -149,20 +133,15 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def data_item(self):
         """
-
-        Returns
-        -------
-
+        The underlying `DataItem` object.
         """
         return self._data_item
 
     @property
     def data_unit(self):
         """
-
-        Returns
-        -------
-
+        The unit to use for displaying the flux values in the underlying
+        :class:`~specutils.Spectrum1D` object.
         """
         return self._data_unit
 
@@ -174,10 +153,8 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def error_bar_item(self):
         """
-
-        Returns
-        -------
-
+        A PyQtGraph `~pyqtgraph.ErrorBarItem` to represent the uncertainties
+        in the underlying :class:`~specutils.Spectrum1D` object.
         """
         spectral_axis = self.spectral_axis
 
@@ -195,29 +172,40 @@ class PlotDataItem(pg.PlotDataItem):
 
     def are_units_compatible(self, spectral_axis_unit, data_unit):
         """
+        Check whether the specified units are compatible with the spectral axis
+        and flux units of the underlying :class:`~specutils.Spectrum1D` object.
 
         Parameters
         ----------
-        spectral_axis_unit
-        data_unit
+        spectral_axis_unit : `~astropy.units.Unit`
+            The spectral axis unit to test
+        data_unit : `~astropy.units.Unit`
+            The data unit to test
 
         Returns
         -------
-
+        bool
+            Returns `True` if the both the spectral axis and data units are
+            compatble with the underlying spectrum units, and `False` otherwise.
         """
         return self.is_data_unit_compatible(data_unit) and \
             self.is_spectral_axis_unit_compatible(spectral_axis_unit)
 
     def is_data_unit_compatible(self, unit):
         """
+        Check whether the specified unit is compatible with the flux units of
+        the underlying :class:`~specutils.Spectrum1D` object.
 
         Parameters
         ----------
-        unit
+        unit : `~astropy.units.Unit`
+            The data unit to test
 
         Returns
         -------
-
+        bool
+            Returns `True` if the specified data unit is compatible, `False`
+            otherwise.
         """
         return (unit is not None and
                 self.data_item.flux.unit.is_equivalent(
@@ -226,14 +214,19 @@ class PlotDataItem(pg.PlotDataItem):
 
     def is_spectral_axis_unit_compatible(self, unit):
         """
+        Check whether the specified unit is compatible with the spectral axis
+        units of the underlying :class:`~specutils.Spectrum1D` object.
 
         Parameters
         ----------
-        unit
+        unit : `~astropy.units.Unit`
+            The spectral axis unit to test
 
         Returns
         -------
-
+        bool
+            Returns `True` if the specified spectral axis unit is compatible,
+            `False` otherwise.
         """
         return (unit is not None and
                 self.data_item.spectral_axis.unit.is_equivalent(
@@ -242,10 +235,8 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def spectral_axis_unit(self):
         """
-
-        Returns
-        -------
-
+        The unit to use for displaying the spectral axis in the underlying
+        :class:`~specutils.Spectrum1D` object.
         """
         return self._spectral_axis_unit
 
@@ -256,7 +247,8 @@ class PlotDataItem(pg.PlotDataItem):
 
     def reset_units(self):
         """
-
+        Reset the display units for the spectral axis and the data to those of
+        the underlying :class:`~specutils.Spectrum1D` object.
         """
         self.data_unit = self.data_item.flux.unit.to_string()
         self.spectral_axis_unit = self.data_item.spectral_axis.unit.to_string()
@@ -264,7 +256,9 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def flux(self):
         """
-        Converts data_item.flux - which consists of the flux axis with units - into the new flux unit
+        Returns the fluxes of the underlying :class:`~specutils.Spectrum1D`
+        object converted to the current data display units (given by
+        `PlotDataItem.data_unit`).
         """
         return self.data_item.flux.to(self.data_unit,
                                       equivalencies=spectral_density(
@@ -273,10 +267,9 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def spectral_axis(self):
         """
-
-        Returns
-        -------
-
+        Returns the spectral axis of the underlying :class:`~specutils.Spectrum1D`
+        object converted to the current specrtal axis display units (given by
+        `PlotDataItem.spectral_axis_unit`).
         """
         return self.data_item.spectral_axis.to(self.spectral_axis_unit or "",
                                                equivalencies=spectral()).value
@@ -284,10 +277,11 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def uncertainty(self):
         """
+        Returns the uncertainties of the underlying
+        :class:`~specutils.Spectrum1D` object converted to the current data
+        display units (given by `PlotDataItem.data_unit`).
 
-        Returns
-        -------
-
+        If no uncertainties are present, `None` is returned.
         """
         if self.data_item.uncertainty is None:
             return
@@ -302,10 +296,7 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def color(self):
         """
-
-        Returns
-        -------
-
+        The display color to use for the spectrum.
         """
         return self._color
 
@@ -318,10 +309,7 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def width(self):
         """
-
-        Returns
-        -------
-
+        The display line width to use for the spectrum.
         """
         return self._width
 
@@ -334,10 +322,10 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def zorder(self):
         """
+        A value indicating the order in which plot items should be drawn.
 
-        Returns
-        -------
-
+        Larger values indicate items that are drawn later on and therefore will
+        appear in front of other plot items.
         """
         return self.zValue()
 
@@ -349,10 +337,7 @@ class PlotDataItem(pg.PlotDataItem):
     @property
     def visible(self):
         """
-
-        Returns
-        -------
-
+        A boolean value indicating whether the spectrum is currently visible.
         """
         return self._visible
 

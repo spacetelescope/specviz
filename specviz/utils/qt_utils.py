@@ -3,15 +3,25 @@ from qtpy.QtWidgets import QMenu, QAction
 
 def dict_to_menu(parent, menu_dict, menu_widget=None):
     """
+    Build a QMenu based on a dictionary.
 
     Parameters
     ----------
-    parent
-    menu_dict
-    menu_widget
+    parent : QWidget
+        The parent widget where the menu will be used
+    menu_dict : dict
+        A dictionary describing the menu. The keys of the dictionary should be
+        the name of the menu items, while the value should be a callable function
+        or a tuple of ('checkable', callable function) if the menu item should
+        be checkable.
+    menu_widget : QMenu, optional
+        An existing QMenu instance if the entries are to be added to an existing
+        menu.
 
     Returns
     -------
+    QMenu
+        The menu to add the entries to.
 
     """
     if not menu_widget:
