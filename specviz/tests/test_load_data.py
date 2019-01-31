@@ -195,3 +195,24 @@ def test_nonexistent_loader(tmpdir):
             assert 'FAKE' in err.msg
 
     run_subprocess_test(use_valid_loader, fname)
+
+
+@jwst_data_test
+def test_load_data_command_line(tmpdir):
+    """
+    Test to simulate the case where a data file is provided on the command line
+    """
+
+    fname = str(tmpdir.join('data.fits'))
+
+    with fits.open(JWST_DATA_PATHS[0]) as hdulist:
+        hdulist.writeto(fname)
+
+    def load_data_command_line(*args):
+        try:
+            spec_app = Application([], file_path=args[0], skip_splash=True,
+                                   load_all=True)
+        finally:
+            spec_app.quit()
+
+    run_subprocess_test(load_data_command_line, fname)

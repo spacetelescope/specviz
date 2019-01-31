@@ -31,7 +31,7 @@ class Application(QApplication):
     workspace_added = Signal(Workspace)
 
     def __init__(self, *args, file_path=None, file_loader=None, embedded=False,
-                 dev=False, skip_splash=False, **kwargs):
+                 dev=False, skip_splash=False, load_all=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
 
         # Set application icon
@@ -72,8 +72,9 @@ class Application(QApplication):
         # If a file path has been given, automatically add data
         if file_path is not None:
             try:
-                self.current_workspace.load_data(
-                    file_path, file_loader, display=True)
+                self.current_workspace.load_data_from_file(
+                                            file_path, file_loader=file_loader,
+                                            multi_select=not load_all)
             except Exception as e:
                 self.current_workspace.display_load_data_error(e)
 
@@ -205,8 +206,10 @@ class SplashDialog(QDialog):
 @click.option('--loader', '-L', type=str, help="Use specified loader when opening the provided file.")
 @click.option('--embed', '-E', is_flag=True, help="Only display a single plot window. Useful when embedding in other applications.")
 @click.option('--dev', '-D', is_flag=True, help="Open SpecViz in developer mode. This mode auto-loads example spectral data.")
+@click.option('--load_all', is_flag=True, help="Automatically load all spectra in file instead of displaying spectrum selection dialog")
 @click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
-def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide_splash=False):
+def start(version=False, file_path=None, loader=None, embed=None, dev=None,
+          hide_splash=False, load_all=None):
     """
     The function called when accessed through the command line. Parses any
     command line arguments and provides them to the application instance, or
@@ -233,7 +236,8 @@ def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide
 
     # Start the application, passing in arguments
     app = Application(sys.argv, file_path=file_path, file_loader=loader,
-                      embedded=embed, dev=dev, skip_splash=hide_splash)
+                      embedded=embed, dev=dev, skip_splash=hide_splash,
+                      load_all=load_all)
 
     # Enable hidpi icons
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
