@@ -31,7 +31,9 @@ if not _ASTROPY_SETUP_:
 
     def load_settings():
         """
-
+        Load any specviz-specific user settings defined in a file called
+        `user_settings.ini` within the user's `~/.specviz` directory. If no
+        settings file exists, create a default one.
         """
         # Get the path relative to the user's home directory
         path = os.path.expanduser("~/.specviz")

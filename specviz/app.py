@@ -95,29 +95,27 @@ class Application(QApplication):
         return workspace
 
     @staticmethod
-    def load_local_plugins(application=None, filt=None):
+    def load_local_plugins():
         """
-
-        Parameters
-        ----------
-        application
-        filt
-
-        Returns
-        -------
-
+        Import and parse any defined plugins in the `specviz.plugins`
+        namespace. These are then added to the plugin registry for future
+        initialization (e.g. when new workspaces are added to the application).
         """
         # Load plugins
         def iter_namespace(ns_pkg):
             """
+            Iterate over a given namespace to provide a list of importable
+            modules.
 
             Parameters
             ----------
-            ns_pkg
+            ns_pkg : module
+                The module whose namespace will be explored plugin definitions.
 
             Returns
             -------
-
+            : list
+                The list of `ModuleInfo`s pertaining to plugin definitions.
             """
             # Specifying the second argument (prefix) to iter_modules makes the
             # returned name an absolute name instead of a relative one. This
@@ -132,7 +130,7 @@ class Application(QApplication):
 
     def remove_workspace(self):
         """
-
+        Explicitly removes a workspace in this SpecViz application instance.
         """
         pass
 
@@ -157,7 +155,14 @@ class Application(QApplication):
 
 class SplashDialog(QDialog):
     """
+    Provides a splash screen when loading SpecViz providing basic information
+    of the current version of relevant packages, and waits a set amount of
+    time to ensure that initialization of the application is complete.
 
+    Parameters
+    ----------
+    wait_time : float
+        The time in milliseconds to wait for application start-up.
     """
     def __init__(self, wait_time, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -184,7 +189,10 @@ class SplashDialog(QDialog):
 
     def calculate_progress(self):
         """
-
+        Calculates a random amount of progress to show in the progress bar.
+        The progress bar currently is not attached to any load operation, so
+        it's a simple visual representation for the time defined in
+        `wait_time`.
         """
         rand = random.randrange(100, 500)
         self._total_time += rand
@@ -204,19 +212,24 @@ class SplashDialog(QDialog):
 @click.option('--version', '-V', is_flag=True, help="Print version information", is_eager=True)
 def start(version=False, file_path=None, loader=None, embed=None, dev=None, hide_splash=False):
     """
+    The function called when accessed through the command line. Parses any
+    command line arguments and provides them to the application instance, or
+    returns the requested information to the user.
 
     Parameters
     ----------
-    version
-    file_path
-    loader
-    embed
-    dev
-    hide_splash
-
-    Returns
-    -------
-
+    version : str
+        Prints the version number of SpecViz.
+    file_path : str
+        Path to a data file to load directly into SpecViz.
+    loader : str
+        Loader definition for specifying how to load the given data.
+    embed : bool
+        Whether or not this application is embed within another.
+    dev : bool
+        Auto-generates sample data for easy developer testing.
+    hide_splash : bool
+        Hides the splash screen on startup.
     """
     if version:
         print(__version__)

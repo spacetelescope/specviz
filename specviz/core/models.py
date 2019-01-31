@@ -127,7 +127,17 @@ class DataListModel(QStandardItemModel):
 
 class PlotProxyModel(QSortFilterProxyModel):
     """
+    A Qt proxy model that wraps the :class:`specviz.core.models.DataListModel`
+    for use in :class:`specviz.plotting.PlotWidget` rendering. Instances of
+    this class will be set as the source model for data views in the GUI, and
+    provides extra information from the internal
+    :class:`specviz.items.PlotDataItem`s used as wrappers for loaded data
+    items.
 
+    Parameters
+    ----------
+    source : :class:`specviz.core.models.DataListModel`
+        The source data model instance the proxied by this model.
     """
     def __init__(self, source=None, *args, **kwargs):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
@@ -142,14 +152,18 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     def item_from_index(self, index):
         """
+        Given a `QModelIndex` object, retrieves the source `DataItem`, and from
+        that, the proxy model's `PlotDataItem`.
 
         Parameters
         ----------
-        index
+        index : :class:`qtpy.QtCore.QModelIndex`
+            The model index of the desired `PlotDataItem`.
 
         Returns
         -------
-
+        item : :class:`specviz.core.items.PlotDataItem`
+            The plot data item corresponding to the given index.
         """
         index = self.mapToSource(index)
         data_item = self.sourceModel().data(index, role=Qt.UserRole)
@@ -166,14 +180,17 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     def item_from_id(self, identifier):
         """
+        Retrieves a `PlotDataItem` from the UUID of a `DataItem`.
 
         Parameters
         ----------
-        identifier
+        identifier : :class:`uui.UUID`
+            The UUID of the `DataItem`.
 
         Returns
         -------
-
+        item : :class:`specviz.core.items.PlotDataItem`
+            The `PlotDataItem` corresponding to the UUID.
         """
         data_item = self.sourceModel().item_from_id(identifier)
 
