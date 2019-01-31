@@ -64,20 +64,20 @@ class DecoratorRegistry:
 
 
 class Plugin(DecoratorRegistry):
+    """
+    Decorator for plugin classes.
+
+    For example, to decorate a specific plugin class as well define a
+    tool bar plugin, you would do::
+
+        @plugin("Custom Dialog")
+        class MyPlyginDialog(QDialog):
+
+            @plugin.tool_bar("Open Custom Dialog", icon=...)
+            def open_dialog(self):
+    """
 
     def __call__(self, name, priority=0):
-        """
-        Decorator for plugin classes.
-
-        For example, to decorate a specific plugin class as well define a
-        tool bar plugin, you would do::
-
-            @plugin("Custom Dialog")
-            class MyPlyginDialog(QDialog):
-
-                @plugin.tool_bar("Open Custom Dialog", icon=...)
-                def open_dialog(self):
-        """
 
         logging.info("Adding plugin '%s'.", name)
 
