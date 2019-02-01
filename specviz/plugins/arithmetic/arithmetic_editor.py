@@ -129,7 +129,7 @@ class EquationEditor(QDialog):
         else:
             self.is_addmode = label is None
 
-            example = self._equation_editor.hub.data_items[0].name
+            example = 'EXAMPLE_DATA'
             self.example_label.setText(self.tip_text.format(example=example))
 
             if label is not None:
