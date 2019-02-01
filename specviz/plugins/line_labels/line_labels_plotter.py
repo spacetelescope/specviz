@@ -90,8 +90,8 @@ class LineLabelsPlotter(object):
             self._go_plot_markers(self._merged_linelist)
 
             # the plotted lines pane needs to be refreshed as well.
-            self._linelist_window.erasePlottedLines()
-            self._linelist_window.displayPlottedLines(self._merged_linelist)
+            self._linelist_window.erase_plotted_lines()
+            self._linelist_window.display_plotted_lines(self._merged_linelist)
 
     def _dismiss_linelists_window(self, **kwargs):
         if self._linelist_window:
@@ -104,7 +104,7 @@ class LineLabelsPlotter(object):
 
         if self._linelist_window:
             self._remove_linelabels_from_plot()
-            self._linelist_window.erasePlottedLines()
+            self._linelist_window.erase_plotted_lines()
 
             self._destroy_zoom_markers_thread()
 
@@ -157,13 +157,13 @@ class LineLabelsPlotter(object):
             if pane.button_pane.redshift_textbox.hasAcceptableInput():
                 redshift = float(pane.button_pane.redshift_textbox.text())
                 z_units = pane.button_pane.combo_box_z_units.currentText()
-                new_list.setRedshift(redshift, z_units)
+                new_list.set_redshift(redshift, z_units)
 
             # color for plotting the specific lines defined in
             # this list, is defined by the itemData property.
             index = pane.button_pane.combo_box_color.currentIndex()
             color = pane.button_pane.combo_box_color.itemData(index, role=Qt.UserRole)
-            new_list.setColor(color)
+            new_list.set_color(color)
 
             # height for plotting the specific lines defined in
             # this list. Defined by the line edit text.
@@ -201,7 +201,7 @@ class LineLabelsPlotter(object):
 
         # Populate the plotted lines pane in the line list window.
         if hasattr(self, '_linelist_window') and self._linelist_window:
-            self._linelist_window.displayPlottedLines(merged_linelist)
+            self._linelist_window.display_plotted_lines(merged_linelist)
 
         # The new line list just created becomes the default for
         # use in subsequent operations.
@@ -467,6 +467,26 @@ class LineLabelsPlotter(object):
 
 
 class ZoomMarkersThread(QThread):
+    """
+    This class sets the pace to which zoom requests can be handled. It uses
+    a mutex-lockable buffer to prevent piling up of too many zoom requests
+    coming from cursor action on screen.
+
+    Parameters
+    ----------
+    caller : :class:`~specviz.plugins.line_labels.line_labels_plotter.LineLabelsPlotter`
+        The plotter instance that runs this thread..
+    npoints : int
+        The number of objects on screen to be zoomed (not used in this implementation).
+
+    Signals
+    -------
+    do_zoom : Signal
+        Signals that a zoom operation can be performed by the event loop.
+    zoom_end : Signal
+        Emitted by the event loop thread to signal that it is ready to
+        receive another zoom request.
+    """
 
     do_zoom = Signal()
     zoom_end = Signal()

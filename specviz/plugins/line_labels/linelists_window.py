@@ -61,7 +61,7 @@ units_formats = {
 
 # Function that creates one single tabbed pane with one single view of a line list.
 
-def _createLineListPane(linelist, table_model, caller):
+def _create_line_list_pane(linelist, table_model, caller):
 
     table_view = QTableView()
 
@@ -72,7 +72,7 @@ def _createLineListPane(linelist, table_model, caller):
     # what would be the approach users will favor. We might add a toggle
     # that users can set/reset depending on their preferences.
     table_view.setSortingEnabled(False)
-    sort_proxy = SortModel(table_model.getName())
+    sort_proxy = SortModel(table_model.get_name())
     sort_proxy.setSourceModel(table_model)
 
     table_view.setModel(sort_proxy)
@@ -121,6 +121,9 @@ class LineListsPlugin(QWidget):
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         panel_layout.setContentsMargins (0,0,0,0)
         self.setLayout(panel_layout)
+
+        # cache the line lists for speedier access
+        linelist.populate_linelists_cache()
 
         self.hub.workspace.mdi_area.subWindowActivated.connect(self._plot_selected)
 
@@ -213,8 +216,8 @@ class LineListsWindow(QWidget):
 
         self.draw_button.clicked.connect(
             lambda:self.line_labels_plotter.plot_linelists(
-            table_views=self._getTableViews(),
-            panes=self._getPanes(),
+            table_views=self._get_table_views(),
+            panes=self._get_panes(),
             units=self.hub.plot_widget.spectral_axis_unit,
             caller=self.line_labels_plotter))
 
@@ -382,18 +385,18 @@ class LineListsWindow(QWidget):
             lineset_tabbed_pane = QTabWidget()
             lineset_tabbed_pane.setTabsClosable(True)
 
-            pane, table_view = _createLineListPane(line_list, table_model, self)
+            pane, table_view = _create_line_list_pane(line_list, table_model, self)
             lineset_tabbed_pane.addTab(pane, "Original")
-            pane.setLineSetsTabbedPane(lineset_tabbed_pane)
+            pane.set_line_sets_tabbed_pane(lineset_tabbed_pane)
 
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
             # internal signals do not use Hub infrastructure.
-            table_view.selectionModel().selectionChanged.connect(self._countSelections)
+            table_view.selectionModel().selectionChanged.connect(self._count_selections)
 
             # now we add this "line set tabbed pane" to the main tabbed
             # pane, with name taken from the list model.
-            self.tab_widget.insertTab(index, lineset_tabbed_pane, table_model.getName())
+            self.tab_widget.insertTab(index, lineset_tabbed_pane, table_model.get_name())
             self.tab_widget.setCurrentIndex(index)
 
             # store for use down stream.
@@ -404,7 +407,7 @@ class LineListsWindow(QWidget):
 
             return line_list
 
-    def _buildViews(self, plot_window):
+    def _build_views(self, plot_window):
         window_linelists = plot_window.linelists
         for linelist, index in zip(window_linelists, range(len(window_linelists))):
             self._build_view(linelist, index)
@@ -415,7 +418,7 @@ class LineListsWindow(QWidget):
             self.tab_widget.addTab(QWidget(), PLOTTED)
             self.tab_widget.tabBar().setTabButton(widget_count - 1, QTabBar.LeftSide, None)
 
-    def _getPanes(self):
+    def _get_panes(self):
         result = []
         for index_1 in range(self.tab_widget.count()):
             widget = self.tab_widget.widget(index_1)
@@ -447,8 +450,8 @@ class LineListsWindow(QWidget):
 
     # computes total of rows selected in all table views in all panes
     # and displays result in GUI.
-    def _countSelections(self):
-        panes = self._getPanes()
+    def _count_selections(self):
+        panes = self._get_panes()
         sizes = [len(pane.table_view.selectionModel().selectedRows()) for pane in panes]
         import functools
         count = functools.reduce(lambda x, y: x + y, sizes)
@@ -505,7 +508,7 @@ class LineListsWindow(QWidget):
 
                 ascii.write(output_table, output=file_name, format='ecsv')
 
-    def displayPlottedLines(self, linelist):
+    def display_plotted_lines(self, linelist):
         self._plotted_lines_pane = PlottedLinesPane(linelist)
 
         for index in range(self.tab_widget.count()):
@@ -519,7 +522,7 @@ class LineListsWindow(QWidget):
         index = self.tab_widget.count()
         self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
-    def erasePlottedLines(self):
+    def erase_plotted_lines(self):
         for index in range(self.tab_widget.count()):
             tab_text = self.tab_widget.tabText(index)
             if tab_text == PLOTTED:
@@ -528,8 +531,8 @@ class LineListsWindow(QWidget):
     # Returns a flat rendering of the panes and table views stored
     # in the two-tiered tabbed window. These flat renderings are
     # required by the drawing code.
-    def _getTableViews(self):
-        panes = self._getPanes()
+    def _get_table_views(self):
+        panes = self._get_panes()
         return [pane.table_view for pane in panes]
 
 
@@ -570,7 +573,7 @@ class LineListPane(QWidget):
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_panel_buttons.ui"), self.button_pane)
 
         # internal signals do not use Hub infrastructure.
-        self.button_pane.create_set_button.clicked.connect(self._createSet)
+        self.button_pane.create_set_button.clicked.connect(self._create_set)
         self.button_pane.deselect_button.clicked.connect(table_view.clearSelection)
 
         # header with line list metadata.
@@ -610,7 +613,7 @@ class LineListPane(QWidget):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def setLineSetsTabbedPane(self, pane):
+    def set_line_sets_tabbed_pane(self, pane):
         self._sets_tabbed_pane = pane
 
         # this must be set only once per tabbed pane, otherwise multiple
@@ -619,7 +622,7 @@ class LineListPane(QWidget):
         # not use Hub infrastructure.
         self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
 
-    def _createSet(self):
+    def _create_set(self):
         # build list with only the selected rows. These must be model
         # rows, not view rows!
         selected_view_rows = self.table_view.selectionModel().selectedRows()
@@ -633,11 +636,11 @@ class LineListPane(QWidget):
             local_list.name = self.linelist.name
 
             table_model = LineListTableModel(local_list)
-            pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+            pane, table_view = _create_line_list_pane(local_list, table_model, self._caller)
 
             pane._sets_tabbed_pane = self._sets_tabbed_pane
             # Internal signals do not use Hub infrastructure.
-            table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
+            table_view.selectionModel().selectionChanged.connect(self._caller._count_selections)
 
             table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
 
@@ -704,7 +707,7 @@ class PlottedLinesPane(QWidget):
             # will favor.
 
             table_view.setSortingEnabled(False)
-            proxy = SortModel(table_model.getName())
+            proxy = SortModel(table_model.get_name())
             proxy.setSourceModel(table_model)
             table_view.setModel(proxy)
             table_view.setSortingEnabled(True)
@@ -836,7 +839,7 @@ class LineListTableModel(QAbstractTableModel):
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
-    def getName(self):
+    def get_name(self):
         return self._linelist.name
 
 
@@ -872,5 +875,5 @@ class SortModel(QSortFilterProxyModel):
             # in QtCore.QModelIndex instances.
             return str(left_data) < str(right_data)
 
-    def getName(self):
+    def get_name(self):
         return self._name

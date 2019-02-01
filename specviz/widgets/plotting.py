@@ -163,7 +163,7 @@ class PlotWidget(pg.PlotWidget):
         self._visible = visible
 
         # Performance enhancements
-        self.setDownsampling(auto=True)
+        # self.setDownsampling(auto=True)
         # self.setClipToView(True)
 
         # Define labels for axes
