@@ -3,13 +3,9 @@
 Model Fitting
 =============
 
-SpecViz utilizes
-Astropy models and specutils's fitting functionality
-to fit models to its spectra. For example, you can fit one model to the
-continuum, another to an emission line of interest, and yet another to an
-absorption line.
-
-Currently, the following models are available:
+SpecViz includes functionality to fit models to spectra.
+It uses astropy’s Models and SpecUtils to do so.
+The following models are available in SpecViz:
 
 ========================= ==========================================================
 SpecViz Model Name        Astropy Model Class
@@ -23,6 +19,7 @@ Polynomial                `~astropy.modeling.polynomial.Polynomial1D`
 ========================= ==========================================================
 
 The models can be fitted with the following fitters:
+They can be fit with the following fitting algorithms in astropy
 
 =================== ============================================
 SpecViz Fitter Name Astropy Fitter Class
@@ -33,13 +30,21 @@ Simplex             `~astropy.modeling.fitting.SimplexLSQFitter`
 
 To use a model:
 
-#. Create a new ``model data item`` by clicking on the ``New Model`` button on the WorkSpace toolbar.
+#. Create a new ``model`` by clicking on the `New Model` button on the WorkSpace toolbar.
 #. Select the layer you wish to operate on from the combination box at the
-   bottom of the fitting window. For example, you can choose the layer containing your emission
+   top of the fitting window. For example, you can choose the layer containing your emission
    or absorption line.
-#. Create and position a region of interest (ROI). Multiple ROIs can be used. SpecViz fits the data under all the ROIs.
+#. Create and position a :ref:`region of interest (ROI) <specviz-regions>`. Multiple ROIs can be used.
+   SpecViz fits the data under all the ROIs.
 #. Select the desired model from the green ``Add Model`` drop-down box to add it to ``Current Models``.
 #. If desired, repeat the above step to add additional models.
+
+.. warning::
+    The selected model will only fit data points under **all**
+    :ref:`regions of interest (ROI) <specviz-regions>`.
+    Data points that are not covered by an ROI will not be fitted.
+    If multiple ROIs overlap over a data point, its only considered once.
+    All data points are fitted if there are no ROIs added to the plot.
 
 To edit model parameters or enter a better first estimate of the model
 parameters:
