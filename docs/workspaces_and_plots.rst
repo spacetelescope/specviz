@@ -24,6 +24,8 @@ Each workspace consists of the following components:
 .. image:: _static/disabled_data_item.png
 
 
+.. _specviz-data-list:
+
 Data List
 ---------
 The data list appears on the left of the workspace. This is where all loaded
@@ -44,11 +46,11 @@ operation on a data item (fitting, removing etc.) you must first select the
 data from the data list before clicking the desired toolbar button.
 
 
-Plugin Panel
-------------
-The plugin panel is where plugin modules such as statistics and model fitting
+Plugin Side Bar
+----------------
+The plugin side bar is where plugin modules such as statistics and model fitting
 appear. You can switch between plugins by using the tabs next to the plugin
-panel.
+side bar.
 
 
 Plots
