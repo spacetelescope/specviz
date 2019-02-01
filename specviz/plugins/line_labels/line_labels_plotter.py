@@ -14,7 +14,13 @@ class LineLabelsPlotter(object):
     """
     Class that encapsulates and handles the gory details of line label
     plotting, and especially, zooming.
+
+    Parameters
+    ----------
+    linelist_window : :class:`~specviz.plugins.line_labels.linelists_window.LineListsWindow`
+        The line list window calling this with data to be plotted.
     """
+
     def __init__(self, linelist_window, *args, **kwargs):
         super(LineLabelsPlotter, self).__init__(*args, **kwargs)
 

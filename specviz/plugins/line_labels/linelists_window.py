@@ -105,6 +105,14 @@ linelists_windows = {}
 
 @plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
 class LineListsPlugin(QWidget):
+    """
+    Top class for the line labels plugin. This is the class that handles
+    the line lists window, where the user manages and interacts with the
+    line lists.
+
+    This class acts as a interface adapter of sorts for the actual class
+    that does the work, :class:`~specutils.LineListsWindow`.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -138,6 +146,22 @@ class LineListsPlugin(QWidget):
                 self.layout().setCurrentIndex(index)
 
 class LineListsWindow(QWidget):
+    """
+    The actual line lists widget.
+
+    Parameters
+    ----------
+    hub : :class:`~specviz.core.Hub`
+        The Hub object for the plugin.
+
+    Signals
+    -------
+    erase_linelabels : Signal
+        Fired when a line list is removed by user action.
+    dismiss_linelists_window : Signal
+        Fired when the entire widget is dismissed. This happens only
+        when the corresponding plot widget is dismissed by user action.
+    """
 
     erase_linelabels = Signal(pg.PlotWidget)
     dismiss_linelists_window = Signal()
@@ -510,8 +534,20 @@ class LineListsWindow(QWidget):
 
 
 class LineListPane(QWidget):
+    """
+    Class that manages a single pane dedicated to a single list.
 
-    # this builds a single pane dedicated to a single list.
+    Parameters
+    ----------
+    table_view : :class:`QTableView`
+        The table view corresponding to the line list.
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list.
+    sort_proxy : :class:`~specviz.plugins.line_labels.linelist_window.SortModel`
+        The table model with sorting capabilities.
+    caller :  :class:`~specviz.plugins.line_labels.linelist_window.LineListsWindow`
+        The caller.
+    """
 
     def __init__(self, table_view, linelist, sort_proxy, caller, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
@@ -616,9 +652,15 @@ class LineListPane(QWidget):
 
 
 class PlottedLinesPane(QWidget):
+    """
+    This holds the list with the currently plotted lines.
 
-    # This holds the list with the currently plotted lines.
-    #
+    Parameters
+    ----------
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list containing only the labels actually plotted.
+
+    """
     # This view is re-built every time a new set of markers
     # is plotted. The list view build here ends up being the
     # main bottleneck in terms of execution time perceived by
@@ -675,6 +717,15 @@ class PlottedLinesPane(QWidget):
 
 
 class LineListTableModel(QAbstractTableModel):
+    """
+    The line list table model.
+
+    Parameters
+    ----------
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list.
+
+    """
 
     def __init__(self, linelist, parent=None, *args):
 
@@ -790,6 +841,15 @@ class LineListTableModel(QAbstractTableModel):
 
 
 class SortModel(QSortFilterProxyModel):
+    """
+    A sorting model for line list columns.
+
+    Parameters
+    ----------
+    name : str
+        The line list name.
+
+    """
 
     def __init__(self, name):
         super(SortModel, self).__init__()

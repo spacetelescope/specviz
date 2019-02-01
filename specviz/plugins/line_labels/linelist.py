@@ -157,10 +157,8 @@ class LineList(Table):
     ----------
     table: `~astropy.table.Table`
         If specified, a table to initialize from.
-
     name: str
         The name of the list.
-
     masked: bool
         If true, a masked table is used.
     """
