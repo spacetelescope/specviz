@@ -206,7 +206,7 @@ class PlotProxyModel(QSortFilterProxyModel):
     def data(self, index, role=Qt.DisplayRole):
         """
         Overrides Qt's `data` method to provide information based on the
-        specified Qt role from either `PlotDataItem`s or `DataItem`s.
+        specified Qt role from either plot data items or data items.
 
         Parameters
         ----------

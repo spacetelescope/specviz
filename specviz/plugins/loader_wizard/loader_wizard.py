@@ -31,22 +31,15 @@ from ...core.plugin import plugin
 from .parse_initial_file import parse_ascii, simplify_arrays
 
 
-def represent_dict_order(self, data):
+def _represent_dict_order(self, data):
     """
-
-    Parameters
-    ----------
-    self
-    data
-
-    Returns
-    -------
-
+    Define yaml-based dictionary representation for serialization. Used to
+    preserve order. Used only for yaml serialization.
     """
     return self.represent_mapping('tag:yaml.org,2002:map', data.items())
 
 
-yaml.add_representer(OrderedDict, represent_dict_order)
+yaml.add_representer(OrderedDict, _represent_dict_order)
 
 # We list here the units that appear in the pre-defined list of units for each
 # component. If a unit is not found, 'Custom' will be selected and a field will
@@ -90,7 +83,7 @@ class OutputPreviewWidget(QWidget):
         text: str
             Text that will be saved to the final loader file
         """
-        
+
         self.text_editor.setPlainText(text)
 
 
@@ -159,7 +152,7 @@ class ComponentHelper(object):
     def unit(self):
         """
         Returns the text for the defined `ComponentHelper` unit.
-        """     
+        """
         combo_text = self.combo_units.currentText()
         if combo_text == 'Custom':
             return self.custom_units.text()
@@ -169,7 +162,7 @@ class ComponentHelper(object):
     @property
     def data(self):
         """
-        Returns the `CompnentHelper` dataset. If no dataset is defined, 
+        Returns the `CompnentHelper` dataset. If no dataset is defined,
         `None` is returned.
         """
         if self.dataset is None or self.component is None:
@@ -180,7 +173,7 @@ class ComponentHelper(object):
     @property
     def hdu_index(self):
         """
-        Returns the `ComponentHelper.dataset` hdu index. If no dataset or 
+        Returns the `ComponentHelper.dataset` hdu index. If no dataset or
         hdu is defined `None` is returned.
         """
         if self.dataset is None or self.component is None:
@@ -190,15 +183,15 @@ class ComponentHelper(object):
 
     def dataset_update(self, new_dataset, is_enabled=True):
         """
-        Update the `ComponentHelper.dataset` attribute and 
-        additional component settings if a new dataset is 
+        Update the `ComponentHelper.dataset` attribute and
+        additional component settings if a new dataset is
         provided.
-  
+
         Parameters
         ----------
         new_dataset: dict
             Dictionary containing the data, data dimension, data shape, unit and index
-        
+
         is_enabled: bool
             Boolean to set enabled for combo_component
         """
@@ -577,11 +570,11 @@ class BaseImportWizard(QDialog):
     def save_loader_check(self):
         """
         Check wizard for valid units and loader name before saving loader to file.
-        
+
         Returns
         -------
         bool:
-            `True` if units are valid and loader name has been provided, 
+            `True` if units are valid and loader name has been provided,
             otherwise `False`
         """
         if (self.helper_disp.combo_units.currentText() == "Custom" and self.helper_disp.label_status.text() != 'Valid units') or \
