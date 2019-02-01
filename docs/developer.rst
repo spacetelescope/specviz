@@ -59,7 +59,7 @@ contain all the interactive elements a user will see, including the main tool
 bar, the data items list, plugins, and any number of |PlotWindow| instances.
 The display of the data items is handled by the |PlotProxyModel|, and this
 |PlotProxyModel| is particular to a single |PlotWindow|. It itself shows all
- data items that exist in the |DataListModel|. Opening multiple
+data items that exist in the |DataListModel|. Opening multiple
 |PlotWindow| objects will result in as many |PlotProxyModel| objects. This is helpful for
 performance reasons because data in the |Workspace| instance is never
 duplicated; these is a single control of data items, and the |PlotProxyModel|
