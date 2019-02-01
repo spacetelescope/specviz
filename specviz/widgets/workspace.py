@@ -390,6 +390,15 @@ class Workspace(QMainWindow):
     def export_data_item(self, data_item, filename, fmt):
         """
         Exports the currently selected data item to an ECSV file.
+
+        Parameters
+        ----------
+        data_item : `~specviz.core.items.PlotDataItem`
+            Data item containing the spectrum to be exported to disk
+        filename : `str`
+            Path of the file to be created on export
+        fmt : `str`
+            Format to be used by IO registry for writing `~specutils.Spectrum1D`
         """
         # TODO: the current release of specutils doesn't support exporting
         # very well (it's untested, and probably does not match the attributes
