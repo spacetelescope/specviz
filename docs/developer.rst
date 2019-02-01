@@ -20,6 +20,18 @@ from some of the core aspects of the SpecViz architecture.
 Data Model
 ----------
 
+All spectral data are stored internally as :class:`specutils.Spectrum1D`, but
+these are exposed in SpecViz through |DataItem| objects. These objects are
+Qt-aware and can interact with the GUI in ways that a simple :class:`specutils.Spectrum1D`
+container cannot. However, individual |DataItem| objects are immutable in
+most cases, and only a single list of |DataItem| objects are ever maintained
+in the SpecViz application instance. Instead, |PlotDataItem| objects are used
+which internally reference a single |DataItem|. Multiple |PlotDataItem| objects
+can reference the same |DataItem|, this reduces duplication of data on the user's
+disk. Likewise, |PlotDataItem| objects have many mutable aspects that can be
+defined on a per-object basis and do not affect the state of the underlying
+|DataItem|.
+
 The central piece of SpecViz is the internal Qt data model expressed in the
 |DataListModel| class. It is responsible for maintaining the collection of
 :class:`~specutils.Spectrum1D` objects and exposing them as Qt |DataItem| objects.
@@ -37,8 +49,10 @@ While SpecViz contains Qt view widgets that expose |DataListModel| objects (e.g.
 they contain mutable attributes that determine how the |DataItem| they contain
 will be expressed in SpecViz. This ranges from whether or not the item is
 hidden, what its current plot color is, what its currently user-defined name
-is, etc. They are also workspace-specific, and not application-specific like
+is, etc. They are also workspace-specific, and not plot window-specific like
 the |PlotProxyModel| and |PlotDataItem| objects.
+
+.. image:: data_model_diagram.png
 
 Application and Workspaces
 --------------------------
@@ -49,8 +63,7 @@ instances are generated and maintained. It contains methods for adding,
 removing, and retrieving workspaces to the application instance. This class is
 also responsible for parsing and loading any plugins that exist in the
 `plugins` directory as well as adding them to the plugin registry maintained
-by an instance of the :class:`~specviz.core.plugin.Plugin` class (more on this
-in the <Plugins> section).
+by an instance of the :class:`~specviz.core.plugin.Plugin` class.
 
 Within a single SpecViz application, multiple, independent |Workspace| objects can be
 created. Each workspace its own internal |DataListModel| and therefore
