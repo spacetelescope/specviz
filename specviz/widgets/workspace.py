@@ -401,10 +401,12 @@ class Workspace(QMainWindow):
             data = {
                 'spectral_axis': spectrum.spectral_axis,
                 'flux': spectrum.flux,
-                'uncertainty': spectrum.uncertainty.array * spectrum.uncertainty.unit,
                 'mask': spectrum.mask if spectrum.mask is not None
                         else u.Quantity(np.ones(spectrum.spectral_axis.shape))
             }
+
+            if spectrum.uncertainty is not None:
+                data['uncertainty'] = spetrum.uncertainty.array * spectrum.uncertainty.unit
 
             meta = {}
 
