@@ -92,7 +92,7 @@ view widget.
 
 |Workspace| objects also contain the methods for providing the Qt dialogs for loading
 data (:func:`~specviz.widgets.workspace.Workspace.load_data`) using the
-` objectspecutils` IO infrastructure, as well as exporting data
+`specutils` IO infrastructure, as well as exporting data
 (:func:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
 data items (:func:`~specviz.widgets.workspace.Workspace._on_delete_data`).
 
@@ -150,7 +150,7 @@ displayed in the data list view to the |PlotWindow| object's |PlotProxyModel|. T
 |PlotProxyModel| itself is given the source |DataListModel| model and maintains
 a dictionary mapping the UUID of each |DataItem| to the
 |PlotProxyModel|-specific |PlotDataItem|. By overriding the `data` and
-` objectsetData` methods of the parent `QSortFilterProxyModel`, the |PlotProxyModel|
+`setData` methods of the parent `QSortFilterProxyModel`, the |PlotProxyModel|
 is able to access information from both the |PlotDataItem| (e.g. color
 information, visibility information, etc) as well as from the |DataItem| (e.g.
 its name) for use in displaying the information in data view widgets.
@@ -183,7 +183,7 @@ objects may listen to
 Centralized Hub and Plugins
 ---------------------------
 
-The :class:` objectspecviz.core.hub.Hub` class acts as a centralized API source
+The :class:`specviz.core.hub.Hub` class acts as a centralized API source
 for external functionality (e.g. plugins) to easily interact with the core
 SpecViz infrastructure. It is mostly an abstraction over various, perhaps
 obscured portions of the internal data model and plotting representations.
