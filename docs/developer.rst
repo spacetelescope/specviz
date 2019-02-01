@@ -196,7 +196,7 @@ objects may listen to
 Centralized Hub and Plugins
 ---------------------------
 
-The :class:`specviz.core.hub.Hub` class acts as a centralized API source
+The |Hub| class acts as a centralized API source
 for external functionality (e.g. plugins) to easily interact with the core
 SpecViz infrastructure. It is mostly an abstraction over various, perhaps
 obscured portions of the internal data model and plotting representations.
