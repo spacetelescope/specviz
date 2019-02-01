@@ -18,7 +18,7 @@ user can have as many workspaces are they wish.
 Each workspace consists of the following components:
     * `Data list`_
     * `Workspace toolbar`_
-    * `Plugin panel`_
+    * `plugin side bar`_
     * `Plots`_
 
 .. image:: _static/disabled_data_item.png

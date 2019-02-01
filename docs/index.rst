@@ -53,6 +53,7 @@ Using SpecViz
    workspaces_and_plots
    regions
    unit_conversion
+   operations
    arithmetic-layer
    model_fitting
    statistics
