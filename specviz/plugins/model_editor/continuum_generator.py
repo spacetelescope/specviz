@@ -13,17 +13,12 @@ class ContinuumGenerator:
     """
     Auto-generates a continuum using the specutils
     :func:`~specutils.fitting.fit_generic_continuum` function.
-
-    Notes
-    -----
-    Plotted ROIs are considered *excluded* regions, as opposed to the
-    formalism in the rest of SpecViz where areas within regions are
-    *included* in calculations.
     """
     @plugin.tool_bar("Generate continuum model", location="Operations")
     def on_action_triggered(self):
         """
-
+        The action triggered via interaction with the UI. Generates the
+        continuum for the selected regions on the spectrum.
         """
         # Get the currently selected data item
         spec = self.hub.data_item.spectrum

@@ -205,15 +205,20 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     def data(self, index, role=Qt.DisplayRole):
         """
+        Overrides Qt's `data` method to provide information based on the
+        specified Qt role from either `PlotDataItem`s or `DataItem`s.
 
         Parameters
         ----------
-        index
-        role
+        index : :class:`qtpy.QtCore.QModelIndex`
+            The `DataListModel` model index for this item.
+        role : Qt role
+            The default role for the data retrieval of this item.
 
         Returns
         -------
-
+        various
+            The data requested for the particular role.
         """
         if not index.isValid():
             return
@@ -235,16 +240,21 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     def setData(self, index, value, role=Qt.EditRole):
         """
+        Overrides the Qt `setData` method to define a value for a given role.
 
         Parameters
         ----------
-        index
-        value
-        role
+        index : :class:`qtpy.QtCore.QModelIndex`
+            The `DataListModel` model index for this item.
+        value : various
+            The value to set the data item for the particular role to.
+        role : Qt role
+            The default role for the data that will have its value set.
 
         Returns
         -------
-
+        bool
+            Whether the role was successfully set.
         """
         if not index.isValid():
             return

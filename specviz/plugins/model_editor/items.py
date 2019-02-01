@@ -5,7 +5,7 @@ from ...core.items import DataItem
 
 class ModelDataItem(DataItem):
     """
-
+    Data item containing information about the generated spectrum
     """
     def __init__(self, model, *args, **kwargs):
         self._model_editor_model = model
