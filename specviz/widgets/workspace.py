@@ -387,7 +387,7 @@ class Workspace(QMainWindow):
 
             message_box.exec()
 
-    def _on_export_data(self):
+    def export_data_item(self, data_item, filename, fmt):
         """
         Exports the currently selected data item to an ECSV file.
         """
@@ -423,20 +423,25 @@ class Workspace(QMainWindow):
         # all_formats = all_formats[np.array(write_mask)]
         # all_filters = ";;".join(list(all_formats))
 
-        all_filters = ";;".join(['*.ecsv'])
-
-        plot_data_item = self.current_item
-
         try:
             io_registry.register_writer('*.ecsv', Spectrum1D, generic_export)
         except io_registry.IORegistryError:
             pass
 
+        data_item.data_item.spectrum.write(filename, format=fmt)
+
+
+    def _on_export_data(self):
+        """
+        Handler function that is called when the Export Data button is pressed
+        """
+        all_filters = ";;".join(['*.ecsv'])
         path, fmt = compat.getsavefilename(filters=all_filters)
 
         if path and fmt:
             try:
-                plot_data_item.data_item.spectrum.write(path, format=fmt)
+                plot_data_item = self.current_item
+                self.export_data_item(plot_data_item, path, fmt)
 
                 message_box = QMessageBox()
                 message_box.setText("Data exported successfully.")
@@ -458,6 +463,7 @@ class Workspace(QMainWindow):
                 )
 
                 message_box.exec()
+
 
     def _add_and_plot_data(self, spectrum, name):
         data_item = self.model.add_data(spectrum, name=name)
