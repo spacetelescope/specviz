@@ -20,7 +20,7 @@ UNIT_FIXES = {
 def parse_unit(unit):
     """
     Parse unit input into an :class:`Astropy.units.Unit` object.
-    
+
 
     Parameters
     ----------

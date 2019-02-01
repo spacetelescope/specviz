@@ -32,17 +32,17 @@ class Workspace(QMainWindow):
 
     Attributes
     ----------
-    window_activated : :class:`~qtpy.QtCore.Signal`
-        Fired when a particular `QMainWindow` is activated.
-    window_closed : :class:`~qtpy.QtCore.Signal`
+    window_activated : ``qtpy.QtCore.Signal``
+        Fired when a particular ``QMainWindow`` is activated.
+    window_closed : ``qtpy.QtCore.Signal``
         Fired when a sub window is closed.
-    current_item_changed : :class:`~qtpy.QtCore.Signal`
+    current_item_changed : ``qtpy.QtCore.Signal``
         Fired when the an item in the view has changed.
-    current_selected_changed: :class:`~qtpy.QtCore.Signal`
+    current_selected_changed: ``qtpy.QtCore.Signal``
         Fired when the currently selected item in the view has changed.
-    plot_window_added : :class:`~qtpy.QtCore.Signal`
+    plot_window_added : ``qtpy.QtCore.Signal``
         Fired when a new plot window is added to the workspace.
-    plot_window_activated : :class:`~qtpy.QtCore.Signal`
+    plot_window_activated : ``qtpy.QtCore.Signal``
         Fired when a plto window in the workspace has become active.
     """
     window_activated = Signal(QMainWindow)
@@ -387,6 +387,14 @@ class Workspace(QMainWindow):
         return filters, loader_name_map
 
     def display_load_data_error(self, exp):
+        """
+        Display error message box when attempting to load a data set.
+
+        Parameters
+        ----------
+        exp : str
+            Error text.
+        """
         message_box = QMessageBox()
         message_box.setText("Error loading data set.")
         message_box.setIcon(QMessageBox.Critical)

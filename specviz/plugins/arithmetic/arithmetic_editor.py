@@ -22,8 +22,10 @@ class Arithmetic(QDialog):
     A plugin that can show a dialog to allow users to define derived variables.
     """
     def __init__(self, *args, **kwargs):
-        """Equation editor main dialog. From this view you can add, edit, and remove
-        arithmetic attributes."""
+        """
+        Equation editor main dialog. From this view you can add, edit, and remove
+        arithmetic attributes.
+        """
         super().__init__(parent=None)
         loadUi(os.path.abspath(
             os.path.join(os.path.dirname(__file__),

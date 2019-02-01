@@ -1,6 +1,6 @@
 .. |DataListModel| replace:: :class:`~specviz.core.models.DataListModel`
 .. |DataItem| replace:: :class:`~specviz.core.items.DataItem`
-.. |PlotDataItem| replace:: :class:`~specviz.core.models.PlotDataItem`
+.. |PlotDataItem| replace:: :class:`~specviz.core.items.PlotDataItem`
 .. |PlotProxyModel| replace:: :class:`~specviz.core.models.PlotProxyModel`
 .. |Workspace| replace:: :class:`~specviz.widgets.workspace.Workspace`
 .. |PlotWindow| replace:: :class:`~specviz.widgets.plotting.PlotWindow`
@@ -43,7 +43,7 @@ to change which :class:`~specutils.Spectrum1D` the |DataItem| contains, but
 otherwise exposes no other means to change the spectrum in-place.
 
 While SpecViz contains Qt view widgets that expose |DataListModel| objects (e.g.
-`QListView`), this is generally not done directly. Instead, a proxy model
+``QListView``), this is generally not done directly. Instead, a proxy model
 (|PlotProxyModel|) is used to wrap and expose the |DataItem| items as
 |PlotDataItem| objects. These are fundamentally different from the |DataItem| objects in that
 they contain mutable attributes that determine how the |DataItem| they contain
@@ -62,7 +62,7 @@ run to begin interacting with SpecViz. It is within this class that |Workspace|
 instances are generated and maintained. It contains methods for adding,
 removing, and retrieving workspaces to the application instance. This class is
 also responsible for parsing and loading any plugins that exist in the
-`plugins` directory as well as adding them to the plugin registry maintained
+``plugins`` directory as well as adding them to the plugin registry maintained
 by an instance of the :class:`~specviz.core.plugin.Plugin` class.
 
 Within a single SpecViz application, multiple, independent |Workspace| objects can be
@@ -79,7 +79,7 @@ duplicated; these is a single control of data items, and the |PlotProxyModel|
 simply handles the display of the data items as |PlotDataItem| objects.
 
 As mentioned, each |Workspace| can contain multiple |PlotWindow| objects, and the set
-of these |PlotWindow| objects is handled by the |Workspace| objects' `QMdiArea` widget. The
+of these |PlotWindow| objects is handled by the |Workspace| objects' ``QMdiArea`` widget. The
 |Workspace| is also responsible for adding
 (:func:`~specviz.widgets.workspace.Workspace.add_plot_window`), removing
 (:func:`~specviz.widgets.workspace.Workspace.remove_current_window`), and
@@ -105,15 +105,15 @@ view widget.
 
 |Workspace| objects also contain the methods for providing the Qt dialogs for loading
 data (:func:`~specviz.widgets.workspace.Workspace.load_data`) using the
-`specutils` IO infrastructure, as well as exporting data
+``specutils`` IO infrastructure, as well as exporting data
 (:func:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
 data items (:func:`~specviz.widgets.workspace.Workspace._on_delete_data`).
 
 Plot Windows and Plot Widget
 ----------------------------
 
-|PlotWindow| objects are implemented as subclasses of `QMdiSubWindow` Qt objects. On
-creation, these sub window objects are added to the |Workspace| object's `QMdiArea`
+|PlotWindow| objects are implemented as subclasses of ``QMdiSubWindow`` Qt objects. On
+creation, these sub window objects are added to the |Workspace| object's ``QMdiArea``
 and exposed as tabs in the plot window area. Each |PlotWindow| contains the
 set of tools used to interact with the plot directly. This mostly includes
 things like changing line colors (which will be reflected in colored icon next
@@ -128,7 +128,7 @@ plot tool bar and the |PlotWidget|, and generally only contains functionality
 that doesn't directly involve manipulating the |PlotWidget| directly.
 
 The |PlotWidget| is the plotted representation of all the |PlotDataItem| objects in
-its internal |PlotProxyModel|. The widget itself is a subclass of `PyQtGraph` object's
+its internal |PlotProxyModel|. The widget itself is a subclass of ``PyQtGraph`` object's
 |PlotWidget| object. Anything that affects the visual representation of the
 loaded data is done in this class. For instance, operations like changing the
 displayed units of the plot are handled here, in which case, the |PlotWidget|
@@ -162,19 +162,19 @@ activated, the parent |Workspace| receives a signal and sets the model
 displayed in the data list view to the |PlotWindow| object's |PlotProxyModel|. The
 |PlotProxyModel| itself is given the source |DataListModel| model and maintains
 a dictionary mapping the UUID of each |DataItem| to the
-|PlotProxyModel|-specific |PlotDataItem|. By overriding the `data` and
-`setData` methods of the parent `QSortFilterProxyModel`, the |PlotProxyModel|
+|PlotProxyModel|-specific |PlotDataItem|. By overriding the ``data`` and
+``setData`` methods of the parent ``QSortFilterProxyModel``, the |PlotProxyModel|
 is able to access information from both the |PlotDataItem| (e.g. color
 information, visibility information, etc) as well as from the |DataItem| (e.g.
 its name) for use in displaying the information in data view widgets.
 
-|PlotDataItem| objects themselves are subclasses of `PyQtGraph` object's |PlotDataItem| class
-which handles the display of data as Qt `GraphicsItem` objects. The |PlotDataItem|
+|PlotDataItem| objects themselves are subclasses of ``PyQtGraph`` object's |PlotDataItem| class
+which handles the display of data as Qt ``GraphicsItem`` objects. The |PlotDataItem|
 class contains extra information about the *current* unit definitions and
 characteristics like color, line width, and visibility of the plot data. As an
 example, when a user changes the units displayed for a plot, all plotted
 |PlotDataItem| objects have their units converted to the displayed values.
-`PlotDataItems` objects are also responsible for maintaining the
+|PlotDataItem| objects are also responsible for maintaining the
 :class:`pyqtgraph.ErrorBarItem` for the display of uncertainties that exist
 on the |DataItem|.
 
@@ -217,7 +217,7 @@ each of which must then re-initialize any imported plugins from the registry.
 There are three types of plugins for SpecViz:
 
     1. plugin bar plugins: these are added to the right side of SpecViz and are
-       encapsulated in a `QTabWidget` that allows the user to select the plugin
+       encapsulated in a ``QTabWidget`` that allows the user to select the plugin
        of interest and have its widget contents displayed in on the side.
     2. tool bar plugins: these plugins are added to the top main tool bar of
        SpecViz and generally contain UI composes as pop-up dialogs or as basic

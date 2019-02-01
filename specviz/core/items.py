@@ -16,6 +16,15 @@ flatui = cycle(["#000000", "#9b59b6", "#3498db", "#95a5a6", "#e74c3c",
 class DataItem(QStandardItem):
     """
     A Qt wrapper class around :class:`~specutils.Spectrum1D`.
+
+    Parameters
+    ----------
+    name : str
+        The name of this data item.
+    identifier : :class:`uuid.UUID`
+        The UUID of this data item.
+    data : :class:`specutils.Spectrum1D`
+        The internal spectrum object associated with this data item.
     """
     NameRole = Qt.UserRole + 1
     IdRole = Qt.UserRole + 2

@@ -78,6 +78,21 @@ class Plugin(DecoratorRegistry):
     """
 
     def __call__(self, name, priority=0):
+        """
+        Wraps the class and adds the decorated class to the registry.
+
+        Parameters
+        ----------
+        name : str
+            Name of plugin.
+        priority : int
+            The priority of when this plugin is loaded. Lower == sooner.
+
+        Returns
+        -------
+        plugin_decorator : func
+            The function to wrap the decorated class.
+        """
 
         logging.info("Adding plugin '%s'.", name)
 

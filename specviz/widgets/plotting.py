@@ -599,9 +599,25 @@ class PlotWidget(pg.PlotWidget):
     # actually read from the line list table(s).
 
     def enterEvent(self, event):
+        """
+        Intercept qt mode enter event and raise event type.
+
+        Parameters
+        ----------
+        event : ``QMouseEvent``
+            The intercepted event.
+        """
         self.mouse_enterexit.emit(event.type())
 
     def leaveEvent(self, event):
+        """
+        Intercept qt mode enter event and raise event type.
+
+        Parameters
+        ----------
+        event : ``QMouseEvent``
+            The intercepted event.
+        """
         self.mouse_enterexit.emit(event.type())
 
     def _find_wavelength_range(self):

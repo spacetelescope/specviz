@@ -460,13 +460,9 @@ class BaseImportWizard(QDialog):
         """
         return self.bool_uncertainties.isChecked()
 
-    def accept(self, event=None):
+    def accept(self, *args, **kwargs):
         """
         Hides the modal dialog and sets the result code to Accepted.
-
-        Parameters
-        ----------
-        event
         """
         super(BaseImportWizard, self).accept()
 
@@ -573,7 +569,7 @@ class BaseImportWizard(QDialog):
 
         Returns
         -------
-        bool:
+        bool
             `True` if units are valid and loader name has been provided,
             otherwise `False`
         """
@@ -770,6 +766,10 @@ class ASCIIImportWizard(BaseImportWizard):
 
 @plugin("Loader Wizard")
 class LoaderWizard(QDialog):
+    """
+    Loader wizard dialog. Handles the rendering and parsing of user input
+    through the SpecViz gui.
+    """
     @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
     def open_wizard(self):
         """

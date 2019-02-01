@@ -102,6 +102,11 @@ matrix:
           env: CMD='pycodestyle specviz --count'
                PIP_DEPENDENCIES='pycodestyle'
 
+        # Do a separate flake8 test for missing docstrings
+        - os: linux
+          env: CMD='flake8 --config=flake8docs.cfg --count specviz'
+               PIP_DEPENDENCIES='flake8 flake8-docstrings'
+
 install:
 
     # We now use the ci-helpers package to set up our testing environment.
