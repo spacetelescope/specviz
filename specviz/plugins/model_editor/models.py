@@ -9,7 +9,15 @@ from qtpy.QtGui import QStandardItem, QStandardItemModel, QValidator
 
 class ModelFittingModel(QStandardItemModel):
     """
+    Internel Qt model containing all instanes of the
+    :class:`astropy.modeling.FittableModel` classes in use in the model editor.
+    Each item in the model is a :class:`specviz.plugins.model_editor.items.ModelDataItem`
+    instance.
 
+    Attributes
+    ----------
+    status_changed : :class:`qtpy.QtCore.Signal`
+        Signal raised when the validator state changes.
     """
     status_changed = Signal(QValidator.State, str)
 
@@ -22,20 +30,16 @@ class ModelFittingModel(QStandardItemModel):
     @property
     def items(self):
         """
-
-        Returns
-        -------
-
+        The list of all :class:`specviz.plugins.model_editor.items.ModelDataItem`
+        instances associated with this model.
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
     @property
     def equation(self):
         """
-
-        Returns
-        -------
-
+        The equation used when parsing the set of models into a single
+        compound model.
         """
         return self._equation
 
@@ -46,10 +50,14 @@ class ModelFittingModel(QStandardItemModel):
 
     def compose_fittable_models(self):
         """
+        Generate the set of models with parameters updated by what the user
+        has inputted in the gui.
 
         Returns
         -------
-
+        fittable_models : dict
+            Collection of models with updated parameters where each key is the
+            model name displayed in the gui, and the value is the model.
         """
         # Recompose the model objects with the current values in each of its
         # parameter rows.
@@ -85,23 +93,24 @@ class ModelFittingModel(QStandardItemModel):
     @property
     def fittable_models(self):
         """
-
-        Returns
-        -------
-
+        Dictionary mapping displayed model name to the model instance with
+        parameters updated by parsing the user input in the ui.
         """
         return self.compose_fittable_models()
 
     def add_model(self, model):
         """
+        Adds a model to the internal Qt model.
 
         Parameters
         ----------
-        model
+        model : :class:`astropy.modeling.FittableModel`
+            The model instance to add.
 
         Returns
         -------
-
+        :class:`qtpy.QtCore.QModelIndex`
+            The index in the Qt model where the new model been added.
         """
         model_name = model.__class__.name
 
@@ -172,7 +181,8 @@ class ModelFittingModel(QStandardItemModel):
 
     def reset_equation(self):
         """
-
+        Resets and reconstructs the equation used when parsing the set of models
+        into a single model.
         """
         self._equation = ""
 
@@ -222,22 +232,3 @@ class ModelFittingModel(QStandardItemModel):
         self.status_changed.emit(state, status_text)
 
         return result
-
-
-class ModelFittingProxyModel(QSortFilterProxyModel):
-    def filterAcceptsRow(self, p_int, index):
-        """
-
-        Parameters
-        ----------
-        p_int
-        index
-
-        Returns
-        -------
-
-        """
-        if index.row() >= 0:
-            return False
-
-        return super().filterAcceptsRow(p_int, index)

@@ -161,8 +161,8 @@ class PlotWidget(pg.PlotWidget):
         This overrides the individual plot data item visibility on
         initialization of the plot widget.
 
-    Signals
-    -------
+    Attributes
+    ----------
     plot_added : None
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
