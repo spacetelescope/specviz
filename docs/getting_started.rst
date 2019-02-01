@@ -6,11 +6,11 @@ Getting Started
 Loading a Basic Spectrum
 ------------------------
 
-Lets start by loading a simple, known spectrum. If you followed the steps in
+Lets start by loading a test spectrum. If you followed the steps in
 :ref:`specviz-launching`, you should see the specviz window up, but without a
 spectrum.
 
-There are two options to load a spectrum data file:
+There are two options to load a spectrum:
 
 1. Load the spectrum with a pre-defined data loader, or a custom user-defined data loader.
 2. Utilize the :doc:`Loader Wizard </loader_wizard>` to create a new custom loader, and use that to load your data.
@@ -22,7 +22,7 @@ down list in the open file dialog
 
 .. image:: _static/loader_select.png
 
-Once the file has been loaded, you will be greeted with a plotted spectrum.
+Once the file has been loaded, the spectrum should plot.
 
 
 Exporting Spectra
@@ -31,7 +31,7 @@ Exporting Spectra
 A user can export a given spectrum in the data list by highlighting the
 spectrum and clicking the ``Export Data`` button in the main toolbar. This
 will provide the user with a save file dialog where they may choose where to
-save the exported spectrum file.
+save the exported spectrum.
 
 .. note::
 
