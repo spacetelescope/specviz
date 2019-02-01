@@ -33,6 +33,7 @@ displayed `plot <Plots_>`_. To select a specific data simply click on its name.
 You can also rename double click on it and typing in the new name; when finished
 press enter.
 
+.. _specviz-workspace-toolbar:
 
 Workspace Toolbar
 -----------------
