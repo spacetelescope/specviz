@@ -17,7 +17,7 @@ be used for the statistics panel and the model fitting.
     "selected".
 
 
-To remove a region, click on the Remove Region button on the s:ref:`plot toolbar <specviz-plot-toolbar>`.
+To remove a region, click on the Remove Region button on the :ref:`plot toolbar <specviz-plot-toolbar>`.
 To expand or contract a region, click and drag its edge until the desired range.
 The ROI can be moved by clicking the middle of the ROI and dragging. The range of
 the currently selected region is displayed at the upper left corner of the plot
