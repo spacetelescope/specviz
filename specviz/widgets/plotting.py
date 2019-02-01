@@ -74,10 +74,7 @@ class PlotWindow(QMdiSubWindow):
     @property
     def current_item(self):
         """
-
-        Returns
-        -------
-
+        The currently selected plot data item.
         """
         if self._current_item_index is not None:
             return self.proxy_model.item_from_index(self._current_item_index)
@@ -92,10 +89,7 @@ class PlotWindow(QMdiSubWindow):
     @property
     def proxy_model(self):
         """
-
-        Returns
-        -------
-
+        The proxy model defined in the internal plot widget.
         """
         return self.plot_widget.proxy_model
 
@@ -239,17 +233,14 @@ class PlotWidget(pg.PlotWidget):
     @property
     def title(self):
         """
-        The title of the widget
+        The title of the widget.
         """
         return self._title
 
     @property
     def proxy_model(self):
         """
-
-        Returns
-        -------
-
+        The proxy model being used by this plot widget.
         """
         return self._proxy_model
 
@@ -321,33 +312,6 @@ class PlotWidget(pg.PlotWidget):
             return self.selected_region.getRegion() * u.Unit(
                 self.spectral_axis_unit or "")
 
-    @property
-    def region_mask(self):
-        """
-
-        Returns
-        -------
-
-        """
-        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
-        mask_holder = []
-
-        for roi in rois:
-            # roi_shape = roi.parentBounds()
-            # x1, y1, x2, y2 = roi_shape.getCoords()
-            x1, x2 = roi.getRegion()
-
-            mask = (container.layer.masked_dispersion.data.value >= x1) & \
-                   (container.layer.masked_dispersion.data.value <= x2)
-
-            mask_holder.append(mask)
-
-        if len(mask_holder) > 0:
-            mask = reduce(np.logical_or, mask_holder)
-            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
-
-        return mask
-
     def on_item_changed(self, item):
         """
         Called when the user clicks the item's checkbox.
@@ -373,7 +337,10 @@ class PlotWidget(pg.PlotWidget):
 
     def check_plot_compatibility(self):
         """
-
+        Checks for unit compatibility between this plot widget and all plot
+        data items currently in the proxy model. If an item is not compatible,
+        its state is set to disabled and the user will not be able to plot it
+        in the plot widget.
         """
         for i in range(self.proxy_model.sourceModel().rowCount()):
             model_item = self.proxy_model.sourceModel().item(i)
@@ -536,7 +503,7 @@ class PlotWidget(pg.PlotWidget):
 
     def clear_plots(self):
         """
-
+        Removes all plots from the plot widget.
         """
         for item in self.listDataItems():
             if isinstance(item, PlotDataItem):

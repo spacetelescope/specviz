@@ -30,10 +30,20 @@ class Workspace(QMainWindow):
     This includes the :class:`~qtpy.QtWidgets.QListView`, and the
     :class:`~qtpy.QtWigets.QMdiArea` widgets, and associated model information.
 
-    Signals
-    -------
-    window_activated : :class:`~qtpy.QtWidgets.QMainWindow`
+    Attributes
+    ----------
+    window_activated : :class:`~qtpy.QtCore.Signal`
         Fired when a particular `QMainWindow` is activated.
+    window_closed : :class:`~qtpy.QtCore.Signal`
+        Fired when a sub window is closed.
+    current_item_changed : :class:`~qtpy.QtCore.Signal`
+        Fired when the an item in the view has changed.
+    current_selected_changed: :class:`~qtpy.QtCore.Signal`
+        Fired when the currently selected item in the view has changed.
+    plot_window_added : :class:`~qtpy.QtCore.Signal`
+        Fired when a new plot window is added to the workspace.
+    plot_window_activated : :class:`~qtpy.QtCore.Signal`
+        Fired when a plto window in the workspace has become active.
     """
     window_activated = Signal(QMainWindow)
     window_closed = Signal(QMainWindow)
@@ -115,10 +125,12 @@ class Workspace(QMainWindow):
 
     def closeEvent(self, a0):
         """
+        Overrides the Qt close event to also emit a signal.
 
         Parameters
         ----------
-        a0
+        a0 : list
+            Close even arguments.
         """
         self.window_closed.emit(self)
 
@@ -139,10 +151,7 @@ class Workspace(QMainWindow):
     @property
     def proxy_model(self):
         """
-
-        Returns
-        -------
-
+        The proxy model of the currently active plot window.
         """
         if self.current_plot_window is not None:
             return self.current_plot_window.proxy_model
@@ -175,7 +184,7 @@ class Workspace(QMainWindow):
 
     def remove_current_window(self):
         """
-
+        Removes the current plot window from the workspace.
         """
         self.mdi_area.removeSubWindow(self.current_plot_window)
 
@@ -270,7 +279,7 @@ class Workspace(QMainWindow):
             # self.plugin_tab_widget.hide()
 
     def event(self, e):
-        """Scrap window events."""
+        """Scrape window events."""
         # When this window is in focus and selected, tell the application that
         # it's the active window
         if e.type() == QEvent.WindowActivate:
@@ -352,14 +361,7 @@ class Workspace(QMainWindow):
         # qt-specified loader names
         def compose_filter_string(reader):
             """
-
-            Parameters
-            ----------
-            reader
-
-            Returns
-            -------
-
+            Generates the Qt loader string to pass to the file load dialog.
             """
             return ' '.join(['*.{}'.format(y) for y in reader.extensions]
                             if reader.extensions is not None else '*')
@@ -431,11 +433,7 @@ class Workspace(QMainWindow):
         # of the Spectrum1D object). So, create some temporary export formats.
         def generic_export(spectrum, path):
             """
-
-            Parameters
-            ----------
-            spectrum
-            path
+            Creates a temporary export format for use in writing out data.
             """
             from astropy.table import QTable
             import astropy.units as u

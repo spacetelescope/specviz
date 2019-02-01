@@ -40,10 +40,9 @@ class UnitChangeDialog(QDialog):
 
     def show(self):
         """
-
-        Returns
-        -------
-
+        Parses the current plot window information and displays the unit change
+        dialog with the appropriate available units to which the current
+        plot's units can be changed.
         """
         # If there is no plot item, don't even try to process unit info
         if self.hub.plot_item is None or len(self.hub.visible_plot_items) == 0:
@@ -129,7 +128,7 @@ class UnitChangeDialog(QDialog):
     @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
     def on_action_triggered(self):
         """
-
+        Called when the user interacts with the ui button. Shows the dialog.
         """
         self.show()
 
@@ -174,7 +173,14 @@ class UnitChangeDialog(QDialog):
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.on_canceled)
 
     def on_combobox_change(self, axis):
-        """Called when the text of the unit combo box has changed."""
+        """
+        Called when the text of the unit combo box has changed.
+
+        Parameters
+        ----------
+        axis : str
+            The axis for which the combo box selection has changed.
+        """
         # If 'Custom', show validation label and line for entering units
         # The X axis corresponds to plot_data_item.spectral_axis_unit
         # The Y axis corresponds to plot_data_item.data_unit
@@ -199,7 +205,14 @@ class UnitChangeDialog(QDialog):
             self.ui.adjustSize()
 
     def on_line_custom_units_change(self, axis):
-        """Called when the text of the custom units textbox has changed."""
+        """
+        Called when the text of the custom units textbox has changed.
+
+        Parameters
+        ----------
+        axis : str
+            The axis for which the custom input has been defined.
+        """
         # The X axis corresponds to plot_data_item.spectral_axis_unit
         # The Y axis corresponds to plot_data_item.data_unit
         if axis == "X":

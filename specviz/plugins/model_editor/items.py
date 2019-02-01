@@ -5,7 +5,16 @@ from ...core.items import DataItem
 
 class ModelDataItem(DataItem):
     """
-    Data item containing information about the generated spectrum
+    Data container for information generated from a model editor model's
+    collection of models. This provides an interface to the generated flux
+    values of the model evaluated in the model editor model.
+
+    Parameters
+    ----------
+    model : :class:`specviz.plugins.model_editor.models.ModelFittingModel`
+        The model edtior fitting model containing the list of individual models
+        used in the editor, as well as the equation to evaluate for model
+        arithmetic.
     """
     def __init__(self, model, *args, **kwargs):
         self._model_editor_model = model
@@ -16,10 +25,8 @@ class ModelDataItem(DataItem):
     @property
     def flux(self):
         """
-
-        Returns
-        -------
-
+        Evaluates the current model editor model equation, generates and
+        returns new flux values, and updates the stored spectrum information.
         """
         if self.model_editor_model is None:
             return super().flux
@@ -37,21 +44,14 @@ class ModelDataItem(DataItem):
     @property
     def spectrum(self):
         """
-
-        Returns
-        -------
-
+        The internal spectrum object.
         """
-        flux = self.flux  # Update the flux
         return super().spectrum
 
     @property
     def model_editor_model(self):
         """
-
-        Returns
-        -------
-
+        The model editor model used during evaluation of the flux.
         """
         return self._model_editor_model
 

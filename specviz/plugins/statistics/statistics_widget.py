@@ -18,22 +18,26 @@ from ...utils.helper_functions import format_float_text
 from ...core.plugin import plugin
 
 
-"""
-The next three functions are place holders while specutils is updated to handle
-these computations internally. They will be moved into the StatisticsWidget
-once they are updated.
-"""
+# The next three functions are place holders while specutils is updated to handle
+# these computations internally. They will be moved into the StatisticsWidget
+# once they are updated.
+
 def check_unit_compatibility(spec, region):
     """
+    Checks if the unit of a region is compatible with the unit of the spectral
+    axis of the spectrum object.
 
     Parameters
     ----------
-    spec
-    region
+    spec : :class:`specutils.Spectrum1D`
+        The spectrum object with which to check compatibility.
+    region : :class:`specutils.SpectralRegion`
+        The region object with which to check compatibility.
 
     Returns
     -------
-
+    bool
+        Whether or not units are compatible.
     """
     spec_unit = spec.spectral_axis.unit
     if region.lower is not None:
@@ -47,15 +51,20 @@ def check_unit_compatibility(spec, region):
 
 def clip_region(spectrum, region):
     """
+    Given a region, clips the lower and upper bounds to the limits of the
+    spectrum's spectral axis.
 
     Parameters
     ----------
-    spectrum
-    region
+    spec : :class:`specutils.Spectrum1D`
+        The spectrum whose bounds will be used in clipping.
+    region : :class:`specutils.SpectralRegion`
+        The region object whose bounds will change.
 
     Returns
     -------
-
+    :class:`specutils.SpectralRegion`
+        New spectral region object with correct bounds.
     """
     # If the region is out of data range return None:
     if region.lower > spectrum.spectral_axis.max() or \
@@ -206,16 +215,18 @@ class StatisticsWidget(QWidget):
 
     def set_status(self, message):
         """
+        Sets the message text of the status display.
 
         Parameters
         ----------
-        message
+        message : str
+            Message text to display.
         """
         self.status_display.setPlainText(message)
 
     def clear_status(self):
         """
-
+        Removes the current status message.
         """
         self.set_status("")
 
@@ -238,8 +249,8 @@ class StatisticsWidget(QWidget):
 
     def _update_stat_widgets(self, stats):
         """
-        Clears all widgets then fills in
-        the available stat values.
+        Clears all widgets then fills in the available stat values.
+
         Parameters
         ----------
         stats: dict
@@ -258,7 +269,7 @@ class StatisticsWidget(QWidget):
 
     def _clear_stat_widgets(self):
         """
-        Clears all widgets in `StatisticsWidget.stat_widgets`
+        Clears all widgets in `StatisticsWidget.stat_widgets`.
         """
         for key in self.stat_widgets:
             self.stat_widgets[key].document().clear()
@@ -266,17 +277,18 @@ class StatisticsWidget(QWidget):
     @staticmethod
     def pos_to_spectral_region(pos):
         """
-        Vet input region position and construct
-        a `~specutils.utils.SpectralRegion`.
+        Get input region position and construct a
+        `~specutils.utils.SpectralRegion`.
+
         Parameters
         ----------
         pos : `~astropy.units.Quantity`
-            A tuple `~astropy.units.Quantity` with
-            (min, max) range of roi.
+            A tuple `~astropy.units.Quantity` with (min, max) range of roi.
 
         Returns
         -------
         None or `~specutils.utils.SpectralRegion`
+            The new spectral region object with appropriate bounds.
         """
         if not isinstance(pos, u.Quantity):
             return None
@@ -285,6 +297,7 @@ class StatisticsWidget(QWidget):
             return None
         elif pos[0] > pos[1]:
             pos = [pos[1], pos[0]] * pos.unit
+
         return SpectralRegion(*pos)
 
     def _get_workspace_region(self):
@@ -320,7 +333,7 @@ class StatisticsWidget(QWidget):
 
     def clear_statistics(self):
         """
-
+        Clears all currently displayed stats information in the widget.
         """
         self._clear_stat_widgets()
         self.stats = None
@@ -359,10 +372,8 @@ class StatisticsWidget(QWidget):
 
     def update_statistics(self):
         """
-
-        Returns
-        -------
-
+        Retrieves the current data item in the workspace and calculates the
+        set of statistics on its information.
         """
         if self.hub.workspace is None or self.hub.plot_item is None:
             return self.clear_statistics()
