@@ -52,7 +52,7 @@ hidden, what its current plot color is, what its currently user-defined name
 is, etc. They are also workspace-specific, and not plot window-specific like
 the |PlotProxyModel| and |PlotDataItem| objects.
 
-.. image:: data_model_diagram.png
+.. image:: _static/data_model_diagram.png
 
 Application and Workspaces
 --------------------------
