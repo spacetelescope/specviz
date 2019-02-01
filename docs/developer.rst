@@ -92,7 +92,7 @@ view widget.
 
 |Workspace| objects also contain the methods for providing the Qt dialogs for loading
 data (:func:`~specviz.widgets.workspace.Workspace.load_data`) using the
-`specutils` IO infrastructure, as well as exporting data
+` objectspecutils` IO infrastructure, as well as exporting data
 (:func:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
 data items (:func:`~specviz.widgets.workspace.Workspace._on_delete_data`).
 
@@ -100,22 +100,22 @@ Plot Windows and Plot Widget
 ----------------------------
 
 |PlotWindow| objects are implemented as subclasses of `QMdiSubWindow` Qt objects. On
-creation, these sub window objects are added to the |Workspace|'s `QMdiArea`
+creation, these sub window objects are added to the |Workspace| object's `QMdiArea`
 and exposed as tabs in the plot window area. Each |PlotWindow| contains the
 set of tools used to interact with the plot directly. This mostly includes
 things like changing line colors (which will be reflected in colored icon next
 to the data item in the data item list).
 
 |PlotWindow| objects are instantiated by their parent |Workspace|, and are passed a
-reference to the |Workspace|'s |DataListModel|. It is the responsibility of the
-|PlotWindow| (and, more specifically, the |PlotWindow|'s |PlotWidget|) to
+reference to the |Workspace| object's |DataListModel|. It is the responsibility of the
+|PlotWindow| (and, more specifically, the |PlotWindow| object's |PlotWidget|) to
 create the corresponding |PlotProxyModel| used for that particular |PlotWindow|
 instance. In essence, the |PlotWindow| is really a container for housing the
 plot tool bar and the |PlotWidget|, and generally only contains functionality
 that doesn't directly involve manipulating the |PlotWidget| directly.
 
 The |PlotWidget| is the plotted representation of all the |PlotDataItem| objects in
-its internal |PlotProxyModel|. The widget itself is a subclass of `PyQtGraph`'s
+its internal |PlotProxyModel|. The widget itself is a subclass of `PyQtGraph` object's
 |PlotWidget| object. Anything that affects the visual representation of the
 loaded data is done in this class. For instance, operations like changing the
 displayed units of the plot are handled here, in which case, the |PlotWidget|
@@ -146,22 +146,22 @@ Plot Proxy Model and Plot Data Items
 The |PlotProxyModel| is a simple wrapper that can be used to expose
 |PlotDataItem| objects for use in |PlotWindow| objects. When a |PlotWindow| is created and
 activated, the parent |Workspace| receives a signal and sets the model
-displayed in the data list view to the |PlotWindow|'s |PlotProxyModel|. The
+displayed in the data list view to the |PlotWindow| object's |PlotProxyModel|. The
 |PlotProxyModel| itself is given the source |DataListModel| model and maintains
 a dictionary mapping the UUID of each |DataItem| to the
 |PlotProxyModel|-specific |PlotDataItem|. By overriding the `data` and
-`setData` methods of the parent `QSortFilterProxyModel`, the |PlotProxyModel|
+` objectsetData` methods of the parent `QSortFilterProxyModel`, the |PlotProxyModel|
 is able to access information from both the |PlotDataItem| (e.g. color
 information, visibility information, etc) as well as from the |DataItem| (e.g.
 its name) for use in displaying the information in data view widgets.
 
-|PlotDataItem| objects themselves are subclasses of `PyQtGraph`'s |PlotDataItem| class
-which handles the display of data as Qt `GraphicsItem`s. The |PlotDataItem|
+|PlotDataItem| objects themselves are subclasses of `PyQtGraph` object's |PlotDataItem| class
+which handles the display of data as Qt `GraphicsItem` objects. The |PlotDataItem|
 class contains extra information about the *current* unit definitions and
 characteristics like color, line width, and visibility of the plot data. As an
 example, when a user changes the units displayed for a plot, all plotted
 |PlotDataItem| objects have their units converted to the displayed values.
-`PlotDataItems`s are also responsible for maintaining the
+`PlotDataItems` objects are also responsible for maintaining the
 :class:`pyqtgraph.ErrorBarItem` for the display of uncertainties that exist
 on the |DataItem|.
 
@@ -171,7 +171,7 @@ objects may listen to
 +--------------------------------+------------------------------------------------------------------------------+
 | ``data_unit_changed``          | Fired when the data units of the |PlotDataItem| have changed.                |
 +--------------------------------+------------------------------------------------------------------------------+
-| ``spectral_axis_unit_changed`` | Fired when the spectral axis units of the |PlotDataItem| have changed.       |
+| `` objectspectral_axis_unit_changed`` | Fired when the spectral axis units of the |PlotDataItem| have changed.       |
 +--------------------------------+------------------------------------------------------------------------------+
 | ``color_changed``              | Fired when the color of the |PlotDataItem| has changed.                      |
 +--------------------------------+------------------------------------------------------------------------------+
@@ -183,7 +183,7 @@ objects may listen to
 Centralized Hub and Plugins
 ---------------------------
 
-The :class:`specviz.core.hub.Hub` class acts as a centralized API source
+The :class:` objectspecviz.core.hub.Hub` class acts as a centralized API source
 for external functionality (e.g. plugins) to easily interact with the core
 SpecViz infrastructure. It is mostly an abstraction over various, perhaps
 obscured portions of the internal data model and plotting representations.
