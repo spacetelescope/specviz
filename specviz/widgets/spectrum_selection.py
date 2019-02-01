@@ -35,7 +35,7 @@ class SpectrumSelection(QDialog):
 
     def populate(self, names):
         """
-        Add a list of names to be displayed as list items in the dialog 
+        Add a list of names to be displayed as list items in the dialog
 
         Parameters
         ----------
