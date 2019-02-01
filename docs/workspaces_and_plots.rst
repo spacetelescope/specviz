@@ -65,6 +65,8 @@ to a plot will show as disabled in the data list.
 Clicking the checkbox next to an item in the data list will plot the data
 item on the current plot.
 
+.. _specviz-plot-toolbar:
+
 Plot toolbar
 ^^^^^^^^^^^^
 The plot toolbar contains buttons that relate to the current plot.
@@ -72,9 +74,9 @@ The plot toolbar contains buttons that relate to the current plot.
 .. image:: _static/plot_toolbar.png
 
 The following features are accessible through the plot toolbar:
-    * Add or remove regions of interest
+    * Add or remove :ref:`regions of interest <specviz-regions>`
     * Add spectral line labels
     * Change the color of the plot
-    * :ref:`Unit conversion <specviz-unit-conversion>` of the axes and export the plot.
+    * :ref:`Unit conversion <specviz-unit-conversion>` of the axes
     * Rest the plot
     * Export the plot to file

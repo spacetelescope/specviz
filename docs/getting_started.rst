@@ -39,27 +39,3 @@ save the exported spectrum.
     is currently the only supported export format. This will change in the
     future as more exporting formats are supported in the specutils package.
 
-
-Using Regions
--------------
-
-Interesting regions can be defined by adding an ROI to the plot. This is done
-via the ``Add Region`` button in the plot toolbar. Multiple regions can be
-used when defining e.g. areas the user might wish to use for model fitting.
-
-A blue highlighted region is considered the _active_ region, and will in cases
-where it is imported (e.g. statistics), will be used to define the region
-used in the calculations.
-
-.. note::
-
-    Currently, only one region can be the "selected" region. This will change
-    in the future to allow a subset of plotted region to be defined as
-    "selected".
-
-Removing a region is accomplished by clicking the ``Remove Region`` button.
-Only the currently selected region is removed.
-
-
-
-
