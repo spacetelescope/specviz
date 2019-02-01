@@ -40,31 +40,6 @@ save the exported spectrum.
     future as more exporting formats are supported in the specutils package.
 
 
-Workspaces and Plots
---------------------
-
-Loaded data is added to the global data list for the entire workspace. A
-workspace is an instance of the SpecViz application. Several can be
-open at once and more can be added by selecting ``File > New Workspace`` from
-the menu bar. Workspaces are completely independent of one another, and the
-user can have as many workspaces are they wish.
-
-Plots are the visual representation of a selection of data items within a
-particular workspace. A user can have as many plots as they wish, and new plots
-can be created by clicking the ``New Plot`` button in the main toolbar.
-Likewise, plot windows can be removed by clicking the ``X`` button in the plot
-tab.
-
-Plots all share the same data list within a workspace. The caveat is that plots
-can only show data that have equivalent units. Any data that cannot be added
-to a plot will show as disabled in the data list.
-
-.. image:: _static/disabled_data_item.png
-
-Clicking the checkbox next to an item in the data list will plot the data
-item on the current plot.
-
-
 Using Regions
 -------------
 

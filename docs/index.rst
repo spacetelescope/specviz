@@ -49,9 +49,11 @@ Using SpecViz
    :maxdepth: 2
 
    getting_started
+   loader_wizard
+   workspaces_and_plots
+   regions
    unit_conversion
    arithmetic-layer
-   loader_wizard
    model_fitting
    statistics
    line_labels
