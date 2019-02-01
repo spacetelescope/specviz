@@ -404,11 +404,11 @@ class LineList(Table):
 
         return result
 
-    def setRedshift(self, redshift, z_units):
+    def set_redshift(self, redshift, z_units):
         self.redshift = redshift
         self.z_units = z_units
 
-    def setColor(self, color):
+    def set_color(self, color):
         self.color = color
 
     def setHeight(self, height):
