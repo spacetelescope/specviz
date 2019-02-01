@@ -8,31 +8,34 @@ Installation
 As a Python package, SpecViz is installable via any approach that is available
 for installing Python packages.  In practice the easiest way is often using the
 the `Anaconda <https://anaconda.org>`__ package manager, but several other
-options are available.  These are detailed below
+options are available.  These are detailed below.
 
-distributed through the `Anaconda <https://anaconda.org>`__ package
-manager. Specifically, it lives within Space Telescope Science Institute's
-`AstroConda <https://astroconda.readthedocs.io/>`_ channel.
+.. note::
 
-
+    SpecViz requires Python 3.6 or later.
 
 Install via Anaconda
 --------------------
 
 If you do not have Anaconda, please follow the `instructions here
-<https://www.continuum.io/downloads>`_ to install it, or scroll down for
+<https://www.anaconda.com/distribution/>`_ to install it, or scroll down for
 manual installation of SpecViz.
 
+To check if Anaconda is installed correctly run the following command on a
+new terminal::
+
+    $ conda info
+
+You should see information about your current conda installation printed out.
 
 If you are using the Space Telescope Science Institute's
-`AstroConda <https://astroconda.readthedocs.io/>`_ channel,  then all you have
-to do to install SpecViz is simply type the following at any Bash terminal
-prompt::
+`AstroConda <https://astroconda.readthedocs.io/>`_ channel,  then type the following
+at any Bash terminal prompt::
 
     $ conda install specviz
 
 If you do not have AstroConda installed, you can still install SpecViz from
-AstrocConda by specifying the channel in your install command::
+AstrocConda by specifying the <channel> in the below install command::
 
     $ conda install --channel http://ssb.stsci.edu/astroconda specviz
 
@@ -42,10 +45,19 @@ any terminal::
     $ specviz
 
 
+Creating a new conda environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since SpecViz uses Python 3.6 or later you may need to create a new environment with
+this requirement satisfied as follows::
+
+    $ conda create -n <environment_name> python=3.6
+
+
 Uninstalling
 ^^^^^^^^^^^^
 
-To uninstall via Anaconda, simply type the following at a command line::
+To uninstall via Anaconda, type the following at a command line::
 
     $ conda uninstall specviz
 
@@ -53,11 +65,23 @@ To uninstall via Anaconda, simply type the following at a command line::
 Install via source
 ------------------
 
-SpecViz can also be installed manually using the source code followint the
+SpecViz can also be installed manually using the source code following the
 instructions below. The dependencies are listed in the ``setup.cfg`` file, and
 therefore most of them will be handled automatically by the setup functions,
 the exception to this is  the exception of PyQt, which may require manual
 installation.
+
+By cloning
+^^^^^^^^^^
+
+You may also install by cloning the repository directly
+
+::
+
+    $ git clone https://github.com/spacetelescope/specviz.git
+    $ cd specviz
+    $ git checkout tags/v0.3.0
+    $ python setup.py install
 
 
 By using ``pip``
@@ -82,23 +106,13 @@ You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
 environment.
 
 
-By cloning
-^^^^^^^^^^
-
-You may also install by cloning the repository directly
-
-::
-
-    $ git clone https://github.com/spacetelescope/specviz.git
-    $ cd specviz
-    $ git checkout tags/v0.3.0
-    $ python setup.py install
-
-
 PyQt bindings
 ^^^^^^^^^^^^^
 
-SpecViz requires PyQt. Currently, only python environments with 3.6 or higher
+SpecViz requires PyQt for its graphical user interface. If you don't have PyQt installed,
+please follow the instructions below.
+
+Currently, only python environments with 3.6 or higher
 installed can use ``pip`` to install PyQt5, in which case simply type::
 
     $ pip install pyqt5
