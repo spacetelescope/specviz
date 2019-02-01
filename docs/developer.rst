@@ -168,17 +168,17 @@ on the |DataItem|.
 Likewise, changes to the |PlotDataItem| raise events that other widgets and
 objects may listen to
 
-+--------------------------------+------------------------------------------------------------------------------+
-| ``data_unit_changed``          | Fired when the data units of the |PlotDataItem| have changed.                |
-+--------------------------------+------------------------------------------------------------------------------+
-| `` objectspectral_axis_unit_changed`` | Fired when the spectral axis units of the |PlotDataItem| have changed.       |
-+--------------------------------+------------------------------------------------------------------------------+
-| ``color_changed``              | Fired when the color of the |PlotDataItem| has changed.                      |
-+--------------------------------+------------------------------------------------------------------------------+
-| ``width_changed``              | Fired when the width of the plotted line for the |PlotDataItem| has changed. |
-+--------------------------------+------------------------------------------------------------------------------+
-| ``visibility_changed``         | Fired when the visibility of the |PlotDataItem| has changed.                 |
-+--------------------------------+------------------------------------------------------------------------------+
++--------------------------------------+------------------------------------------------------------------------------+
+| ``data_unit_changed``                | Fired when the data units of the |PlotDataItem| have changed.                |
++--------------------------------------+------------------------------------------------------------------------------+
+| ``objectspectral_axis_unit_changed`` | Fired when the spectral axis units of the |PlotDataItem| have changed.       |
++--------------------------------------+------------------------------------------------------------------------------+
+| ``color_changed``                    | Fired when the color of the |PlotDataItem| has changed.                      |
++--------------------------------------+------------------------------------------------------------------------------+
+| ``width_changed``                    | Fired when the width of the plotted line for the |PlotDataItem| has changed. |
++--------------------------------------+------------------------------------------------------------------------------+
+| ``visibility_changed``               | Fired when the visibility of the |PlotDataItem| has changed.                 |
++--------------------------------------+------------------------------------------------------------------------------+
 
 Centralized Hub and Plugins
 ---------------------------
