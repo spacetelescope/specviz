@@ -232,10 +232,10 @@ class LineListsWindow(QWidget):
         self.hub.plot_window.window_removed.connect(self.dismiss_linelists_window.emit)
 
     def dismiss(self):
-        '''
+        """
         The Dismiss button just clears the plug-in
         window from whatever line lists it's holding.
-        '''
+        """
         v = self.tab_widget.count()
         for index in range(v-1,-1,-1):
             self.tab_widget.removeTab(index)
@@ -813,15 +813,24 @@ class LineListTableModel(QAbstractTableModel):
             self._ncols = len(self._row_cells[0])
 
     def rowCount(self, parent=None, *args, **kwargs):
+        """
+        Overrides the base class
+        """
         # this has to use a pre-computed number of rows,
         # otherwise sorting gets significantly slowed
         # down. Same for number of columns.
         return self._nrows
 
     def columnCount(self, parent=None, *args, **kwargs):
+        """
+        Overrides the base class
+        """
         return self._ncols
 
     def data(self, index, role=None):
+        """
+        Overrides the base class
+        """
         if role != Qt.DisplayRole:
             return QVariant()
 
@@ -838,6 +847,9 @@ class LineListTableModel(QAbstractTableModel):
         return self._row_cells[index.row()][index.column()]
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
+        """
+        Overrides the base class
+        """
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._linelist.colnames[section]
 
@@ -856,6 +868,13 @@ class LineListTableModel(QAbstractTableModel):
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
     def get_name(self):
+        """
+        Gets the name of the line list
+
+        Returns
+        -------
+        the name of the line list
+        """
         return self._linelist.name
 
 
@@ -876,6 +895,9 @@ class SortModel(QSortFilterProxyModel):
         self._name = name
 
     def lessThan(self, left, right):
+        """
+        Overrides the base class
+        """
         left_data = left.data()
         right_data = right.data()
 
@@ -892,4 +914,11 @@ class SortModel(QSortFilterProxyModel):
             return str(left_data) < str(right_data)
 
     def get_name(self):
+        """
+        Gets the name of the line list
+
+        Returns
+        -------
+        the name of the line list
+        """
         return self._name

@@ -228,6 +228,14 @@ class LineList(Table):
 
     @property
     def table(self):
+        """
+        The astropy Table in this LineList instance
+
+        Returns
+        -------
+        astropy Table in this instance
+
+        """
         return self._table
 
     @classmethod

@@ -480,8 +480,8 @@ class ZoomMarkersThread(QThread):
     npoints : int
         The number of objects on screen to be zoomed (not used in this implementation).
 
-    Signals
-    -------
+    Attributes
+    ----------
     do_zoom : Signal
         Signals that a zoom operation can be performed by the event loop.
     zoom_end : Signal
@@ -502,6 +502,10 @@ class ZoomMarkersThread(QThread):
         self.zoom_end.connect(self._zoom_finished)
 
     def run(self):
+        """
+        Overrides the base class.
+        """
+
         while(self.is_processing):
 
             value = self.buffer._get()
@@ -530,9 +534,10 @@ class ZoomMarkersThread(QThread):
 
 
 class ZoomEventBuffer(object):
+    """
+    A mutex-lockable buffer that stores zoom request events.
 
-    # A mutex-lockable buffer that stores zoom request events.
-
+    """
     def __init__(self):
         self.buffer = []
         self.mutex = QMutex()
