@@ -135,8 +135,8 @@ class PlotWidget(pg.PlotWidget):
         This overrides the individual plot data item visibility on
         initialization of the plot widget.
 
-    Signals
-    -------
+    Attributes
+    ----------
     plot_added : None
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
@@ -272,27 +272,6 @@ class PlotWidget(pg.PlotWidget):
         if self.selected_region is not None:
             return self.selected_region.getRegion() * u.Unit(
                 self.spectral_axis_unit or "")
-
-    @property
-    def region_mask(self):
-        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
-        mask_holder = []
-
-        for roi in rois:
-            # roi_shape = roi.parentBounds()
-            # x1, y1, x2, y2 = roi_shape.getCoords()
-            x1, x2 = roi.getRegion()
-
-            mask = (container.layer.masked_dispersion.data.value >= x1) & \
-                   (container.layer.masked_dispersion.data.value <= x2)
-
-            mask_holder.append(mask)
-
-        if len(mask_holder) > 0:
-            mask = reduce(np.logical_or, mask_holder)
-            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
-
-        return mask
 
     def on_item_changed(self, item):
         """
@@ -443,7 +422,6 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
-                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
