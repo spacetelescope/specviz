@@ -55,3 +55,4 @@ Using SpecViz
    model_fitting
    statistics
    developer
+   line_labels
