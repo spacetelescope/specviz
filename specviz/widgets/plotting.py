@@ -59,19 +59,31 @@ class PlotWindow(QMdiSubWindow):
 
     @property
     def tool_bar(self):
+        """
+        Return the tool bar for the embedded plot widget.
+        """
         return self._central_widget.tool_bar
 
     @property
     def current_item(self):
+        """
+        The currently selected plot data item.
+        """
         if self._current_item_index is not None:
             return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
+        """
+        Return the embedded plot widget
+        """
         return self._plot_widget
 
     @property
     def proxy_model(self):
+        """
+        The proxy model defined in the internal plot widget.
+        """
         return self.plot_widget.proxy_model
 
     def closeEvent(self, event):
@@ -163,7 +175,7 @@ class PlotWidget(pg.PlotWidget):
         self._visible = visible
 
         # Performance enhancements
-        # self.setDownsampling(auto=True)
+        # self.setDownsampling(auto=False)
         # self.setClipToView(True)
 
         # Define labels for axes
@@ -207,18 +219,30 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def title(self):
+        """
+        The title of the widget.
+        """
         return self._title
 
     @property
     def proxy_model(self):
+        """
+        The proxy model being used by this plot widget.
+        """
         return self._proxy_model
 
     @property
     def data_unit(self):
+        """
+        The current data unit used for displaying the spectrum.
+        """
         return self._data_unit
 
     @property
     def spectral_axis_unit(self):
+        """
+        The current spectral axis unit used for displaying the spectrum.
+        """
         return self._spectral_axis_unit
 
     @data_unit.setter
@@ -260,14 +284,16 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def selected_region(self):
-        """Returns currently selected region object."""
+        """
+        The currently selected region object.
+        """
         return self._selected_region
 
     @property
     def selected_region_bounds(self):
         """
-        Returns the bounds of the currently selected region as a tuple of
-        quantities.
+        The bounds of the currently selected region as a tuple of
+        `~astropy.units.Quantity` objects.
         """
         if self.selected_region is not None:
             return self.selected_region.getRegion() * u.Unit(
@@ -297,6 +323,12 @@ class PlotWidget(pg.PlotWidget):
                 self.remove_plot(item=plot_data_item)
 
     def check_plot_compatibility(self):
+        """
+        Checks for unit compatibility between this plot widget and all plot
+        data items currently in the proxy model. If an item is not compatible,
+        its state is set to disabled and the user will not be able to plot it
+        in the plot widget.
+        """
         for i in range(self.proxy_model.sourceModel().rowCount()):
             model_item = self.proxy_model.sourceModel().item(i)
             source_index = self.proxy_model.sourceModel().indexFromItem(model_item)
@@ -403,6 +435,7 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
+        self.setDownsampling(auto=False)
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """
@@ -456,6 +489,9 @@ class PlotWidget(pg.PlotWidget):
             self.plot_removed.emit(item)
 
     def clear_plots(self):
+        """
+        Removes all plots from the plot widget.
+        """
         for item in self.listDataItems():
             if isinstance(item, PlotDataItem):
                 self.remove_plot(item=item)
@@ -545,25 +581,23 @@ class PlotWidget(pg.PlotWidget):
 
     def enterEvent(self, event):
         """
-        Emits a mouse_enterexit signal when the mouse
-        pointer enters the window.
+        Intercept qt mode enter event and raise event type.
 
         Parameters
         ----------
-        event : QEnterEvent
-            the event. The event.type() is delivered.
+        event : ``QMouseEvent``
+            The intercepted event.
         """
         self.mouse_enterexit.emit(event.type())
 
     def leaveEvent(self, event):
         """
-        Emits a mouse_enterexit signal when the mouse
-        pointer exits the window.
+        Intercept qt mode enter event and raise event type.
 
         Parameters
         ----------
-        event : QEvent
-            the event. The event.type() is delivered.
+        event : ``QMouseEvent``
+            The intercepted event.
         """
         self.mouse_enterexit.emit(event.type())
 
