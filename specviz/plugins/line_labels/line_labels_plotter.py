@@ -6,7 +6,8 @@ from qtpy.QtWidgets import QMessageBox
 from astropy import units as u
 
 from .annotation import LineIDMarker, LineIDMarkerProxy
-from .linelist import LineList, WAVELENGTH_COLUMN, REDSHIFTED_WAVELENGTH_COLUMN, \
+from .linelist import LineList, WAVELENGTH_COLUMN, \
+    REDSHIFTED_WAVELENGTH_COLUMN, \
     MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 
