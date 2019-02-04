@@ -53,6 +53,21 @@ _linelists_cache = []
 
 
 def get_from_file(linelist_path, filename):
+    """
+    Gets a line liest from file
+
+    Parameters
+    ----------
+    linelist_path: str
+        File path to the line list file
+    filename: str
+        File name
+
+    Returns
+    ------
+    LineList
+        The linelist
+    """
 
     if filename.endswith('.yaml'):
         yaml_object = yaml.load(open(filename, 'r'))
@@ -72,9 +87,11 @@ def get_from_file(linelist_path, filename):
         return None
 
 
-# This should be called at the appropriate time when starting the
-# app, so the lists are cached for speedier access later on.
 def populate_linelists_cache():
+    """
+    This should be called at the appropriate time when starting the
+    app, so the lists are cached for speedier access later on.
+    """
     # we could benefit from a threaded approach here. But I couldn't
     # see the benefits, since the reading of even the largest line
     # list files takes a fraction of a second at most.
@@ -90,6 +107,19 @@ def populate_linelists_cache():
 
 
 def get_from_cache(index):
+    """
+    Returns a cached line list.
+
+    Parameters
+    ----------
+    index: int
+        The index in the cache.
+
+    Returns
+    -------
+    LineList
+        The line list
+    """
     return _linelists_cache[index]
 
 
@@ -198,6 +228,21 @@ class LineList(Table):
 
     @classmethod
     def read_list(cls, filename, yaml_object):
+        """
+        Read a line list from file, using its YAML descriptor
+
+        Parameters
+        ----------
+        filename: str
+            The file name
+        yaml_object: yaml object
+            The line list descriptor
+
+        Returns
+        -------
+        LineList
+            The line list
+        """
         names_list = []
         start_list = []
         end_list = []
@@ -405,11 +450,41 @@ class LineList(Table):
         return result
 
     def set_redshift(self, redshift, z_units):
+        """
+        Sets the redshift
+
+        Parameters
+        ----------
+        redshift: float
+            The redshift value
+        z_units: str
+            Either 'km/s' or 'z'
+
+        """
         self.redshift = redshift
         self.z_units = z_units
 
     def set_color(self, color):
+        """
+        Sets the color
+
+        Parameters
+        ----------
+        color: tuple
+            The color as a RGB tuple
+
+        """
         self.color = color
 
     def setHeight(self, height):
+        """
+        Sets the height where to display the markers of this
+        list on screen
+
+        Parameters
+        ----------
+        height: float
+            Between 0. (bottom) and 1. (top)
+
+        """
         self.height = height

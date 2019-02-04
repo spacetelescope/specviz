@@ -57,7 +57,7 @@ class LineLabelsPlotter(object):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             # for now, any object can be used as a zoom message.
-            self._zoom_event_buffer.put(1)
+            self._zoom_event_buffer._put(1)
 
     # These two slots below handle the logic associated with the
     # data_unit_changed and sigRangeChanged signals.
@@ -109,7 +109,7 @@ class LineLabelsPlotter(object):
             self._destroy_zoom_markers_thread()
 
     # Main method for drawing line labels on the plot surface.
-    def plot_linelists(self, table_views, panes, units, caller, **kwargs):
+    def _plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
         # If there is no valid plot item down to this point, then bail out (unfortunately)
         # because we cannot connect to the 'spectral_axis_unit_changed' signal.
@@ -217,12 +217,12 @@ class LineLabelsPlotter(object):
 
             # Detects when mouse entered the plot area but the thread is not processing yet.
             if event_type == QEvent.Enter and not is_processing:
-                self._zoom_markers_thread.start_processing()
+                self._zoom_markers_thread._start_processing()
                 return
 
             # Detects the complementary condition: mouse exited plot and thread still processing.
             if event_type == QEvent.Leave and is_processing:
-                self._zoom_markers_thread.stop_processing()
+                self._zoom_markers_thread._stop_processing()
 
 #--------  Private methods.
 
@@ -462,7 +462,7 @@ class LineLabelsPlotter(object):
 
     def _destroy_zoom_markers_thread(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
-            self._zoom_markers_thread.stop_processing()
+            self._zoom_markers_thread._stop_processing()
             self._zoom_markers_thread = None
 
 
@@ -498,12 +498,12 @@ class ZoomMarkersThread(QThread):
         self.is_processing = False
         self.is_zooming = False
 
-        self.zoom_end.connect(self.zoom_finished)
+        self.zoom_end.connect(self._zoom_finished)
 
     def run(self):
         while(self.is_processing):
 
-            value = self.buffer.get()
+            value = self.buffer._get()
             if value:
                 self.do_zoom.emit()
 
@@ -516,16 +516,16 @@ class ZoomMarkersThread(QThread):
             # one more, to prevent hiccups.
             QThread.msleep(10)
 
-    def zoom_finished(self):
+    def _zoom_finished(self):
         self.is_zooming = False
 
-    def start_processing(self):
+    def _start_processing(self):
         self.is_processing = True
         self.start()
 
-    def stop_processing(self):
+    def _stop_processing(self):
         self.is_processing = False
-        self.buffer.clear()
+        self.buffer._clear()
 
 
 class ZoomEventBuffer(object):
@@ -536,12 +536,12 @@ class ZoomEventBuffer(object):
         self.buffer = []
         self.mutex = QMutex()
 
-    def clear(self):
+    def _clear(self):
         self.mutex.lock()
         self.buffer = []
         self.mutex.unlock()
 
-    def put(self, value):
+    def _put(self, value):
         self.mutex.lock()
 
         # Don't let the buffer fill up too much.
@@ -553,7 +553,7 @@ class ZoomEventBuffer(object):
 
         self.mutex.unlock()
 
-    def get(self):
+    def _get(self):
         self.mutex.lock()
         if len(self.buffer) > 0:
             value = self.buffer.pop()

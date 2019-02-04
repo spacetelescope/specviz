@@ -28,6 +28,21 @@ class LineIDMarkerProxy(object):
         instantiated. This saves an enormous amount of time not only on the constructor
         phase, but also on the addItem and removeItem calls, which seem to generate in
         turn an inordinate amount of calls to connect() and disconnect().
+
+        Parameters:
+        ----------
+        x0,y0: float
+            Coordinates for the marker
+        marker: LineIDMarkerProxy
+            A marker proxy from which to build this marker
+        text: str
+            The marker text
+        tip: str
+            The marker tool tip
+        color: tuple (int, int, int)
+            The marker color in RGB values
+        orientation: str
+            The marker orientation on screen
     '''
 
     def __init__(self, x0, y0, proxy=None, text=None, tip="", color=(0, 0, 0),
@@ -66,6 +81,11 @@ class LineIDMarker(TextItem):
 
         Line1DMarker instances can only be built from instances of the
         matching Line1DMarkerProxy class, or from instances of itself.
+
+        Parameters:
+        ----------
+        marker: LineIDMarkerProxy
+            A marker proxy from which to build this marker
     '''
 
     def __init__(self, marker=None):
@@ -141,12 +161,16 @@ class LineIDMarker(TextItem):
         p.setPen(pen)
         p.drawPolygon(polygon)
 
-    # This accounts for the fact that the modified text item has an extra
-    # appendage (the marker) that makes its bounding rectangle be a bit higher
-    # than the text-only rectangle. This is called whenever erasing or
-    # redrawing a line label.
     def boundingRect(self):
+        """
+        This accounts for the fact that the modified text item has an extra
+        appendage (the marker) that makes its bounding rectangle be a bit higher
+        than the text-only rectangle. This is called whenever erasing or
+        redrawing a line label.
 
+        :return: QRectF
+            The bounding rectangle
+        """
         base_rect = super(LineIDMarker, self).boundingRect()
 
         if self._orientation == 'vertical':
