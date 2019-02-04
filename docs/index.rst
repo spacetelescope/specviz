@@ -54,4 +54,5 @@ Using SpecViz
    loader_wizard
    model_fitting
    statistics
+   developer
    line_labels
