@@ -6,6 +6,8 @@ from qtpy.QtGui import QStandardItemModel
 
 from .items import DataItem, PlotDataItem
 
+__all__ = ['DataListModel', 'PlotProxyModel']
+
 
 class DataListModel(QStandardItemModel):
     """
@@ -19,7 +21,7 @@ class DataListModel(QStandardItemModel):
     @property
     def items(self):
         """
-        Retrieves all the :class:`~specviz.core.items.DataItem`s in this model.
+        Retrieves all the :class:`~specviz.core.items.DataItem` objects in this model.
         """
         return [self.item(idx) for idx in range(self.rowCount())]
 
@@ -58,6 +60,19 @@ class DataListModel(QStandardItemModel):
             self.removeRow(item.index().row())
 
     def item_from_id(self, identifier):
+        """
+        Return a the data item corresponding to a unique identifier.
+
+        Parameters
+        ----------
+        identifier : :class:`~uuid.UUID`
+            Assigned id of the :class:`~specviz.core.items.DataItem` object.
+
+        Returns
+        -------
+        `~specviz.core.items.DataItem`
+            The corresponding data item.
+        """
         return next((x for x in self.items if x.identifier == identifier))
 
     def data(self, index, role=Qt.DisplayRole):
@@ -80,6 +95,10 @@ class DataListModel(QStandardItemModel):
         return super(DataListModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
+        """
+        This overrides Qt's setData and automatically updates the name of the
+        item if we are in editing mode.
+        """
         if not index.isValid():
             return False
 
@@ -92,6 +111,10 @@ class DataListModel(QStandardItemModel):
         return super(DataListModel, self).setData(index, value, role)
 
     def clear(self):
+        """
+        Remove all data items.
+
+        """
         self.beginResetModel()
 
         for item in self.items:
@@ -101,6 +124,19 @@ class DataListModel(QStandardItemModel):
 
 
 class PlotProxyModel(QSortFilterProxyModel):
+    """
+    A Qt proxy model that wraps the :class:`~specviz.core.models.DataListModel`
+    for use in :class:`~specviz.widgets.plotting.PlotWidget` rendering. Instances of
+    this class will be set as the source model for data views in the GUI, and
+    provides extra information from the internal
+    :class:`~specviz.core.items.PlotDataItem` objects used as wrappers for loaded
+    data items.
+
+    Parameters
+    ----------
+    source : :class:`~specviz.core.models.DataListModel`
+        The source data model instance the proxied by this model.
+    """
     def __init__(self, source=None, *args, **kwargs):
         super(PlotProxyModel, self).__init__(*args, **kwargs)
 
@@ -109,10 +145,28 @@ class PlotProxyModel(QSortFilterProxyModel):
 
     @property
     def items(self):
-        """Returns a list of :class:`PlotDataItems` in the proxy model."""
+        """
+        Returns a list of :class:`~specviz.core.items.PlotDataItem` instances in
+        the proxy model.
+        """
         return list(self._items.values())
 
     def item_from_index(self, index):
+        """
+        Given a ``QModelIndex`` object, retrieves the source
+        `~specviz.core.items.DataItem`, and from that, the proxy model's
+        `~specviz.core.items.PlotDataItem`.
+
+        Parameters
+        ----------
+        index : :class:`~qtpy.QtCore.QModelIndex`
+            The model index of the desired `~specviz.core.items.PlotDataItem`.
+
+        Returns
+        -------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The plot data item corresponding to the given index.
+        """
         index = self.mapToSource(index)
         data_item = self.sourceModel().data(index, role=Qt.UserRole)
 
@@ -127,6 +181,20 @@ class PlotProxyModel(QSortFilterProxyModel):
         return item
 
     def item_from_id(self, identifier):
+        """
+        Retrieves a `~specviz.core.items.PlotDataItem` from the UUID of a
+        `~specviz.core.items.DataItem`.
+
+        Parameters
+        ----------
+        identifier : :class:`uuid.UUID`
+            The UUID of the `~specviz.core.items.DataItem`.
+
+        Returns
+        -------
+        item : :class:`~specviz.core.items.PlotDataItem`
+            The `~specviz.core.items.PlotDataItem` corresponding to the UUID.
+        """
         data_item = self.sourceModel().item_from_id(identifier)
 
         if data_item.identifier not in self._items:
@@ -136,6 +204,22 @@ class PlotProxyModel(QSortFilterProxyModel):
         return item
 
     def data(self, index, role=Qt.DisplayRole):
+        """
+        Overrides Qt's `data` method to provide information based on the
+        specified Qt role from either plot data items or data items.
+
+        Parameters
+        ----------
+        index : :class:`qtpy.QtCore.QModelIndex`
+            The `DataListModel` model index for this item.
+        role : Qt role
+            The default role for the data retrieval of this item.
+
+        Returns
+        -------
+        various
+            The data requested for the particular role.
+        """
         if not index.isValid():
             return
 
@@ -155,7 +239,23 @@ class PlotProxyModel(QSortFilterProxyModel):
         return super(PlotProxyModel, self).data(index, role)
 
     def setData(self, index, value, role=Qt.EditRole):
+        """
+        Overrides the Qt `setData` method to define a value for a given role.
 
+        Parameters
+        ----------
+        index : :class:`qtpy.QtCore.QModelIndex`
+            The `DataListModel` model index for this item.
+        value : various
+            The value to set the data item for the particular role to.
+        role : Qt role
+            The default role for the data that will have its value set.
+
+        Returns
+        -------
+        bool
+            Whether the role was successfully set.
+        """
         if not index.isValid():
             return
 

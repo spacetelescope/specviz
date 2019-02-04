@@ -39,6 +39,12 @@ SPECVIZ_MODEL_FILE_FILTER = 'Specviz Model Files (*.smf)'
 
 @plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
 class ModelEditor(QWidget):
+    """
+    Qt widget for interacting with the model editor functionality in SpecViz.
+    This class is responsible for populating the values and handling user
+    interactions such as adding/removing models, accessing the arithmetic
+    editor and allows for parameter editing.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -103,6 +109,10 @@ class ModelEditor(QWidget):
 
     @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
     def on_new_model_triggered(self):
+        """
+        Create a new model based on user choice and add it to the display of
+        models in the editor.
+        """
         self._on_create_new_model()
 
     def _on_data_item_added(self, data_item):
@@ -525,6 +535,17 @@ class ModelEditor(QWidget):
 
 
 class ModelAdvancedSettingsDialog(QDialog):
+    """
+    Dialog to display an interface for editing the fitting performed when the
+    user attempts to fit the model to the selected data.
+
+    Parameters
+    ----------
+    model_editor : :class:`specviz.plugins.model_editor.ModelEditor`
+        The model editor instance to which these fitter settings will apply.
+    parent : :class:`qtpy.QtWidgets.QWidget`
+        The parent widget this class will be owned by.
+    """
     def __init__(self, model_editor, parent=None):
         super().__init__(parent)
 
@@ -593,6 +614,9 @@ class ModelAdvancedSettingsDialog(QDialog):
         return success
 
     def apply_settings(self):
+        """
+        Validates and applies the user settings for the fitter.
+        """
         if not self._validate_inputs():
             return
 
@@ -613,4 +637,7 @@ class ModelAdvancedSettingsDialog(QDialog):
         self.close()
 
     def cancel(self):
+        """
+        Closes the dialog without apply user settings to the fitter.
+        """
         self.close()

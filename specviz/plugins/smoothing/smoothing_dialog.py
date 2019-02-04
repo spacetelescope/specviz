@@ -44,7 +44,7 @@ class SmoothingDialog(QDialog):
     """
     Widget to handle user interactions with smoothing operations.
     Allows the user to select spectra, kernel type and kernel size.
-    It utilizes smoothing functions in `~specutils.manipulation.smoothing`.
+    It utilizes smoothing functions in `~specutils.manipulation`.
     Assigns the smoothing workload to a QTread instance.
     """
     def __init__(self, parent=None, *args, **kwargs):
@@ -78,6 +78,10 @@ class SmoothingDialog(QDialog):
 
     @plugin.tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
+        """
+        Triggers the display of the dialog where users may enter smoothing
+        options.
+        """
         # Update the current list of available data items
         self.model_items = self.hub.data_items
 
