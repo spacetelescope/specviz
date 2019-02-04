@@ -47,7 +47,8 @@ MARKER_COLUMN = 'marker'
 DEFAULT_HEIGHT = 0.75
 
 # columns to remove when exporting the plotted lines
-columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN, MARKER_COLUMN]
+columns_to_remove = [REDSHIFTED_WAVELENGTH_COLUMN, COLOR_COLUMN,
+                     HEIGHT_COLUMN, MARKER_COLUMN]
 
 _linelists_cache = []
 
@@ -71,7 +72,8 @@ def get_from_file(linelist_path, filename):
 
     if filename.endswith('.yaml'):
         yaml_object = yaml.load(open(filename, 'r'))
-        linelist_fullname = linelist_path + os.path.sep + yaml_object['filename']
+        linelist_fullname = linelist_path + os.path.sep + \
+                            yaml_object['filename']
 
         return LineList.read_list(linelist_fullname, yaml_object)
 
@@ -89,7 +91,7 @@ def get_from_file(linelist_path, filename):
 
 def populate_linelists_cache():
     """
-    This should be called at the appropriate time when starting the
+    Function that should be called at the appropriate time when starting the
     app, so the lists are cached for speedier access later on.
     """
     # we could benefit from a threaded approach here. But I couldn't
@@ -97,7 +99,7 @@ def populate_linelists_cache():
     # list files takes a fraction of a second at most.
     linelist_path = os.path.dirname(os.path.abspath(__file__))
     s = path.sep
-    linelist_path +=  s + '..' + s + '..' + s + 'data' + s + 'linelists' + s
+    linelist_path += s + '..' + s + '..' + s + 'data' + s + 'linelists' + s
 
     yaml_paths = glob.glob(linelist_path + '*.yaml')
 
@@ -145,7 +147,7 @@ def ingest(range):
         try:
             ll = linelist.extract_range(range)
             result.append(ll)
-        except UnitConversionError as err:
+        except UnitConversionError:
             pass
 
     return result
@@ -153,7 +155,8 @@ def ingest(range):
 
 def descriptions():
     """
-    Returns a python list with strings containing a description of each line list.
+    Returns a python list with strings containing a description of each line
+    list.
 
     Returns
     -------
@@ -169,7 +172,8 @@ def descriptions():
         w2 = linelist.wmax
         units = linelist[WAVELENGTH_COLUMN].unit
 
-        description = '{:15}  ({:>d},  [ {:.2f} - {:.2f} ] {})'.format(desc, nlines, w1, w2, units)
+        description = '{:15}({:>d},[{:.2f}-{:.2f}]{})'.format(desc, nlines,
+                                                              w1, w2, units)
 
         result.append(description)
 
@@ -267,10 +271,10 @@ class LineList(Table):
                 tooltip = yaml_object['columns'][k][TOOLTIP_COLUMN]
             tooltips_list.append(tooltip)
 
-        tab = ascii.read(filename, format = yaml_object['format'],
-                         names = names_list,
-                         col_starts = start_list,
-                         col_ends = end_list)
+        tab = ascii.read(filename, format=yaml_object['format'],
+                         names=names_list,
+                         col_starts=start_list,
+                         col_ends=end_list)
 
         for k, colname in enumerate(tab.columns):
             tab[colname].unit = units_list[k]
@@ -314,23 +318,27 @@ class LineList(Table):
             # to the raw Table instances.
 
             internal_table = linelist._table
-            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units, equivalencies=u.spectral())
+            internal_table[WAVELENGTH_COLUMN].convert_unit_to(target_units,
+                                                equivalencies=u.spectral())
 
             # add columns to hold color and height attributes
-            color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.color)
+            color_array = np.full(len(internal_table[WAVELENGTH_COLUMN]),
+                                  linelist.color)
             internal_table[COLOR_COLUMN] = color_array
-            height_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), linelist.height)
+            height_array = np.full(len(internal_table[WAVELENGTH_COLUMN]),
+                                   linelist.height)
             internal_table[HEIGHT_COLUMN] = height_array
 
             # add column to hold redshifted wavelength
-            f =  1. + linelist.redshift
+            f = 1. + linelist.redshift
             if linelist.z_units == 'km/s':
                 f = 1. + linelist.redshift / constants.c.value * 1000.
             z_wavelength = internal_table[WAVELENGTH_COLUMN] * f
             internal_table[REDSHIFTED_WAVELENGTH_COLUMN] = z_wavelength
 
             # add column to hold plot markers
-            marker_array = np.full(len(internal_table[WAVELENGTH_COLUMN]), None)
+            marker_array = np.full(len(internal_table[WAVELENGTH_COLUMN]),
+                                   None)
             internal_table[MARKER_COLUMN] = marker_array
 
             tables.append(internal_table)
@@ -371,7 +379,8 @@ class LineList(Table):
 
         # convert wavelenghts in line list to whatever
         # units the wavelength range is expressed in.
-        new_wavelengths = wavelengths.to(wmin.unit, equivalencies=u.spectral())
+        new_wavelengths = wavelengths.to(wmin.unit,
+                                         equivalencies=u.spectral())
 
         # add some leeway at the short and long end points.
         # For now, we extend both ends by 10%. This might
