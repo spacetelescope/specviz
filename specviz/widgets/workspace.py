@@ -21,6 +21,8 @@ from ..version import version as specviz_version
 
 from . import resources
 
+__all__ = ['Workspace']
+
 
 class Workspace(QMainWindow):
     """
@@ -28,10 +30,20 @@ class Workspace(QMainWindow):
     This includes the :class:`~qtpy.QtWidgets.QListView`, and the
     :class:`~qtpy.QtWigets.QMdiArea` widgets, and associated model information.
 
-    Signals
-    -------
-    window_activated : :class:`~qtpy.QtWidgets.QMainWindow`
-        Fired when a particular `QMainWindow` is activated.
+    Attributes
+    ----------
+    window_activated : ``qtpy.QtCore.Signal``
+        Fired when a particular ``QMainWindow`` is activated.
+    window_closed : ``qtpy.QtCore.Signal``
+        Fired when a sub window is closed.
+    current_item_changed : ``qtpy.QtCore.Signal``
+        Fired when the an item in the view has changed.
+    current_selected_changed: ``qtpy.QtCore.Signal``
+        Fired when the currently selected item in the view has changed.
+    plot_window_added : ``qtpy.QtCore.Signal``
+        Fired when a new plot window is added to the workspace.
+    plot_window_activated : ``qtpy.QtCore.Signal``
+        Fired when a plto window in the workspace has become active.
     """
     window_activated = Signal(QMainWindow)
     window_closed = Signal(QMainWindow)
@@ -112,6 +124,14 @@ class Workspace(QMainWindow):
         plugin.mount(self)
 
     def closeEvent(self, a0):
+        """
+        Overrides the Qt close event to also emit a signal.
+
+        Parameters
+        ----------
+        a0 : list
+            Close even arguments.
+        """
         self.window_closed.emit(self)
 
     @property
@@ -130,6 +150,9 @@ class Workspace(QMainWindow):
 
     @property
     def proxy_model(self):
+        """
+        The proxy model of the currently active plot window.
+        """
         if self.current_plot_window is not None:
             return self.current_plot_window.proxy_model
 
@@ -160,6 +183,9 @@ class Workspace(QMainWindow):
                 return self.current_plot_window.plot_widget.selected_region_pos
 
     def remove_current_window(self):
+        """
+        Removes the current plot window from the workspace.
+        """
         self.mdi_area.removeSubWindow(self.current_plot_window)
 
     @property
@@ -253,7 +279,7 @@ class Workspace(QMainWindow):
             # self.plugin_tab_widget.hide()
 
     def event(self, e):
-        """Scrap window events."""
+        """Scrape window events."""
         # When this window is in focus and selected, tell the application that
         # it's the active window
         if e.type() == QEvent.WindowActivate:
@@ -334,6 +360,9 @@ class Workspace(QMainWindow):
         # Create a dictionary mapping the registry loader names to the
         # qt-specified loader names
         def compose_filter_string(reader):
+            """
+            Generates the Qt loader string to pass to the file load dialog.
+            """
             return ' '.join(['*.{}'.format(y) for y in reader.extensions]
                             if reader.extensions is not None else '*')
 
@@ -358,6 +387,14 @@ class Workspace(QMainWindow):
         return filters, loader_name_map
 
     def display_load_data_error(self, exp):
+        """
+        Display error message box when attempting to load a data set.
+
+        Parameters
+        ----------
+        exp : str
+            Error text.
+        """
         message_box = QMessageBox()
         message_box.setText("Error loading data set.")
         message_box.setIcon(QMessageBox.Critical)
@@ -403,6 +440,9 @@ class Workspace(QMainWindow):
         # very well (it's untested, and probably does not match the attributes
         # of the Spectrum1D object). So, create some temporary export formats.
         def generic_export(spectrum, path):
+            """
+            Creates a temporary export format for use in writing out data.
+            """
             from astropy.table import QTable
             import astropy.units as u
 
@@ -501,8 +541,8 @@ class Workspace(QMainWindow):
 
         Returns
         -------
-        : :class:`~specviz.core.items.DataItem`
-            The `DataItem` instance that has been added to the internal model.
+        :class:`~specviz.core.items.DataItem`
+            The `~specviz.core.items.DataItem` instance that has been added to the internal model.
         """
         # In the case that the user has selected auto load, loop through every
         # available loader and choose the one that 1) the registry identifier
@@ -546,8 +586,9 @@ class Workspace(QMainWindow):
 
     def force_plot(self, data_item):
         """
-        Enabled checkbox and highlight row of the `PlotDataItem` representing
-        the provided data_item instance.
+        Enabled checkbox and highlight row of the
+        `~specviz.core.items.PlotDataItem` representing the provided data_item
+        instance.
 
         Parameters
         ----------

@@ -175,30 +175,37 @@ github_issues_url = 'https://github.com/{0}/issues/'.format(setup_cfg['github_pr
 
 # -- Turn on nitpicky mode for sphinx (to warn about references not found) ----
 #
-# nitpicky = True
-# nitpick_ignore = []
-#
-# Some warnings are impossible to suppress, and you can list specific references
-# that should be ignored in a nitpick-exceptions file which should be inside
-# the docs/ directory. The format of the file should be:
-#
-# <type> <class>
-#
-# for example:
-#
-# py:class astropy.io.votable.tree.Element
-# py:class astropy.io.votable.tree.SimpleElement
-# py:class astropy.io.votable.tree.SimpleElementWithContent
-#
-# Uncomment the following lines to enable the exceptions:
-#
-# for line in open('nitpick-exceptions'):
-#     if line.strip() == "" or line.startswith("#"):
-#         continue
-#     dtype, target = line.split(None, 1)
-#     target = target.strip()
-#     nitpick_ignore.append((dtype, six.u(target)))
+nitpicky = True
 
+nitpick_ignore = [('py:class', 'PyQt5.QtWidgets.QMainWindow'),
+                  ('py:class', 'PyQt5.QtWidgets.QWidget'),
+                  ('py:class', 'PyQt5.QtWidgets.QTextEdit'),
+                  ('py:class', 'PyQt5.QtWidgets.QMdiSubWindow'),
+                  ('py:class', 'PyQt5.QtWidgets.QTabBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QLabel'),
+                  ('py:class', 'PyQt5.QtWidgets.QComboBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QMessageBox'),
+                  ('py:class', 'PyQt5.QtWidgets.QDialog'),
+                  ('py:class', 'PyQt5.QtWidgets.QToolBar'),
+                  ('py:class', 'PyQt5.QtWidgets.QStyledItemDelegate'),
+                  ('py:class', 'PyQt5.QtWidgets.QListView'),
+                  ('py:class', 'PyQt5.QtCore.QMimeData'),
+                  ('py:class', 'PyQt5.QtCore.QAbstractListModel'),
+                  ('py:class', 'PyQt5.QtCore.QAbstractTableModel'),
+                  ('py:class', 'PyQt5.QtCore.QThread'),
+                  ('py:class', 'PyQt5.QtCore.QSortFilterProxyModel'),
+                  ('py:obj', 'PyQt5.QtGui.QIcon'),
+                  ('py:class', 'PyQt5.QtGui.QStandardItemModel'),
+                  ('py:class', 'PyQt5.QtGui.QStandardItem'),
+                  ('py:class', 'qtpy.QtGui.QMouseEvent'),
+                  ('py:class', 'qtpy.QtCore.QModelIndex'),
+                  ('py:class', 'qtpy.QtWigets.QMdiArea'),
+                  ('py:class', 'qtpy.QtWidgets.QListView'),
+                  ('py:class', 'pyqtgraph.widgets.PlotWidget.PlotWidget'),
+                  ('py:class', 'pyqtgraph.graphicsItems.LinearRegionItem.LinearRegionItem'),
+                  ('py:class', 'pyqtgraph.graphicsItems.TextItem.TextItem'),
+                  ('py:class', 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem')]
 
 # add custom intersphinx
 intersphinx_mapping['specutils'] = ('https://specutils.readthedocs.io/en/latest/', None)
+intersphinx_mapping['pyqtgraph'] = ('http://www.pyqtgraph.org/documentation/', None)

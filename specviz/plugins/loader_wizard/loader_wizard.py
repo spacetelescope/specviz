@@ -31,11 +31,15 @@ from ...core.plugin import plugin
 from .parse_initial_file import parse_ascii, simplify_arrays
 
 
-def represent_dict_order(self, data):
+def _represent_dict_order(self, data):
+    """
+    Define yaml-based dictionary representation for serialization. Used to
+    preserve order. Used only for yaml serialization.
+    """
     return self.represent_mapping('tag:yaml.org,2002:map', data.items())
 
 
-yaml.add_representer(OrderedDict, represent_dict_order)
+yaml.add_representer(OrderedDict, _represent_dict_order)
 
 # We list here the units that appear in the pre-defined list of units for each
 # component. If a unit is not found, 'Custom' will be selected and a field will
@@ -70,6 +74,16 @@ class OutputPreviewWidget(QWidget):
         self.text_editor.setReadOnly(True)
 
     def set_text(self, text):
+        """
+        Set the text in the loader preview widget. This will display the text that
+        will be saved to the output loader python file.
+
+        Parameters
+        ----------
+        text: str
+            Text that will be saved to the final loader file
+        """
+
         self.text_editor.setPlainText(text)
 
 
@@ -115,18 +129,30 @@ class ComponentHelper(object):
 
     @property
     def component_index(self):
+        """
+        Returns the `ComponentHelper.combo_component.currentIndex` property.
+        """
         return self.combo_component.currentIndex()
 
     @property
     def component_name(self):
+        """
+        Returns the `ComponentHelper.combo_component.currentData` property.
+        """
         return self.combo_component.currentData()
 
     @property
     def component(self):
+        """
+        Returns the `ComponentHelper.combo_component.currentData` property.
+        """
         return self.combo_component.currentData()
 
     @property
     def unit(self):
+        """
+        Returns the text for the defined `ComponentHelper` unit.
+        """
         combo_text = self.combo_units.currentText()
         if combo_text == 'Custom':
             return self.custom_units.text()
@@ -135,6 +161,10 @@ class ComponentHelper(object):
 
     @property
     def data(self):
+        """
+        Returns the `CompnentHelper` dataset. If no dataset is defined,
+        `None` is returned.
+        """
         if self.dataset is None or self.component is None:
             return None
         else:
@@ -142,12 +172,29 @@ class ComponentHelper(object):
 
     @property
     def hdu_index(self):
+        """
+        Returns the `ComponentHelper.dataset` hdu index. If no dataset or
+        hdu is defined `None` is returned.
+        """
         if self.dataset is None or self.component is None:
             return None
         else:
             return self.dataset[self.component]['index']
 
     def dataset_update(self, new_dataset, is_enabled=True):
+        """
+        Update the `ComponentHelper.dataset` attribute and
+        additional component settings if a new dataset is
+        provided.
+
+        Parameters
+        ----------
+        new_dataset: dict
+            Dictionary containing the data, data dimension, data shape, unit and index
+
+        is_enabled: bool
+            Boolean to set enabled for combo_component
+        """
         self.dataset = new_dataset
         self._dataset_changed(is_enabled=is_enabled)
         self._set_units()
@@ -374,7 +421,14 @@ class BaseImportWizard(QDialog):
 
 
     def set_uncertainties_enabled(self, enabled):
+        """
+        Set the uncertainity components to enabled/not enabled.
 
+        Parameters
+        ----------
+        enabled: bool
+            Enable uncertainity components.
+        """
         self.combo_uncertainty_component.blockSignals(not enabled)
         self.combo_uncertainty_type.blockSignals(not enabled)
 
@@ -384,7 +438,14 @@ class BaseImportWizard(QDialog):
         self._update_preview()
 
     def set_mask_enabled(self, enabled):
+        """
+        Set the mask components to enabled/not enabled.
 
+        Parameters
+        ----------
+        enabled: bool
+            Enable mask components.
+        """
         self.combo_mask_component.blockSignals(not enabled)
         self.combo_bit_mask_definition.blockSignals(not enabled)
 
@@ -394,9 +455,15 @@ class BaseImportWizard(QDialog):
 
     @property
     def uncertainties_enabled(self):
+        """
+        Return the boolean for `ComponentHelper.bool_uncertainties.isChecked`.
+        """
         return self.bool_uncertainties.isChecked()
 
-    def accept(self, event=None):
+    def accept(self, *args, **kwargs):
+        """
+        Hides the modal dialog and sets the result code to Accepted.
+        """
         super(BaseImportWizard, self).accept()
 
     def _update_data(self):
@@ -453,13 +520,32 @@ class BaseImportWizard(QDialog):
         self.output_preview.show()
 
     def as_new_loader_dict(self):
+        """
+        Convert the current configuration to a dictionary
+        that can then be serialized to a Python file.
+        """
         raise NotImplementedError()
 
     def get_template(self):
+        """
+        Return path for desired loader template. Implemented in subclass.
+        """
         raise NotImplementedError()
 
     def as_new_loader(self, name=None):
+        """
+        Retrieve template file text and fill with `BaseImportWizard.new_loader_dict`.
 
+        Parameters
+        ----------
+        name: str
+            loader name
+
+        Returns
+        -------
+        : str
+            The final loader string.
+        """
         self.as_new_loader_dict(name=name)
 
         template_path = self.get_template()
@@ -478,6 +564,15 @@ class BaseImportWizard(QDialog):
         self.ui.label_unit_status.setStyleSheet('')
 
     def save_loader_check(self):
+        """
+        Check wizard for valid units and loader name before saving loader to file.
+
+        Returns
+        -------
+        bool
+            `True` if units are valid and loader name has been provided,
+            otherwise `False`
+        """
         if (self.helper_disp.combo_units.currentText() == "Custom" and self.helper_disp.label_status.text() != 'Valid units') or \
                 (self.helper_data.combo_units.currentText() == "Custom" and self.helper_data.label_status.text() != 'Valid units'):
             self.ui.label_unit_status.setText('Found invalid units')
@@ -529,6 +624,17 @@ class BaseImportWizard(QDialog):
         self.save_register_new_loader(filename)
 
     def save_register_new_loader(self, filename):
+        """
+        Save and register new loader file to specutils loader directory.
+        If a loader with the current name already exists it will be
+        deleted.
+
+        Parameters
+        ----------
+        filename: str
+          Loader filename. If filename does not end in ".py", ".py" will be appended
+          to the end of the string.
+        """
         filename = "{}.py".format(filename) if not filename.endswith(".py") else filename
 
         string = self.as_new_loader()
@@ -554,16 +660,25 @@ class BaseImportWizard(QDialog):
 # --------- Helper methods for subclasses ------------
 
     def new_loader_dispersion(self):
+        """
+        Add the disperions key/value pairs to the new_loader_dict.
+        """
         self.new_loader_dict['dispersion_hdu'] = self.helper_disp.hdu_index
         self.new_loader_dict['dispersion_col'] = self.helper_disp.component_name
         self.new_loader_dict['dispersion_unit'] = self.helper_disp.unit
 
     def new_loader_data(self):
+        """
+        Add the data key/value pairs to the new_loader_dict.
+        """
         self.new_loader_dict['data_hdu'] = self.helper_data.hdu_index
         self.new_loader_dict['data_col'] = self.helper_data.component_name
         self.new_loader_dict['data_unit'] = self.helper_data.unit
 
     def new_loader_uncertainty(self):
+        """
+        Add the uncertainty key/value pairs to the new_loader_dict.
+        """
         if self.ui.bool_uncertainties.isChecked():
             self.new_loader_dict['uncertainty_hdu'] = self.helper_unce.hdu_index
             self.new_loader_dict['uncertainty_col'] = self.helper_unce.component_name
@@ -614,10 +729,24 @@ class ASCIIImportWizard(BaseImportWizard):
 
 
     def add_extension(self):
+        """
+        Extension type to add to the new_loader_dict. This value will be used in the
+        extensions field of the final loader decorator.
+        """
         self.new_loader_dict['extension'] = ['dat']
 
 
     def get_template(self):
+        """
+        Provide the appropriate template according to options chosen in the wizard.
+        Currently their are different templates depending on uncertainity. This
+        method is a candidate for refactoring.
+
+        Returns
+        -------
+        str:
+            string containing the path to the requested template file.
+        """
         template_string = "new_loader_"
 
         if "uncertainty_hdu" in self.new_loader_dict.keys():
@@ -637,9 +766,15 @@ class ASCIIImportWizard(BaseImportWizard):
 
 @plugin("Loader Wizard")
 class LoaderWizard(QDialog):
+    """
+    Loader wizard dialog. Handles the rendering and parsing of user input
+    through the SpecViz gui.
+    """
     @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
     def open_wizard(self):
-
+        """
+        Opens loader wizard plugin interface.
+        """
         filters = ["FITS, ECSV, text (*.fits *.ecsv *.dat *.txt *.*)"]
         filename, file_filter = compat.getopenfilename(filters=";;".join(filters))
 

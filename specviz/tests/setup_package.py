@@ -7,5 +7,9 @@ paths = ['coveragerc',
          ]
 
 def get_package_data():
+    """
+    Function to return the a mapping of defining the paths for this package's
+    tests.
+    """
     return {
         _ASTROPY_PACKAGE_NAME_ + '.tests': paths}

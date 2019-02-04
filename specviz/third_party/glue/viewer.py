@@ -40,7 +40,9 @@ class SpecvizViewerState(ViewerState):
     pass
 
 class SpecvizLayerState(LayerState):
+    """
 
+    """
     color = CallbackProperty(docstring='The color used to display the data')
     alpha = CallbackProperty(docstring='The transparency used to display the data')
     linewidth = CallbackProperty(1, docstring='The width of the line for the data')
@@ -73,7 +75,9 @@ class SpecvizLayerState(LayerState):
 
 
 class SpecvizLayerArtist(LayerArtist):
+    """
 
+    """
     _layer_state_cls = SpecvizLayerState
 
     def __init__(self, specviz_window, *args, **kwargs):
@@ -95,14 +99,23 @@ class SpecvizLayerArtist(LayerArtist):
         self.data_item = None
 
     def remove(self):
+        """
+
+        """
         if self.data_item is not None:
             self.specviz_window.model.remove_data(self.data_item.identifier)
             self.data_item = None
 
     def clear(self):
+        """
+
+        """
         self.remove()
 
     def redraw(self):
+        """
+
+        """
         pass
 
     @property
@@ -116,6 +129,13 @@ class SpecvizLayerArtist(LayerArtist):
             return self.plot_widget.proxy_model.item_from_id(self.data_item.identifier)
 
     def update_visual(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        args
+        kwargs
+        """
         plot_data_item = self.plot_data_item
         if plot_data_item is not None:
             plot_data_item.visible = self.state.visible
@@ -124,7 +144,17 @@ class SpecvizLayerArtist(LayerArtist):
             plot_data_item.color = self.state.layer.style.color
 
     def update(self, *args, **kwargs):
+        """
 
+        Parameters
+        ----------
+        args
+        kwargs
+
+        Returns
+        -------
+
+        """
         if self.state.layer is None or self.state.attribute is None:
             return
 
@@ -148,7 +178,9 @@ class SpecvizLayerArtist(LayerArtist):
 
 
 class SpecvizViewerStateWidget(QWidget):
+    """
 
+    """
     def __init__(self, viewer_state=None, session=None):
 
         super(SpecvizViewerStateWidget, self).__init__()
@@ -161,7 +193,9 @@ class SpecvizViewerStateWidget(QWidget):
 
 
 class SpecvizLayerStateWidget(QWidget):
+    """
 
+    """
     def __init__(self, layer_artist):
 
         super(SpecvizLayerStateWidget, self).__init__()
@@ -175,7 +209,9 @@ class SpecvizLayerStateWidget(QWidget):
 
 
 class SpecvizDataViewer(DataViewer):
+    """
 
+    """
     LABEL = 'Specviz viewer'
     _state_cls = SpecvizViewerState
     _options_cls = SpecvizViewerStateWidget
@@ -200,6 +236,16 @@ class SpecvizDataViewer(DataViewer):
         self.setCentralWidget(self.current_workspace)
 
     def add_data(self, data):
+        """
+
+        Parameters
+        ----------
+        data
+
+        Returns
+        -------
+
+        """
         if not glue_data_has_spectral_axis(data):
             QMessageBox.critical(self, "Error", "Data is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
@@ -207,6 +253,16 @@ class SpecvizDataViewer(DataViewer):
         return super(SpecvizDataViewer, self).add_data(data)
 
     def add_subset(self, subset):
+        """
+
+        Parameters
+        ----------
+        subset
+
+        Returns
+        -------
+
+        """
         if not glue_data_has_spectral_axis(subset):
             QMessageBox.critical(self, "Error", "Subset is not a 1D spectrum",
                                  buttons=QMessageBox.Ok)
@@ -214,7 +270,22 @@ class SpecvizDataViewer(DataViewer):
         return super(SpecvizDataViewer, self).add_subset(subset)
 
     def get_layer_artist(self, cls, layer=None, layer_state=None):
+        """
+
+        Parameters
+        ----------
+        cls
+        layer
+        layer_state
+
+        Returns
+        -------
+
+        """
         return cls(self.current_workspace, self.state, layer=layer, layer_state=layer_state)
 
     def initialize_toolbar(self):
+        """
+
+        """
         pass

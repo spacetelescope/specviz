@@ -18,6 +18,20 @@ UNIT_FIXES = {
 
 
 def parse_unit(unit):
+    """
+    Parse unit input into an :class:`Astropy.units.Unit` object.
+
+
+    Parameters
+    ----------
+    unit : str or :class:`Astropy.units.Unit`
+        Input unit. If not a string, may already be in :class:`Astropy.units.Unit`.
+
+    Returns
+    -------
+    : :class:`Astropy.units.Unit`
+        The interpreted Astropy unit.
+    """
     if not isinstance(unit, u.Unit):
 
         if isinstance(unit, u.UnrecognizedUnit):
@@ -57,7 +71,23 @@ def _parse(filename, table=None):
 
 
 def parse_ascii(filename, read_input=None):
+    """
+    Read file into `Astropy.table.Table` using `Table.read`.  Additional
+    if some read_input is provided, split this into input parameters
+    for the `Table.read` call.
 
+    Parameters
+    ----------
+    filename: str
+        Input table filename.
+    read_input: str
+        Input string containing input parameters.
+
+    Returns
+    -------
+    : dict
+        Parsed dataset dictionary.
+    """
     if read_input == None:
         try:
             itable = Table.read(filename)
@@ -80,7 +110,20 @@ def parse_ascii(filename, read_input=None):
 
 
 def simplify_arrays(dataset):
+    """
+    Loop through datasets and reduce length zero axes.
 
+    Parameters
+    ----------
+    dataset : dict
+        Dictionary containing dataset information.
+
+    Returns
+    -------
+    : dataset
+        Reduced dataset dictionary.
+
+    """
     for component in dataset.values():
         if isinstance(component['data'], WCS):
             continue

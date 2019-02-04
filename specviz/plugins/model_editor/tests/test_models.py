@@ -11,6 +11,17 @@ from specviz.core.hub import Hub
 
 
 def fill_in_models(model_editor, value_dict):
+    """
+    Adds model parameters to the model item instance.
+
+    Parameters
+    ----------
+    model_editor : :class:`specviz.plugins.model_editor.model_editor.ModelEditor`
+        The model editor plugin instance.
+    value_dict : dict
+        Dictionary mapping the name of a model to a dictionary containing
+        parameter information.
+    """
     for model_item in model_editor.items:
         name = model_item.text()
         if name not in value_dict.keys():
