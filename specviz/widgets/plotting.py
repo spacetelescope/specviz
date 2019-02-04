@@ -87,6 +87,15 @@ class PlotWindow(QMdiSubWindow):
         return self.plot_widget.proxy_model
 
     def closeEvent(self, event):
+        """
+        Called by qt when window closes, upon which
+        it emits the window_removed signal.
+
+        Parameters
+        ----------
+        event :
+            ignored in this implementation.
+        """
         self.window_removed.emit()
 
     def _on_current_item_changed(self, current_idx, prev_idx):
