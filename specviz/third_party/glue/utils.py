@@ -22,17 +22,53 @@ class SpectralCoordinates(Coordinates):
 
     @property
     def spectral_axis(self):
+        """
+
+        Returns
+        -------
+
+        """
         return self._values
 
     def world2pixel(self, *world):
+        """
+
+        Parameters
+        ----------
+        world
+
+        Returns
+        -------
+
+        """
         return tuple(np.interp(world, self._values.value, self._index,
                                left=np.nan, right=np.nan))
 
     def pixel2world(self, *pixel):
+        """
+
+        Parameters
+        ----------
+        pixel
+
+        Returns
+        -------
+
+        """
         return tuple(np.interp(pixel, self._index, self._values.value,
                                left=np.nan, right=np.nan))
 
     def dependent_axes(self, axis):
+        """
+
+        Parameters
+        ----------
+        axis
+
+        Returns
+        -------
+
+        """
         return (axis,)
 
 

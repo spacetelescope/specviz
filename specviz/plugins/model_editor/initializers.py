@@ -125,7 +125,7 @@ class _LineProfile1DInitializer(object):
         self._factor = factor
 
     def _set_width_attribute(self, instance, name, fwhm):
-        '''
+        """
         Each line profile class has its own way of naming
         and defining the width parameter. Subclasses should
         override this method to conform to the specific
@@ -141,7 +141,7 @@ class _LineProfile1DInitializer(object):
 
         fwhm : float
             FWHM
-        '''
+        """
         raise NotImplementedError
 
     def initialize(self, instance, x, y):

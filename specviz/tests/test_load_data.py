@@ -49,6 +49,14 @@ JWST_DATA_PATHS = [urljoin(BOX_PREFIX, name) for name in JWST_DATA_FILES]
 
 
 def load_jwst_data(url):
+    """
+    Loads the set of jwst test data at the give url.
+
+    Parameters
+    ----------
+    url : str
+        URL of the jwst test data.
+    """
     try:
         spec_app = Application([], skip_splash=True)
         data = spec_app.current_workspace.load_data(url)
@@ -59,6 +67,16 @@ def load_jwst_data(url):
 
 
 def run_specviz_subprocess(q, url):
+    """
+    Encapsulates the function calls in a single specviz test process.
+
+    Parameters
+    ----------
+    q : :class:`multiprocessing.queues.Queue`
+        The process queue into which this process will be placed.
+    url : str
+        The url of the data.
+    """
     try:
         load_jwst_data(url)
     except Exception:

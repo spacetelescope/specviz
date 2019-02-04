@@ -16,7 +16,12 @@ from ..viewer import SpecvizDataViewer
 class TestSpecvizDataViewer(object):
 
     def setup_method(self, method):
+        """
 
+        Parameters
+        ----------
+        method
+        """
         # Set up simple spectral WCS
         wcs_1d = WCS(naxis=1)
         wcs_1d.wcs.ctype = ['VELO-LSR']

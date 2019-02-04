@@ -6,6 +6,8 @@ from ..core.annotation import LineIDMarker, LineIDMarkerProxy
 from ..core.linelist import LineList, \
     REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
+__all__ = ['LineLabelsPlotter', 'ZoomMarkersThread', 'ZoomEventBuffer']
+
 
 class LineLabelsPlotter(object):
     """
@@ -33,6 +35,9 @@ class LineLabelsPlotter(object):
 
     # Buffering of zoom events.
     def process_zoom_signal(self):
+        """
+
+        """
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             # for now, any object can be used as a zoom message.
@@ -62,7 +67,20 @@ class LineLabelsPlotter(object):
 
     # Main method for drawing line labels on the plot surface.
     def plot_linelists(self, table_views, panes, units, caller, **kwargs):
+        """
 
+        Parameters
+        ----------
+        table_views
+        panes
+        units
+        caller
+        kwargs
+
+        Returns
+        -------
+
+        """
         if caller != self._caller or not self._caller._is_selected:
             return
 
@@ -405,7 +423,9 @@ class LineLabelsPlotter(object):
 
 
 class ZoomMarkersThread(QThread):
+    """
 
+    """
     # Notice that we can't use the dispatch mechanism to manage the zoom
     # thread and its signal-slot dependencies. Something in the dispatch
     # code messes up with the timing relationships in the GUI and secondary
@@ -426,6 +446,9 @@ class ZoomMarkersThread(QThread):
         self.zoom_end.connect(self.zoom_finished)
 
     def run(self):
+        """
+
+        """
         while(self.is_processing):
 
             value = self.buffer.get()
@@ -442,19 +465,30 @@ class ZoomMarkersThread(QThread):
             QThread.msleep(10)
 
     def zoom_finished(self):
+        """
+
+        """
         self.is_zooming = False
 
     def start_processing(self):
+        """
+
+        """
         self.is_processing = True
         self.start()
 
     def stop_processing(self):
+        """
+
+        """
         self.is_processing = False
         self.buffer.clear()
 
 
 class ZoomEventBuffer(object):
+    """
 
+    """
     # A mutex-lockable buffer that stores zoom request events.
 
     def __init__(self):
@@ -462,11 +496,20 @@ class ZoomEventBuffer(object):
         self.mutex = QMutex()
 
     def clear(self):
+        """
+
+        """
         self.mutex.lock()
         self.buffer = []
         self.mutex.unlock()
 
     def put(self, value):
+        """
+
+        Parameters
+        ----------
+        value
+        """
         self.mutex.lock()
 
         # Don't let the buffer fill up too much.
@@ -479,6 +522,12 @@ class ZoomEventBuffer(object):
         self.mutex.unlock()
 
     def get(self):
+        """
+
+        Returns
+        -------
+
+        """
         self.mutex.lock()
         if len(self.buffer) > 0:
             value = self.buffer.pop()

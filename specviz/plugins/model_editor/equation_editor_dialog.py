@@ -11,6 +11,18 @@ import astropy.units as u
 
 
 class ModelEquationEditorDialog(QDialog):
+    """
+    Interactive dialog for defining and manipulating equations dealing with
+    arithmetic of models. This dialog sports as text area what users may
+    insert references to models in arithemtic equations. The equation is
+    checked for whether it can actually be performed, and the user is notified
+    via warnings in the dialog if the arithmetic is ill-formed.
+
+    Parameters
+    ----------
+    model : :class:`specviz.plugins.model_editor.models.ModelFittingModel`
+        The internel model fitting model containing the stored model items.
+    """
     def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         loadUi(os.path.abspath(
@@ -36,6 +48,14 @@ class ModelEquationEditorDialog(QDialog):
 
     @property
     def model(self):
+        """
+        Reference to the stored model fitting model.
+
+        Returns
+        -------
+        :class:`specviz.plugins.model_editor.models.ModelFittingModel`
+            The model fitting model for this instance of the model editor.
+        """
         return self._model_editor_model
 
     @model.setter
@@ -43,6 +63,10 @@ class ModelEquationEditorDialog(QDialog):
         self._model_editor_model = value
 
     def exec_(self):
+        """
+        Populate the list of models in the equation editor dialog and show
+        the dialog to the user.
+        """
         # Populate the drop down list with the model names
         self.model_list_combo_box.clear()
         self.model_list_combo_box.addItems(self.model.compose_fittable_models().keys())

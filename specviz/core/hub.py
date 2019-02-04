@@ -5,8 +5,18 @@ from specutils.spectra.spectral_region import SpectralRegion
 
 from .items import DataItem
 
+__all__ = ['Hub']
 
 class Hub:
+    """
+    API for accessing the core specviz functions. This acts as a centralized
+    abstracted interface and is automatically added to plugin defintions.
+
+    Parameters
+    ----------
+    workspace : :class:`~specviz.widgets.workspace.Workspace`
+        The workspace this hub will provide an abstracted interface for.
+    """
     def __init__(self, workspace, *args, **kwargs):
         self._workspace = workspace
 
