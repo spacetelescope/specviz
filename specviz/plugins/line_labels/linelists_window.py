@@ -2,33 +2,34 @@
 Define all the line list-based windows and dialogs
 """
 import os
+import sys
 
-from qtpy.QtWidgets import (QWidget, QGridLayout, QHBoxLayout, QLabel,
-                            QPushButton, QTabWidget, QVBoxLayout, QSpacerItem,
-                            QSizePolicy, QToolBar, QLineEdit, QTabBar,
-                            QAction, QTableView, QMainWindow, QHeaderView,
-                            QAbstractItemView, QLayout, QTextBrowser, QComboBox,
-                            QDialog, QErrorMessage)
-from qtpy.QtGui import QIcon, QColor, QStandardItem, \
-                       QDoubleValidator, QFont
-from qtpy.QtCore import (Signal, QSize, QCoreApplication, QMetaObject, Qt,
-                         QAbstractTableModel, QVariant, QSortFilterProxyModel)
+from qtpy.QtWidgets import (QWidget, QTabWidget, QVBoxLayout, QTabBar,
+                            QTableView, QMainWindow, QAbstractItemView, QStackedLayout,
+                            QLayout, QGridLayout, QBoxLayout, QTextBrowser, QComboBox,
+                            QDialog, QErrorMessage, QSizePolicy)
+from qtpy.QtGui import QColor, QStandardItem, QDoubleValidator, QFont, QIcon
+from qtpy.QtCore import (Qt, Signal, QAbstractTableModel, QVariant, QSortFilterProxyModel)
 from qtpy import compat
 from qtpy.uic import loadUi
 
+import pyqtgraph as pg
+
+from astropy import units as u
 from astropy.units import Quantity
 from astropy.units.core import UnitConversionError
 from astropy.io import ascii
 
-from ..core import linelist
-from ..core.linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
-from ..core.linelist import columns_to_remove
+from ...core.plugin import plugin
 
-__all__ = ['ClosableMainWindow', 'LineListsWindow', 'LineListPane',
-           'PlottedLinesPane', 'LineListTableModel', 'SortModel']
+from . import linelist
+from .linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
+from .linelist import columns_to_remove
+from .line_labels_plotter import LineLabelsPlotter
+
 
 ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                         '..', 'data', 'qt', 'resources'))
+                                         '..', '..', 'data', 'resources'))
 
 # We need our own mapping because the list with color names returned by
 # QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
@@ -47,9 +48,20 @@ ID_COLORS = {
 PLOTTED = "Plotted"
 NLINES_WARN = 150
 
+# Commonly used spectral axis units have custom formats
+# for displaying values in the dialog text fields.
+units_formats = {
+    "Angstrom": "%.2f",
+    "micron": "%.4f",
+    "cm": "%.4g",
+    "m": "%.4g",
+    "Hz": "%.4g",
+    "eV": "%.3f"
+}
+
 # Function that creates one single tabbed pane with one single view of a line list.
 
-def _createLineListPane(linelist, table_model, caller):
+def _create_line_list_pane(linelist, table_model, caller):
 
     table_view = QTableView()
 
@@ -60,7 +72,7 @@ def _createLineListPane(linelist, table_model, caller):
     # what would be the approach users will favor. We might add a toggle
     # that users can set/reset depending on their preferences.
     table_view.setSortingEnabled(False)
-    sort_proxy = SortModel(table_model.getName())
+    sort_proxy = SortModel(table_model.get_name())
     sort_proxy.setSourceModel(table_model)
 
     table_view.setModel(sort_proxy)
@@ -88,108 +100,145 @@ def _createLineListPane(linelist, table_model, caller):
 
     return pane, table_view
 
+# line list widget storage.
+linelists_windows = {}
 
-# The line list window must be a full fledged window and not a dialog.
-# Dialogs do not support things like menu bars and central widgets.
-# They are also a bit cumbersome to use when modal behavior is of no
-# importance. Lets try to treat this as a window for now, and see how
-# it goes.
+@plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+class LineListsPlugin(QWidget):
+    """
+    Top class for the line labels plugin. This is the class that handles
+    the line lists window, where the user manages and interacts with the
+    line lists.
 
-class ClosableMainWindow(QMainWindow):
+    This class acts as a interface adapter of sorts for the actual class
+    that does the work, :class:`~specutils.LineListsWindow`.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        panel_layout = QStackedLayout()
+        panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
+        panel_layout.setContentsMargins (0,0,0,0)
+        self.setLayout(panel_layout)
+
+        # cache the line lists for speedier access
+        linelist.populate_linelists_cache()
+
+        self.hub.workspace.mdi_area.subWindowActivated.connect(self._plot_selected)
+
+    # line list widgets for the plugin bar are associated with their corresponding
+    # plot widget via a key built from the plot widget instance hash. References are
+    # kept in a dict for management purposes, but the actual widgets are kept in a
+    # stacked layout. This method provides the logic to select the appropriate line
+    # list widget and display it, upon selection of the subwindow that contains the
+    # plot widget.
+    def _plot_selected(self):
+        if hasattr(self.hub, "plot_widget") and self.hub.plot_widget:
+            key = self.hub.plot_widget.__hash__()
+            if key not in linelists_windows:
+                # build a new line list window and display it.
+                linelists_windows[key] = LineListsWindow(self.hub, parent=self)
+
+                self.layout().addWidget(linelists_windows[key])
+                self.layout().setCurrentIndex(self.layout().count()-1)
+
+            else:
+                # re-display an existing line list window.
+                index = self.layout().indexOf(linelists_windows[key])
+                self.layout().setCurrentIndex(index)
+
+class LineListsWindow(QWidget):
     """
-    # This class exists just to ensure that a window closing event
-    # that is generated by the OS itself, gets properly handled.
-    def __init__(self, plot_window, parent=None):
-        super(ClosableMainWindow, self).__init__()
-        self.plot_window = plot_window
+    The actual line lists widget.
 
-    def closeEvent(self, event):
-        """
+    Parameters
+    ----------
+    hub : :class:`~specviz.core.Hub`
+        The Hub object for the plugin.
 
-        Parameters
-        ----------
-        event
-        """
-        self.plot_window.dismiss_linelists_window.emit(False)
-
-
-class LineListsWindow(ClosableMainWindow):
+    Signals
+    -------
+    erase_linelabels : Signal
+        Fired when a line list is removed by user action.
+    dismiss_linelists_window : Signal
+        Fired when the entire widget is dismissed. This happens only
+        when the corresponding plot widget is dismissed by user action.
     """
 
-    """
-    def __init__(self, plot_window, parent=None):
-        super(LineListsWindow, self).__init__(plot_window)
+    erase_linelabels = Signal(pg.PlotWidget)
+    dismiss_linelists_window = Signal()
 
-        self.plot_window = plot_window
+    def __init__(self, hub, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.hub = hub
 
         self.wave_range = (None, None)
 
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_window.ui"), self)
-        self.setWindowTitle(str(self.plot_window._title))
 
         # QtDesigner can't add a combo box to a tool bar...
         self.line_list_selector = QComboBox()
+        self.line_list_selector.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.line_list_selector.setMinimumWidth(230)
         self.line_list_selector.setToolTip("Select line list from internal library")
-        self.mainToolBar.addWidget(self.line_list_selector)
+        self.main_toolbar.addWidget(self.line_list_selector)
 
         # QtDesigner creates tabbed widgets with 2 tabs, and doesn't allow
         # removing then in the designer itself. Remove in here then.
-        while self.tabWidget.count() > 0:
-            self.tabWidget.removeTab(0)
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
+
+        # Local references for often used objects.
+        self.plot_window = self.hub.plot_window
 
         # Request that line lists be read from wherever are they sources.
-        plot_window.request_linelists()
+        if not hasattr(self, 'linelists'):
+            self._request_linelists()
 
-        # Populate line list selector with internal line lists
-        model = self.line_list_selector.model()
-        item = QStandardItem("Select line list")
-        font = QFont("Monospace")
-        font.setStyleHint(QFont.TypeWriter)
-        font.setPointSize(12)
-        item.setFont(font)
-        model.appendRow(item)
-        for description in linelist.descriptions():
-            item = QStandardItem(str(description))
+            # Populate line list selector with internal line lists
+            model = self.line_list_selector.model()
+            item = QStandardItem("Select line list")
+            font = QFont("Monospace")
+            font.setStyleHint(QFont.TypeWriter)
+            font.setPointSize(12)
             item.setFont(font)
             model.appendRow(item)
+            for description in linelist.descriptions():
+                item = QStandardItem(str(description))
+                item.setFont(font)
+                model.appendRow(item)
 
-        #------------ UNCOMMENT TO LOAD LISTS AUTOMATICALLY --------------
-        #
-        # Populate GUI.
-        #
-        # This is commented out for now to comply with the decision about
-        # not showing any line list automatically upon startup. In case
-        # we need that capability back, just uncomment this line.
-
-        # self._buildViews(plot_window)
-
-        #---------------------------------------------------------------
+        self.line_labels_plotter = LineLabelsPlotter(self)
 
         # Connect controls to appropriate signals.
-        #
-        # Note that, for the Draw operation, we have to pass the table views to
-        # the handler, even though it would be better to handle the row selections
-        # all in here for the sake of encapsulation. This used to be necessary
-        # because this class is not a QWidget or one of its subclasses, thus it
-        # cannot implement a DispatchHandle signal handler. Once we gt rid of the
-        # Dispatch facility, this design decision could likely be modified. We
-        # decide to keep the same old design for now, to prevent breaks in logic.
 
         self.draw_button.clicked.connect(
-            lambda:self.plot_window.line_labels_plotter.plot_linelists(
-                table_views=self._getTableViews(),
-                panes=self._getPanes(),
-                units=self.plot_window.spectral_axis_unit,
-                caller=self.plot_window))
+            lambda:self.line_labels_plotter._plot_linelists(
+            table_views=self._get_table_views(),
+            panes=self._get_panes(),
+            units=self.hub.plot_widget.spectral_axis_unit,
+            caller=self.line_labels_plotter))
 
-        self.erase_button.clicked.connect(lambda:self.plot_window.erase_linelabels.emit(self.plot_window))
-        self.dismiss_button.clicked.connect(lambda:self.plot_window.dismiss_linelists_window.emit(False))
+        self.erase_button.clicked.connect(lambda:self.erase_linelabels.emit(self.plot_window.plot_widget))
+        self.dismiss_button.clicked.connect(self.dismiss_linelists_window.emit)
+
         self.actionOpen.triggered.connect(lambda:self._open_linelist_file(file_name=None))
         self.actionExport.triggered.connect(lambda:self._export_to_file(file_name=None))
         self.line_list_selector.currentIndexChanged.connect(self._lineList_selection_change)
-        self.tabWidget.tabCloseRequested.connect(self.tab_close)
+        self.tab_widget.tabCloseRequested.connect(self._on_tab_close)
+
+        self.hub.plot_window.window_removed.connect(self.dismiss_linelists_window.emit)
+
+    def dismiss(self):
+        '''
+        The Dismiss button just clears the plug-in
+        window from whatever line lists it's holding.
+        '''
+        v = self.tab_widget.count()
+        for index in range(v-1,-1,-1):
+            self.tab_widget.removeTab(index)
 
     def _get_waverange_from_dialog(self, line_list):
         # there is a widget-wide wavelength range so as to preserve
@@ -197,11 +246,227 @@ class LineListsWindow(ClosableMainWindow):
         # call, the wave range is initialized with whatever range
         # is being displayed in the spectrum plot window.
         if self.wave_range[0] == None or self.wave_range[1] == None:
-            self.wave_range = self.plot_window._find_wavelength_range()
+            self.wave_range = self._find_wavelength_range()
 
         wrange = self._build_waverange_dialog(self.wave_range, line_list)
 
         self.wave_range = wrange
+
+    def _lineList_selection_change(self, index):
+        # ignore first element in drop down. It contains
+        # the "Select line list" message.
+        if index > 0 and hasattr(self.hub, 'plot_widget') and self.hub.plot_widget.spectral_axis_unit:
+            line_list = linelist.get_from_cache(index - 1)
+
+            try:
+                self._get_waverange_from_dialog(line_list)
+                if self.wave_range[0] and self.wave_range[1]:
+                    self._build_view(line_list, 0, waverange=self.wave_range)
+
+                self.line_list_selector.setCurrentIndex(0)
+
+            except UnitConversionError as err:
+                error_dialog = QErrorMessage()
+                error_dialog.showMessage('Units conversion not possible.')
+                error_dialog.exec_()
+
+    def _build_waverange_dialog(self, wave_range, line_list):
+
+        dialog = QDialog()
+
+        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_waverange.ui"), dialog)
+
+        # convert from line list native units to whatever units
+        # are currently being displayed in the spectral axis.
+        linelist_units = wave_range[0].unit
+        spectral_axis_unit = self.hub.plot_widget.spectral_axis_unit
+        w0 = wave_range[0].to(spectral_axis_unit, equivalencies=u.spectral())
+        w1 = wave_range[1].to(spectral_axis_unit, equivalencies=u.spectral())
+
+        # populate labels with correct physical quantity name
+        dispersion_unit = u.Unit(spectral_axis_unit or "")
+        if dispersion_unit.physical_type == 'length':
+            dialog.minwave_label.setText("Minimum wavelength")
+            dialog.maxwave_label.setText("Maximum wavelength")
+        elif dispersion_unit.physical_type == 'frequency':
+            dialog.minwave_label.setText("Minimum frequency")
+            dialog.maxwave_label.setText("Maximum frequency")
+        elif dispersion_unit.physical_type == 'energy':
+            dialog.minwave_label.setText("Minimum energy")
+            dialog.maxwave_label.setText("Maximum energy")
+        else:
+            dialog.minwave_label.setText("Minimum disp. var.")
+            dialog.maxwave_label.setText("Maximum disp. var.")
+
+        # pick a good format to display values represented
+        # in the currently selected plot units.
+        if str(w0.unit) in units_formats:
+            fmt = units_formats[str(w0.unit)]
+        else:
+            # use generic formatting for weirder units
+            fmt = "%.6g"
+
+        dialog.min_text.setText(fmt % w0.value)
+        dialog.max_text.setText(fmt % w1.value)
+
+        validator = QDoubleValidator()
+        validator.setBottom(0.0)
+        dialog.min_text.setValidator(validator)
+        dialog.max_text.setValidator(validator)
+
+        dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
+                                                                dialog.nlines_label, linelist_units, spectral_axis_unit)
+
+        dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                                                          dialog.min_text,
+                                                                                          dialog.max_text,
+                                                                                          dialog.nlines_label,
+                                                                                          linelist_units,
+                                                                                          spectral_axis_unit))
+        dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
+                                                                                          dialog.min_text,
+                                                                                          dialog.max_text,
+                                                                                          dialog.nlines_label,
+                                                                                          linelist_units,
+                                                                                          spectral_axis_unit))
+        accepted = dialog.exec_() > 0
+
+        amin = amax = None
+        if accepted:
+            return self._get_range_from_textfields(dialog.min_text, dialog.max_text,
+                                                   linelist_units, spectral_axis_unit)
+        return (amin, amax)
+
+    def _get_range_from_textfields(self, min_text, max_text, linelist_units, plot_units):
+        amin = amax = None
+        if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
+
+            amin = float(min_text.text())
+            amax = float(max_text.text())
+
+            amin = Quantity(amin, plot_units)
+            amax = Quantity(amax, plot_units)
+
+            amin = amin.to(linelist_units, equivalencies=u.spectral())
+            amax = amax.to(linelist_units, equivalencies=u.spectral())
+
+        return (amin, amax)
+
+    # computes how many lines in the supplied list
+    # fall within the supplied wavelength range. The
+    # result populates the supplied label. Or, it
+    # builds a fresh QLabel with the result.
+    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label,
+                                     linelist_units, plot_units):
+
+        amin, amax = self._get_range_from_textfields(min_text, max_text, linelist_units, plot_units)
+
+        if amin != None or amax != None:
+            r = (amin, amax)
+
+            extracted = line_list.extract_range(r)
+            nlines = len(extracted[WAVELENGTH_COLUMN].data)
+
+            label.setText(str(nlines))
+            color = 'black' if nlines < NLINES_WARN else 'red'
+            label.setStyleSheet('color:' + color)
+
+        return label
+
+    def _build_view(self, line_list, index, waverange=(None, None)):
+
+        if self.wave_range[0] and self.wave_range[1]:
+            line_list = line_list.extract_range(waverange)
+
+        table_model = LineListTableModel(line_list)
+
+        if table_model.rowCount() > 0:
+            # here we add the first pane (the one with the entire
+            # original line list), to the tabbed pane that contains
+            # the line sets corresponding to the current line list.
+            lineset_tabbed_pane = QTabWidget()
+            lineset_tabbed_pane.setTabsClosable(True)
+
+            pane, table_view = _create_line_list_pane(line_list, table_model, self)
+            lineset_tabbed_pane.addTab(pane, "Original")
+            pane._set_line_sets_tabbed_pane(lineset_tabbed_pane)
+
+            table_view.selectionModel().selectionChanged.connect(pane._handle_button_activation)
+
+            # internal signals do not use Hub infrastructure.
+            table_view.selectionModel().selectionChanged.connect(self._count_selections)
+
+            # now we add this "line set tabbed pane" to the main tabbed
+            # pane, with name taken from the list model.
+            self.tab_widget.insertTab(index, lineset_tabbed_pane, table_model.get_name())
+            self.tab_widget.setCurrentIndex(index)
+
+            # store for use down stream.
+            # self.table_views.append(table_view)
+            # self.set_tabbed_panes.append(set_tabbed_pane)
+            # self.tab_count.append(0)
+            # self.panes.append(pane)
+
+            return line_list
+
+    def _build_views(self, plot_window):
+        window_linelists = plot_window.linelists
+        for linelist, index in zip(window_linelists, range(len(window_linelists))):
+            self._build_view(linelist, index)
+
+        # add extra tab to hold the plotted lines view.
+        widget_count = self.tab_widget.count()
+        if widget_count > 0:
+            self.tab_widget.addTab(QWidget(), PLOTTED)
+            self.tab_widget.tabBar().setTabButton(widget_count - 1, QTabBar.LeftSide, None)
+
+    def _get_panes(self):
+        result = []
+        for index_1 in range(self.tab_widget.count()):
+            widget = self.tab_widget.widget(index_1)
+            if isinstance(widget, QTabWidget) and self.tab_widget.tabText(index_1) != PLOTTED:
+                # do not use list comprehension here!
+                for index_2 in range(widget.count()):
+                    result.append(widget.widget(index_2))
+        return result
+
+    def _request_linelists(self):
+        self.waverange = self._find_wavelength_range()
+
+        self.linelists = linelist.ingest(self.waverange)
+
+    def _find_wavelength_range(self):
+        unit = self.hub.plot_widget.spectral_axis_unit
+        data_item_list = self.hub.plot_widget.plotItem.dataItems
+
+        amin = sys.float_info.max
+        amax = -amin
+        for item in data_item_list:
+            value = item.dataBounds(0)
+            amin = min(value[0], amin)
+            amax = max(value[1], amax)
+        amin = Quantity(amin, unit)
+        amax = Quantity(amax, unit)
+
+        return (amin, amax)
+
+    # computes total of rows selected in all table views in all panes
+    # and displays result in GUI.
+    def _count_selections(self):
+        panes = self._get_panes()
+        sizes = [len(pane.table_view.selectionModel().selectedRows()) for pane in panes]
+        import functools
+        count = functools.reduce(lambda x, y: x + y, sizes)
+
+        # display total selected rows, with eventual warning.
+        self.lines_selected_label.setText(str(count))
+        color = 'black' if count < NLINES_WARN else 'red'
+        self.lines_selected_label.setStyleSheet('color:' + color)
+
+        self.lines_selected_label.repaint()
+
+    def _on_tab_close(self, index):
+        self.tab_widget.removeTab(index)
 
     def _open_linelist_file(self, file_name=None):
         if file_name is None:
@@ -214,12 +479,16 @@ class LineListsWindow(ClosableMainWindow):
             # Not an issue for self-contained ecsv files.
             if file_name is not None and len(file_name) > 0:
                 name = file_name[0]
-                line_list = linelist.get_from_file(name, linelist_path=os.path.dirname(name))
+                line_list = linelist.get_from_file(os.path.dirname(name), name)
 
                 if line_list:
                     self._get_waverange_from_dialog(line_list)
                     if self.wave_range[0] and self.wave_range[1]:
                         line_list = self._build_view(line_list, 0, waverange=self.wave_range)
+
+                        if not hasattr(self.plot_window, 'linelists'):
+                            self.plot_window.linelists = []
+
                         self.plot_window.linelists.append(line_list)
 
     def _export_to_file(self, file_name=None):
@@ -241,212 +510,63 @@ class LineListsWindow(ClosableMainWindow):
 
                 ascii.write(output_table, output=file_name, format='ecsv')
 
-    def _lineList_selection_change(self, index):
-        # ignore first element in drop down. It contains
-        # the "Select line list" message.
-        if index > 0:
-            line_list = linelist.get_from_cache(index-1)
-
-            try:
-                self._get_waverange_from_dialog(line_list)
-                if self.wave_range[0] and self.wave_range[1]:
-                    self._build_view(line_list, 0, waverange=self.wave_range)
-
-                self.line_list_selector.setCurrentIndex(0)
-
-            except UnitConversionError as err:
-                error_dialog = QErrorMessage()
-                error_dialog.showMessage('Units conversion not possible.')
-                error_dialog.exec_()
-
-    def _build_waverange_dialog(self, wave_range, line_list):
-
-        dialog = QDialog(parent=self.centralWidget)
-
-        loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_waverange.ui"), dialog)
-
-        dialog.min_text.setText("%.2f" % wave_range[0].value)
-        dialog.max_text.setText("%.2f" % wave_range[1].value)
-
-        validator = QDoubleValidator()
-        validator.setBottom(0.0)
-        validator.setDecimals(2)
-        dialog.min_text.setValidator(validator)
-        dialog.max_text.setValidator(validator)
-
-        dialog.nlines_label = self._compute_nlines_in_waverange(line_list, dialog.min_text, dialog.max_text,
-                                                                dialog.nlines_label)
-
-        dialog.min_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
-        dialog.max_text.editingFinished.connect(lambda: self._compute_nlines_in_waverange(line_list,
-                                                 dialog.min_text, dialog.max_text, dialog.nlines_label))
-
-        accepted = dialog.exec_() > 0
-
-        amin = amax = None
-        if accepted:
-            return self._get_range_from_textfields(dialog.min_text, dialog.max_text)
-
-        return (amin, amax)
-
-    def _get_range_from_textfields(self, min_text, max_text):
-        amin = amax = None
-
-        if min_text.hasAcceptableInput() and max_text.hasAcceptableInput():
-            amin = float(min_text.text())
-            amax = float(max_text.text())
-            if amax != amin:
-                units = self.plot_window.listDataItems()[0].spectral_axis_unit
-                amin = Quantity(amin, units)
-                amax = Quantity(amax, units)
-            else:
-                return (None, None)
-
-        return (amin, amax)
-
-    # computes how many lines in the supplied list
-    # fall within the supplied wavelength range. The
-    # result populates the supplied label. Or, it
-    # builds a fresh QLabel with the result.
-    def _compute_nlines_in_waverange(self, line_list, min_text, max_text, label):
-
-        amin, amax = self._get_range_from_textfields(min_text, max_text)
-
-        if amin != None or amax != None:
-            r = (amin, amax)
-            extracted = line_list.extract_range(r)
-            nlines = len(extracted[WAVELENGTH_COLUMN].data)
-
-            label.setText(str(nlines))
-            color = 'black' if nlines < NLINES_WARN else 'red'
-            label.setStyleSheet('color:' + color)
-
-        return label
-
-    def _build_view(self, line_list, index, waverange=(None,None)):
-
-        if waverange[0] and waverange[1]:
-            line_list = line_list.extract_range(waverange)
-
-        table_model = LineListTableModel(line_list)
-
-        if table_model.rowCount() > 0:
-            # here we add the first pane (the one with the entire
-            # original line list), to the tabbed pane that contains
-            # the line sets corresponding to the current line list.
-            lineset_tabbed_pane = QTabWidget()
-            lineset_tabbed_pane.setTabsClosable(True)
-
-            pane, table_view = _createLineListPane(line_list, table_model, self)
-            lineset_tabbed_pane.addTab(pane, "Original")
-            pane.setLineSetsTabbedPane(lineset_tabbed_pane)
-
-            # connect signals
-            table_view.selectionModel().selectionChanged.connect(self._countSelections)
-            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
-
-            # now we add this "line set tabbed pane" to the main tabbed
-            # pane, with name taken from the list model.
-            self.tabWidget.insertTab(index, lineset_tabbed_pane, table_model.getName())
-            self.tabWidget.setCurrentIndex(index)
-
-            # store for use down stream.
-            # self.table_views.append(table_view)
-            # self.set_tabbed_panes.append(set_tabbed_pane)
-            # self.tab_count.append(0)
-            # self.panes.append(pane)
-
-            return line_list
-
-    def _buildViews(self, plot_window):
-        window_linelists = plot_window.linelists
-        for linelist, index  in zip(window_linelists, range(len(window_linelists))):
-            self._build_view(linelist, index)
-
-        # add extra tab to hold the plotted lines view.
-        widget_count = self.tabWidget.count()
-        if widget_count > 0:
-            self.tabWidget.addTab(QWidget(), PLOTTED)
-            self.tabWidget.tabBar().setTabButton(widget_count-1, QTabBar.LeftSide, None)
-
-    def tab_close(self, index):
+    def display_plotted_lines(self, linelist):
         """
+        Displays the input line list in the plotted
+        lines tabbed pane.
 
         Parameters
         ----------
-        index
-        """
-        self.tabWidget.removeTab(index)
-
-    def displayPlottedLines(self, linelist):
-        """
-
-        Parameters
-        ----------
-        linelist
-
-        Returns
-        -------
-
+        linelist: LineList
+            The line list to display in the plotted lines tabbed pane
         """
         self._plotted_lines_pane = PlottedLinesPane(linelist)
 
-        for index in range(self.tabWidget.count()):
-            tab_text = self.tabWidget.tabText(index)
+        for index in range(self.tab_widget.count()):
+            tab_text = self.tab_widget.tabText(index)
             if tab_text == PLOTTED:
-                self.tabWidget.removeTab(index)
-                self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
+                self.tab_widget.removeTab(index)
+                self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
                 return
 
         # if no plotted pane yet, create one.
-        index = self.tabWidget.count()
-        self.tabWidget.insertTab(index, self._plotted_lines_pane, PLOTTED)
+        index = self.tab_widget.count()
+        self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
-    def erasePlottedLines(self):
+    def erase_plotted_lines(self):
         """
+        Removes the plotted lines tabbed pane.
 
+        Called in response for the Erase button.
         """
-        index_last = self.tabWidget.count() - 1
-        self.tabWidget.removeTab(index_last)
+        for index in range(self.tab_widget.count()):
+            tab_text = self.tab_widget.tabText(index)
+            if tab_text == PLOTTED:
+                self.tab_widget.removeTab(index)
 
-    # computes total of rows selected in all table views in all panes
-    # and displays result in GUI.
-    def _countSelections(self):
-        panes = self._getPanes()
-        sizes = [len(pane.table_view.selectionModel().selectedRows()) for pane in panes]
-        import functools
-        count = functools.reduce(lambda x,y: x+y, sizes)
-
-        # display total selected rows, with eventual warning.
-        self.lines_selected_label.setText(str(count))
-        color = 'black' if count < NLINES_WARN else 'red'
-        self.lines_selected_label.setStyleSheet('color:'+color)
-
-    # these two methods below return a flat rendering of the panes
-    # and table views stored in the two-tiered tabbed window. These
-    # flat renderings are required by the drawing code.
-
-    def _getTableViews(self):
-        panes = self._getPanes()
+    # Returns a flat rendering of the panes and table views stored
+    # in the two-tiered tabbed window. These flat renderings are
+    # required by the drawing code.
+    def _get_table_views(self):
+        panes = self._get_panes()
         return [pane.table_view for pane in panes]
-
-    def _getPanes(self):
-        result = []
-        for index_1 in range(self.tabWidget.count()):
-            widget = self.tabWidget.widget(index_1)
-            if isinstance(widget, QTabWidget) and self.tabWidget.tabText(index_1) != PLOTTED:
-                # do not use list comprehension here!
-                for index_2 in range(widget.count()):
-                    result.append(widget.widget(index_2))
-        return result
 
 
 class LineListPane(QWidget):
     """
+    Class that manages a single pane dedicated to a single list.
 
+    Parameters
+    ----------
+    table_view : :class:`QTableView`
+        The table view corresponding to the line list.
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list.
+    sort_proxy : :class:`~specviz.plugins.line_labels.linelist_window.SortModel`
+        The table model with sorting capabilities.
+    caller :  :class:`~specviz.plugins.line_labels.linelist_window.LineListsWindow`
+        The caller.
     """
-    # this builds a single pane dedicated to a single list.
 
     def __init__(self, table_view, linelist, sort_proxy, caller, *args, **kwargs):
         super().__init__(None, *args, **kwargs)
@@ -459,7 +579,7 @@ class LineListPane(QWidget):
         self._build_GUI(linelist, table_view)
 
     def _build_GUI(self, linelist, table_view):
-        panel_layout = QVBoxLayout()
+        panel_layout = QGridLayout()
         panel_layout.setSizeConstraint(QLayout.SetMaximumSize)
         self.setLayout(panel_layout)
 
@@ -467,7 +587,9 @@ class LineListPane(QWidget):
         # It has to be built on-the-fly here.
         self.button_pane = QWidget()
         loadUi(os.path.join(os.path.dirname(__file__), "ui", "linelists_panel_buttons.ui"), self.button_pane)
-        self.button_pane.create_set_button.clicked.connect(self._createSet)
+
+        # internal signals do not use Hub infrastructure.
+        self.button_pane.create_set_button.clicked.connect(self._create_set)
         self.button_pane.deselect_button.clicked.connect(table_view.clearSelection)
 
         # header with line list metadata.
@@ -500,28 +622,23 @@ class LineListPane(QWidget):
             model.appendRow(item)
 
         # put it all together
-        panel_layout.addWidget(info)
-        panel_layout.addWidget(table_view)
-        panel_layout.addWidget(self.button_pane)
+        panel_layout.addWidget(info,0,0)
+        panel_layout.addWidget(table_view,1,0)
+        panel_layout.addWidget(self.button_pane,2,0)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def setLineSetsTabbedPane(self, pane):
-        """
-
-        Parameters
-        ----------
-        pane
-        """
+    def _set_line_sets_tabbed_pane(self, pane):
         self._sets_tabbed_pane = pane
 
         # this must be set only once per tabbed pane, otherwise multiple
         # signal handlers can result in more than one tab being closed
-        # when just one closing request is posted.
-        self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
+        # when just one closing request is posted. Internal signals do
+        # not use Hub infrastructure.
+        self._sets_tabbed_pane.tabCloseRequested.connect(self._tab_close)
 
-    def _createSet(self):
+    def _create_set(self):
         # build list with only the selected rows. These must be model
         # rows, not view rows!
         selected_view_rows = self.table_view.selectionModel().selectedRows()
@@ -535,37 +652,34 @@ class LineListPane(QWidget):
             local_list.name = self.linelist.name
 
             table_model = LineListTableModel(local_list)
-            pane, table_view = _createLineListPane(local_list, table_model, self._caller)
+            pane, table_view = _create_line_list_pane(local_list, table_model, self._caller)
 
             pane._sets_tabbed_pane = self._sets_tabbed_pane
-            table_view.selectionModel().selectionChanged.connect(self._caller._countSelections)
-            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+            # Internal signals do not use Hub infrastructure.
+            table_view.selectionModel().selectionChanged.connect(self._caller._count_selections)
+
+            table_view.selectionModel().selectionChanged.connect(pane._handle_button_activation)
 
             self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
 
-    def tab_close(self, index):
-        """
-
-        Parameters
-        ----------
-        index
-        """
+    def _tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
 
-    def handle_button_activation(self):
-        """
-
-        """
+    def _handle_button_activation(self):
         nselected = len(self.table_view.selectionModel().selectedRows())
         self.button_pane.create_set_button.setEnabled(nselected > 0)
 
 
 class PlottedLinesPane(QWidget):
     """
+    This holds the list with the currently plotted lines.
+
+    Parameters
+    ----------
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list containing only the labels actually plotted.
 
     """
-    # This holds the list with the currently plotted lines.
-    #
     # This view is re-built every time a new set of markers
     # is plotted. The list view build here ends up being the
     # main bottleneck in terms of execution time perceived by
@@ -609,7 +723,7 @@ class PlottedLinesPane(QWidget):
             # will favor.
 
             table_view.setSortingEnabled(False)
-            proxy = SortModel(table_model.getName())
+            proxy = SortModel(table_model.get_name())
             proxy.setSourceModel(table_model)
             table_view.setModel(proxy)
             table_view.setSortingEnabled(True)
@@ -623,8 +737,15 @@ class PlottedLinesPane(QWidget):
 
 class LineListTableModel(QAbstractTableModel):
     """
+    The line list table model.
+
+    Parameters
+    ----------
+    linelist : :class:`~specviz.plugins.line_labels.linelist.LineList`
+        The line list.
 
     """
+
     def __init__(self, linelist, parent=None, *args):
 
         QAbstractTableModel.__init__(self, parent, *args)
@@ -692,50 +813,15 @@ class LineListTableModel(QAbstractTableModel):
             self._ncols = len(self._row_cells[0])
 
     def rowCount(self, parent=None, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        parent
-        args
-        kwargs
-
-        Returns
-        -------
-
-        """
         # this has to use a pre-computed number of rows,
         # otherwise sorting gets significantly slowed
         # down. Same for number of columns.
         return self._nrows
 
     def columnCount(self, parent=None, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        parent
-        args
-        kwargs
-
-        Returns
-        -------
-
-        """
         return self._ncols
 
     def data(self, index, role=None):
-        """
-
-        Parameters
-        ----------
-        index
-        role
-
-        Returns
-        -------
-
-        """
         if role != Qt.DisplayRole:
             return QVariant()
 
@@ -752,18 +838,6 @@ class LineListTableModel(QAbstractTableModel):
         return self._row_cells[index.row()][index.column()]
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-        """
-
-        Parameters
-        ----------
-        section
-        orientation
-        role
-
-        Returns
-        -------
-
-        """
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._linelist.colnames[section]
 
@@ -781,37 +855,27 @@ class LineListTableModel(QAbstractTableModel):
 
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
-    def getName(self):
-        """
-
-        Returns
-        -------
-
-        """
+    def get_name(self):
         return self._linelist.name
 
 
 class SortModel(QSortFilterProxyModel):
     """
+    A sorting model for line list columns.
+
+    Parameters
+    ----------
+    name : str
+        The line list name.
 
     """
+
     def __init__(self, name):
         super(SortModel, self).__init__()
 
         self._name = name
 
     def lessThan(self, left, right):
-        """
-
-        Parameters
-        ----------
-        left
-        right
-
-        Returns
-        -------
-
-        """
         left_data = left.data()
         right_data = right.data()
 
@@ -827,11 +891,5 @@ class SortModel(QSortFilterProxyModel):
             # in QtCore.QModelIndex instances.
             return str(left_data) < str(right_data)
 
-    def getName(self):
-        """
-
-        Returns
-        -------
-
-        """
+    def get_name(self):
         return self._name

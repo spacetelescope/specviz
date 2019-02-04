@@ -17,18 +17,13 @@ from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 
-from .linelists_window import LineListsWindow
-from ..core.linelist import ingest
-from ..core.linelist import LineList, WAVELENGTH_COLUMN, ID_COLUMN
-from .line_labels_plotter import LineLabelsPlotter
-
-__all__ = ['PlotWindow', 'PlotWidget']
-
 
 class PlotWindow(QMdiSubWindow):
     """
-    Displayed plotting subwindow available in the QMdiArea.
+    Displayed plotting subwindow available in the `QMdiArea`.
     """
+    window_removed = Signal()
+
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
         # Hide the icon in the title bar
@@ -58,40 +53,29 @@ class PlotWindow(QMdiSubWindow):
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
-        self._central_widget.line_labels_action.triggered.connect(
-            self._on_line_labels)
 
         self._central_widget.reset_view_action.triggered.connect(
-            self._on_reset_view)
+            lambda: self._on_reset_view())
 
     @property
     def tool_bar(self):
-        """
-        Return the tool bar for the embedded plot widget.
-        """
         return self._central_widget.tool_bar
 
     @property
     def current_item(self):
-        """
-        The currently selected plot data item.
-        """
         if self._current_item_index is not None:
             return self.proxy_model.item_from_index(self._current_item_index)
 
     @property
     def plot_widget(self):
-        """
-        Return the embedded plot widget
-        """
         return self._plot_widget
 
     @property
     def proxy_model(self):
-        """
-        The proxy model defined in the internal plot widget.
-        """
         return self.plot_widget.proxy_model
+
+    def closeEvent(self, event):
+        self.window_removed.emit()
 
     def _on_current_item_changed(self, current_idx, prev_idx):
         self._current_item_index = current_idx
@@ -104,7 +88,6 @@ class PlotWindow(QMdiSubWindow):
         self.plot_widget.autoRange(
                 items=[item for item in self.plot_widget.listDataItems()
                        if isinstance(item, PlotDataItem)])
-
         self.plot_widget.sigRangeChanged.emit(*self.plot_widget.viewRange())
 
     def _on_change_color(self):
@@ -130,9 +113,6 @@ class PlotWindow(QMdiSubWindow):
         if color.isValid():
             self.current_item.color = color.name()
 
-    def _on_line_labels(self):
-        self._plot_widget._show_linelists_window()
-
 
 class PlotWidget(pg.PlotWidget):
     """
@@ -155,8 +135,8 @@ class PlotWidget(pg.PlotWidget):
         This overrides the individual plot data item visibility on
         initialization of the plot widget.
 
-    Attributes
-    ----------
+    Signals
+    -------
     plot_added : None
         Fired when a plot data item has been added to the plot widget.
     plot_removed : None
@@ -165,6 +145,8 @@ class PlotWidget(pg.PlotWidget):
         Fired when region is moved. Delivers the range of region as tuple.
     roi_removed : Signal
         Fired when region is removed. Delivers the region removed.
+    mouse_enterexit : Signal
+        Fired when mouse enters or exits the window. Delivers the event type.
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
@@ -173,8 +155,6 @@ class PlotWidget(pg.PlotWidget):
     roi_removed = Signal(LinearRegionItem)
 
     mouse_enterexit = Signal(QEvent.Type)
-    dismiss_linelists_window = Signal(bool)
-    erase_linelabels = Signal(pg.PlotWidget)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -183,7 +163,7 @@ class PlotWidget(pg.PlotWidget):
         self._visible = visible
 
         # Performance enhancements
-        # self.setDownsampling(auto=False)
+        # self.setDownsampling(auto=True)
         # self.setClipToView(True)
 
         # Define labels for axes
@@ -217,10 +197,6 @@ class PlotWidget(pg.PlotWidget):
         # Show grid lines
         self.showGrid(x=True, y=True, alpha=0.25)
 
-        # Line label plot control.
-        self.linelist_window = None
-        self._is_selected = True
-
         # Listen for model events to add/remove items from the plot
         self.proxy_model.sourceModel().data_added.connect(self._check_unit_compatibility)
         self.proxy_model.rowsAboutToBeRemoved.connect(
@@ -228,34 +204,21 @@ class PlotWidget(pg.PlotWidget):
 
         self.plot_added.connect(self.check_plot_compatibility)
         self.plot_removed.connect(self.check_plot_compatibility)
-        self.dismiss_linelists_window.connect(self._dismiss_linelists_window)
 
     @property
     def title(self):
-        """
-        The title of the widget.
-        """
         return self._title
 
     @property
     def proxy_model(self):
-        """
-        The proxy model being used by this plot widget.
-        """
         return self._proxy_model
 
     @property
     def data_unit(self):
-        """
-        The current data unit used for displaying the spectrum.
-        """
         return self._data_unit
 
     @property
     def spectral_axis_unit(self):
-        """
-        The current spectral axis unit used for displaying the spectrum.
-        """
         return self._spectral_axis_unit
 
     @data_unit.setter
@@ -297,20 +260,39 @@ class PlotWidget(pg.PlotWidget):
 
     @property
     def selected_region(self):
-        """
-        The currently selected region object.
-        """
+        """Returns currently selected region object."""
         return self._selected_region
 
     @property
     def selected_region_bounds(self):
         """
-        The bounds of the currently selected region as a tuple of
-        `~astropy.units.Quantity` objects.
+        Returns the bounds of the currently selected region as a tuple of
+        quantities.
         """
         if self.selected_region is not None:
             return self.selected_region.getRegion() * u.Unit(
                 self.spectral_axis_unit or "")
+
+    @property
+    def region_mask(self):
+        mask = np.ones(layer.masked_dispersion.shape, dtype=bool)
+        mask_holder = []
+
+        for roi in rois:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
+
+            mask = (container.layer.masked_dispersion.data.value >= x1) & \
+                   (container.layer.masked_dispersion.data.value <= x2)
+
+            mask_holder.append(mask)
+
+        if len(mask_holder) > 0:
+            mask = reduce(np.logical_or, mask_holder)
+            mask = reduce(np.logical_and, [container.layer.layer_mask, mask])
+
+        return mask
 
     def on_item_changed(self, item):
         """
@@ -336,12 +318,6 @@ class PlotWidget(pg.PlotWidget):
                 self.remove_plot(item=plot_data_item)
 
     def check_plot_compatibility(self):
-        """
-        Checks for unit compatibility between this plot widget and all plot
-        data items currently in the proxy model. If an item is not compatible,
-        its state is set to disabled and the user will not be able to plot it
-        in the plot widget.
-        """
         for i in range(self.proxy_model.sourceModel().rowCount()):
             model_item = self.proxy_model.sourceModel().item(i)
             source_index = self.proxy_model.sourceModel().indexFromItem(model_item)
@@ -448,7 +424,6 @@ class PlotWidget(pg.PlotWidget):
             self._plot_item.setLabel('left', "Flux", units=data_unit)
 
         self.autoRange()
-        self.setDownsampling(auto=False)
 
     def remove_plot(self, item=None, index=None, start=None, end=None):
         """
@@ -468,6 +443,7 @@ class PlotWidget(pg.PlotWidget):
         """
         if item is None and index is not None:
             if not index.isValid():
+                print("Index not valid", index.row())
                 return
 
             # Retrieve the data item from the proxy model
@@ -502,9 +478,6 @@ class PlotWidget(pg.PlotWidget):
             self.plot_removed.emit(item)
 
     def clear_plots(self):
-        """
-        Removes all plots from the plot widget.
-        """
         for item in self.listDataItems():
             if isinstance(item, PlotDataItem):
                 self.remove_plot(item=item)
@@ -592,97 +565,27 @@ class PlotWidget(pg.PlotWidget):
 
         return regions
 
-    # --------  Line lists and line labels handling.
-
-    # Finds the wavelength range spanned by the spectrum (or spectra)
-    # at hand. The range will be used to bracket the set of lines
-    # actually read from the line list table(s).
-
     def enterEvent(self, event):
         """
-        Intercept qt mode enter event and raise event type.
+        Emits a mouse_enterexit signal when the mouse
+        pointer enters the window.
 
         Parameters
         ----------
-        event : ``QMouseEvent``
-            The intercepted event.
+        event : QEnterEvent
+            the event. The event.type() is delivered.
         """
         self.mouse_enterexit.emit(event.type())
 
     def leaveEvent(self, event):
         """
-        Intercept qt mode enter event and raise event type.
+        Emits a mouse_enterexit signal when the mouse
+        pointer exits the window.
 
         Parameters
         ----------
-        event : ``QMouseEvent``
-            The intercepted event.
+        event : QEvent
+            the event. The event.type() is delivered.
         """
         self.mouse_enterexit.emit(event.type())
 
-    def _find_wavelength_range(self):
-        # increasing dispersion values!
-        amin = sys.float_info.max
-        amax = 0.0
-
-        for item in self.listDataItems():
-            if isinstance(item, PlotDataItem):
-                amin = min(amin, item.spectral_axis[0])
-                amax = max(amax, item.spectral_axis[-1])
-
-        amin = Quantity(amin, self.listDataItems()[0].spectral_axis_unit)
-        amax = Quantity(amax, self.listDataItems()[0].spectral_axis_unit)
-
-        return (amin, amax)
-
-    def request_linelists(self, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        args
-        kwargs
-        """
-        self.waverange = self._find_wavelength_range()
-
-        self.linelists = ingest(self.waverange)
-
-        if len(self.linelists) == 0:
-            error_dialog = QErrorMessage()
-            error_dialog.showMessage('Units conversion not possible. '
-                                     'Or, no line lists in internal library '
-                                     'match wavelength range.')
-            error_dialog.exec_()
-
-    # @dispatch.register_listener("on_activated_window")
-    def _set_selection_state(self, window):
-        self._is_selected = window == self
-
-        if self.linelist_window:
-            if self._is_selected:
-                self.linelist_window.show()
-            else:
-                self.linelist_window.hide()
-
-    def _show_linelists_window(self, *args, **kwargs):
-        if self._is_selected:
-            if self.linelist_window is None:
-                self.linelist_window = LineListsWindow(self)
-                self.line_labels_plotter = LineLabelsPlotter(self)
-
-                self.sigRangeChanged.connect(
-                    self.line_labels_plotter.process_zoom_signal)
-                self.sigRangeChanged.connect(
-                    lambda: self.line_labels_plotter._handle_mouse_events(
-                        QEvent.Enter))
-
-            self.linelist_window.show()
-
-    def _dismiss_linelists_window(self, close, **kwargs):
-        if self._is_selected and self.linelist_window:
-            if close:
-                self.linelist_window.close()
-                self.line_labels_plotter = None
-                self.linelist_window = None
-            else:
-                self.linelist_window.hide()

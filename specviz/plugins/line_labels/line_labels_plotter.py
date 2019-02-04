@@ -1,88 +1,134 @@
 import numpy as np
 
 from qtpy.QtCore import QEvent, Qt, QThread, Signal, QMutex, QTime
+from qtpy.QtWidgets import QMessageBox
 
-from ..core.annotation import LineIDMarker, LineIDMarkerProxy
-from ..core.linelist import LineList, \
-    REDSHIFTED_WAVELENGTH_COLUMN, MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
+from astropy import units as u
 
-__all__ = ['LineLabelsPlotter', 'ZoomMarkersThread', 'ZoomEventBuffer']
+from .annotation import LineIDMarker, LineIDMarkerProxy
+from .linelist import LineList, WAVELENGTH_COLUMN, \
+    REDSHIFTED_WAVELENGTH_COLUMN, \
+    MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
 
 class LineLabelsPlotter(object):
     """
     Class that encapsulates and handles the gory details of line label
     plotting, and especially, zooming.
+
+    Parameters
+    ----------
+    linelist_window : :class:`~specviz.plugins.line_labels.linelists_window.LineListsWindow`
+        The line list window calling this with data to be plotted.
     """
-    def __init__(self, caller, *args, **kwargs):
+
+    def __init__(self, linelist_window, *args, **kwargs):
         super(LineLabelsPlotter, self).__init__(*args, **kwargs)
 
-        # When porting code to this new class, we kept references
-        # that explicitly point to objects in the caller code. A better
-        # approach to encapsulation would be an improvement here.
-        self._caller = caller
-        self._linelist_window = caller.linelist_window
-        self._linelists = caller.linelists
-        self._plot_item = caller._plot_item
+        self._linelist_window = linelist_window
+        self._linelists = self._linelist_window.linelists
+        self._plot_widget = self._linelist_window.hub.plot_widget
+
+        # This is normally set to False, except for the brief moment in
+        # between the arrivals of a data_unit_changed signal and a
+        # sigRangeChanged signal. That situation takes place when the
+        # plot units have changed, but the plot widget didn't have time
+        # to update it's range yet (as delivered by plot_widget.viewRange).
+        # After the arrival of a data_unit_changed, we have to wait for the
+        # next sigRangeChanged in order to access the new plot range and
+        # use it to re-plot the line labels.
+        self._units_changed = False
 
         # create a new, empty list that will store and help track down
         # which markers are actually being displayed at any time.
         self._markers_on_screen = []
 
-        self._caller.mouse_enterexit.connect(self._handle_mouse_events)
-        self._caller.dismiss_linelists_window.connect(self._dismiss_linelists_window)
-        self._caller.erase_linelabels.connect(self._erase_linelabels)
+        # connect signals
+        self._linelist_window.dismiss_linelists_window.connect(self._dismiss_linelists_window)
+        self._linelist_window.erase_linelabels.connect(self._erase_linelabels)
+        self._linelist_window.hub.plot_widget.mouse_enterexit.connect(self._handle_mouse_events)
+        self._linelist_window.hub.plot_widget.sigRangeChanged.connect(self._handle_range_change)
+        self._linelist_window.hub.plot_widget.sigRangeChanged.connect(
+            lambda: self._handle_mouse_events(QEvent.Enter))
+
+    # --------  Slots.
 
     # Buffering of zoom events.
-    def process_zoom_signal(self):
-        """
-
-        """
+    def _process_zoom_signal(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
 
             # for now, any object can be used as a zoom message.
-            self._zoom_event_buffer.put(1)
+            self._zoom_event_buffer._put(1)
 
-#--------  Slots.
+    # These two slots below handle the logic associated with the
+    # data_unit_changed and sigRangeChanged signals.
 
-    def _dismiss_linelists_window(self, close, **kwargs):
-        if self._caller._is_selected and self._linelist_window:
-            if close:
-                self._caller.erase_linelabels.emit(self._caller)
+    def _handle_units_change(self):
+        # we have to remove all line labels here, to prevent
+        # the range re-calculation to include them when the
+        # next sigRangeChanged signal is received.
+        self._remove_linelabels_from_plot()
+        self._units_changed = True
 
-                self._linelist_window.close()
-                self._linelist_window = None
-            else:
-                self._linelist_window.hide()
+    def _handle_range_change(self):
+        if self._units_changed:
+            self._process_units_change()
+            self._units_changed = False
+        else:
+            self._process_zoom_signal()
+
+    # handle the re-plot of line labels after a plot units change.
+    def _process_units_change(self):
+        if hasattr(self, "_merged_linelist") and \
+           hasattr(self, '_linelist_window') and \
+           self._linelist_window:
+
+            units = self._linelist_window.hub.plot_item.spectral_axis_unit
+
+            self._merged_linelist[WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
+            self._merged_linelist[REDSHIFTED_WAVELENGTH_COLUMN].convert_unit_to(units, equivalencies=u.spectral())
+
+            self._go_plot_markers(self._merged_linelist)
+
+            # the plotted lines pane needs to be refreshed as well.
+            self._linelist_window.erase_plotted_lines()
+            self._linelist_window.display_plotted_lines(self._merged_linelist)
+
+    def _dismiss_linelists_window(self, **kwargs):
+        if self._linelist_window:
+            self._erase_linelabels(self._plot_widget)
+            self._linelist_window.dismiss()
 
     def _erase_linelabels(self, caller, *args, **kwargs):
-        if caller != self._caller:
+        if caller != self._plot_widget:
             return
 
-        if self._linelist_window and self._caller._is_selected:
+        if self._linelist_window:
             self._remove_linelabels_from_plot()
-            self._linelist_window.erasePlottedLines()
+            self._linelist_window.erase_plotted_lines()
 
             self._destroy_zoom_markers_thread()
 
     # Main method for drawing line labels on the plot surface.
-    def plot_linelists(self, table_views, panes, units, caller, **kwargs):
-        """
+    def _plot_linelists(self, table_views, panes, units, caller, **kwargs):
 
-        Parameters
-        ----------
-        table_views
-        panes
-        units
-        caller
-        kwargs
-
-        Returns
-        -------
-
-        """
-        if caller != self._caller or not self._caller._is_selected:
+        # If there is no valid plot item down to this point, then bail out (unfortunately)
+        # because we cannot connect to the 'spectral_axis_unit_changed' signal.
+        if self._linelist_window.hub.plot_item is None or \
+            len(self._linelist_window.hub.visible_plot_items) == 0:
+            message_box = QMessageBox()
+            message_box.setText("No plot item selected.")
+            message_box.setIcon(QMessageBox.Warning)
+            message_box.setInformativeText(
+                "There are currently no plot items selected. Please select "
+                " plotted item before changing unit.")
+            message_box.exec_()
             return
+
+        # we have to postpone the 'spectral_axis_unit_changed' signal connection
+        # to here. It cannot be done at constructor time because there is no valid
+        # plot_item at that time.
+        self._linelist_window.hub.plot_item.spectral_axis_unit_changed.connect(self._handle_units_change)
 
         # Get a list of the selected indices in each line list.
         # Build new line lists with only the selected rows.
@@ -112,13 +158,13 @@ class LineLabelsPlotter(object):
             if pane.button_pane.redshift_textbox.hasAcceptableInput():
                 redshift = float(pane.button_pane.redshift_textbox.text())
                 z_units = pane.button_pane.combo_box_z_units.currentText()
-                new_list.setRedshift(redshift, z_units)
+                new_list.set_redshift(redshift, z_units)
 
             # color for plotting the specific lines defined in
             # this list, is defined by the itemData property.
             index = pane.button_pane.combo_box_color.currentIndex()
             color = pane.button_pane.combo_box_color.itemData(index, role=Qt.UserRole)
-            new_list.setColor(color)
+            new_list.set_color(color)
 
             # height for plotting the specific lines defined in
             # this list. Defined by the line edit text.
@@ -156,7 +202,7 @@ class LineLabelsPlotter(object):
 
         # Populate the plotted lines pane in the line list window.
         if hasattr(self, '_linelist_window') and self._linelist_window:
-            self._linelist_window.displayPlottedLines(merged_linelist)
+            self._linelist_window.display_plotted_lines(merged_linelist)
 
         # The new line list just created becomes the default for
         # use in subsequent operations.
@@ -172,12 +218,12 @@ class LineLabelsPlotter(object):
 
             # Detects when mouse entered the plot area but the thread is not processing yet.
             if event_type == QEvent.Enter and not is_processing:
-                self._zoom_markers_thread.start_processing()
+                self._zoom_markers_thread._start_processing()
                 return
 
             # Detects the complementary condition: mouse exited plot and thread still processing.
             if event_type == QEvent.Leave and is_processing:
-                self._zoom_markers_thread.stop_processing()
+                self._zoom_markers_thread._stop_processing()
 
 #--------  Private methods.
 
@@ -217,9 +263,11 @@ class LineLabelsPlotter(object):
         # The pinning of the Y coordinate is handled by the handle_zoom method
         # that in turn relies in the storage of marker instances row-wise in the
         # line list table.
-        plot_item = self._plot_item
 
-        height = self._compute_height(merged_linelist, plot_item)
+        # plot_widget = self._plot_widget.plotItem
+        plot_widget = self._plot_widget
+
+        height = self._compute_height(merged_linelist, plot_widget)
 
         # column names are defined in the YAML files
         # or by constants elsewhere.
@@ -245,11 +293,9 @@ class LineLabelsPlotter(object):
             marker = LineIDMarkerProxy(wave_column[row_index],
                                        height[row_index],
                                        text=id_column[row_index],
-                                       plot_item=plot_item,
                                        tip=tool_tip,
                                        color=color_column[row_index],
                                        orientation='vertical')
-
             markers[row_index] = marker
 
         # after all markers are created, check their positions
@@ -259,14 +305,14 @@ class LineLabelsPlotter(object):
         # place markers on screen
         for marker_proxy in new_markers:
             if marker_proxy:
-                # build eal, full-fledged marker from proxy.
+                # build the real, full-fledged marker from proxy.
                 real_marker = LineIDMarker(marker_proxy)
-                real_marker.setPos(real_marker.x0, real_marker.y0)
+                real_marker.setPos(marker_proxy.x0, marker_proxy.y0)
 
-                self._plot_item.addItem(real_marker)
+                self._plot_widget.addItem(real_marker)
                 self._markers_on_screen.append(real_marker)
 
-        plot_item.update()
+        self._plot_widget.update()
 
     # Slot called by the zoom control thread.
     def _handle_zoom(self):
@@ -280,12 +326,12 @@ class LineLabelsPlotter(object):
 
             # update height column in line list based on
             # the new, zoomed coordinates.
-            height_array = self._compute_height(self._merged_linelist, self._plot_item)
+            height_array = self._compute_height(self._merged_linelist, self._plot_widget)
 
             # remove markers that are displaying right now
             for index in range(len(self._markers_on_screen)):
                 marker = self._markers_on_screen[index]
-                self._plot_item.removeItem(marker)
+                self._plot_widget.removeItem(marker)
             self._markers_on_screen = []
 
             # update markers based on what is stored in the
@@ -327,10 +373,10 @@ class LineLabelsPlotter(object):
                     real_marker = LineIDMarker(marker_proxy)
                     real_marker.setPos(real_marker.x0, real_marker.y0)
 
-                    self._plot_item.addItem(real_marker)
+                    self._plot_widget.addItem(real_marker)
                     self._markers_on_screen.append(real_marker)
 
-            self._plot_item.update()
+            self._plot_widget.update()
 
             # took = self.Cron.elapsed()
             # print("took: {0} msec" .format(str(took)))
@@ -338,8 +384,8 @@ class LineLabelsPlotter(object):
             self._zoom_markers_thread.zoom_end.emit()
 
     # compute height to display each marker
-    def _compute_height(self, merged_linelist, plot_item):
-        data_range = plot_item.viewRange()
+    def _compute_height(self, merged_linelist, plot_widget):
+        data_range = plot_widget.viewRange()
         ymin = data_range[1][0]
         ymax = data_range[1][1]
 
@@ -368,26 +414,26 @@ class LineLabelsPlotter(object):
 
     def _declutter(self, marker_list):
         if len(marker_list) > 10:
-            threshold = 5
+            threshold = 3
 
-            data_range = self._plot_item.viewRange()
-            x_pixels = self._plot_item.sceneBoundingRect().width()
-            # y_pixels = self._plot_item.sceneBoundingRect().height()
+            data_range = self._plot_widget.viewRange()
+            x_pixels = self._plot_widget.sceneBoundingRect().width()
+            # y_pixels = self._plot_widget.sceneBoundingRect().height()  ###
             xmin = data_range[0][0]
             xmax = data_range[0][1]
-            # ymin = data_range[1][0]
-            # ymax = data_range[1][1]
+            # ymin = data_range[1][0]  ###
+            # ymax = data_range[1][1]  ###
 
             # compute X and Y distances in between markers, in screen pixels
             x = np.array([marker.x0 for marker in marker_list])
-            xdist = np.diff(x)
-            xdist *= x_pixels / (xmax - xmin)
-            # y = np.array([marker.y0 for marker in marker_list])
-            # ydist = np.diff(y)
-            # ydist *= y_pixels / (ymax - ymin)
+            xdist = np.abs(np.diff(x))
+            xdist *= np.abs(x_pixels / (xmax - xmin))
+            # y = np.array([marker.y0 for marker in marker_list])  ###
+            # ydist = np.diff(y)                                   ###
+            # ydist *= y_pixels / (ymax - ymin)                    ###
 
             # replace cluttered markers with None
-            # new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))
+            # new_array = np.where((xdist + ydist) < threshold, None, np.array(marker_list[1:]))     ####
             new_array = np.where(xdist < threshold, None, np.array(marker_list[1:]))
 
             # replace markers currently outside the wave range with None
@@ -410,28 +456,38 @@ class LineLabelsPlotter(object):
 
     def _remove_linelabels_from_plot(self):
         if hasattr(self, '_merged_linelist'):
-            markers = self._markers_on_screen
-            for index in range(len(markers)):
-                self._plot_item.removeItem(markers[index])
-            self._plot_item.update()
+            for index in range(len(self._markers_on_screen)):
+                self._plot_widget.removeItem(self._markers_on_screen[index])
+            self._plot_widget.update()
             self._markers_on_screen = []
 
     def _destroy_zoom_markers_thread(self):
         if hasattr(self, '_zoom_markers_thread') and self._zoom_markers_thread:
-            self._zoom_markers_thread.stop_processing()
+            self._zoom_markers_thread._stop_processing()
             self._zoom_markers_thread = None
 
 
 class ZoomMarkersThread(QThread):
     """
+    This class sets the pace to which zoom requests can be handled. It uses
+    a mutex-lockable buffer to prevent piling up of too many zoom requests
+    coming from cursor action on screen.
 
+    Parameters
+    ----------
+    caller : :class:`~specviz.plugins.line_labels.line_labels_plotter.LineLabelsPlotter`
+        The plotter instance that runs this thread..
+    npoints : int
+        The number of objects on screen to be zoomed (not used in this implementation).
+
+    Signals
+    -------
+    do_zoom : Signal
+        Signals that a zoom operation can be performed by the event loop.
+    zoom_end : Signal
+        Emitted by the event loop thread to signal that it is ready to
+        receive another zoom request.
     """
-    # Notice that we can't use the dispatch mechanism to manage the zoom
-    # thread and its signal-slot dependencies. Something in the dispatch
-    # code messes up with the timing relationships in the GUI and secondary
-    # threads, causing the “Timers cannot be started from another thread”
-    # warning, and eventual app crash. We have to manage locally-defined
-    # signals instead, explicitly connecting them with their slots
 
     do_zoom = Signal()
     zoom_end = Signal()
@@ -443,15 +499,12 @@ class ZoomMarkersThread(QThread):
         self.is_processing = False
         self.is_zooming = False
 
-        self.zoom_end.connect(self.zoom_finished)
+        self.zoom_end.connect(self._zoom_finished)
 
     def run(self):
-        """
-
-        """
         while(self.is_processing):
 
-            value = self.buffer.get()
+            value = self.buffer._get()
             if value:
                 self.do_zoom.emit()
 
@@ -464,52 +517,32 @@ class ZoomMarkersThread(QThread):
             # one more, to prevent hiccups.
             QThread.msleep(10)
 
-    def zoom_finished(self):
-        """
-
-        """
+    def _zoom_finished(self):
         self.is_zooming = False
 
-    def start_processing(self):
-        """
-
-        """
+    def _start_processing(self):
         self.is_processing = True
         self.start()
 
-    def stop_processing(self):
-        """
-
-        """
+    def _stop_processing(self):
         self.is_processing = False
-        self.buffer.clear()
+        self.buffer._clear()
 
 
 class ZoomEventBuffer(object):
-    """
 
-    """
     # A mutex-lockable buffer that stores zoom request events.
 
     def __init__(self):
         self.buffer = []
         self.mutex = QMutex()
 
-    def clear(self):
-        """
-
-        """
+    def _clear(self):
         self.mutex.lock()
         self.buffer = []
         self.mutex.unlock()
 
-    def put(self, value):
-        """
-
-        Parameters
-        ----------
-        value
-        """
+    def _put(self, value):
         self.mutex.lock()
 
         # Don't let the buffer fill up too much.
@@ -521,13 +554,7 @@ class ZoomEventBuffer(object):
 
         self.mutex.unlock()
 
-    def get(self):
-        """
-
-        Returns
-        -------
-
-        """
+    def _get(self):
         self.mutex.lock()
         if len(self.buffer) > 0:
             value = self.buffer.pop()
