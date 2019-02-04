@@ -357,6 +357,13 @@ class Workspace(QMainWindow):
 
         return filters, loader_name_map
 
+    def display_load_data_error(self, exp):
+        message_box = QMessageBox()
+        message_box.setText("Error loading data set.")
+        message_box.setIcon(QMessageBox.Critical)
+        message_box.setInformativeText(str(exp))
+        message_box.exec()
+
     def _on_load_data(self):
         """
         When the user loads a data file, this method is triggered. It provides
@@ -376,20 +383,21 @@ class Workspace(QMainWindow):
 
         try:
             self.load_data(file_path, file_loader=loader_name_map[fmt])
-        except:
-            message_box = QMessageBox()
-            message_box.setText("Error loading data set.")
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.setInformativeText(
-                "{}\n{}".format(
-                    sys.exc_info()[0], sys.exc_info()[1])
-            )
+        except Exception as e:
+            self.display_load_data_error(e)
 
-            message_box.exec()
-
-    def _on_export_data(self):
+    def export_data_item(self, data_item, filename, fmt):
         """
         Exports the currently selected data item to an ECSV file.
+
+        Parameters
+        ----------
+        data_item : `~specviz.core.items.PlotDataItem`
+            Data item containing the spectrum to be exported to disk
+        filename : `str`
+            Path of the file to be created on export
+        fmt : `str`
+            Format to be used by IO registry for writing `~specutils.Spectrum1D`
         """
         # TODO: the current release of specutils doesn't support exporting
         # very well (it's untested, and probably does not match the attributes
@@ -401,10 +409,12 @@ class Workspace(QMainWindow):
             data = {
                 'spectral_axis': spectrum.spectral_axis,
                 'flux': spectrum.flux,
-                'uncertainty': spectrum.uncertainty.array * spectrum.uncertainty.unit,
                 'mask': spectrum.mask if spectrum.mask is not None
                         else u.Quantity(np.ones(spectrum.spectral_axis.shape))
             }
+
+            if spectrum.uncertainty is not None:
+                data['uncertainty'] = spetrum.uncertainty.array * spectrum.uncertainty.unit
 
             meta = {}
 
@@ -423,20 +433,25 @@ class Workspace(QMainWindow):
         # all_formats = all_formats[np.array(write_mask)]
         # all_filters = ";;".join(list(all_formats))
 
-        all_filters = ";;".join(['*.ecsv'])
-
-        plot_data_item = self.current_item
-
         try:
             io_registry.register_writer('*.ecsv', Spectrum1D, generic_export)
         except io_registry.IORegistryError:
             pass
 
+        data_item.data_item.spectrum.write(filename, format=fmt)
+
+
+    def _on_export_data(self):
+        """
+        Handler function that is called when the Export Data button is pressed
+        """
+        all_filters = ";;".join(['*.ecsv'])
         path, fmt = compat.getsavefilename(filters=all_filters)
 
         if path and fmt:
             try:
-                plot_data_item.data_item.spectrum.write(path, format=fmt)
+                plot_data_item = self.current_item
+                self.export_data_item(plot_data_item, path, fmt)
 
                 message_box = QMessageBox()
                 message_box.setText("Data exported successfully.")
@@ -458,6 +473,7 @@ class Workspace(QMainWindow):
                 )
 
                 message_box.exec()
+
 
     def _add_and_plot_data(self, spectrum, name):
         data_item = self.model.add_data(spectrum, name=name)
