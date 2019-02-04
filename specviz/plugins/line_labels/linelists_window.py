@@ -215,7 +215,7 @@ class LineListsWindow(QWidget):
         # Connect controls to appropriate signals.
 
         self.draw_button.clicked.connect(
-            lambda:self.line_labels_plotter.plot_linelists(
+            lambda:self.line_labels_plotter._plot_linelists(
             table_views=self._get_table_views(),
             panes=self._get_panes(),
             units=self.hub.plot_widget.spectral_axis_unit,
@@ -232,8 +232,10 @@ class LineListsWindow(QWidget):
         self.hub.plot_window.window_removed.connect(self.dismiss_linelists_window.emit)
 
     def dismiss(self):
-        # the Dismiss button just clears the plug-in
-        # window from whatever line lists it's holding.
+        '''
+        The Dismiss button just clears the plug-in
+        window from whatever line lists it's holding.
+        '''
         v = self.tab_widget.count()
         for index in range(v-1,-1,-1):
             self.tab_widget.removeTab(index)
@@ -387,9 +389,9 @@ class LineListsWindow(QWidget):
 
             pane, table_view = _create_line_list_pane(line_list, table_model, self)
             lineset_tabbed_pane.addTab(pane, "Original")
-            pane.set_line_sets_tabbed_pane(lineset_tabbed_pane)
+            pane._set_line_sets_tabbed_pane(lineset_tabbed_pane)
 
-            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+            table_view.selectionModel().selectionChanged.connect(pane._handle_button_activation)
 
             # internal signals do not use Hub infrastructure.
             table_view.selectionModel().selectionChanged.connect(self._count_selections)
@@ -509,6 +511,15 @@ class LineListsWindow(QWidget):
                 ascii.write(output_table, output=file_name, format='ecsv')
 
     def display_plotted_lines(self, linelist):
+        """
+        Displays the input line list in the plotted
+        lines tabbed pane.
+
+        Parameters
+        ----------
+        linelist: LineList
+            The line list to display in the plotted lines tabbed pane
+        """
         self._plotted_lines_pane = PlottedLinesPane(linelist)
 
         for index in range(self.tab_widget.count()):
@@ -523,6 +534,11 @@ class LineListsWindow(QWidget):
         self.tab_widget.insertTab(index, self._plotted_lines_pane, PLOTTED)
 
     def erase_plotted_lines(self):
+        """
+        Removes the plotted lines tabbed pane.
+
+        Called in response for the Erase button.
+        """
         for index in range(self.tab_widget.count()):
             tab_text = self.tab_widget.tabText(index)
             if tab_text == PLOTTED:
@@ -613,14 +629,14 @@ class LineListPane(QWidget):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def set_line_sets_tabbed_pane(self, pane):
+    def _set_line_sets_tabbed_pane(self, pane):
         self._sets_tabbed_pane = pane
 
         # this must be set only once per tabbed pane, otherwise multiple
         # signal handlers can result in more than one tab being closed
         # when just one closing request is posted. Internal signals do
         # not use Hub infrastructure.
-        self._sets_tabbed_pane.tabCloseRequested.connect(self.tab_close)
+        self._sets_tabbed_pane.tabCloseRequested.connect(self._tab_close)
 
     def _create_set(self):
         # build list with only the selected rows. These must be model
@@ -642,14 +658,14 @@ class LineListPane(QWidget):
             # Internal signals do not use Hub infrastructure.
             table_view.selectionModel().selectionChanged.connect(self._caller._count_selections)
 
-            table_view.selectionModel().selectionChanged.connect(pane.handle_button_activation)
+            table_view.selectionModel().selectionChanged.connect(pane._handle_button_activation)
 
             self._sets_tabbed_pane.addTab(pane, str(self._sets_tabbed_pane.count()))
 
-    def tab_close(self, index):
+    def _tab_close(self, index):
         self._sets_tabbed_pane.removeTab(index)
 
-    def handle_button_activation(self):
+    def _handle_button_activation(self):
         nselected = len(self.table_view.selectionModel().selectedRows())
         self.button_pane.create_set_button.setEnabled(nselected > 0)
 
