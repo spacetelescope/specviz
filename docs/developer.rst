@@ -57,7 +57,7 @@ the |PlotProxyModel| and |PlotDataItem| objects.
 Application and Workspaces
 --------------------------
 
-The :class:`~specviz.app.Application` is the singular Qt application instance
+The ``specviz.app.Application`` is the singular Qt application instance
 run to begin interacting with SpecViz. It is within this class that |Workspace|
 instances are generated and maintained. It contains methods for adding,
 removing, and retrieving workspaces to the application instance. This class is
@@ -106,8 +106,8 @@ view widget.
 |Workspace| objects also contain the methods for providing the Qt dialogs for loading
 data (:func:`~specviz.widgets.workspace.Workspace.load_data`) using the
 ``specutils`` IO infrastructure, as well as exporting data
-(:func:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
-data items (:func:`~specviz.widgets.workspace.Workspace._on_delete_data`).
+(:meth:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
+data items (:meth:`~specviz.widgets.workspace.Workspace._on_delete_data`).
 
 Plot Windows and Plot Widget
 ----------------------------
@@ -206,7 +206,7 @@ infrastructure is such that, when adding a class to the plugin registry, that
 class is injected with a reference to the |Hub| and has access to all the
 abstracted API.
 
-SpecViz plugins are specified by the :class:`~specviz.core.plugin.plugin`
+SpecViz plugins are specified by the ``plugin``
 decorator. When a SpecViz application instance is loaded, the decorator will
 add the plugin to the plugin registry and initialize the class to be added to
 the application instance. Storing the plugin in the registry allows the
