@@ -18,6 +18,9 @@ from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
 
 
+__all__ = ['PlotWindow', 'PlotWidget']
+
+
 class PlotWindow(QMdiSubWindow):
     """
     Displayed plotting subwindow available in the `QMdiArea`.
