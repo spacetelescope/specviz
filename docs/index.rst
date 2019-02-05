@@ -49,7 +49,7 @@ Using SpecViz
    :maxdepth: 2
 
    getting_started
-   loader_wizard
+   loading_data
    workspaces_and_plots
    regions
    unit_conversion
