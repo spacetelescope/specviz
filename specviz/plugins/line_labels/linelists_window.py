@@ -100,7 +100,7 @@ def _create_line_list_pane(linelist, table_model, caller):
 # line list widget storage.
 linelists_windows = {}
 
-@plugin.plugin_bar("Line labels", icon=QIcon(":/icons/Label-48.png"))
+@plugin.plugin_bar("Line labels", icon=QIcon(":/icons/price.svg"))
 class LineListsPlugin(QWidget):
     """
     Top class for the line labels plugin. This is the class that handles
