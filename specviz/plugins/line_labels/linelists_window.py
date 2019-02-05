@@ -28,9 +28,6 @@ from .linelist import columns_to_remove
 from .line_labels_plotter import LineLabelsPlotter
 
 
-ICON_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                         '..', '..', 'data', 'resources'))
-
 # We need our own mapping because the list with color names returned by
 # QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
 ID_COLORS = {
@@ -103,7 +100,7 @@ def _create_line_list_pane(linelist, table_model, caller):
 # line list widget storage.
 linelists_windows = {}
 
-@plugin.plugin_bar("Line labels", icon=QIcon(os.path.join(ICON_PATH, "Label-48.png")))
+@plugin.plugin_bar("Line labels", icon=QIcon(":/icons/Label-48.png"))
 class LineListsPlugin(QWidget):
     """
     Top class for the line labels plugin. This is the class that handles
