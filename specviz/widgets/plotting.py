@@ -609,4 +609,3 @@ class PlotWidget(pg.PlotWidget):
             The intercepted event.
         """
         self.mouse_enterexit.emit(event.type())
-
