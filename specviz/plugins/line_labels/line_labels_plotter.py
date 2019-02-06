@@ -10,6 +10,8 @@ from .linelist import LineList, WAVELENGTH_COLUMN, \
     REDSHIFTED_WAVELENGTH_COLUMN, \
     MARKER_COLUMN, ID_COLUMN, COLOR_COLUMN, HEIGHT_COLUMN
 
+__all__ = ['LineLabelsPlotter', 'ZoomMarkersThread', 'ZoomEventBuffer']
+
 
 class LineLabelsPlotter(object):
     """

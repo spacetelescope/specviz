@@ -23,7 +23,7 @@ __all__ = ['PlotWindow', 'PlotWidget']
 
 class PlotWindow(QMdiSubWindow):
     """
-    Displayed plotting subwindow available in the `QMdiArea`.
+    Displayed plotting subwindow available in the ``QMdiArea``.
     """
     window_removed = Signal()
 

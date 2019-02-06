@@ -11,6 +11,8 @@ orientations = {
     'vertical': {'anchor': (0, 0.5), 'angle': 90}
 }
 
+__all__ = ['LineIDMarkerProxy', 'LineIDMarker']
+
 
 class LineIDMarkerProxy(object):
     """
