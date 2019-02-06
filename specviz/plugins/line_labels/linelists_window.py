@@ -108,7 +108,8 @@ class LineListsPlugin(QWidget):
     line lists.
 
     This class acts as a interface adapter of sorts for the actual class
-    that does the work, :class:`~specutils.LineListsWindow`.
+    that does the work,
+    :class:`~specviz.plugins.line_labels.linelists_window.LineListsWindow`.
     """
 
     def __init__(self, *args, **kwargs):
