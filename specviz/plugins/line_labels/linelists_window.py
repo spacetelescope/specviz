@@ -27,6 +27,8 @@ from .linelist import WAVELENGTH_COLUMN, ERROR_COLUMN, DEFAULT_HEIGHT
 from .linelist import columns_to_remove
 from .line_labels_plotter import LineLabelsPlotter
 
+__all__ = ['LineListsPlugin', 'LineListsWindow', 'LineListPane', 'PlottedLinesPane', 'LineListTableModel', 'SortModel']
+
 
 # We need our own mapping because the list with color names returned by
 # QColor.colorNames() is inconsistent with the color names in Qt.GlobalColor.
