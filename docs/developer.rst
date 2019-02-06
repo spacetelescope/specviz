@@ -103,9 +103,9 @@ view widget.
 | ``plot_window_activated``    | Fired when a PlotWindow becomes active.                                  |
 +------------------------------+--------------------------------------------------------------------------+
 
-|Workspace| objects also contain the methods for providing the Qt dialogs for loading
-data (:func:`~specviz.widgets.workspace.Workspace.load_data`) using the
-``specutils`` IO infrastructure, as well as exporting data
+|Workspace| objects also contain the methods for providing the Qt dialogs for
+loading data (:func:`~specviz.widgets.workspace.Workspace.load_data_from_file`)
+using the ``specutils`` IO infrastructure, as well as exporting data
 (:meth:`~specviz.widgets.workspace.Workspace._on_export_data`), and deleting
 data items (:meth:`~specviz.widgets.workspace.Workspace._on_delete_data`).
 

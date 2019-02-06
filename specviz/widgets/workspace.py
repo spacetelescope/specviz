@@ -434,7 +434,7 @@ class Workspace(QMainWindow):
         This is a high-level function that is intended to be used both by GUI
         functionality, and also programmatically if necessary. By default, if
         the given file contains multiple spectra, a dialog will be presented to
-        the user to select which spectra to load. If `multi_select=False`, no
+        the user to select which spectra to load. If ``multi_select=False``, no
         dialog will be displayed and all spectra in the file will be loaded.
 
         Parameters
@@ -646,7 +646,7 @@ class Workspace(QMainWindow):
         Returns
         -------
         : :class:`~specutils.SpectrumList`
-            A `SpectrumList` instance containing the spectra loaded from the file
+            A `~specutils.SpectrumList` instance containing the spectra loaded from the file
         """
         # In the case that the user has selected auto load, loop through every
         # available loader and choose the one that 1) the registry identifier
