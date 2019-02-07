@@ -4,16 +4,10 @@ API Documentation
 specviz.core
 ------------
 
-.. automodapi:: specviz.core.annotation
-   :no-inheritance-diagram:
-
 .. automodapi:: specviz.core.hub
    :no-inheritance-diagram:
 
 .. automodapi:: specviz.core.items
-   :no-inheritance-diagram:
-
-.. automodapi:: specviz.core.linelist
    :no-inheritance-diagram:
 
 .. automodapi:: specviz.core.models
@@ -45,6 +39,9 @@ specviz.plugins
 .. automodapi:: specviz.plugins.unit_change
    :no-inheritance-diagram:
 
+.. automodapi:: specviz.plugins.line_labels
+   :no-inheritance-diagram:
+
 
 specviz.utils
 -------------
@@ -59,12 +56,6 @@ specviz.widgets
    :no-inheritance-diagram:
 
 .. automodapi:: specviz.widgets.delegates
-   :no-inheritance-diagram:
-
-.. automodapi:: specviz.widgets.line_labels_plotter
-   :no-inheritance-diagram:
-
-.. automodapi:: specviz.widgets.linelists_window
    :no-inheritance-diagram:
 
 .. automodapi:: specviz.widgets.plotting
