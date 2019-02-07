@@ -98,14 +98,14 @@ class EquationEditor(QDialog):
     derived from other variables.
     """
     tip_text = ("<b>Note:</b> The spectrum names in the expression should be surrounded "
-                "by {{ }} brackets (e.g. {{{example}}}), and you <br>"
+                "by {{ }} brackets (e.g. {{{example1}}}), and you <br>"
                 "you can use libraries imported in the namespace (numpy, specutils, etc). "
                 "Objects returned from editor must be type Spectrum1D!<br><br>"
                 "<b>Example expressions:</b><br><br>"
-                "  - Double the flux of '{example}': {{{example}}} * 2<br>"
-                "  - Add two Spectrum1D objects: {{{example}}}*2 + {{{example}}}<br>"
-                "  - Subtract two Spectrum1D objects: {{{example}}}*2 - {{{example}}}<br>"
-                "  - Use Spectrum1D API: Spectrum1D(spectral_axis={{{example}}}.wavelength,flux={{{example}}}.flux)")
+                "  - Double the flux of '{example1}': {{{example1}}} * 2<br>"
+                "  - Add two Spectrum1D objects: {{{example1}}}*2 + {{{example2}}}<br>"
+                "  - Subtract two Spectrum1D objects: {{{example1}}}*2 - {{{example2}}}<br>"
+                "  - Use Spectrum1D API: Spectrum1D(spectral_axis={{{example1}}}.wavelength,flux={{{example1}}}.flux)")
 
     placeholder_text = ("Type any mathematical expression here - "
                         "you can include attribute names from the "
@@ -129,8 +129,10 @@ class EquationEditor(QDialog):
         else:
             self.is_addmode = label is None
 
-            example = self._equation_editor.hub.data_items[0].name
-            self.example_label.setText(self.tip_text.format(example=example))
+            example1 = 'SPECTRUM1'
+            example2 = 'SPECTRUM2'
+            self.example_label.setText(self.tip_text.format(example1=example1,
+                                                            example2=example2))
 
             if label is not None:
                 self.text_label.setText(label)
