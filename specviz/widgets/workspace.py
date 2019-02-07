@@ -66,6 +66,8 @@ class Workspace(QMainWindow):
         # Update title
         self.setWindowTitle(self.name + " — SpecViz (v{})".format(specviz_version))
 
+        self.quit_action.triggered.connect(self._on_quit)
+
         # Setup workspace action connections
         self.new_workspace_action.triggered.connect(
             self._on_add_workspace)
@@ -628,3 +630,6 @@ class Workspace(QMainWindow):
             sub_window.plot_widget.remove_plot(index=proxy_idx)
 
         self.model.removeRow(model_idx.row())
+
+    def _on_quit(self):
+        self._app.quit()
