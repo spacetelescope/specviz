@@ -27,17 +27,17 @@ Types of Statistics
 
 Currently there are three types of statistics:
     - Generic:
-        - Mean
-        - Median
-        - Std Dev
-        - SNR
-        - Max Flux
-        - Min Flux
-        - Count total
+        - ``Mean``
+        - ``Median``
+        - ``Std Dev``
+        - ``SNR``
+        - ``Max Flux``
+        - ``Min Flux``
+        - ``Count total``
     - Continuum Subtracted:
-        Appends `FWHM` and `Centroid` to the Generic statistics.
+        Appends ``FWHM`` and ``Centroid`` to the Generic statistics.
     - Continuum Normalized:
-        Appends `Eq Width` the Generic statistics.
+        Appends ``Eq Width`` the Generic statistics.
 
 You can swap between the different types of statistics by using the drop down menu
 at the top of the statistics side bar.
@@ -56,7 +56,7 @@ Mean                      `~astropy.units.Quantity.mean`
 Median                    `~numpy.median`
 Std Dev                   `~astropy.units.Quantity.std`
 Centroid                  `~specutils.analysis.centroid`
-RMS (Calculated)          `~numpy.sqrt(flux.dot(flux) / len(flux))`
+RMS (Calculated)          ``~numpy.sqrt(flux.dot(flux) / len(flux))``
 SNR                       `~specutils.analysis.snr`
 FWHM                      `~specutils.analysis.fwhm`
 Eq Width                  `~specutils.analysis.equivalent_width`

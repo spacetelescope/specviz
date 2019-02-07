@@ -11,10 +11,6 @@ open at once and more can be added by selecting ``File > New Workspace`` from
 the menu bar. Workspaces are completely independent of one another, and the
 user can have as many workspaces are they wish.
 
-
-
-
-
 Each workspace consists of the following components:
     * `Data list`_
     * `Workspace toolbar`_
@@ -39,11 +35,17 @@ press enter.
 
 Workspace Toolbar
 -----------------
+
+.. note::
+    When applying an :ref:`operation <specviz_operations>` on a data item (fitting, removing etc.) you must
+    first select the data from the data list before clicking the desired toolbar
+    button.
+
 This is the main toolbar and appears at the top of each workspace. The tool
-bar consists of buttons that control loading/remobing data, adding new plots
-and buttons that are associated with SpecViz plugins. When applying an
-operation on a data item (fitting, removing etc.) you must first select the
-data from the data list before clicking the desired toolbar button.
+bar consists of buttons that control loading/removing data, adding new plots
+and buttons that are associated with SpecViz plugins.
+
+.. image:: _static/workspace_toolbar.png
 
 
 Plugin Side Bar
@@ -70,7 +72,7 @@ item on the current plot.
 
 .. _specviz-plot-toolbar:
 
-Plot toolbar
+Plot Toolbar
 ^^^^^^^^^^^^
 The plot toolbar contains buttons that relate to the current plot.
 
@@ -81,5 +83,5 @@ The following features are accessible through the plot toolbar:
     * Add spectral line labels
     * Change the color of the plot
     * :ref:`Unit conversion <specviz-unit-conversion>` of the axes
-    * Rest the plot
+    * Reset the plot
     * Export the plot to file

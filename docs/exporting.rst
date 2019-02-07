@@ -1,19 +1,6 @@
-.. _specviz-start:
 
-Getting Started
-===============
-
-Loading a Basic Spectrum
-------------------------
-
-Lets start by loading a test spectrum. If you followed the steps in
-:ref:`specviz-launching`, you should see the specviz window up, but without a
-spectrum.
-
-
-
-Exporting Spectra
------------------
+Exporting Data
+==============
 
 A user can export a given spectrum in the data list by highlighting the
 spectrum and clicking the ``Export Data`` button in the main toolbar. This

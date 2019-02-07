@@ -1,4 +1,4 @@
-.. _doc_loading_data:
+.. _specviz_loading_data:
 
 Loading Data
 ============
@@ -8,6 +8,7 @@ interface. It supports many ASCII and FITS Binary Table file types. FITS Image
 files are not currently supported, but there are plans to add this capability
 in the future.
 
+.. _specviz-loader-list:
 
 Supported File Types
 --------------------

@@ -1,4 +1,4 @@
-.. _doc_model_fitting:
+.. _specviz_model_fitting:
 
 Model Fitting
 =============
@@ -30,7 +30,7 @@ Simplex             `~astropy.modeling.fitting.SimplexLSQFitter`
 
 To use a model:
 
-#. Create a new ``model`` by clicking on the `New Model` button on the WorkSpace toolbar.
+#. Create a new ``model`` by clicking on the "New Model" button on the WorkSpace toolbar.
 #. Select the layer you wish to operate on from the combination box at the
    top of the fitting window. For example, you can choose the layer containing your emission
    or absorption line.
@@ -62,17 +62,20 @@ To fit a model:
 #. Adjust model parameter values to approximate fit.
 #. Click the lock icon next to any parameter to choose whether it should be kept
    fixed (closed lock) or allowed to vary (open lock) during fitting.
-#. Click on the settings icon at the bottom of the model fitting window select options such as the desired fitter and maximum iterations.
-#. Check the model's ``Equation Editor`` by clicking the calculator button. It will pop up with the current model arithmetic. Review. edit and press ok when done.
+#. Click on the settings icon at the bottom of the model fitting window select options
+    such as the desired fitter and maximum iterations.
+#. Check the model's ``Equation Editor`` by clicking the calculator button.
+    It will pop up with the current model arithmetic. Review. edit and press ok when done.
 #. Click the blue ``Fit Model`` button at the bottom of the fitting window.
 #. The associated model parameters will be adjusted accordingly.
 
 Equation Editor
 ^^^^^^^^^^^^^^^
 The ``Equation Editor`` text box is used to define the relationship between
-different models for the same ``model data item``. The editor can be launched by clicking the calculator Botton at the bottom of the model fitting window. If nothing is defined, the default is to
-add all the models together. To describe a non-default model relationship,
-adjust the math operators, as shown in the examples below and
+different models for the same ``model data item``. The editor can be launched by
+clicking the calculator Botton at the bottom of the model fitting window. If nothing
+is defined, the default is to add all the models together. To describe a non-default
+model relationship, adjust the math operators, as shown in the examples below and
 then press ``Enter`` to produce the compound model::
 
     Linear1 + Gaussian1

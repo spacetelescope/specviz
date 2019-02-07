@@ -28,6 +28,17 @@ new terminal::
 
 You should see information about your current conda installation printed out.
 
+Creating a new conda environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since SpecViz uses Python 3.6 or later you may need to create a new environment with
+this requirement satisfied as follows::
+
+    $ conda create -n <environment_name> python=3.6
+
+Installing
+^^^^^^^^^^
+
 If you are using the Space Telescope Science Institute's
 `AstroConda <https://astroconda.readthedocs.io/>`_ channel,  then type the following
 at any Bash terminal prompt::
@@ -43,15 +54,6 @@ At this point, you're done! You can launch SpecViz by typing the following at
 any terminal::
 
     $ specviz
-
-
-Creating a new conda environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Since SpecViz uses Python 3.6 or later you may need to create a new environment with
-this requirement satisfied as follows::
-
-    $ conda create -n <environment_name> python=3.6
 
 
 Uninstalling
@@ -70,6 +72,39 @@ instructions below. The dependencies are listed in the ``setup.cfg`` file, and
 therefore most of them will be handled automatically by the setup functions,
 the exception to this is  the exception of PyQt, which may require manual
 installation.
+
+PyQt bindings
+^^^^^^^^^^^^^
+
+.. note::
+
+    SpecViz requires PyQt for its graphical user interface. Before you install
+    via source please make sure your environment includes PyQt. If you don't have
+    PyQt installed, please follow the instructions in this section.
+
+You can check if PyQt is installed by looking for it in the list of packages in your
+environment. To get a list of packages you can run::
+
+        $ pip list
+
+If you have anaconda installed you can check via::
+
+        $ conda list
+
+If QtPy (not to be confused with PyQt) does not appear in the list, you must manually
+install it.
+
+Currently, only python environments with 3.6 or higher
+installed can use ``pip`` to install PyQt5, in which case simply type::
+
+    $ pip install pyqt5
+
+to install it on your system.
+
+In any other case, PyQt can be installed via anaconda::
+
+    $ conda install pyqt
+
 
 By cloning
 ^^^^^^^^^^
@@ -104,24 +139,6 @@ This uses the ``pip`` installation system, so please note that
 Likewise, the ``pip`` command will use your default Python to install.
 You can specify by using ``pip2`` or ``pip3``, if you're not using a virtual
 environment.
-
-
-PyQt bindings
-^^^^^^^^^^^^^
-
-SpecViz requires PyQt for its graphical user interface. If you don't have PyQt installed,
-please follow the instructions below.
-
-Currently, only python environments with 3.6 or higher
-installed can use ``pip`` to install PyQt5, in which case simply type::
-
-    $ pip install pyqt5
-
-to install it on your system.
-
-In any other case, PyQt can be installed via anaconda::
-
-    $ conda install pyqt
 
 
 Uninstalling

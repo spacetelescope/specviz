@@ -7,6 +7,9 @@ How Unit Conversion Works
 -------------------------
 
 SpecViz allows the user to change the units on their spectra.
+It uses the `astropy.units <http://docs.astropy.org/en/stable/units/>`_
+module for unit conversion.
+
 To change the units, click on the blue “Change Units” button in the :ref:`plot toolbar <specviz-plot-toolbar>`.
 A dialog box will appear and you can change the X or Y axis units by selecting new units
 from one of the two drop down boxes. The boxes are populated by potential compatible units.
@@ -23,19 +26,10 @@ the units are invalid, and there should be suggestions provided. Green coloring 
 entered valid units and can now press the “OK” button. If the units are incompatible,
 the current plot units will not be changed.
 
+Invalid custom unit:
+
 .. image:: _static/specviz_uc_custom2.png
 
+Valid custom `astropy unit <http://docs.astropy.org/en/stable/units/index.html#>`_:
+
 .. image:: _static/specviz_uc_custom3.png
-
-SpecViz uses the `astropy.units <http://docs.astropy.org/en/stable/units/>`_ module for unit
-conversion as follows:
-
-.. code-block:: python
-
-    import astropy.units as u
-
-    potential_X_axis_units =
-    u.Unit(original_spectral_axis_units).find_equivalent_units(equivalencies=u.spectral())
-
-    potential_Y_axis_units = u.Unit(original_flux_units).find_equivalent_units(
-    equivalencies=u.spectral_density(spectral_axis_element))
