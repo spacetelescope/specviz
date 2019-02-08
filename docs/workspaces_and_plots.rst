@@ -14,7 +14,7 @@ user can have as many workspaces are they wish.
 Each workspace consists of the following components:
     * `Data list`_
     * `Workspace toolbar`_
-    * `plugin side bar`_
+    * `plugin sidebar`_
     * `Plots`_
 
 .. image:: _static/disabled_data_item.png
@@ -48,11 +48,11 @@ and buttons that are associated with SpecViz plugins.
 .. image:: _static/workspace_toolbar.png
 
 
-Plugin Side Bar
+Plugin Sidebar
 ----------------
-The plugin side bar is where plugin modules such as statistics and model fitting
+The plugin sidebar is where plugin modules such as statistics and model fitting
 appear. You can switch between plugins by using the tabs next to the plugin
-side bar.
+sidebar.
 
 
 Plots

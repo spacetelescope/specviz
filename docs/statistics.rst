@@ -5,13 +5,13 @@ Statistics
 
 11 statistic/analysis functions are calculated using the input spectrum
 or  specified region of interest, depending on what is selected in the
-left side bar. To get the statistics of a spectrum, select it on the
+left sidebar. To get the statistics of a spectrum, select it on the
 :ref:`data list <specviz-data-list>` on the left panel.
 
 The user can calculate statistics for a selected region of a spectrum.
 First, a `"Region of Interest" is selected <specviz_regions>`_.  Once this
 is done, the statistics are automatically calculated and displayed in the left
-side bar. If a region of interest is selected, the statistic
+sidebar. If a region of interest is selected, the statistic
 calculations are updated when that region of interest is changed.
 
 .. warning::
@@ -40,7 +40,7 @@ Currently there are three types of statistics:
         Appends ``Eq Width`` the Generic statistics.
 
 You can swap between the different types of statistics by using the drop down menu
-at the top of the statistics side bar.
+at the top of the statistics sidebar.
 
 
 
