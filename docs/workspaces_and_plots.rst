@@ -80,7 +80,6 @@ The plot toolbar contains buttons that relate to the current plot.
 
 The following features are accessible through the plot toolbar:
     * Add or remove :ref:`regions of interest <specviz-regions>`
-    * Add spectral line labels
     * Change the color of the plot
     * :ref:`Unit conversion <specviz-unit-conversion>` of the axes
     * Reset the plot
