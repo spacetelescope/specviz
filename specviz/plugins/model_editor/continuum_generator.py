@@ -27,7 +27,7 @@ class ContinuumGenerator:
         # TODO: need an easy way to invert this to satisfy the formalism of
         # specutils where *excluded* regions are passed in.
         inc_regs = self.hub.spectral_regions
-        exc_regs = inc_regs.invert_from_spectrum(spec)
+        exc_regs = inc_regs.invert_from_spectrum(spec) if inc_regs else None
 
         # Perform the continuum fitting, storing both model and array output
 
