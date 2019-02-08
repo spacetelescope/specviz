@@ -10,7 +10,7 @@ from qtpy.QtWidgets import (QAction, QDialog, QFileDialog, QInputDialog, QMenu,
                             QMessageBox, QToolButton, QWidget)
 from qtpy.uic import loadUi
 from specutils.fitting import fit_lines
-from specutils.manipulation import extract_region
+from specutils.manipulation.utils import excise_regions
 from specutils.spectra import Spectrum1D
 
 from .equation_editor_dialog import ModelEquationEditorDialog
@@ -260,7 +260,10 @@ class ModelEditor(QWidget):
         spec = self._get_selected_plot_data_item().data_item.spectrum
 
         if inc_regs is not None:
-            spec = extract_region(spec, inc_regs)
+            exc_regs = inc_regs.invert_from_spectrum(spec) \
+                if inc_regs is not None else None
+
+            spec = excise_regions(spec, exc_regs)
 
         # Initialize the parameters
         model = initialize(model, spec.spectral_axis, spec.flux)
