@@ -39,8 +39,8 @@ env:
         # Make sure README will display properly on pypi
         - TOXENV='checkdocs'
         # Run a test with stable dependencies
-        - TOXENV='py36'
-        - TOXENV='py37'
+        - TOXENV='py36-test'
+        - TOXENV='py37-test'
 
 
 matrix:
@@ -64,27 +64,27 @@ matrix:
 
         # Try MacOS X and Windows
         - os: osx
-          env: TOXENV='py37'
+          env: TOXENV='py37-test'
 
         - os: windows
-          env: TOXENV='py37'
+          env: TOXENV='py37-test'
 
         - os: linux
-          env: TOXENV='py37-astrodev'
+          env: TOXENV='py37-astrodev-test'
                EVENT_TYPE='pull_request push cron'
 
         - os: linux
-          env: TOXENV='py37-numpydev'
+          env: TOXENV='py37-numpydev-test'
                EVENT_TYPE='pull_request push cron'
 
         # Test with glue installed
         - os: linux
-          env: TOXENV='py37-glue'
+          env: TOXENV='py37-glue-test'
 
     allow_failures:
-        - env: TOXENV='py37-astrodev'
+        - env: TOXENV='py37-astrodev-test'
                EVENT_TYPE='pull_request push cron'
-        - env: TOXENV='py37-numpydev'
+        - env: TOXENV='py37-numpydev-test'
                EVENT_TYPE='pull_request push cron'
 
 install:
@@ -96,3 +96,6 @@ install:
 script:
     - conda info
     - $TOX_CMD $TOX_ARGS
+    - if [[ $TOXENV == *-test ]]; then
+        JWST_DATA_TEST=1 $TOX_CMD specviz/tests/test_load_data.py $TOX_ARGS;
+      fi
