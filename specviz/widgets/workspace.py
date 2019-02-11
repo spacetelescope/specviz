@@ -123,7 +123,7 @@ class Workspace(QMainWindow):
         self._plugin_bars = {}
 
         # Current working directory. Updated by file open dialogs
-        self.cwd = os.getcwd()
+        self._cwd = os.getcwd()
 
         # Mount plugins
         plugin.mount(self)
@@ -416,14 +416,14 @@ class Workspace(QMainWindow):
         filters, loader_name_map = self._create_loader_filters()
 
         file_path, fmt = compat.getopenfilename(parent=self,
-                                                basedir=self.cwd,
+                                                basedir=self._cwd,
                                                 caption="Load spectral data file",
                                                 filters=";;".join(filters))
 
         if not file_path:
             return
 
-        self.cwd = os.path.dirname(file_path)
+        self._cwd = os.path.dirname(file_path)
 
         try:
             self.load_data(file_path, file_loader=loader_name_map[fmt])
