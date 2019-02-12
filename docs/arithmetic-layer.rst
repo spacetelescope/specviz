@@ -1,37 +1,44 @@
 .. _specviz-arithmetic:
 
-Arithmetic Widget
+Arithmetic Editor
 =================
-The Arithmetic widget allows users to perform basic arithmetic on their spectra
-that are loaded into Specviz. The arithmetic editor accepts data loaded into the
-Specviz session and only outputs type `specutils.Spectrum1D <https://specutils.readthedocs.io/en/latest/api/specutils.Spectrum1D.html>`_. 
-This means the editor allows users to perform the same arithmatic operations that are available with 
-`specutils.Spectrum1D` objects.
+
+The Arithmetic Editor allows users to perform basic spectral arithmetic.
+Inputs are spectra loaded into the Specviz session.
+Outputs are also spectra in SpecViz.
 
 
-Launching Arithmetic Editor
----------------------------
-
-Lets start by loading the arithmetic layer widget located on the tool bar.
-Upon clicking you will be prompted with the arithmetic dialog
+To load the Arithmetic Editor, click on the Arithmetic button in the
+:ref:`workspace toolbar <specviz-workspace-toolbar>`. This dialog box will appear:
 
 .. image:: _static/arithmetic-layer.png
 
 From this dialog you can add, edit or remove arithmetic items from the
-editor. We will start by clicking the New Arithmetic Attribute button located in 
-top left hand corner of the Editor dialog. Upon clicking you will be prompted with
-the editor dialog
+editor.
+
+.. note::
+
+    All spectra are specutils.Spectrum1D objects in astropy.
+    Therefore, the Arithmetic Editor allows users to perform the
+    arithmatic operations that are incorporated into the specutils.Spectrum1D object.
+
+Example
+^^^^^^^
+
+We will walk you through an example of how to multiply a spectrum by a factor of 2.
+Start by clicking the "New Arithmetic Attribute" button in the top left and the
+following dialog box will appear:
 
 .. image:: _static/equation_editor.png
 
-Adding Arithmetic
------------------
 
-Once the Arithmetic widget is launched, spectra and their components can be added
-here by typing the names directly surrounded by '{}' or by selecting the spectrum
-in the dropdown bar and clicking insert. We are going to take the preloaded spectrum 
-(``science_spectrum``) and create a new spectrum that is double the flux of ``science_spectrum``
-and call it ``double science_spectrum``.
+Arithmetic is done using expressions entered into the large box. Examples of operations
+are given at the bottom of the dialog box. We first assign a name to the output data by
+entering it in the first text box; we will call the output of this example ``double science_spectrum``.
+Let's choose a spectrum to operate on called "science spectrum" by choosing it from the
+first drop-down menu and clicking "Insert." Let's choose to operate on the wavelength axis
+by choosing "wavelength" from the second drop-down menu and clicking "Insert." Click on the
+text editor to start editing and multiply the inserted component by ``2``:
 
 .. image:: _static/valid_expression.png
 

@@ -48,10 +48,13 @@ Using SpecViz
 .. toctree::
    :maxdepth: 2
 
-   getting_started
+   loading_data
+   exporting
+   workspaces_and_plots
+   regions
    unit_conversion
+   operations
    arithmetic-layer
-   loader_wizard
    model_fitting
    statistics
    line_labels

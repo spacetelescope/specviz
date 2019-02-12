@@ -9,8 +9,8 @@ lists. There is a set of line lists already included in the distribution,
 and the user can read his/hers own line lists as text files formatted
 in Astropy's ECSV format.
 
-One a spectrum is displayed in the plot window, clicking on the
-"Line Labels" tab in the plug-in bar will give access to the line
+Once a spectrum is displayed in the plot window, clicking on the
+"Line Labels" tab in the plug-in sidebar will give access to the line
 labels tool, which contain the functionality to manage the line lists.
 
 
