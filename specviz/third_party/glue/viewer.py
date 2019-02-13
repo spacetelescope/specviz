@@ -172,7 +172,7 @@ class SpecvizLayerArtist(LayerArtist):
         else:
             self.plot_data_item.data_item.set_data(spectrum)
             # FIXME: we shouldn't have to call update_data manually
-            # self.plot_data_item.update_data()
+            self.plot_data_item.set_data()
 
         self.update_visual()
 
@@ -219,7 +219,7 @@ class SpecvizDataViewer(DataViewer):
     _data_artist_cls = SpecvizLayerArtist
     _subset_artist_cls = SpecvizLayerArtist
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, layout=None, **kwargs):
 
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()

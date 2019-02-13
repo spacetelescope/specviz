@@ -25,6 +25,11 @@ class DataItem(QStandardItem):
         The UUID of this data item.
     data : :class:`specutils.Spectrum1D`
         The internal spectrum object associated with this data item.
+
+    Attributes
+    ----------
+    data_changed : ``Signal``
+        Fired when the internal stored data is changed.
     """
     NameRole = Qt.UserRole + 1
     IdRole = Qt.UserRole + 2
@@ -85,6 +90,7 @@ class DataItem(QStandardItem):
         Update the stored :class:`~specutils.Spectrum1D` data values.
         """
         self.setData(data, self.DataRole)
+        self.emitDataChanged()
 
     @property
     def spectrum(self):
@@ -98,6 +104,14 @@ class PlotDataItem(pg.PlotDataItem):
     """
     A PyQtGraph `~pyqtgraph.PlotDataItem` object that wraps a `DataItem` object
     (which in turn wraps a :class:`~specutils.Spectrum1D` object).
+
+    Notes
+    -----
+        Currently, the ``PlotDataItem`` class does not take in a reference to
+        the data model. This means that it is not listening to ``dataChanged``
+        signals raised from the data items within the model. Thus, if the
+        data item for this plot data item is changed, users must call the
+        ``set_data`` method on this class to re-render the plot.
     """
     data_unit_changed = Signal(str)
     spectral_axis_unit_changed = Signal(str)
