@@ -82,6 +82,8 @@ matrix:
           env: TOXENV='py37-glue-test'
 
     allow_failures:
+        - os: windows
+          env: TOXENV='py37-test'
         - env: TOXENV='py37-astrodev-test'
                EVENT_TYPE='pull_request push cron'
         - env: TOXENV='py37-numpydev-test'
