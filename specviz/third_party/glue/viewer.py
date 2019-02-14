@@ -6,26 +6,23 @@
 # http://docs.glueviz.org/en/latest/customizing_guide/qt_viewer.html
 
 import os
-
 from collections import OrderedDict
-
-from qtpy.QtWidgets import QWidget, QMessageBox, QApplication
 
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.core.exceptions import IncompatibleAttribute
-
-from glue.external.echo import CallbackProperty, SelectionCallbackProperty, keep_in_sync
+from glue.external.echo import (CallbackProperty, SelectionCallbackProperty,
+                                keep_in_sync)
 from glue.external.echo.qt import autoconnect_callbacks_to_qt
-
-from glue.viewers.common.layer_artist import LayerArtist
-from glue.viewers.common.state import ViewerState, LayerState
-from glue.viewers.common.qt.data_viewer import DataViewer
-
 from glue.utils.qt import load_ui
+from glue.viewers.common.layer_artist import LayerArtist
+from glue.viewers.common.qt.data_viewer import DataViewer
+from glue.viewers.common.state import LayerState, ViewerState
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget
 
-from .utils import glue_data_to_spectrum1d, glue_data_has_spectral_axis
-from ...widgets.workspace import Workspace
+from .utils import glue_data_has_spectral_axis, glue_data_to_spectrum1d
 from ...app import Application
+from ...widgets.workspace import Workspace
 
 __all__ = ['SpecvizDataViewer']
 
@@ -207,17 +204,18 @@ class SpecvizLayerStateWidget(QWidget):
 
         autoconnect_callbacks_to_qt(layer_artist.state, self.ui, connect_kwargs)
 
-
 class SpecvizDataViewer(DataViewer):
     """
 
     """
-    LABEL = 'Specviz viewer'
+    LABEL = 'SpecViz viewer'
     _state_cls = SpecvizViewerState
     _options_cls = SpecvizViewerStateWidget
     _layer_style_widget_cls = SpecvizLayerStateWidget
     _data_artist_cls = SpecvizLayerArtist
     _subset_artist_cls = SpecvizLayerArtist
+    tools = []
+    subtools = []
 
     def __init__(self, *args, layout=None, **kwargs):
 
@@ -288,4 +286,24 @@ class SpecvizDataViewer(DataViewer):
         """
 
         """
-        pass
+        super().initialize_toolbar()
+
+        # Find all actions in the default specviz tool bar, sans ones that
+        # allow the user to load or delete data. Add these to the glue-generated
+        # tool bar.
+        for act in self.current_workspace.main_tool_bar.actions()[6:]:
+            self.toolbar.addAction(act)
+
+        # Hide the main tool bar in favor of the glue-generated one
+        self.current_workspace.main_tool_bar.hide()
+
+        # Show labels in the tool bar
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
+        # Hide the tabs of the mdiarea in specviz.
+        self.current_workspace.mdi_area.setViewMode(QMdiArea.SubWindowView)
+        self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
+        self.current_workspace.current_plot_window.showMaximized()
+
+        # Hide the data list view in favor of the glue layer list view
+        self.current_workspace.list_view.hide()
