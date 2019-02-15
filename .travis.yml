@@ -50,7 +50,8 @@ matrix:
 
     include:
         # Do a coverage test
-        - env: TOXENV='coverage' TOX_ARGS=''
+        # Skip for now. Eventually we will want to use codecov
+        #- env: TOXENV='coverage' TOX_ARGS=''
 
         # Perform a sanity check of packaging using twine
         - env: TOXENV='twine' TOX_ARGS=''
