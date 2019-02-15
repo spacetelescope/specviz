@@ -259,14 +259,9 @@ class ModelEditor(QWidget):
         inc_regs = self.hub.spectral_regions
         spec = self._get_selected_plot_data_item().data_item.spectrum
 
-        if inc_regs is not None:
-            exc_regs = inc_regs.invert_from_spectrum(spec) \
-                if inc_regs is not None else None
-
-            spec = excise_regions(spec, exc_regs)
-
         # Initialize the parameters
-        model = initialize(model, spec.spectral_axis, spec.flux)
+        mask = (spec.spectral_axis > inc_regs.lower) & (spec.spectral_axis < inc_regs.upper)
+        model = initialize(model, spec.spectral_axis[mask], spec.flux[mask])
 
         self._add_model(model)
 
