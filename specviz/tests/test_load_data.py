@@ -62,21 +62,28 @@ jwst_data_test = pytest.mark.skipif(
                     'the test suite.')
 
 
-def run_subprocess_test(callback, *args):
-    def run_specviz_subprocess(q, callback, *args):
+def run_subprocess_test(run_test, *args, callback=None, **app_kwargs):
+    def run_specviz_subprocess(q, run_test, *args):
         try:
-            callback(args[0])
+            app = Application([], skip_splash=True, **app_kwargs)
+            if run_test is not None:
+                run_test(app, args[0])
         except Exception:
             ex_type, ex_value, tb = sys.exc_info()
             error = ex_type, ex_value, ''.join(traceback.format_tb(tb))
         else:
             error = None
+        finally:
+            app.quit()
+
         q.put(error)
+
+    callback = callback or run_specviz_subprocess
 
     q = Queue()
     # Running multiple subsequent Qt applications in the same process seems to
     # cause segfaults, so we run each specviz instance in a separate process
-    p = Process(target=run_specviz_subprocess, args=(q, callback, *args))
+    p = Process(target=callback, args=(q, run_test, *args))
     p.start()
     error = q.get()
     p.join()
@@ -87,19 +94,22 @@ def run_subprocess_test(callback, *args):
         raise ex_type(message)
 
 
+def download_test_data(tmpdir, url):
+    fname = str(tmpdir.join('test_data.fits'))
+    with fits.open(url) as hdulist:
+        hdulist.writeto(fname)
+    return fname
+
+
 @jwst_data_test
 @pytest.mark.parametrize('url', JWST_DATA_PATHS)
 def test_load_jwst_data(url):
 
-    def load_jwst_data(url):
-        try:
-            spec_app = Application([], skip_splash=True)
-            # Use loader auto-detection here
-            data = spec_app.current_workspace.load_data_from_file(url, multi_select=False)
-            # Basic sanity check to make sure there are data items
-            assert len(data) > 0
-        finally:
-            spec_app.quit()
+    def load_jwst_data(spec_app, url):
+        # Use loader auto-detection here
+        data = spec_app.current_workspace.load_data_from_file(url, multi_select=False)
+        # Basic sanity check to make sure there are data items
+        assert len(data) > 0
 
     run_subprocess_test(load_jwst_data, url)
 
@@ -110,17 +120,13 @@ def test_valid_loader(tmpdir):
     Explicitly request to use the appropriate loader for a HST/COS data file
     """
 
-    fname = str(tmpdir.join('good_data.fits'))
-    with fits.open(HST_COS_PATH) as hdulist:
-        hdulist.writeto(fname)
-
-    def use_valid_loader(fname):
-        spec_app = Application([], skip_splash=True)
+    def use_valid_loader(spec_app, tmpdir):
+        fname = download_test_data(tmpdir, HST_COS_PATH)
         spec_app.current_workspace.load_data_from_file(fname,
                                                        file_loader='HST/COS',
                                                        multi_select=False)
 
-    run_subprocess_test(use_valid_loader, fname)
+    run_subprocess_test(use_valid_loader, tmpdir)
 
 
 @jwst_data_test
@@ -132,18 +138,14 @@ def test_invalid_data_file(tmpdir):
     rather than an unexpected error later on.
     """
 
-    fname = str(tmpdir.join('bad_data.fits'))
-    with fits.open(BAD_DATA_PATH) as hdulist:
-        hdulist.writeto(fname)
-
-    def open_invalid_data(fname):
-        spec_app = Application([], skip_splash=True)
+    def open_invalid_data(spec_app, tmpdir):
+        fname = download_test_data(tmpdir, BAD_DATA_PATH)
         with pytest.raises(IOError) as err:
             spec_app.current_workspace.load_data_from_file(fname,
                                                            multi_select=False)
             assert err.msg.startswith('Could not find appropriate loader')
 
-    run_subprocess_test(open_invalid_data, fname)
+    run_subprocess_test(open_invalid_data, tmpdir)
 
 
 @jwst_data_test
@@ -156,12 +158,8 @@ def test_invalid_loader(url, tmpdir):
     We expect to get a reasonable error.
     """
 
-    fname = str(tmpdir.join('data.fits'))
-    with fits.open(url) as hdulist:
-        hdulist.writeto(fname)
-
-    def use_wrong_loader(fname):
-        spec_app = Application([], skip_splash=True)
+    def use_wrong_loader(spec_app, tmpdir):
+        fname = download_test_data(tmpdir, url)
         with pytest.raises(IOError) as err:
             # Using the HST/COS loader is not appropriate for a JWST data file
             spec_app.current_workspace.load_data_from_file(fname,
@@ -171,7 +169,7 @@ def test_invalid_loader(url, tmpdir):
                  'Given file can not be processed as specified file format')
             assert 'HST/COS' in err.msg
 
-    run_subprocess_test(use_wrong_loader, fname)
+    run_subprocess_test(use_wrong_loader, tmpdir)
 
 
 @jwst_data_test
@@ -180,12 +178,8 @@ def test_nonexistent_loader(tmpdir):
     Try to specify a loader that doesn't exist.
     """
 
-    fname = str(tmpdir.join('good_data.fits'))
-    with fits.open(HST_COS_PATH) as hdulist:
-        hdulist.writeto(fname)
-
-    def use_valid_loader(fname):
-        spec_app = Application([], skip_splash=True)
+    def use_valid_loader(spec_app, tmpdir):
+        fname = download_test_data(tmpdir, HST_COS_PATH)
         with pytest.raises(IOError) as err:
             spec_app.current_workspace.load_data_from_file(fname,
                                                            file_loader='FAKE',
@@ -194,7 +188,7 @@ def test_nonexistent_loader(tmpdir):
                  'Given file can not be processed as specified file format')
             assert 'FAKE' in err.msg
 
-    run_subprocess_test(use_valid_loader, fname)
+    run_subprocess_test(use_valid_loader, tmpdir)
 
 
 @jwst_data_test
@@ -203,16 +197,20 @@ def test_load_data_command_line(tmpdir):
     Test to simulate the case where a data file is provided on the command line
     """
 
-    fname = str(tmpdir.join('data.fits'))
+    def callback(q, run_test, *args):
+        fname = download_test_data(args[0], JWST_DATA_PATHS[0])
 
-    with fits.open(JWST_DATA_PATHS[0]) as hdulist:
-        hdulist.writeto(fname)
-
-    def load_data_command_line(*args):
         try:
-            spec_app = Application([], file_path=args[0], skip_splash=True,
-                                   load_all=True)
+            app = Application([], skip_splash=True, file_path=fname,
+                              load_all=True)
+        except Exception:
+            ex_type, ex_value, tb = sys.exc_info()
+            error = ex_type, ex_value, ''.join(traceback.format_tb(tb))
+        else:
+            error = None
         finally:
-            spec_app.quit()
+            app.quit()
 
-    run_subprocess_test(load_data_command_line, fname)
+        q.put(error)
+
+    run_subprocess_test(None, tmpdir, callback=callback)

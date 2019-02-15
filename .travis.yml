@@ -25,40 +25,22 @@ env:
     global:
 
         # The following versions are the 'default' for tests, unless
-        # overridden underneath. They are defined here in order to save having
+        # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        - PYTHON_VERSION=3.7
-        - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=stable
-        - SETUP_CMD='python setup.py'
-        - DATA_TEST_PATH='specviz/tests/test_load_data.py'
-        - CMD=test
+        - TOX_CMD='tox --'
+        - TOX_ARGS='--remote-data'
         - EVENT_TYPE='pull_request push'
-
-
-        # List other runtime dependencies for the package that are available as
-        # conda packages here.
-        - CONDA_DEPENDENCIES=''
-
-        # List other runtime dependencies for the package that are available as
-        # pip packages here.
-        - PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.2 asteval sphinx-astropy sphinx-rtd-theme pytest-astropy pytest-qt'
-
-        # Conda packages for affiliated packages are hosted in channel
-        # "astropy" while builds for astropy LTS with recent numpy versions
-        # are in astropy-ci-extras. If your package uses either of these,
-        # add the channels to CONDA_CHANNELS along with any other channels
-        # you want to use.
-        - CONDA_CHANNELS='astropy-ci-extras astropy'
-
-        # If there are matplotlib or other GUI tests, uncomment the following
-        # line to use the X virtual framebuffer.
         - SETUP_XVFB=True
 
+
     matrix:
-        # Make sure that egg_info works without dependencies
-        - PYTHON_VERSION=3.6 CMD="$SETUP_CMD egg_info"
-        - PYTHON_VERSION=3.7 CMD="$SETUP_CMD egg_info"
+        # Make sure that installation does not fail
+        - TOXENV='py37' TOX_CMD='tox --notest' TOX_ARGS=''
+        # Make sure README will display properly on pypi
+        - TOXENV='checkdocs'
+        # Run a test with stable dependencies
+        - TOXENV='py36-test'
+        - TOXENV='py37-test'
 
 
 matrix:
@@ -67,85 +49,56 @@ matrix:
     fast_finish: true
 
     include:
-        # Try MacOS X
-        - os: osx
+        # Do a coverage test
+        # Skip for now. Eventually we will want to use codecov
+        #- env: TOXENV='coverage' TOX_ARGS=''
 
-        # Re-enable once coverage is set up for this repository
-        ## Do a coverage test.
-        #- os: linux
-        #  env: SETUP_CMD='test --coverage'
+        # Perform a sanity check of packaging using twine
+        - env: TOXENV='twine' TOX_ARGS=''
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
-        - os: linux
-          env: CMD="$SETUP_CMD build_docs -w"
+        - env: TOXENV='docbuild' TOX_ARGS=''
 
-        # Now try Astropy dev with the latest Python and LTS with Python 2.7 and 3.x.
+        # Do a code style check
+        - env: TOXENV='style' TOX_ARGS=''
+
+        # Try MacOS X and Windows
+        - os: osx
+          env: TOXENV='py37-test'
+
+        - os: windows
+          env: TOXENV='py37-test'
+
         - os: linux
-          env: ASTROPY_VERSION=development
+          env: TOXENV='py37-astrodev-test'
+               EVENT_TYPE='pull_request push cron'
+
+        - os: linux
+          env: TOXENV='py37-numpydev-test'
                EVENT_TYPE='pull_request push cron'
 
         # Test with glue installed
         - os: linux
-          env: PIP_DEPENDENCIES='pyqt5 pyqtgraph qtawesome qtpy click specutils>=0.5.2 sphinx-astropy pytest-astropy pytest-qt glue-core'
+          env: TOXENV='py37-glue-test'
 
-        # Test with latest stable versions of dependencies
-        - os: linux
-
-        # Try numpy pre-release
-        - os: linux
-          env: NUMPY_VERSION=prerelease
+    allow_failures:
+        - os: windows
+          env: TOXENV='py37-test'
+        - env: TOXENV='py37-astrodev-test'
                EVENT_TYPE='pull_request push cron'
-
-        # Do a PEP8 test with pycodestyle
-        - os: linux
-          env: CMD='pycodestyle specviz --count'
-               PIP_DEPENDENCIES='pycodestyle'
-
-        # Do a separate flake8 test for missing docstrings
-        - os: linux
-          env: CMD='flake8 --config=flake8docs.cfg --count specviz'
-               PIP_DEPENDENCIES='flake8 flake8-docstrings'
+        - env: TOXENV='py37-numpydev-test'
+               EVENT_TYPE='pull_request push cron'
 
 install:
 
-    # We now use the ci-helpers package to set up our testing environment.
-    # This is done by using Miniconda and then using conda and pip to install
-    # dependencies. Which dependencies are installed using conda and pip is
-    # determined by the CONDA_DEPENDENCIES and PIP_DEPENDENCIES variables,
-    # which should be space-delimited lists of package names. See the README
-    # in https://github.com/astropy/ci-helpers for information about the full
-    # list of environment variables that can be used to customize your
-    # environment. In some cases, ci-helpers may not offer enough flexibility
-    # in how to install a package, in which case you can have additional
-    # commands in the install: section below.
-
     - git clone --depth 1 git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
-
-    # As described above, using ci-helpers, you should be able to set up an
-    # environment with dependencies installed using conda and pip, but in some
-    # cases this may not provide enough flexibility in how to install a
-    # specific dependency (and it will not be able to install non-Python
-    # dependencies). Therefore, you can also include commands below (as
-    # well as at the start of the install section or in the before_install
-    # section if they are needed before setting up conda) to install any
-    # other dependencies.
+    - pip install tox tox-conda
 
 script:
-  # We do two separate test runs: one runs the main test suite where all tests
-  # share the same specviz application instance. The second runs only the JWST
-  # data loader tests, which each run in a separate subprocess.  These two
-  # different test cases do not play nicely when they run in the same pytest
-  # process, which is the reason for separating them here.
-  - if [[ $CMD == test ]]; then
-      pip install -e .;
-      pytest && JWST_DATA_TEST=1 pytest $DATA_TEST_PATH;
-    else
-      $CMD;
-    fi
-
-after_success:
-    # If coveralls.io is set up for this package, uncomment the line below.
-    # The coveragerc file may be customized as needed for your package.
-    # - if [[ $CMD == *coverage* ]]; then coveralls --rcfile='specviz/tests/coveragerc'; fi
+    - conda info
+    - $TOX_CMD $TOX_ARGS
+    - if [[ $TOXENV == *-test ]]; then
+        JWST_DATA_TEST=1 $TOX_CMD specviz/tests/test_load_data.py $TOX_ARGS;
+      fi
