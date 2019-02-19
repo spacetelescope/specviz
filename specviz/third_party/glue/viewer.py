@@ -8,6 +8,8 @@
 import os
 from collections import OrderedDict
 
+from glue.core import Component, Data
+from glue.core.coordinates import coordinates_from_header
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.core.exceptions import IncompatibleAttribute
 from glue.external.echo import (CallbackProperty, SelectionCallbackProperty,
@@ -18,11 +20,15 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget
+from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction
+import numpy as np
+import logging
 
 from .utils import glue_data_has_spectral_axis, glue_data_to_spectrum1d
 from ...app import Application
 from ...widgets.workspace import Workspace
+from .operation_handler import SpectralOperationHandler
+from ...core.hub import Hub
 
 __all__ = ['SpecvizDataViewer']
 
@@ -214,24 +220,65 @@ class SpecvizDataViewer(DataViewer):
     _layer_style_widget_cls = SpecvizLayerStateWidget
     _data_artist_cls = SpecvizLayerArtist
     _subset_artist_cls = SpecvizLayerArtist
+    _inherit_tools = False
     tools = []
-    subtools = []
+    subtools = {}
 
     def __init__(self, *args, layout=None, **kwargs):
+        # Load specviz plugins
+        Application.load_local_plugins()
 
         super(SpecvizDataViewer, self).__init__(*args, **kwargs)
         self.statusBar().hide()
 
-        # Load specviz plugins
-        Application.load_local_plugins()
-
         # Instantiate workspace widget
         self.current_workspace = Workspace()
+        self.hub = Hub(self.current_workspace)
+
+        # Store a reference to the cubeviz layout instance
+        self._layout = layout
 
         # Add an initially empty plot window
         self.current_workspace.add_plot_window()
 
         self.setCentralWidget(self.current_workspace)
+
+        self.options.gridLayout.addWidget(self.current_workspace.list_view)
+
+        # When a new data item is added to the specviz model, create a new
+        # glue data component and add it to the glue data list
+        # self.current_workspace.model.data_added.connect(self.reverse_add_data)
+
+        self.current_workspace.mdi_area.setViewMode(QMdiArea.SubWindowView)
+        self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
+        self.current_workspace.current_plot_window.showMaximized()
+
+    def reverse_add_data(self, data_item):
+        """
+        Adds data from specviz to glue.
+
+        Parameters
+        ----------
+        data_item : :class:`specviz.core.items.DataItem`
+            The data item recently added to model.
+        """
+        new_data = Data(label=data_item.name)
+        new_data.coords = coordinates_from_header(data_item.spectrum.wcs)
+
+        flux_component = Component(data_item.spectrum.flux,
+                                   data_item.spectrum.flux.unit)
+        new_data.add_component(flux_component, "Flux")
+
+        disp_component = Component(data_item.spectrum.spectral_axis,
+                                   data_item.spectrum.spectral_axis.unit)
+        new_data.add_component(disp_component, "Dispersion")
+
+        if data_item.spectrum.uncertainty is not None:
+            uncert_component = Component(data_item.spectrum.uncertainty.array,
+                                         data_item.spectrum.uncertainty.unit)
+            new_data.add_component(uncert_component, "Uncertainty")
+
+        self._session.data_collection.append(new_data)
 
     def add_data(self, data):
         """
@@ -294,8 +341,16 @@ class SpecvizDataViewer(DataViewer):
         for act in self.current_workspace.main_tool_bar.actions()[6:]:
             self.toolbar.addAction(act)
 
+        self.toolbar.addSeparator()
+
+        for act in self.current_workspace.current_plot_window.tool_bar.actions():
+            self.toolbar.addAction(act)
+
         # Hide the main tool bar in favor of the glue-generated one
         self.current_workspace.main_tool_bar.hide()
+
+        # Hide the main tool bar in favor of the glue-generated one
+        self.current_workspace.current_plot_window.tool_bar.hide()
 
         # Show labels in the tool bar
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -305,5 +360,94 @@ class SpecvizDataViewer(DataViewer):
         self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
         self.current_workspace.current_plot_window.showMaximized()
 
-        # Hide the data list view in favor of the glue layer list view
-        self.current_workspace.list_view.hide()
+        # Create operation actions
+        act = QAction("Simple Linemap", self)
+        act.triggered.connect(self._create_simple_linemap)
+
+        self.current_workspace.main_tool_bar.addAction(act)
+
+        act = QAction("Fitted Linemap", self)
+        act.triggered.connect(self.create_fitted_linemap)
+
+        self.current_workspace.main_tool_bar.addAction(act)
+
+    def _create_simple_linemap(self):
+
+        def threadable_function(data, tracker):
+            out = np.empty(shape=data.shape)
+            mask = self.hub.region_mask
+
+            for x in range(data.shape[1]):
+                for y in range(data.shape[2]):
+                    out[:, x, y] = np.sum(data[:, x, y][mask])
+                    tracker()
+
+            return out
+
+        spectral_operation = SpectralOperationHandler(
+            data=self.layers[0].state.layer,
+            function=threadable_function,
+            operation_name="Simple Linemap",
+            component_id=self.layers[0].state.attribute,
+            layout=self._layout,
+            ui_settings={
+                'title': "Simple Linemap Operation",
+                'group_box_title': "Choose the component to use for linemap "
+                                   "generation",
+                'description': "Sums the values of the chosen component in the "
+                               "range of the current ROI in the spectral view "
+                               "for each spectrum in the data cube."})
+
+        spectral_operation.exec_()
+
+    def create_fitted_linemap(self):
+
+        def threadable_function(data, tracker):
+            from astropy.modeling.fitting import LevMarLSQFitter
+
+            out = np.empty(shape=data.shape)
+            mask = self.hub.region_mask
+
+            # Check to see if the model fitting plugin is loaded
+            model_editor_plugin = self.current_workspace._plugin_bars.get("Model Editor")
+
+            if model_editor_plugin is None:
+                logging.error("Model editor plugin is not loaded.")
+                return
+
+            spectral_axis = self.hub.plot_item.spectral_axis
+            model = model_editor_plugin.model_tree_view.model().evaluate()
+
+            for x in range(data.shape[1]):
+                for y in range(data.shape[2]):
+                    flux = data[:, x, y].value
+
+                    fitter = LevMarLSQFitter()
+                    fit_model = fitter(model,
+                                       spectral_axis[mask],
+                                       flux[mask])
+
+                    new_data = fit_model(spectral_axis)
+
+                    out[:, x, y] = new_data
+
+                    tracker()
+
+            return out
+
+        spectral_operation = SpectralOperationHandler(
+            data=self.layers[0].state.layer,
+            function=threadable_function,
+            operation_name="Fitted Linemap",
+            component_id=self.layers[0].state.attribute,
+            layout=self._layout,
+            ui_settings={
+                'title': "Fitted Linemap Operation",
+                'group_box_title': "Choose the component to use for linemap "
+                                   "generation",
+                'description': "Fits the current model to the values of the "
+                               "chosen component in the range of the current "
+                               "ROI in the spectral view for each spectrum in "
+                               "the data cube."})
+
+        spectral_operation.exec_()
