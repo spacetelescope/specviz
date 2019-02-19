@@ -1,6 +1,9 @@
 import logging
 
 import astropy.units as u
+import numpy as np
+from functools import reduce
+
 from specutils.spectra.spectral_region import SpectralRegion
 
 from .items import DataItem
@@ -94,6 +97,26 @@ class Hub:
                 positions.append(pos)
 
         return SpectralRegion(positions)
+
+    @property
+    def region_mask(self):
+        mask = np.ones(self.plot_item.spectral_axis.shape, dtype=bool)
+        mask_holder = []
+
+        for roi in self.regions:
+            # roi_shape = roi.parentBounds()
+            # x1, y1, x2, y2 = roi_shape.getCoords()
+            x1, x2 = roi.getRegion()
+
+            mask = (self.plot_item.spectral_axis >= x1) & \
+                   (self.plot_item.spectral_axis <= x2)
+
+            mask_holder.append(mask)
+
+        if len(mask_holder) > 0:
+            mask = reduce(np.logical_or, mask_holder)
+
+        return mask
 
     @property
     def selected_region(self):

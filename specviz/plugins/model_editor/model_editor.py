@@ -256,11 +256,10 @@ class ModelEditor(QWidget):
 
         # Grab any user-defined regions so we may initialize parameters only
         # for the selected data.
-        inc_regs = self.hub.spectral_regions
+        mask = self.hub.region_mask
         spec = self._get_selected_plot_data_item().data_item.spectrum
 
         # Initialize the parameters
-        mask = (spec.spectral_axis > inc_regs.lower) & (spec.spectral_axis < inc_regs.upper)
         model = initialize(model, spec.spectral_axis[mask], spec.flux[mask])
 
         self._add_model(model)
