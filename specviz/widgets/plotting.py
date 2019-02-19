@@ -551,11 +551,15 @@ class PlotWidget(pg.PlotWidget):
             # De-select previous region
             if self._selected_region is not None:
                 self._selected_region._on_region_selected(False)
+                self._selected_region.sigRegionChangeFinished.disconnect(
+                    self._on_region_changed)
+                self._selected_region.selected.disconnect(
+                    self._on_region_changed)
 
             new_region._on_region_selected(True)
 
             # Listen to region move events
-            new_region.sigRegionChanged.connect(
+            new_region.sigRegionChangeFinished.connect(
                 self._on_region_changed)
             new_region.selected.connect(
                 self._on_region_changed)
