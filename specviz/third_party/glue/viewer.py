@@ -23,6 +23,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction
 import numpy as np
 import logging
+from pyqtgraph import InfiniteLine
 
 from .utils import glue_data_has_spectral_axis, glue_data_to_spectrum1d
 from ...app import Application
@@ -224,7 +225,7 @@ class SpecvizDataViewer(DataViewer):
     tools = []
     subtools = {}
 
-    def __init__(self, *args, layout=None, **kwargs):
+    def __init__(self, *args, layout=None, include_line=False, **kwargs):
         # Load specviz plugins
         Application.load_local_plugins()
 
@@ -252,6 +253,14 @@ class SpecvizDataViewer(DataViewer):
         self.current_workspace.mdi_area.setViewMode(QMdiArea.SubWindowView)
         self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
         self.current_workspace.current_plot_window.showMaximized()
+
+        # Create and attach a movable vertical line indicating the current
+        # slice position in the cube
+        if include_line:
+            self._slice_indicator = InfiniteLine(0, movable=True,
+                                                 pen={'color': 'g', 'width': 3})
+            self.current_workspace.current_plot_window.plot_widget.addItem(
+                self._slice_indicator)
 
     def reverse_add_data(self, data_item):
         """

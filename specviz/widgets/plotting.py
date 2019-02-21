@@ -217,6 +217,7 @@ class PlotWidget(pg.PlotWidget):
 
         # Set default axes ranges
         self.setRange(xRange=(0, 1), yRange=(0, 1))
+        self.enableAutoRange(True)
 
         # Show grid lines
         self.showGrid(x=True, y=True, alpha=0.25)
