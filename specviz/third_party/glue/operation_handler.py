@@ -24,12 +24,15 @@ class SpectralOperationHandler(QDialog):
         Python class instance whose `call` function will be performed on the
         :class:`~spectral_cube.SpectralCube` object.
     """
-    def __init__(self, data, function, operation_name, component_id, layout,
-                 ui_settings=None, *args, **kwargs):
+    def __init__(self, data, component_id, layout, function=None, func_proxy=None,
+                 stack=None, operation_name=None, ui_settings=None, *args, **kwargs):
         super(SpectralOperationHandler, self).__init__(*args, **kwargs)
         self._data = data
-        self._function = function
-        self._operation_name = operation_name
+        self._stack = stack
+        self._func_proxy = func_proxy
+        self._function = function or (stack[0] if stack is not None else None)
+        self._operation_name = operation_name or (self._function.function.__name__
+            if self._function is not None else "None")
         self._component_id = component_id
         self._operation_thread = None
         self._layout = layout
@@ -51,7 +54,28 @@ class SpectralOperationHandler(QDialog):
         component_ids = [str(i) for i in self._data.component_ids()]
         cur_ind = self._data.component_ids().index(self._component_id)
 
-        self.operation_combo_box.addItem(self._operation_name)
+        if self._stack is not None:
+            operation_stack = []
+
+            for oper in self._stack:
+                func_params = []
+
+                for arg in oper.args:
+                    func_params.append("{}".format(arg))
+
+                for k, v in oper.kwargs.items():
+                    func_params.append("{}={}".format(k,
+                                                      str(v)[:10] + "... " + str(
+                                                          v)[-5:] if len(
+                                                          str(v)) > 15 else str(
+                                                          v)))
+
+                operation_stack.append("{}({})".format(oper.function.__name__,
+                                                       ", ".join(func_params)))
+
+            self.operation_combo_box.addItems(operation_stack)
+        else:
+            self.operation_combo_box.addItem(self._operation_name)
 
         # Populate combo box
         self.data_component_combo_box.addItems(component_ids)
@@ -63,6 +87,10 @@ class SpectralOperationHandler(QDialog):
 
     def setup_connections(self):
         """Setup signal/slot connections for this dialog."""
+        # When an operation is selected, update the function reference
+        self.operation_combo_box.currentIndexChanged.connect(
+            self.on_operation_index_changed)
+
         # When a data component is selected, update the data object reference
         self.data_component_combo_box.currentIndexChanged.connect(
             self.on_data_component_index_changed)
@@ -88,6 +116,10 @@ class SpectralOperationHandler(QDialog):
 
         return SpectralCube(data[self._component_id], wcs=wcs, mask=mask)
 
+    def on_operation_index_changed(self, index):
+        """Called when the index of the operation combo box has changed."""
+        self._function = self._stack[index]
+
     def on_data_component_index_changed(self, index):
         """Called when the index of the component combo box has changed."""
         self._component_id = self._data.component_ids()[index]
@@ -101,8 +133,12 @@ class SpectralOperationHandler(QDialog):
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(False)
         self.button_box.button(QDialogButtonBox.Cancel).setEnabled(False)
 
-        self._operation_thread = OperationThread(self._compose_cube(),
-                                                 self._function)
+        if self._func_proxy is not None:
+            op_func = lambda *args, **kwargs: self._func_proxy(self._function, *args, **kwargs)
+        else:
+            op_func = self._function
+
+        self._operation_thread = OperationThread(self._compose_cube(), op_func)
 
         self._operation_thread.finished.connect(self.on_finished)
         self._operation_thread.status.connect(self.on_status_updated)

@@ -1,13 +1,17 @@
 import os
 
+from functools import wraps
 from qtpy.QtCore import QThread, Signal
 from qtpy.QtWidgets import QDialog, QMessageBox
 from qtpy.uic import loadUi
+import astropy.units as u
+from specutils import Spectrum1D
 from specutils.manipulation.smoothing import (box_smooth, gaussian_smooth,
                                               median_smooth, trapezoid_smooth)
 
 from ...core.items import PlotDataItem
 from ...core.plugin import plugin
+from ...core.operations import FunctionalOperation
 
 KERNEL_REGISTRY = {
     """
@@ -173,6 +177,24 @@ class SmoothingDialog(QDialog):
         self.size = float(self.size_input.text())
 
         if self.data is not None:
+            # This wrapper function is necessary for cases where the specutils
+            # functions expect a spectrum1d, but the data provided is a simple
+            # array or quantity.
+            def func_convert(func):
+                @wraps(func)
+                def wrapper(data, spectral_axis, *args, **kwargs):
+                    spec = Spectrum1D(flux=u.Quantity(data),
+                                      spectral_axis=spectral_axis)
+                    return func(spec, *args, **kwargs).flux.value
+                return wrapper
+
+            # Generate a smoothing operation to place on the operation stack.
+            # This allows for playback via stack singleton.
+            smoothing_operation = FunctionalOperation(
+                func_convert(self.function), self.size,
+                name="Smoothing Operation ({}, size={})".format(
+                    self.function.__name__, self.size))
+
             self._smoothing_thread = SmoothingThread(self.data.spectrum, self.size, self.function)
             self._smoothing_thread.finished.connect(self.on_finished)
             self._smoothing_thread.exception.connect(self.on_exception)

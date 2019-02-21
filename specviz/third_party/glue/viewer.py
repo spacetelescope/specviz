@@ -20,7 +20,8 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction, QToolButton
+from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction, QToolButton, QMenu
+from qtpy.QtGui import QIcon
 import numpy as np
 import logging
 from pyqtgraph import InfiniteLine
@@ -30,6 +31,7 @@ from ...app import Application
 from ...widgets.workspace import Workspace
 from .operation_handler import SpectralOperationHandler
 from ...core.hub import Hub
+from ...core.operations import FunctionalOperation
 
 __all__ = ['SpecvizDataViewer']
 
@@ -344,7 +346,6 @@ class SpecvizDataViewer(DataViewer):
         """
         # Merge the main tool bar and the plot tool bar to get back some
         # real estate
-        self.current_workspace.main_tool_bar.addSeparator()
         self.current_workspace.addToolBar(
             self.current_workspace.current_plot_window.tool_bar)
 
@@ -360,14 +361,28 @@ class SpecvizDataViewer(DataViewer):
         op_act = next((x for x in self.current_workspace.main_tool_bar.findChildren(QToolButton)
                        if x.text() == "Operations"))
 
+        cube_ops = QAction(QIcon(":/icons/cube.svg"), "Cube Operations",
+                           self.current_workspace.main_tool_bar)
+        self.current_workspace.main_tool_bar.addAction(cube_ops)
+        self.current_workspace.main_tool_bar.addSeparator()
+
+        button = self.current_workspace.main_tool_bar.widgetForAction(cube_ops)
+        button.setPopupMode(QToolButton.InstantPopup)
+        menu = QMenu(self.current_workspace.main_tool_bar)
+        button.setMenu(menu)
+
         # Create operation actions
         act = QAction("Simple Linemap", self)
         act.triggered.connect(self._create_simple_linemap)
-        op_act.menu().addAction(act)
+        menu.addAction(act)
 
         act = QAction("Fitted Linemap", self)
         act.triggered.connect(self.create_fitted_linemap)
-        op_act.menu().addAction(act)
+        menu.addAction(act)
+
+        act = QAction("Spectral Smoothing", self)
+        act.triggered.connect(self.spectral_smoothing)
+        menu.addAction(act)
 
     def _create_simple_linemap(self):
 
@@ -389,7 +404,7 @@ class SpecvizDataViewer(DataViewer):
             component_id=self.layers[0].state.attribute,
             layout=self._layout,
             ui_settings={
-                'title': "Simple Linemap Operation",
+                'title': "Simple Linemap",
                 'group_box_title': "Choose the component to use for linemap "
                                    "generation",
                 'description': "Sums the values of the chosen component in the "
@@ -399,19 +414,27 @@ class SpecvizDataViewer(DataViewer):
         spectral_operation.exec_()
 
     def create_fitted_linemap(self):
+        # Check to see if the model fitting plugin is loaded
+        model_editor_plugin = self.current_workspace._plugin_bars.get("Model Editor")
+
+        if model_editor_plugin is None:
+            logging.error("Model editor plugin is not loaded.")
+            return
+
+        if (model_editor_plugin.model_tree_view.model() is None or
+                model_editor_plugin.model_tree_view.model().evaluate() is None):
+            QMessageBox.warning(self,
+                                "No evaluable model.",
+                                "There is currently no model or the created "
+                                "model is empty. Unable to perform fitted "
+                                "linemap operation.")
+            return
 
         def threadable_function(data, tracker):
             from astropy.modeling.fitting import LevMarLSQFitter
 
             out = np.empty(shape=data.shape)
             mask = self.hub.region_mask
-
-            # Check to see if the model fitting plugin is loaded
-            model_editor_plugin = self.current_workspace._plugin_bars.get("Model Editor")
-
-            if model_editor_plugin is None:
-                logging.error("Model editor plugin is not loaded.")
-                return
 
             spectral_axis = self.hub.plot_item.spectral_axis
             model = model_editor_plugin.model_tree_view.model().evaluate()
@@ -440,12 +463,52 @@ class SpecvizDataViewer(DataViewer):
             component_id=self.layers[0].state.attribute,
             layout=self._layout,
             ui_settings={
-                'title': "Fitted Linemap Operation",
+                'title': "Fitted Linemap",
                 'group_box_title': "Choose the component to use for linemap "
                                    "generation",
                 'description': "Fits the current model to the values of the "
                                "chosen component in the range of the current "
                                "ROI in the spectral view for each spectrum in "
                                "the data cube."})
+
+        spectral_operation.exec_()
+
+    def spectral_smoothing(self):
+
+        def threadable_function(func, data, tracker, **kwargs):
+            out = np.empty(shape=data.shape)
+            mask = self.hub.region_mask
+
+            for x in range(data.shape[1]):
+                for y in range(data.shape[2]):
+                    out[:, x, y] = func(data[:, x, y][mask],
+                                        data.spectral_axis)
+                    tracker()
+
+            return out
+
+        stack = FunctionalOperation.operations()[::-1]
+
+        if len(stack) == 0:
+            QMessageBox.warning(self,
+                                "No smoothing in history.",
+                                "To apply a smoothing operation to the entire "
+                                "cube, first do a local smoothing operation "
+                                "(Operations > Smoothing). Once done, the "
+                                "operation can then be performed over the "
+                                "entire cube.")
+            return
+
+        spectral_operation = SpectralOperationHandler(
+            data=self.layers[0].state.layer,
+            func_proxy=threadable_function,
+            stack=stack,
+            component_id=self.layers[0].state.attribute,
+            layout=self._layout,
+            ui_settings={
+                'title': "Spectral Smoothing",
+                'group_box_title': "Choose the component to smooth.",
+                'description': "Performs a previous smoothing operation over "
+                               "the selected component for the entire cube."})
 
         spectral_operation.exec_()
