@@ -290,9 +290,9 @@ class PlotWidget(pg.PlotWidget):
         self.data_unit = unit
 
         if isinstance(unit, u.Unit):
-            value = unit.to_string()
+            unit = unit.to_string()
 
-        self.data_unit_changed.emit(value)
+        self.data_unit_changed.emit(unit)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
@@ -325,9 +325,9 @@ class PlotWidget(pg.PlotWidget):
         self.spectral_axis_unit = unit
 
         if isinstance(unit, u.Unit):
-            value = unit.to_string()
+            unit = unit.to_string()
 
-        self.spectral_axis_unit_changed.emit(value)
+        self.spectral_axis_unit_changed.emit(unit)
 
     @property
     def selected_region(self):
