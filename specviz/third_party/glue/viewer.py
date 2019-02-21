@@ -20,7 +20,7 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction
+from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction, QToolButton
 import numpy as np
 import logging
 from pyqtgraph import InfiniteLine
@@ -342,43 +342,32 @@ class SpecvizDataViewer(DataViewer):
         """
 
         """
-        super().initialize_toolbar()
+        # Merge the main tool bar and the plot tool bar to get back some
+        # real estate
+        self.current_workspace.main_tool_bar.addSeparator()
+        self.current_workspace.addToolBar(
+            self.current_workspace.current_plot_window.tool_bar)
 
-        # Find all actions in the default specviz tool bar, sans ones that
-        # allow the user to load or delete data. Add these to the glue-generated
-        # tool bar.
-        for act in self.current_workspace.main_tool_bar.actions()[6:]:
-            self.toolbar.addAction(act)
-
-        self.toolbar.addSeparator()
-
-        for act in self.current_workspace.current_plot_window.tool_bar.actions():
-            self.toolbar.addAction(act)
-
-        # Hide the main tool bar in favor of the glue-generated one
-        self.current_workspace.main_tool_bar.hide()
-
-        # Hide the main tool bar in favor of the glue-generated one
-        self.current_workspace.current_plot_window.tool_bar.hide()
-
-        # Show labels in the tool bar
-        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # Hide the first five actions in the default specviz tool bar
+        for act in self.current_workspace.main_tool_bar.actions()[:6]:
+            act.setVisible(False)
 
         # Hide the tabs of the mdiarea in specviz.
         self.current_workspace.mdi_area.setViewMode(QMdiArea.SubWindowView)
         self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
         self.current_workspace.current_plot_window.showMaximized()
 
+        op_act = next((x for x in self.current_workspace.main_tool_bar.findChildren(QToolButton)
+                       if x.text() == "Operations"))
+
         # Create operation actions
         act = QAction("Simple Linemap", self)
         act.triggered.connect(self._create_simple_linemap)
-
-        self.current_workspace.main_tool_bar.addAction(act)
+        op_act.menu().addAction(act)
 
         act = QAction("Fitted Linemap", self)
         act.triggered.connect(self.create_fitted_linemap)
-
-        self.current_workspace.main_tool_bar.addAction(act)
+        op_act.menu().addAction(act)
 
     def _create_simple_linemap(self):
 
