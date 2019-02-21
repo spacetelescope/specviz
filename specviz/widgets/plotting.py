@@ -174,11 +174,11 @@ class PlotWidget(pg.PlotWidget):
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
-
     roi_moved = Signal(u.Quantity)
     roi_removed = Signal(LinearRegionItem)
-
     mouse_enterexit = Signal(QEvent.Type)
+    data_unit_changed = Signal(str)
+    spectral_axis_unit_changed = Signal(str)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -277,6 +277,23 @@ class PlotWidget(pg.PlotWidget):
                               plot_data_item.data_item.name,
                               plot_data_item.data_unit, value)
 
+    def set_data_unit(self, unit):
+        """
+        Sets the data unit and emits a signal telling interested
+        parties of the change.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            The unit to which the data axis will be converted.
+        """
+        self.data_unit = unit
+
+        if isinstance(unit, u.Unit):
+            value = unit.to_string()
+
+        self.data_unit_changed.emit(value)
+
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
@@ -294,6 +311,23 @@ class PlotWidget(pg.PlotWidget):
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
                               plot_data_item.spectral_axis_unit, value)
+
+    def set_spectral_axis_unit(self, unit):
+        """
+        Sets the spectral axis unit and emits a signal telling interested
+        parties of the change.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            The unit to which the spectral axis will be converted.
+        """
+        self.spectral_axis_unit = unit
+
+        if isinstance(unit, u.Unit):
+            value = unit.to_string()
+
+        self.spectral_axis_unit_changed.emit(value)
 
     @property
     def selected_region(self):
