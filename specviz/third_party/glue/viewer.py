@@ -110,14 +110,15 @@ class SpecvizLayerArtist(LayerArtist):
     def on_color_changed(self, plot_data_item, color):
         """
         Called when the color of a plot data item is changed from specviz.
+
         Parameters
         ----------
         plot_data_item : ``PlotDataItem``
             The plot data item whose colors has been changed.
-        color : str
-            The string representation of the color.
+        color : ``QColor``
+            The qt representation of the color.
         """
-        self.state.layer.style.color = color
+        self.state.layer.style.color = color.name()
 
     def remove(self):
         """
