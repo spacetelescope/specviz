@@ -387,20 +387,17 @@ class SpecvizDataViewer(DataViewer):
         self.current_workspace.current_plot_window.setWindowFlags(Qt.FramelessWindowHint)
         self.current_workspace.current_plot_window.showMaximized()
 
-        op_act = next((x for x in self.current_workspace.main_tool_bar.findChildren(QToolButton)
-                       if x.text() == "Operations"))
-
-        cube_ops = QAction(QIcon(":/icons/cube.svg"), "Cube Operations",
-                           self.current_workspace.main_tool_bar)
-        self.current_workspace.main_tool_bar.addAction(cube_ops)
-        self.current_workspace.main_tool_bar.addSeparator()
-
-        button = self.current_workspace.main_tool_bar.widgetForAction(cube_ops)
-        button.setPopupMode(QToolButton.InstantPopup)
-        menu = QMenu(self.current_workspace.main_tool_bar)
-        button.setMenu(menu)
-
         if self._layout is not None:
+            cube_ops = QAction(QIcon(":/icons/cube.svg"), "Cube Operations",
+                               self.current_workspace.main_tool_bar)
+            self.current_workspace.main_tool_bar.addAction(cube_ops)
+            self.current_workspace.main_tool_bar.addSeparator()
+
+            button = self.current_workspace.main_tool_bar.widgetForAction(cube_ops)
+            button.setPopupMode(QToolButton.InstantPopup)
+            menu = QMenu(self.current_workspace.main_tool_bar)
+            button.setMenu(menu)
+
             # Create operation actions
             act = QAction("Simple Linemap", self)
             act.triggered.connect(self._create_simple_linemap)
