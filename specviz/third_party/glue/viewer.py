@@ -21,7 +21,7 @@ from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction, QToolButton, QMenu
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QColor
 import numpy as np
 import logging
 from pyqtgraph import InfiniteLine
@@ -103,6 +103,21 @@ class SpecvizLayerArtist(LayerArtist):
         self.state.add_callback('linewidth', self.update_visual)
 
         self.data_item = None
+        self._init_plot = True
+
+        self.specviz_window.current_plot_window.color_changed.connect(self.on_color_changed)
+
+    def on_color_changed(self, plot_data_item, color):
+        """
+        Called when the color of a plot data item is changed from specviz.
+        Parameters
+        ----------
+        plot_data_item : ``PlotDataItem``
+            The plot data item whose colors has been changed.
+        color : str
+            The string representation of the color.
+        """
+        self.state.layer.style.color = color
 
     def remove(self):
         """
@@ -147,7 +162,9 @@ class SpecvizLayerArtist(LayerArtist):
             plot_data_item.visible = self.state.visible
             plot_data_item.zorder = self.state.zorder
             plot_data_item.width = self.state.linewidth
-            plot_data_item.color = self.state.layer.style.color
+            color = QColor(self.state.layer.style.color)
+            color.setAlphaF(self.state.layer.style.alpha)
+            plot_data_item.color = color
 
     def update(self, *args, **kwargs):
         """
@@ -165,7 +182,9 @@ class SpecvizLayerArtist(LayerArtist):
             return
 
         try:
-            spectrum = glue_data_to_spectrum1d(self.state.layer, self.state.attribute, statistic=self.state.statistic)
+            spectrum = glue_data_to_spectrum1d(self.state.layer,
+                                               self.state.attribute,
+                                               statistic=self.state.statistic)
         except IncompatibleAttribute:
             self.disable_invalid_attributes(self.state.attribute)
             return
@@ -173,14 +192,23 @@ class SpecvizLayerArtist(LayerArtist):
         self.enable()
 
         if self.data_item is None:
-            self.data_item = self.specviz_window.model.add_data(spectrum, name=self.state.layer.label)
-            self.plot_widget.add_plot(self.plot_data_item, visible=True, initialize=True)
+            self.data_item = self.specviz_window.model.add_data(spectrum,
+                                                                name=self.state.layer.label)
+            self.plot_widget.add_plot(self.plot_data_item,
+                                      visible=True,
+                                      initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
             # FIXME: we shouldn't have to call update_data manually
             self.plot_data_item.set_data()
 
         self.update_visual()
+
+        if self._init_plot:
+            self.plot_widget.autoRange(
+                items=[item for item in self.plot_widget.listDataItems()
+                       if not isinstance(item, InfiniteLine)])
+            self._init_plot = False
 
 
 class SpecvizViewerStateWidget(QWidget):
@@ -385,7 +413,6 @@ class SpecvizDataViewer(DataViewer):
         menu.addAction(act)
 
     def _create_simple_linemap(self):
-
         def threadable_function(data, tracker):
             out = np.empty(shape=data.shape)
             mask = self.hub.region_mask
@@ -474,7 +501,6 @@ class SpecvizDataViewer(DataViewer):
         spectral_operation.exec_()
 
     def spectral_smoothing(self):
-
         def threadable_function(func, data, tracker, **kwargs):
             out = np.empty(shape=data.shape)
             mask = self.hub.region_mask

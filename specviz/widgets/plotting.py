@@ -9,6 +9,7 @@ import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox, QErrorMessage, QApplication)
+from qtpy.QtGui import QColor
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -26,6 +27,7 @@ class PlotWindow(QMdiSubWindow):
     Displayed plotting subwindow available in the ``QMdiArea``.
     """
     window_removed = Signal()
+    color_changed = Signal(PlotDataItem, QColor)
 
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
@@ -132,10 +134,11 @@ class PlotWindow(QMdiSubWindow):
             message_box.exec()
             return
 
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel)
 
         if color.isValid():
-            self.current_item.color = color.name()
+            self.current_item.color = color.toRgb()
+            self.color_changed.emit(self.current_item, self.current_item.color)
 
 
 class PlotWidget(pg.PlotWidget):

@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QStandardItem
+from qtpy.QtGui import QStandardItem, QColor
 
 __all__ = ['DataItem', 'PlotDataItem']
 
@@ -116,7 +116,7 @@ class PlotDataItem(pg.PlotDataItem):
     """
     data_unit_changed = Signal(str)
     spectral_axis_unit_changed = Signal(str)
-    color_changed = Signal(str)
+    color_changed = Signal(QColor)
     width_changed = Signal(int)
     visibility_changed = Signal(bool)
 
@@ -148,12 +148,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def _update_pen(self, *args):
         if self.visible:
-            try:
-                color = float(self.color)
-            except ValueError:
-                color = self.color
-
-            self.setPen(color=color, width=float(self.width))
+            self.setPen(color=self.color, width=float(self.width))
         else:
             self.setPen(None)
 
@@ -332,7 +327,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @color.setter
     def color(self, value):
-        self._color = value
+        self._color = QColor(value).toRgb()
         self.color_changed.emit(self._color)
         self.data_item.emitDataChanged()
 
