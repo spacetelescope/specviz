@@ -514,7 +514,7 @@ class Workspace(QMainWindow):
             }
 
             if spectrum.uncertainty is not None:
-                data['uncertainty'] = spetrum.uncertainty.array * spectrum.uncertainty.unit
+                data['uncertainty'] = spectrum.uncertainty.array * spectrum.uncertainty.unit
 
             meta = {}
 
