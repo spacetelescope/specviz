@@ -100,6 +100,9 @@ class Hub:
 
     @property
     def region_mask(self):
+        """
+        Generates a boolean mask based on all current roi objects in the plot.
+        """
         mask = np.ones(self.plot_item.spectral_axis.shape, dtype=bool)
         mask_holder = []
 

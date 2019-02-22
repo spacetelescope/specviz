@@ -1,13 +1,17 @@
 import abc
 
+__all__ = ['StackOperation', 'Operation', 'FunctionalOperation']
+
 
 class StackOperation(type):
-    """Meta class that stores the :class:`~FunctionalOperation` instance on an
+    """
+    Meta class that stores the :class:`~FunctionalOperation` instance on an
     operation stack that can be used again in the future.
     """
     _operations = []
 
     def __call__(cls, *args, **kwargs):
+        """Append operation to stack on instantiation."""
         instance = super(StackOperation, cls).__call__(*args, **kwargs)
         cls._operations.append(instance)
 
@@ -19,17 +23,23 @@ class StackOperation(type):
 
     @classmethod
     def last_operation(cls):
+        """Last operation performed."""
         return cls._operations[-1]
 
     @classmethod
     def operations(cls):
+        """All operations currently on the stack."""
         return cls._operations
 
 
 class Operation(metaclass=StackOperation):
-
+    """
+    Base class for operations whose function calls will be stored on the
+    meta class stack.
+    """
     @abc.abstractmethod
     def __call__(self, flux, spectral_axis=None):
+        """Call the operation."""
         raise NotImplementedError
 
 
@@ -59,4 +69,5 @@ class FunctionalOperation(Operation):
         self.name = name or "Generic Operation"
 
     def __call__(self, flux, spectral_axis=None):
+        """Call the operation."""
         return self.function(flux, spectral_axis, *self.args, **self.kwargs)

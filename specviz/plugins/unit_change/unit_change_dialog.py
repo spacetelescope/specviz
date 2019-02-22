@@ -338,6 +338,16 @@ class UnitChangeDialog(QDialog):
         return True
 
     def set_units(self, spectral_axis_unit, data_unit):
+        """
+        Set the units on the associated plot widget.
+
+        Parameters
+        ----------
+        spectral_axis_unit : str
+            Formatted spectral axis unit.
+        data_unit : str
+            Formatted data axis unit.
+        """
         # Set new units
         self.hub.plot_widget.set_spectral_axis_unit(spectral_axis_unit)
 
