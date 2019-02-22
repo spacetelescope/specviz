@@ -400,18 +400,19 @@ class SpecvizDataViewer(DataViewer):
         menu = QMenu(self.current_workspace.main_tool_bar)
         button.setMenu(menu)
 
-        # Create operation actions
-        act = QAction("Simple Linemap", self)
-        act.triggered.connect(self._create_simple_linemap)
-        menu.addAction(act)
+        if self._layout is not None:
+            # Create operation actions
+            act = QAction("Simple Linemap", self)
+            act.triggered.connect(self._create_simple_linemap)
+            menu.addAction(act)
 
-        act = QAction("Fitted Linemap", self)
-        act.triggered.connect(self.create_fitted_linemap)
-        menu.addAction(act)
+            act = QAction("Fitted Linemap", self)
+            act.triggered.connect(self.create_fitted_linemap)
+            menu.addAction(act)
 
-        act = QAction("Spectral Smoothing", self)
-        act.triggered.connect(self.spectral_smoothing)
-        menu.addAction(act)
+            act = QAction("Spectral Smoothing", self)
+            act.triggered.connect(self.spectral_smoothing)
+            menu.addAction(act)
 
     def _create_simple_linemap(self):
         def threadable_function(data, tracker):
