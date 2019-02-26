@@ -34,6 +34,9 @@ class Application(QApplication):
                  dev=False, skip_splash=False, load_all=False, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
 
+        # Store references to workspace instances
+        self._workspaces = []
+
         # Set application icon
         if not embedded:
             self.setWindowIcon(QIcon(":/icons/specviz.icns"))
@@ -85,6 +88,7 @@ class Application(QApplication):
         # Initialize with a single main window
         workspace = Workspace()
         workspace.show()
+        self._workspaces.append(workspace)
 
         # Connect the window focus event to the current workspace reference
         workspace.window_activated.connect(self._on_window_activated)

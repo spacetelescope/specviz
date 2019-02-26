@@ -19,7 +19,7 @@ def test_export_data(specviz_gui, tmpdir):
 
     fname = str(tmpdir.join('export.ecsv'))
 
-    workspace = specviz_gui.current_workspace
+    workspace = specviz_gui._workspaces[0]
     data_item = workspace.current_item
     workspace.export_data_item(data_item, fname, '*.ecsv')
 

@@ -61,8 +61,13 @@ class UnitChangeDialog(QDialog):
         self.ui.comboBox_spectral.clear()
 
         # If the units in PlotWidget are not set, do not allow the user to click the OK button
-        if not (self.hub.plot_widget.data_unit
-                and self.hub.plot_widget.spectral_axis_unit):
+        if not self.hub.plot_widget.data_unit:
+            self.ui.comboBox_units.setEnabled(False)
+
+        if not self.hub.plot_widget.spectral_axis_unit:
+            self.ui.comboBox_spectral.setEnabled(False)
+
+        if not (self.hub.plot_widget.data_unit or self.hub.plot_widget.spectral_axis_unit):
             self.ui.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
 
         # Gets all possible conversions from current spectral_axis_unit
@@ -278,9 +283,6 @@ class UnitChangeDialog(QDialog):
                     self.close()
                     return False
 
-            # Set new units
-            self.hub.plot_widget.data_unit = data_unit_formatted
-
         else:
             # Converts the data_unit to something that can be used by PlotWidget
             current_data_unit_in_u = \
@@ -294,9 +296,6 @@ class UnitChangeDialog(QDialog):
                     log.warning("DID NOT CHANGE UNITS. {} NOT COMPATIBLE".format(data_unit_formatted))
                     self.close()
                     return False
-
-            # Set new units
-            self.hub.plot_widget.data_unit = data_unit_formatted
 
         if self.ui.comboBox_spectral.currentText() == "Custom":
 
@@ -324,9 +323,6 @@ class UnitChangeDialog(QDialog):
                     self.close()
                     return False
 
-            # Set new units
-            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
-
         else:
             # Converts the spectral_axis_unit to something that can be used by PlotWidget
             current_spectral_axis_unit_in_u = \
@@ -341,11 +337,28 @@ class UnitChangeDialog(QDialog):
                     self.close()
                     return False
 
-            # Set new units
-            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit_formatted
+        self.set_units(spectral_axis_unit_formatted, data_unit_formatted)
 
         self.close()
         return True
+
+    def set_units(self, spectral_axis_unit, data_unit):
+        """
+        Set the units on the associated plot widget.
+
+        Parameters
+        ----------
+        spectral_axis_unit : str
+            Formatted spectral axis unit.
+        data_unit : str
+            Formatted data axis unit.
+        """
+        # Set new units
+        self.hub.plot_widget.set_spectral_axis_unit(spectral_axis_unit)
+
+        # Set new units
+        self.hub.plot_widget.set_data_unit(data_unit)
+
 
     def on_canceled(self):
         """Called when the user clicks the "Cancel" button of the dialog."""

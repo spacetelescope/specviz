@@ -9,6 +9,7 @@ import qtawesome as qta
 from qtpy.QtCore import Signal, QEvent
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
                             QMessageBox, QErrorMessage, QApplication)
+from qtpy.QtGui import QColor
 from qtpy.uic import loadUi
 
 from astropy.units import Quantity
@@ -26,6 +27,7 @@ class PlotWindow(QMdiSubWindow):
     Displayed plotting subwindow available in the ``QMdiArea``.
     """
     window_removed = Signal()
+    color_changed = Signal(PlotDataItem, QColor)
 
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
@@ -132,10 +134,11 @@ class PlotWindow(QMdiSubWindow):
             message_box.exec()
             return
 
-        color = QColorDialog.getColor()
+        color = QColorDialog.getColor(options=QColorDialog.ShowAlphaChannel)
 
         if color.isValid():
-            self.current_item.color = color.name()
+            self.current_item.color = color.toRgb()
+            self.color_changed.emit(self.current_item, self.current_item.color)
 
 
 class PlotWidget(pg.PlotWidget):
@@ -174,11 +177,11 @@ class PlotWidget(pg.PlotWidget):
     """
     plot_added = Signal(PlotDataItem)
     plot_removed = Signal(PlotDataItem)
-
     roi_moved = Signal(u.Quantity)
     roi_removed = Signal(LinearRegionItem)
-
     mouse_enterexit = Signal(QEvent.Type)
+    data_unit_changed = Signal(str)
+    spectral_axis_unit_changed = Signal(str)
 
     def __init__(self, title=None, model=None, visible=True, *args, **kwargs):
         super(PlotWidget, self).__init__(*args, **kwargs)
@@ -217,6 +220,7 @@ class PlotWidget(pg.PlotWidget):
 
         # Set default axes ranges
         self.setRange(xRange=(0, 1), yRange=(0, 1))
+        self.enableAutoRange(True)
 
         # Show grid lines
         self.showGrid(x=True, y=True, alpha=0.25)
@@ -276,6 +280,23 @@ class PlotWidget(pg.PlotWidget):
                               plot_data_item.data_item.name,
                               plot_data_item.data_unit, value)
 
+    def set_data_unit(self, unit):
+        """
+        Sets the data unit and emits a signal telling interested
+        parties of the change.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            The unit to which the data axis will be converted.
+        """
+        self.data_unit = unit
+
+        if isinstance(unit, u.Unit):
+            unit = unit.to_string()
+
+        self.data_unit_changed.emit(unit)
+
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
@@ -293,6 +314,23 @@ class PlotWidget(pg.PlotWidget):
                               "('%s' and '%s').",
                               plot_data_item.data_item.name,
                               plot_data_item.spectral_axis_unit, value)
+
+    def set_spectral_axis_unit(self, unit):
+        """
+        Sets the spectral axis unit and emits a signal telling interested
+        parties of the change.
+
+        Parameters
+        ----------
+        unit : :class:`~astropy.units.Unit`
+            The unit to which the spectral axis will be converted.
+        """
+        self.spectral_axis_unit = unit
+
+        if isinstance(unit, u.Unit):
+            unit = unit.to_string()
+
+        self.spectral_axis_unit_changed.emit(unit)
 
     @property
     def selected_region(self):
@@ -551,11 +589,15 @@ class PlotWidget(pg.PlotWidget):
             # De-select previous region
             if self._selected_region is not None:
                 self._selected_region._on_region_selected(False)
+                self._selected_region.sigRegionChangeFinished.disconnect(
+                    self._on_region_changed)
+                self._selected_region.selected.disconnect(
+                    self._on_region_changed)
 
             new_region._on_region_selected(True)
 
             # Listen to region move events
-            new_region.sigRegionChanged.connect(
+            new_region.sigRegionChangeFinished.connect(
                 self._on_region_changed)
             new_region.selected.connect(
                 self._on_region_changed)

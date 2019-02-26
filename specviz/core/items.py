@@ -1,10 +1,11 @@
 from itertools import cycle
 
+import astropy.units as u
 import numpy as np
 import pyqtgraph as pg
 from astropy.units import spectral, spectral_density
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QStandardItem
+from qtpy.QtGui import QStandardItem, QColor
 
 __all__ = ['DataItem', 'PlotDataItem']
 
@@ -25,6 +26,11 @@ class DataItem(QStandardItem):
         The UUID of this data item.
     data : :class:`specutils.Spectrum1D`
         The internal spectrum object associated with this data item.
+
+    Attributes
+    ----------
+    data_changed : ``Signal``
+        Fired when the internal stored data is changed.
     """
     NameRole = Qt.UserRole + 1
     IdRole = Qt.UserRole + 2
@@ -85,6 +91,7 @@ class DataItem(QStandardItem):
         Update the stored :class:`~specutils.Spectrum1D` data values.
         """
         self.setData(data, self.DataRole)
+        self.emitDataChanged()
 
     @property
     def spectrum(self):
@@ -98,10 +105,18 @@ class PlotDataItem(pg.PlotDataItem):
     """
     A PyQtGraph `~pyqtgraph.PlotDataItem` object that wraps a `DataItem` object
     (which in turn wraps a :class:`~specutils.Spectrum1D` object).
+
+    Notes
+    -----
+        Currently, the ``PlotDataItem`` class does not take in a reference to
+        the data model. This means that it is not listening to ``dataChanged``
+        signals raised from the data items within the model. Thus, if the
+        data item for this plot data item is changed, users must call the
+        ``set_data`` method on this class to re-render the plot.
     """
     data_unit_changed = Signal(str)
     spectral_axis_unit_changed = Signal(str)
-    color_changed = Signal(str)
+    color_changed = Signal(QColor)
     width_changed = Signal(int)
     visibility_changed = Signal(bool)
 
@@ -133,12 +148,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     def _update_pen(self, *args):
         if self.visible:
-            try:
-                color = float(self.color)
-            except ValueError:
-                color = self.color
-
-            self.setPen(color=color, width=float(self.width))
+            self.setPen(color=self.color, width=float(self.width))
         else:
             self.setPen(None)
 
@@ -254,6 +264,9 @@ class PlotDataItem(pg.PlotDataItem):
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
+        if isinstance(value, u.Unit):
+            value = value.to_string()
+
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)
 
@@ -314,7 +327,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @color.setter
     def color(self, value):
-        self._color = value
+        self._color = QColor(value).toRgb()
         self.color_changed.emit(self._color)
         self.data_item.emitDataChanged()
 
