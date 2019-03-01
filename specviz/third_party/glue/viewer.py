@@ -128,6 +128,13 @@ class SpecvizLayerArtist(LayerArtist):
 
         """
         if self.data_item is not None:
+            # Remove from plot
+            plot_data_item = self.specviz_window.proxy_model.item_from_id(
+                self.data_item.identifier)
+            self.specviz_window.current_plot_window.plot_widget.remove_plot(
+                item=plot_data_item)
+
+            # Delete from model
             self.specviz_window.model.remove_data(self.data_item.identifier)
             self.data_item = None
 
