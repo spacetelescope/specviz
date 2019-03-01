@@ -89,3 +89,24 @@ class TestSpecvizDataViewer(object):
         self.data_3d.subsets[0].subset_state = self.data_3d.id['x'] > 0.1
 
         viewer.close(warn=False)
+
+    def test_remove_subset(self):
+        """
+        Test that remove/delete operations in glue are propagated to the
+        embedded specviz plot instance.
+        """
+        viewer = self.app.new_data_viewer(SpecvizDataViewer)
+        viewer.add_data(self.data_3d)
+
+        self.data_collection.new_subset_group(
+            subset_state=self.data_3d.id['x'] > 0, label='Subset')
+
+        # Test that the data element is plotted
+        assert len([x for x in viewer.hub.plot_widget.listDataItems()]) == 2
+        assert len([x for x in viewer.hub.plot_widget.listDataItems()
+                    if x.data_item is viewer.layers[1].data_item]) == 1
+
+        # Remove the glue
+        viewer.remove_subset(viewer.layers[1].state.layer)
+
+        assert len([x for x in viewer.hub.plot_widget.listDataItems()]) == 1
