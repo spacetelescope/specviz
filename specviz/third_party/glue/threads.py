@@ -15,7 +15,7 @@ class OperationThread(QThread):
         The function-like callable used to perform the operation on the cube.
     """
     status = Signal(float)
-    finished = Signal(object)
+    finished = Signal(object, str)
 
     def __init__(self, data, function, parent=None):
         super(OperationThread, self).__init__(parent)
@@ -26,9 +26,9 @@ class OperationThread(QThread):
 
     def run(self):
         """Run the thread."""
-        new_data = self._function(self._data, self._tracker)
+        new_data, unit = self._function(self._data, self._tracker)
 
-        self.finished.emit(new_data)
+        self.finished.emit(new_data, unit)
 
     def abort(self):
         """

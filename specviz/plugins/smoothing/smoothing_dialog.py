@@ -211,7 +211,8 @@ class SmoothingDialog(QDialog):
             The result of the smoothing operation.
         """
         name = self._generate_output_name()
-        self.hub.workspace.model.add_data(spec=spec, name=name)
+        data_item = self.hub.workspace.model.add_data(spec=spec, name=name)
+        self.hub.workspace.force_plot(data_item)
         self.close()
 
     def on_exception(self, exception):

@@ -8,6 +8,8 @@
 import os
 from collections import OrderedDict
 
+import astropy.units as u
+
 from glue.core import Component, Data
 from glue.core.coordinates import coordinates_from_header
 from glue.core.data_combo_helper import ComponentIDComboHelper
@@ -105,7 +107,8 @@ class SpecvizLayerArtist(LayerArtist):
         self.data_item = None
         self._init_plot = True
 
-        self.specviz_window.current_plot_window.color_changed.connect(self.on_color_changed)
+        self.specviz_window.current_plot_window.color_changed.connect(
+            self.on_color_changed)
 
     def on_color_changed(self, plot_data_item, color):
         """
@@ -200,7 +203,6 @@ class SpecvizLayerArtist(LayerArtist):
                                       initialize=True)
         else:
             self.plot_data_item.data_item.set_data(spectrum)
-            # FIXME: we shouldn't have to call update_data manually
             self.plot_data_item.set_data()
 
         self.update_visual()
@@ -421,7 +423,7 @@ class SpecvizDataViewer(DataViewer):
                     out[:, x, y] = np.sum(data[:, x, y][mask])
                     tracker()
 
-            return out
+            return out, data.meta.get('unit')
 
         spectral_operation = SpectralOperationHandler(
             data=self.layers[0].state.layer,
@@ -480,7 +482,7 @@ class SpecvizDataViewer(DataViewer):
 
                     tracker()
 
-            return out
+            return out, data.meta.get('unit')
 
         spectral_operation = SpectralOperationHandler(
             data=self.layers[0].state.layer,
@@ -502,15 +504,14 @@ class SpecvizDataViewer(DataViewer):
     def spectral_smoothing(self):
         def threadable_function(func, data, tracker, **kwargs):
             out = np.empty(shape=data.shape)
-            mask = self.hub.region_mask
 
             for x in range(data.shape[1]):
                 for y in range(data.shape[2]):
-                    out[:, x, y] = func(data[:, x, y][mask],
+                    out[:, x, y] = func(data[:, x, y],
                                         data.spectral_axis)
                     tracker()
 
-            return out
+            return out, data.meta.get('unit')
 
         stack = FunctionalOperation.operations()[::-1]
 
