@@ -4,7 +4,7 @@ import numpy as np
 from qtpy.QtWidgets import QDialog, QDialogButtonBox
 from qtpy.uic import loadUi
 from spectral_cube import BooleanArrayMask, SpectralCube
-from glue.core import Subset, Data
+from glue.core import Subset, Data, Component
 
 from .threads import OperationThread
 
@@ -114,7 +114,8 @@ class SpectralOperationHandler(QDialog):
 
         mask = BooleanArrayMask(mask=mask, wcs=wcs)
 
-        return SpectralCube(data[self._component_id], wcs=wcs, mask=mask)
+        return SpectralCube(data[self._component_id], wcs=wcs, mask=mask,
+                            meta={'unit':self._data.get_component(self._component_id).units})
 
     def on_operation_index_changed(self, index):
         """Called when the index of the operation combo box has changed."""
@@ -168,7 +169,7 @@ class SpectralOperationHandler(QDialog):
         """
         self.progress_bar.setValue(value * 100)
 
-    def on_finished(self, data):
+    def on_finished(self, data, unit=None):
         """
         Called when the `QThread` has finished performing the operation on the
         `SpectralCube` object.
@@ -188,8 +189,10 @@ class SpectralOperationHandler(QDialog):
             component_name = "{} {}".format(component_name, comp_count)
 
         if len(data.shape) == len(self._data.shape):
-            self._layout.add_overlay(data[0, :, :], component_name, display_now=False)
+            component = Component(data[0, :, :], units=unit)
+            self._layout.add_overlay(component, component_name, display_now=False)
 
-        self._data.add_component(data, component_name)
+        component = Component(data, units=unit)
+        self._data.add_component(component, component_name)
 
         super(SpectralOperationHandler, self).accept()
