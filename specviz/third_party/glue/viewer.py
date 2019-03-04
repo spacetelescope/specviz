@@ -439,8 +439,6 @@ class SpecvizDataViewer(DataViewer):
             if spectral_axis_unit == self.hub.plot_widget.spectral_axis_unit:
                 return
 
-            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit
-
             if self._slice_indicator is not None:
                 cur_slice_pos = u.Quantity(self._slice_indicator.value(),
                                            self.hub.plot_widget.spectral_axis_unit)
@@ -450,6 +448,8 @@ class SpecvizDataViewer(DataViewer):
                 self._slice_indicator.blockSignals(True)
                 self._slice_indicator.setPos(new_slice_pos)
                 self._slice_indicator.blockSignals(False)
+
+            self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit
 
         if data_unit is not None:
             if isinstance(data_unit, u.Quantity):
