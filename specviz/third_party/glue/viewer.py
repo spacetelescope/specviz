@@ -436,7 +436,7 @@ class SpecvizDataViewer(DataViewer):
                 spectral_axis_unit = spectral_axis_unit.to_string()
 
             # Return if the units are already the same.
-            if spectral_axis_unit != self.hub.plot_widget.spectral_axis_unit:
+            if spectral_axis_unit == self.hub.plot_widget.spectral_axis_unit:
                 return
 
             self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit
