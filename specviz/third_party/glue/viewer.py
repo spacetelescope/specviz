@@ -432,30 +432,24 @@ class SpecvizDataViewer(DataViewer):
             The data axis unit to convert to.
         """
         if spectral_axis_unit is not None:
-            if isinstance(spectral_axis_unit, u.Quantity):
-                spectral_axis_unit = spectral_axis_unit.to_string()
-
-            # Return if the units are already the same.
-            if spectral_axis_unit == self.hub.plot_widget.spectral_axis_unit:
-                return
-
-            if self._slice_indicator is not None:
-                cur_slice_pos = u.Quantity(self._slice_indicator.value(),
-                                           self.hub.plot_widget.spectral_axis_unit)
-                new_slice_pos = cur_slice_pos.to(spectral_axis_unit,
-                                                 equivalencies=u.spectral()).value
-
-                self._slice_indicator.blockSignals(True)
-                self._slice_indicator.setPos(new_slice_pos)
-                self._slice_indicator.blockSignals(False)
-
             self.hub.plot_widget.spectral_axis_unit = spectral_axis_unit
 
         if data_unit is not None:
-            if isinstance(data_unit, u.Quantity):
-                data_unit = data_unit.to_string()
-
             self.hub.plot_widget.data_unit = data_unit
+
+    def update_slice_indicator_position(self, pos):
+        """
+        Updates the current position of the movable vertical slice indicator.
+
+        Parameters
+        ----------
+        pos : float
+            The new position of the vertical line.
+        """
+        if self._slice_indicator is not None:
+            self._slice_indicator.blockSignals(True)
+            self._slice_indicator.setPos(u.Quantity(pos).value)
+            self._slice_indicator.blockSignals(False)
 
     def _create_simple_linemap(self):
         def threadable_function(data, tracker):

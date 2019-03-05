@@ -290,11 +290,9 @@ class PlotWidget(pg.PlotWidget):
         unit : :class:`~astropy.units.Unit`
             The unit to which the data axis will be converted.
         """
+        unit = u.Unit(unit).to_string()
+
         self.data_unit = unit
-
-        if isinstance(unit, u.Unit):
-            unit = unit.to_string()
-
         self.data_unit_changed.emit(unit)
 
     @spectral_axis_unit.setter
@@ -325,11 +323,9 @@ class PlotWidget(pg.PlotWidget):
         unit : :class:`~astropy.units.Unit`
             The unit to which the spectral axis will be converted.
         """
+        unit = u.Unit(unit).to_string()
+
         self.spectral_axis_unit = unit
-
-        if isinstance(unit, u.Unit):
-            unit = unit.to_string()
-
         self.spectral_axis_unit_changed.emit(unit)
 
     @property
