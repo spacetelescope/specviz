@@ -174,7 +174,7 @@ class SmoothingDialog(QDialog):
         self.smooth_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
 
-        self.size = float(self.size_input.text())
+        self.size = int(self.size_input.text())
 
         if self.data is not None:
             # This wrapper function is necessary for cases where the specutils
