@@ -730,7 +730,6 @@ class PlotWidget(pg.PlotWidget):
         size : int
             The new width of the rendered lines.
         """
-        print("New size ", size)
         if not pg.getConfigOption('useOpenGL'):
             self.useOpenGL(True if size > 1 else False)
 

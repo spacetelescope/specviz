@@ -6,7 +6,8 @@ from qtpy.QtGui import QIntValidator
 from qtpy.QtWidgets import QDialog, QPushButton, QTabBar
 from qtpy.uic import loadUi
 
-__all__ = ['LinearRegionItem', 'TabBarPlus', 'PlotSizeDialog']
+__all__ = ['LinearRegionItem', 'TabBarPlus', 'PlotSizeDialog',
+           'ModifiedImageExporter']
 
 
 class LinearRegionItem(pyqtgraph.LinearRegionItem):
