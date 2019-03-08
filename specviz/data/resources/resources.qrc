@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>pan.svg</file>
+    <file>zoom.svg</file>
     <file>cube.svg</file>
     <file>specviz.icns</file>
     <file>configuration.svg</file>
