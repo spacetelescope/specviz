@@ -1,25 +1,32 @@
-import sys
 import os
 import logging
+import os
 
 import astropy.units as u
-import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.exporters
 import qtawesome as qta
-from qtpy.QtCore import Signal, QEvent
-from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage, QApplication)
+from qtpy import compat
+from qtpy.QtCore import QEvent, Signal
 from qtpy.QtGui import QColor
+from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMessageBox, QAction, QActionGroup)
 from qtpy.uic import loadUi
-
-from astropy.units import Quantity
 
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
-
+from ..widgets.custom import PlotSizeDialog, ModifiedImageExporter
 
 __all__ = ['PlotWindow', 'PlotWidget']
+
+
+EXPORT_FILTERS = {
+    "*.png": ModifiedImageExporter,
+    "*.jpg": ModifiedImageExporter,
+    "*.tiff": ModifiedImageExporter,
+    "*.svg": pg.exporters.SVGExporter,
+}
 
 
 class PlotWindow(QMdiSubWindow):
@@ -51,6 +58,22 @@ class PlotWindow(QMdiSubWindow):
 
         self._central_widget.setCentralWidget(self._plot_widget)
 
+        mode_group = QActionGroup(self.tool_bar)
+        mode_group.addAction(self._central_widget.pan_mode_action)
+        self._central_widget.pan_mode_action.setChecked(True)
+        mode_group.addAction(self._central_widget.zoom_mode_action)
+
+        def _toggle_mode(state):
+            view_state = self.plot_widget.plotItem.getViewBox().state.copy()
+            view_state.update({'mouseMode': pg.ViewBox.RectMode
+                               if state else pg.ViewBox.PanMode})
+            self.plot_widget.plotItem.getViewBox().setState(view_state)
+
+        self._central_widget.pan_mode_action.triggered.connect(
+            lambda: _toggle_mode(False))
+        self._central_widget.zoom_mode_action.triggered.connect(
+            lambda: _toggle_mode(True))
+
         # Setup connections
         self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
@@ -58,7 +81,8 @@ class PlotWindow(QMdiSubWindow):
             self.plot_widget._on_remove_linear_region)
         self._central_widget.change_color_action.triggered.connect(
             self._on_change_color)
-
+        self._central_widget.export_plot_action.triggered.connect(
+            self._on_export_plot)
         self._central_widget.reset_view_action.triggered.connect(
             lambda: self._on_reset_view())
 
@@ -139,6 +163,35 @@ class PlotWindow(QMdiSubWindow):
         if color.isValid():
             self.current_item.color = color.toRgb()
             self.color_changed.emit(self.current_item, self.current_item.color)
+
+    def _on_export_plot(self):
+        file_path, key = compat.getsavefilename(filters=";;".join(
+            EXPORT_FILTERS.keys()))
+
+        if key == '':
+            return
+
+        exporter = EXPORT_FILTERS[key](self.plot_widget.plotItem)
+
+        # TODO: Current issue in pyqtgraph where the user cannot explicitly
+        # define the output size. Fix incoming.
+
+        # plot_size_dialog = PlotSizeDialog(self)
+        # plot_size_dialog.height_line_edit.setText(
+        #     str(int(exporter.params.param('height').value())))
+        # plot_size_dialog.width_line_edit.setText(
+        #     str(int(exporter.params.param('width').value())))
+        #
+        # if key != "*.svg":
+        #     if plot_size_dialog.exec_():
+        #         exporter.params.param('height').setValue(int(exporter.params.param('height').value()),
+        #                                                  blockSignal=exporter.heightChanged)
+        #         exporter.params.param('width').setValue(int(exporter.params.param('height').value()),
+        #                                                  blockSignal=exporter.widthChanged)
+        #     else:
+        #         return
+
+        exporter.export(file_path)
 
 
 class PlotWidget(pg.PlotWidget):
@@ -223,7 +276,7 @@ class PlotWidget(pg.PlotWidget):
         self.enableAutoRange(True)
 
         # Show grid lines
-        self.showGrid(x=True, y=True, alpha=0.25)
+        self.showGrid(x=True, y=True, alpha=0.05)
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.sourceModel().data_added.connect(self._check_unit_compatibility)
