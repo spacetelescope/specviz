@@ -37,7 +37,7 @@ FITTERS = {
 SPECVIZ_MODEL_FILE_FILTER = 'Specviz Model Files (*.smf)'
 
 
-@plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/012-file.svg"))
+@plugin.plugin_bar("Model Editor", icon=QIcon(":/icons/new-model.svg"))
 class ModelEditor(QWidget):
     """
     Qt widget for interacting with the model editor functionality in SpecViz.
@@ -107,7 +107,7 @@ class ModelEditor(QWidget):
         # Connect the fit model button
         self.fit_button.clicked.connect(self._on_fit_clicked)
 
-    @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/012-file.svg"))
+    @plugin.tool_bar(name="New Model", icon=QIcon(":/icons/new-model.svg"))
     def on_new_model_triggered(self):
         """
         Create a new model based on user choice and add it to the display of

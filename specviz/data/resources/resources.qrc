@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>axis.svg</file>
+    <file>new-model.svg</file>
+    <file>crystal-ball.svg</file>
     <file>pan.svg</file>
     <file>zoom.svg</file>
     <file>cube.svg</file>

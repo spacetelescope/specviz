@@ -770,7 +770,7 @@ class LoaderWizard(QDialog):
     Loader wizard dialog. Handles the rendering and parsing of user input
     through the SpecViz gui.
     """
-    @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/012-file.svg"), location=0)
+    @plugin.tool_bar("Loader Wizard", icon=QIcon(":/icons/crystal-ball.svg"), location=0)
     def open_wizard(self):
         """
         Opens loader wizard plugin interface.

@@ -130,7 +130,7 @@ class UnitChangeDialog(QDialog):
 
         super().show()
 
-    @plugin.plot_bar("Change Units", icon=QIcon(":/icons/012-file.svg"))
+    @plugin.plot_bar("Change Units", icon=QIcon(":/icons/axis.svg"))
     def on_action_triggered(self):
         """
         Called when the user interacts with the ui button. Shows the dialog.
