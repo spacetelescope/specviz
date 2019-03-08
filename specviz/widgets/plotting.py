@@ -10,7 +10,7 @@ from qtpy import compat
 from qtpy.QtCore import QEvent, Signal
 from qtpy.QtGui import QColor
 from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QAction, QActionGroup)
+                            QMessageBox, QAction, QActionGroup, QToolButton, QMenu)
 from qtpy.uic import loadUi
 
 from .custom import LinearRegionItem
@@ -58,6 +58,7 @@ class PlotWindow(QMdiSubWindow):
 
         self._central_widget.setCentralWidget(self._plot_widget)
 
+        # Setup action group for interaction modes
         mode_group = QActionGroup(self.tool_bar)
         mode_group.addAction(self._central_widget.pan_mode_action)
         self._central_widget.pan_mode_action.setChecked(True)
@@ -69,17 +70,37 @@ class PlotWindow(QMdiSubWindow):
                                if state else pg.ViewBox.PanMode})
             self.plot_widget.plotItem.getViewBox().setState(view_state)
 
+        # Setup plot settings options menu
+        self.plot_settings_button = self.tool_bar.widgetForAction(
+            self._central_widget.plot_settings_action)
+        self.plot_settings_button.setPopupMode(QToolButton.InstantPopup)
+
+        self.plot_settings_menu = QMenu(self.plot_settings_button)
+        self.plot_settings_button.setMenu(self.plot_settings_menu)
+
+        self.color_change_action = QAction("Line Color")
+        self.plot_settings_menu.addAction(self.color_change_action)
+
+        self.line_width_menu = QMenu("Line Widths")
+        self.plot_settings_menu.addMenu(self.line_width_menu)
+
+        # Setup the line width plot setting options
+        for i in range(1, 4):
+            act = QAction(str(i), self.line_width_menu)
+            self.line_width_menu.addAction(act)
+            act.triggered.connect(lambda *args, size=i:
+                                  self.plot_widget.change_width(size))
+
+        # Setup connections
         self._central_widget.pan_mode_action.triggered.connect(
             lambda: _toggle_mode(False))
         self._central_widget.zoom_mode_action.triggered.connect(
             lambda: _toggle_mode(True))
-
-        # Setup connections
         self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
         self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
-        self._central_widget.change_color_action.triggered.connect(
+        self.color_change_action.triggered.connect(
             self._on_change_color)
         self._central_widget.export_plot_action.triggered.connect(
             self._on_export_plot)
@@ -245,6 +266,7 @@ class PlotWidget(pg.PlotWidget):
         # Performance enhancements
         # self.setDownsampling(auto=False)
         # self.setClipToView(True)
+        # self.useOpenGL(True)
 
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='')
@@ -681,6 +703,31 @@ class PlotWidget(pg.PlotWidget):
                 regions.append(item)
 
         return regions
+
+    def change_width(self, size):
+        """
+        Change the width of every plot data item rendered on the plot. This
+        currently does not include uncertainty indicators.
+
+        Notes
+        -----
+            Enabling a width greater than 1 will automatically enable opengl
+            and use the user's gpu to render the plot. If the user has not
+            set the global pyqtgraph opengl option to true, opengl will be
+            disabled when the user returns the size to 1.
+
+        Parameters
+        ----------
+        size : int
+            The new width of the rendered lines.
+        """
+        print("New size ", size)
+        if not pg.getConfigOption('useOpenGL'):
+            self.useOpenGL(True if size > 1 else False)
+
+        for item in self.items():
+            if isinstance(item, PlotDataItem):
+                item.width = size
 
     def enterEvent(self, event):
         """

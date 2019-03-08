@@ -66,7 +66,7 @@
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
    <addaction name="separator"/>
-   <addaction name="change_color_action"/>
+   <addaction name="plot_settings_action"/>
    <addaction name="separator"/>
    <addaction name="pan_mode_action"/>
    <addaction name="zoom_mode_action"/>
@@ -178,6 +178,18 @@
    </property>
    <property name="toolTip">
     <string>Enable plot box zooming</string>
+   </property>
+  </action>
+  <action name="plot_settings_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/configuration.svg</normaloff>:/icons/configuration.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Plot Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot settings</string>
    </property>
   </action>
  </widget>
