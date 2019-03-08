@@ -374,6 +374,7 @@ class PlotWidget(pg.PlotWidget):
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_spectral_axis_unit_compatible(value):
+
                 plot_data_item.spectral_axis_unit = value
 
                 # Re-initialize plot to update the displayed values and
@@ -530,6 +531,14 @@ class PlotWidget(pg.PlotWidget):
         spectral_axis_unit : str or :class:`~astropy.units.Unit`
             The spectral axis unit used for the display of the x axis.
         """
+        # Update any ROIs currently on the plot
+        if spectral_axis_unit is not None:
+            for item in self.items():
+                if isinstance(item, LinearRegionItem):
+                    item.setRegion(
+                        u.Quantity(item.getRegion(), self.spectral_axis_unit).to(
+                            spectral_axis_unit, equivalencies=u.spectral()).value)
+
         # We need to be careful here to explicitly check the data_unit against
         # None since it may also be '' which is a valid dimensionless unit.
         self._data_unit = self._data_unit if data_unit is None else data_unit
