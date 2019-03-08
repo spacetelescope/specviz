@@ -6,8 +6,7 @@ from qtpy.QtGui import QIntValidator
 from qtpy.QtWidgets import QDialog, QPushButton, QTabBar
 from qtpy.uic import loadUi
 
-__all__ = ['LinearRegionItem', 'TabBarPlus', 'PlotSizeDialog',
-           'ModifiedImageExporter']
+__all__ = ['LinearRegionItem', 'TabBarPlus', 'PlotSizeDialog']
 
 
 class LinearRegionItem(pyqtgraph.LinearRegionItem):
@@ -76,20 +75,6 @@ class LinearRegionItem(pyqtgraph.LinearRegionItem):
         if ev.button() == Qt.LeftButton:
             if not self._selected:
                 self.selected.emit(True)
-
-    def mouseDragEvent(self, ev):
-        """
-        Intercepts mouse drag events.
-
-        Parameters
-        ----------
-        ev : :class:`~qtpy.QtGui.QMouseEvent`
-            The qt event object.
-        """
-        super(LinearRegionItem, self).mouseDragEvent(ev)
-
-        if not self._selected:
-            self.selected.emit(True)
 
 
 class TabBarPlus(QTabBar):
