@@ -110,6 +110,9 @@ class SpecvizLayerArtist(LayerArtist):
         self.specviz_window.current_plot_window.color_changed.connect(
             self.on_color_changed)
 
+        self.specviz_window.current_plot_window.width_changed.connect(
+            self.on_width_changed)
+
     def on_color_changed(self, plot_data_item, color):
         """
         Called when the color of a plot data item is changed from specviz.
@@ -122,6 +125,19 @@ class SpecvizLayerArtist(LayerArtist):
             The qt representation of the color.
         """
         self.state.layer.style.color = color.name()
+
+    def on_width_changed(self, size):
+        """
+        Called when the width of line is changed from specviz.
+
+        Parameters
+        ----------
+        plot_data_item : ``PlotDataItem``
+            The plot data item whose colors has been changed.
+        size : int
+            The new width of the plotted line.
+        """
+        self.state.linewidth = size
 
     def remove(self):
         """
@@ -169,13 +185,16 @@ class SpecvizLayerArtist(LayerArtist):
         kwargs
         """
         plot_data_item = self.plot_data_item
-        if plot_data_item is not None:
-            plot_data_item.visible = self.state.visible
-            plot_data_item.zorder = self.state.zorder
-            plot_data_item.width = self.state.linewidth
-            color = QColor(self.state.layer.style.color)
-            color.setAlphaF(self.state.layer.style.alpha)
-            plot_data_item.color = color
+
+        if plot_data_item is None:
+            return
+
+        plot_data_item.visible = self.state.visible
+        plot_data_item.zorder = self.state.zorder
+        plot_data_item.width = self.state.linewidth
+        color = QColor(self.state.layer.style.color)
+        color.setAlphaF(self.state.layer.style.alpha)
+        plot_data_item.color = color
 
     def update(self, *args, **kwargs):
         """
@@ -413,11 +432,11 @@ class SpecvizDataViewer(DataViewer):
             menu.addAction(act)
 
             act = QAction("Fitted Linemap", self)
-            act.triggered.connect(self.create_fitted_linemap)
+            act.triggered.connect(self._create_fitted_linemap)
             menu.addAction(act)
 
             act = QAction("Spectral Smoothing", self)
-            act.triggered.connect(self.spectral_smoothing)
+            act.triggered.connect(self._spectral_smoothing)
             menu.addAction(act)
 
     def update_units(self, spectral_axis_unit=None, data_unit=None):
@@ -453,12 +472,12 @@ class SpecvizDataViewer(DataViewer):
 
     def _create_simple_linemap(self):
         def threadable_function(data, tracker):
-            out = np.empty(shape=data.shape)
+            out = np.empty(shape=data.shape[1:])
             mask = self.hub.region_mask
 
             for x in range(data.shape[1]):
                 for y in range(data.shape[2]):
-                    out[:, x, y] = np.sum(data[:, x, y][mask])
+                    out[x, y] = np.sum(data[:, x, y][mask])
                     tracker()
 
             return out, data.meta.get('unit')
@@ -479,7 +498,7 @@ class SpecvizDataViewer(DataViewer):
 
         spectral_operation.exec_()
 
-    def create_fitted_linemap(self):
+    def _create_fitted_linemap(self):
         # Check to see if the model fitting plugin is loaded
         model_editor_plugin = self.current_workspace._plugin_bars.get("Model Editor")
 
@@ -499,7 +518,7 @@ class SpecvizDataViewer(DataViewer):
         def threadable_function(data, tracker):
             from astropy.modeling.fitting import LevMarLSQFitter
 
-            out = np.empty(shape=data.shape)
+            out = np.empty(shape=data.shape[1:])
             mask = self.hub.region_mask
 
             spectral_axis = self.hub.plot_item.spectral_axis
@@ -516,7 +535,7 @@ class SpecvizDataViewer(DataViewer):
 
                     new_data = fit_model(spectral_axis)
 
-                    out[:, x, y] = new_data
+                    out[x, y] = np.sum(new_data[mask])
 
                     tracker()
 
@@ -539,7 +558,7 @@ class SpecvizDataViewer(DataViewer):
 
         spectral_operation.exec_()
 
-    def spectral_smoothing(self):
+    def _spectral_smoothing(self):
         def threadable_function(func, data, tracker, **kwargs):
             out = np.empty(shape=data.shape)
 
