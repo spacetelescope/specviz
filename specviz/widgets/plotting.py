@@ -35,6 +35,7 @@ class PlotWindow(QMdiSubWindow):
     """
     window_removed = Signal()
     color_changed = Signal(PlotDataItem, QColor)
+    width_changed = Signal(int)
 
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
@@ -89,7 +90,7 @@ class PlotWindow(QMdiSubWindow):
             act = QAction(str(i), self.line_width_menu)
             self.line_width_menu.addAction(act)
             act.triggered.connect(lambda *args, size=i:
-                                  self.plot_widget.change_width(size))
+                                  self._on_change_width(size))
 
         # Setup connections
         self._central_widget.pan_mode_action.triggered.connect(
@@ -184,6 +185,10 @@ class PlotWindow(QMdiSubWindow):
         if color.isValid():
             self.current_item.color = color.toRgb()
             self.color_changed.emit(self.current_item, self.current_item.color)
+
+    def _on_change_width(self, size):
+        self.plot_widget.change_width(size)
+        self.width_changed.emit(size)
 
     def _on_export_plot(self):
         file_path, key = compat.getsavefilename(filters=";;".join(
