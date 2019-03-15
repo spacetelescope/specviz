@@ -197,7 +197,7 @@ class SpectralOperationHandler(QDialog):
             self._data.container_2d.add_component(data, component_name)
 
             # self._layout.session.data_collection.append(self._data.container_2d)
-            self._layout.add_overlay(data, component_name, display_now=False)
+            self._layout.add_overlay(data, component_name, display_now=True)
         else:
             component = Component(data, units=unit)
             self._data.add_component(component, component_name)

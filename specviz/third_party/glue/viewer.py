@@ -5,11 +5,13 @@
 # Writing a custom viewer for glue with Qt
 # http://docs.glueviz.org/en/latest/customizing_guide/qt_viewer.html
 
+import logging
 import os
 from collections import OrderedDict
 
 import astropy.units as u
-
+import numpy as np
+from astropy.modeling.fitting import LevMarLSQFitter
 from glue.core import Component, Data
 from glue.core.coordinates import coordinates_from_header
 from glue.core.data_combo_helper import ComponentIDComboHelper
@@ -21,19 +23,18 @@ from glue.utils.qt import load_ui
 from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QMdiArea, QMessageBox, QWidget, QAction, QToolButton, QMenu
-from qtpy.QtGui import QIcon, QColor
-import numpy as np
-import logging
 from pyqtgraph import InfiniteLine
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor, QIcon
+from qtpy.QtWidgets import (QAction, QMdiArea, QMenu, QMessageBox, QToolButton,
+                            QWidget, QWidgetAction, QLabel)
 
+from .operation_handler import SpectralOperationHandler
 from .utils import glue_data_has_spectral_axis, glue_data_to_spectrum1d
 from ...app import Application
-from ...widgets.workspace import Workspace
-from .operation_handler import SpectralOperationHandler
 from ...core.hub import Hub
 from ...core.operations import FunctionalOperation
+from ...widgets.workspace import Workspace
 
 __all__ = ['SpecvizDataViewer']
 
@@ -427,12 +428,20 @@ class SpecvizDataViewer(DataViewer):
             button.setMenu(menu)
 
             # Create operation actions
+            menu.addSection("2D Operations")
+
             act = QAction("Simple Linemap", self)
             act.triggered.connect(self._create_simple_linemap)
             menu.addAction(act)
 
             act = QAction("Fitted Linemap", self)
             act.triggered.connect(self._create_fitted_linemap)
+            menu.addAction(act)
+
+            menu.addSection("3D Operations")
+
+            act = QAction("Fit Spaxels", self)
+            act.triggered.connect(self._fit_spaxels)
             menu.addAction(act)
 
             act = QAction("Spectral Smoothing", self)
@@ -516,8 +525,6 @@ class SpecvizDataViewer(DataViewer):
             return
 
         def threadable_function(data, tracker):
-            from astropy.modeling.fitting import LevMarLSQFitter
-
             out = np.empty(shape=data.shape[1:])
             mask = self.hub.region_mask
 
@@ -551,6 +558,64 @@ class SpecvizDataViewer(DataViewer):
                 'title': "Fitted Linemap",
                 'group_box_title': "Choose the component to use for linemap "
                                    "generation",
+                'description': "Fits the current model to the values of the "
+                               "chosen component in the range of the current "
+                               "ROI in the spectral view for each spectrum in "
+                               "the data cube."})
+
+        spectral_operation.exec_()
+
+    def _fit_spaxels(self):
+        # Check to see if the model fitting plugin is loaded
+        model_editor_plugin = self.current_workspace._plugin_bars.get("Model Editor")
+
+        if model_editor_plugin is None:
+            logging.error("Model editor plugin is not loaded.")
+            return
+
+        if (model_editor_plugin.model_tree_view.model() is None or
+                model_editor_plugin.model_tree_view.model().evaluate() is None):
+            QMessageBox.warning(self,
+                                "No evaluable model.",
+                                "There is currently no model or the created "
+                                "model is empty. Unable to perform fitted "
+                                "linemap operation.")
+            return
+
+        def threadable_function(data, tracker):
+            out = np.empty(shape=data.shape)
+            mask = self.hub.region_mask
+
+            spectral_axis = self.hub.plot_item.spectral_axis
+            model = model_editor_plugin.model_tree_view.model().evaluate()
+
+            for x in range(data.shape[1]):
+                for y in range(data.shape[2]):
+                    flux = data[:, x, y].value
+
+                    fitter = LevMarLSQFitter()
+                    fit_model = fitter(model,
+                                       spectral_axis[mask],
+                                       flux[mask])
+
+                    new_data = fit_model(spectral_axis)
+
+                    out[:, x, y] = np.sum(new_data[mask])
+
+                    tracker()
+
+            return out, data.meta.get('unit')
+
+        spectral_operation = SpectralOperationHandler(
+            data=self.layers[0].state.layer,
+            function=threadable_function,
+            operation_name="Fit Spaxels",
+            component_id=self.layers[0].state.attribute,
+            layout=self._layout,
+            ui_settings={
+                'title': "Fit Spaxel",
+                'group_box_title': "Choose the component to use for spaxel "
+                                   "fitting",
                 'description': "Fits the current model to the values of the "
                                "chosen component in the range of the current "
                                "ROI in the spectral view for each spectrum in "
