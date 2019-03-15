@@ -234,7 +234,12 @@ class EquationEditor(QDialog):
                 dict_map = {x.name: "self._item_from_name('{}')".format(x.name)
                             for x in self._equation_editor.hub.data_items}
                 raw_str = self._get_raw_command()
-                self.evaluated_arith = eval(raw_str.format(**dict_map))
+
+                for k, v in dict_map.items():
+                    raw_str = raw_str.replace("{" + k + "}", v)
+
+                self.evaluated_arith = eval(raw_str)
+
                 if not isinstance(self.evaluated_arith,
                                   specutils.spectra.spectrum1d.Spectrum1D):
 
@@ -245,10 +250,10 @@ class EquationEditor(QDialog):
                 self.label_status.setStyleSheet('color: red')
                 self.label_status.setText("Incomplete or invalid syntax")
                 self.button_ok.setEnabled(False)
-            except Exception as exc:
-                self.label_status.setStyleSheet('color: red')
-                self.label_status.setText(str(exc))
-                self.button_ok.setEnabled(False)
+            # except Exception as exc:
+            #     self.label_status.setStyleSheet('color: red')
+            #     self.label_status.setText(str(exc))
+            #     self.button_ok.setEnabled(False)
             else:
                 self.label_status.setStyleSheet('color: green')
                 self.label_status.setText("Valid expression")
