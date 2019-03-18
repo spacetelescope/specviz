@@ -250,10 +250,10 @@ class EquationEditor(QDialog):
                 self.label_status.setStyleSheet('color: red')
                 self.label_status.setText("Incomplete or invalid syntax")
                 self.button_ok.setEnabled(False)
-            # except Exception as exc:
-            #     self.label_status.setStyleSheet('color: red')
-            #     self.label_status.setText(str(exc))
-            #     self.button_ok.setEnabled(False)
+            except Exception as exc:
+                self.label_status.setStyleSheet('color: red')
+                self.label_status.setText(str(exc))
+                self.button_ok.setEnabled(False)
             else:
                 self.label_status.setStyleSheet('color: green')
                 self.label_status.setText("Valid expression")

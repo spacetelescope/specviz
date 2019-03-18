@@ -3,6 +3,7 @@ import os
 from functools import wraps
 from qtpy.QtCore import QThread, Signal
 from qtpy.QtWidgets import QDialog, QMessageBox
+from qtpy.QtGui import QIntValidator
 from qtpy.uic import loadUi
 import astropy.units as u
 from specutils import Spectrum1D
@@ -79,6 +80,9 @@ class SmoothingDialog(QDialog):
             kernel = KERNEL_REGISTRY[key]
             self.kernel_combo.addItem(kernel["name"], key)
         self.kernel_combo.currentIndexChanged.connect(self._on_kernel_change)
+
+        # Add integer validator to size input field
+        self.size_input.setValidator(QIntValidator())
 
     @plugin.tool_bar("Smoothing", location="Operations")
     def on_action_triggered(self):
