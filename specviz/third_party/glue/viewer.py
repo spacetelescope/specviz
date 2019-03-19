@@ -24,7 +24,7 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.viewers.common.qt.data_viewer import DataViewer
 from glue.viewers.common.state import LayerState, ViewerState
 from pyqtgraph import InfiniteLine
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QColor, QIcon
 from qtpy.QtWidgets import (QAction, QMdiArea, QMenu, QMessageBox, QToolButton,
                             QWidget, QWidgetAction, QLabel)
@@ -406,6 +406,7 @@ class SpecvizDataViewer(DataViewer):
         # real estate
         self.current_workspace.addToolBar(
             self.current_workspace.current_plot_window.tool_bar)
+        self.current_workspace.main_tool_bar.setIconSize(QSize(15, 15))
 
         # Hide the first five actions in the default specviz tool bar
         for act in self.current_workspace.main_tool_bar.actions()[:6]:
