@@ -5,6 +5,7 @@ from qtpy.QtWidgets import QDialog, QDialogButtonBox
 from qtpy.uic import loadUi
 from spectral_cube import BooleanArrayMask, SpectralCube
 from glue.core import Subset, Data, Component
+from glue.core.coordinates import WCSCoordinates
 
 from .threads import OperationThread
 
@@ -188,11 +189,17 @@ class SpectralOperationHandler(QDialog):
         if comp_count > 0:
             component_name = "{} {}".format(component_name, comp_count)
 
-        if len(data.shape) == len(self._data.shape):
-            component = Component(data[0, :, :], units=unit)
-            self._layout.add_overlay(component, component_name, display_now=False)
+        if data.ndim == 2:
+            coords = WCSCoordinates(wcs=self._data.coords.wcs.celestial)
 
-        component = Component(data, units=unit)
-        self._data.add_component(component, component_name)
+            self._data.container_2d = Data(label=self._data.label + " [2d]",
+                                           coords=coords)
+            self._data.container_2d.add_component(data, component_name)
+
+            # self._layout.session.data_collection.append(self._data.container_2d)
+            self._layout.add_overlay(data, component_name, display_now=True)
+        else:
+            component = Component(data, units=unit)
+            self._data.add_component(component, component_name)
 
         super(SpectralOperationHandler, self).accept()

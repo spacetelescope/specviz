@@ -1,25 +1,32 @@
-import sys
 import os
 import logging
+import os
 
 import astropy.units as u
-import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.exporters
 import qtawesome as qta
-from qtpy.QtCore import Signal, QEvent
-from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
-                            QMessageBox, QErrorMessage, QApplication)
+from qtpy import compat
+from qtpy.QtCore import QEvent, Signal
 from qtpy.QtGui import QColor
+from qtpy.QtWidgets import (QColorDialog, QMainWindow, QMdiSubWindow,
+                            QMessageBox, QAction, QActionGroup, QToolButton, QMenu)
 from qtpy.uic import loadUi
-
-from astropy.units import Quantity
 
 from .custom import LinearRegionItem
 from ..core.items import PlotDataItem
 from ..core.models import PlotProxyModel
-
+from ..widgets.custom import PlotSizeDialog, ModifiedImageExporter
 
 __all__ = ['PlotWindow', 'PlotWidget']
+
+
+EXPORT_FILTERS = {
+    "*.png": ModifiedImageExporter,
+    "*.jpg": ModifiedImageExporter,
+    "*.tiff": ModifiedImageExporter,
+    "*.svg": pg.exporters.SVGExporter,
+}
 
 
 class PlotWindow(QMdiSubWindow):
@@ -28,6 +35,7 @@ class PlotWindow(QMdiSubWindow):
     """
     window_removed = Signal()
     color_changed = Signal(PlotDataItem, QColor)
+    width_changed = Signal(int)
 
     def __init__(self, model, *args, **kwargs):
         super(PlotWindow, self).__init__(*args, **kwargs)
@@ -51,14 +59,52 @@ class PlotWindow(QMdiSubWindow):
 
         self._central_widget.setCentralWidget(self._plot_widget)
 
+        # Setup action group for interaction modes
+        mode_group = QActionGroup(self.tool_bar)
+        mode_group.addAction(self._central_widget.pan_mode_action)
+        self._central_widget.pan_mode_action.setChecked(True)
+        mode_group.addAction(self._central_widget.zoom_mode_action)
+
+        def _toggle_mode(state):
+            view_state = self.plot_widget.plotItem.getViewBox().state.copy()
+            view_state.update({'mouseMode': pg.ViewBox.RectMode
+                               if state else pg.ViewBox.PanMode})
+            self.plot_widget.plotItem.getViewBox().setState(view_state)
+
+        # Setup plot settings options menu
+        self.plot_settings_button = self.tool_bar.widgetForAction(
+            self._central_widget.plot_settings_action)
+        self.plot_settings_button.setPopupMode(QToolButton.InstantPopup)
+
+        self.plot_settings_menu = QMenu(self.plot_settings_button)
+        self.plot_settings_button.setMenu(self.plot_settings_menu)
+
+        self.color_change_action = QAction("Line Color")
+        self.plot_settings_menu.addAction(self.color_change_action)
+
+        self.line_width_menu = QMenu("Line Widths")
+        self.plot_settings_menu.addMenu(self.line_width_menu)
+
+        # Setup the line width plot setting options
+        for i in range(1, 4):
+            act = QAction(str(i), self.line_width_menu)
+            self.line_width_menu.addAction(act)
+            act.triggered.connect(lambda *args, size=i:
+                                  self._on_change_width(size))
+
         # Setup connections
+        self._central_widget.pan_mode_action.triggered.connect(
+            lambda: _toggle_mode(False))
+        self._central_widget.zoom_mode_action.triggered.connect(
+            lambda: _toggle_mode(True))
         self._central_widget.linear_region_action.triggered.connect(
             self.plot_widget._on_add_linear_region)
         self._central_widget.remove_region_action.triggered.connect(
             self.plot_widget._on_remove_linear_region)
-        self._central_widget.change_color_action.triggered.connect(
+        self.color_change_action.triggered.connect(
             self._on_change_color)
-
+        self._central_widget.export_plot_action.triggered.connect(
+            self._on_export_plot)
         self._central_widget.reset_view_action.triggered.connect(
             lambda: self._on_reset_view())
 
@@ -140,6 +186,39 @@ class PlotWindow(QMdiSubWindow):
             self.current_item.color = color.toRgb()
             self.color_changed.emit(self.current_item, self.current_item.color)
 
+    def _on_change_width(self, size):
+        self.plot_widget.change_width(size)
+        self.width_changed.emit(size)
+
+    def _on_export_plot(self):
+        file_path, key = compat.getsavefilename(filters=";;".join(
+            EXPORT_FILTERS.keys()))
+
+        if key == '':
+            return
+
+        exporter = EXPORT_FILTERS[key](self.plot_widget.plotItem)
+
+        # TODO: Current issue in pyqtgraph where the user cannot explicitly
+        # define the output size. Fix incoming.
+
+        # plot_size_dialog = PlotSizeDialog(self)
+        # plot_size_dialog.height_line_edit.setText(
+        #     str(int(exporter.params.param('height').value())))
+        # plot_size_dialog.width_line_edit.setText(
+        #     str(int(exporter.params.param('width').value())))
+        #
+        # if key != "*.svg":
+        #     if plot_size_dialog.exec_():
+        #         exporter.params.param('height').setValue(int(exporter.params.param('height').value()),
+        #                                                  blockSignal=exporter.heightChanged)
+        #         exporter.params.param('width').setValue(int(exporter.params.param('height').value()),
+        #                                                  blockSignal=exporter.widthChanged)
+        #     else:
+        #         return
+
+        exporter.export(file_path)
+
 
 class PlotWidget(pg.PlotWidget):
     """
@@ -192,6 +271,7 @@ class PlotWidget(pg.PlotWidget):
         # Performance enhancements
         # self.setDownsampling(auto=False)
         # self.setClipToView(True)
+        # self.useOpenGL(True)
 
         # Define labels for axes
         self._plot_item.setLabel('bottom', text='')
@@ -223,7 +303,7 @@ class PlotWidget(pg.PlotWidget):
         self.enableAutoRange(True)
 
         # Show grid lines
-        self.showGrid(x=True, y=True, alpha=0.25)
+        self.showGrid(x=True, y=True, alpha=0.05)
 
         # Listen for model events to add/remove items from the plot
         self.proxy_model.sourceModel().data_added.connect(self._check_unit_compatibility)
@@ -290,17 +370,16 @@ class PlotWidget(pg.PlotWidget):
         unit : :class:`~astropy.units.Unit`
             The unit to which the data axis will be converted.
         """
+        unit = u.Unit(unit).to_string()
+
         self.data_unit = unit
-
-        if isinstance(unit, u.Unit):
-            unit = unit.to_string()
-
         self.data_unit_changed.emit(unit)
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
         for plot_data_item in self.listDataItems():
             if plot_data_item.is_spectral_axis_unit_compatible(value):
+
                 plot_data_item.spectral_axis_unit = value
 
                 # Re-initialize plot to update the displayed values and
@@ -325,11 +404,9 @@ class PlotWidget(pg.PlotWidget):
         unit : :class:`~astropy.units.Unit`
             The unit to which the spectral axis will be converted.
         """
+        unit = u.Unit(unit).to_string()
+
         self.spectral_axis_unit = unit
-
-        if isinstance(unit, u.Unit):
-            unit = unit.to_string()
-
         self.spectral_axis_unit_changed.emit(unit)
 
     @property
@@ -459,6 +536,14 @@ class PlotWidget(pg.PlotWidget):
         spectral_axis_unit : str or :class:`~astropy.units.Unit`
             The spectral axis unit used for the display of the x axis.
         """
+        # Update any ROIs currently on the plot
+        if spectral_axis_unit is not None:
+            for item in self.items():
+                if isinstance(item, LinearRegionItem):
+                    item.setRegion(
+                        u.Quantity(item.getRegion(), self.spectral_axis_unit).to(
+                            spectral_axis_unit, equivalencies=u.spectral()).value)
+
         # We need to be careful here to explicitly check the data_unit against
         # None since it may also be '' which is a valid dimensionless unit.
         self._data_unit = self._data_unit if data_unit is None else data_unit
@@ -632,6 +717,30 @@ class PlotWidget(pg.PlotWidget):
                 regions.append(item)
 
         return regions
+
+    def change_width(self, size):
+        """
+        Change the width of every plot data item rendered on the plot. This
+        currently does not include uncertainty indicators.
+
+        Notes
+        -----
+            Enabling a width greater than 1 will automatically enable opengl
+            and use the user's gpu to render the plot. If the user has not
+            set the global pyqtgraph opengl option to true, opengl will be
+            disabled when the user returns the size to 1.
+
+        Parameters
+        ----------
+        size : int
+            The new width of the rendered lines.
+        """
+        if not pg.getConfigOption('useOpenGL'):
+            self.useOpenGL(True if size > 1 else False)
+
+        for item in self.items():
+            if isinstance(item, PlotDataItem):
+                item.width = size
 
     def enterEvent(self, event):
         """

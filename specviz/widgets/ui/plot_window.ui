@@ -66,9 +66,12 @@
    <addaction name="linear_region_action"/>
    <addaction name="remove_region_action"/>
    <addaction name="separator"/>
-   <addaction name="change_color_action"/>
+   <addaction name="plot_settings_action"/>
    <addaction name="separator"/>
+   <addaction name="pan_mode_action"/>
+   <addaction name="zoom_mode_action"/>
    <addaction name="reset_view_action"/>
+   <addaction name="separator"/>
    <addaction name="export_plot_action"/>
   </widget>
   <action name="linear_region_action">
@@ -145,6 +148,48 @@
    </property>
    <property name="toolTip">
     <string>Reset the axes to fit the data</string>
+   </property>
+  </action>
+  <action name="pan_mode_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/pan.svg</normaloff>:/icons/pan.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Pan Mode</string>
+   </property>
+   <property name="toolTip">
+    <string>Enabling plot panning</string>
+   </property>
+  </action>
+  <action name="zoom_mode_action">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/zoom.svg</normaloff>:/icons/zoom.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Box Zoom</string>
+   </property>
+   <property name="toolTip">
+    <string>Enable plot box zooming</string>
+   </property>
+  </action>
+  <action name="plot_settings_action">
+   <property name="icon">
+    <iconset resource="../../data/resources/resources.qrc">
+     <normaloff>:/icons/configuration.svg</normaloff>:/icons/configuration.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Plot Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot settings</string>
    </property>
   </action>
  </widget>

@@ -264,8 +264,7 @@ class PlotDataItem(pg.PlotDataItem):
 
     @spectral_axis_unit.setter
     def spectral_axis_unit(self, value):
-        if isinstance(value, u.Unit):
-            value = value.to_string()
+        value = u.Unit(value).to_string()
 
         self._spectral_axis_unit = value
         self.spectral_axis_unit_changed.emit(self._spectral_axis_unit)

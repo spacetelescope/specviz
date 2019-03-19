@@ -341,7 +341,7 @@ class Plugin(DecoratorRegistry):
                         parent = self.get_action(parent, level)
 
                 before_action = [x for x in parent.actions()
-                                 if x.isSeparator()].pop()
+                                 if x.isSeparator()].pop(-2)
                 parent.insertAction(before_action, action)
                 action.triggered.connect(lambda: func(plugin, *args, **kwargs))
 
