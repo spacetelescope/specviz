@@ -1,10 +1,16 @@
 .. _specviz-stats_sidebar:
 
+.. warning:: 
+
+      Please note that this version of Specviz is no longer being actively supported
+      or maintained. The functionality of Specviz is now available and being actively
+      developed as part of `Jdaviz <https://github.com/spacetelescope/jdaviz>`_.
+
 Statistics
 ==========
 
 11 statistic/analysis functions are calculated using the input spectrum
-or  specified region of interest, depending on what is selected in the
+or specified region of interest, depending on what is selected in the
 left sidebar. To get the statistics of a spectrum, select it on the
 :ref:`data list <specviz-data-list>` on the left panel.
 
