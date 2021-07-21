@@ -1,3 +1,9 @@
+.. DANGER:: 
+
+      Please note that this version of Specviz is **no longer being actively supported
+      or maintained**. The functionality of Specviz is now available and being actively
+      developed as part of `Jdaviz <https://github.com/spacetelescope/jdaviz>`_.
+
 .. |DataListModel| replace:: :class:`~specviz.core.models.DataListModel`
 .. |DataItem| replace:: :class:`~specviz.core.items.DataItem`
 .. |PlotDataItem| replace:: :class:`~specviz.core.items.PlotDataItem`
