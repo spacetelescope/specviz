@@ -77,6 +77,9 @@ RELEASE = 'dev' not in VERSION
 if not RELEASE:
     VERSION += get_git_devstr(False)
 
+# Override for final release
+VERSION = '0.7.1'
+
 # Populate the dict of setup command overrides; this should be done before
 # invoking any other functionality from distutils since it can potentially
 # modify distutils' behavior.
