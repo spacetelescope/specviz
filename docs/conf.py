@@ -36,10 +36,7 @@ except ImportError:
     sys.exit(1)
 
 # Get configuration information from setup.cfg
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 conf = ConfigParser()
 
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
@@ -120,7 +117,7 @@ html_theme = "sphinx_rtd_theme"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '_static/specviz_html_logo.png'
+#html_logo = '_static/specviz_html_logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -205,7 +202,3 @@ nitpick_ignore = [('py:class', 'PyQt5.QtWidgets.QMainWindow'),
                   ('py:class', 'pyqtgraph.graphicsItems.LinearRegionItem.LinearRegionItem'),
                   ('py:class', 'pyqtgraph.graphicsItems.TextItem.TextItem'),
                   ('py:class', 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem')]
-
-# add custom intersphinx
-intersphinx_mapping['specutils'] = ('https://specutils.readthedocs.io/en/latest/', None)
-intersphinx_mapping['pyqtgraph'] = ('http://www.pyqtgraph.org/documentation/', None)

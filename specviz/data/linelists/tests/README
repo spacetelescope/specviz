@@ -1,5 +1,0 @@
-The Common-xxx lists were used at the initial development phase. They are very short and have the
-simplest format that can be accessed by specviz. Good for testing.
-
-The Reader-Corliss list contains 46,000+ lines. It's slow to load and sort thru. Good for testing.
-
